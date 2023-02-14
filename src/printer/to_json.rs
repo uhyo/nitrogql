@@ -125,7 +125,10 @@ impl JsonPrintable for VariableDefinition<'_, String> {
             JSONValue(&Variable::new(Name(self.name.as_str()))),
         );
         writer.value("type", JSONValue(&self.var_type));
-        todo!("More fields to add")
+        if let Some(ref value) = self.default_value {
+            value.print_json(&mut writer.object("defaultValue"));
+        }
+        writer.array("directives").end();
     }
 }
 
