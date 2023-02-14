@@ -1,7 +1,7 @@
 use graphql_parser::{
     query::{
-        Definition, Document, Field, FragmentSpread, InlineFragment, OperationDefinition,
-        Selection, SelectionSet, TypeCondition, VariableDefinition,
+        Definition, Document, Field, FragmentDefinition, FragmentSpread, InlineFragment,
+        OperationDefinition, Selection, SelectionSet, TypeCondition, VariableDefinition,
     },
     schema::{Directive, Text, Type, Value},
 };
@@ -24,8 +24,8 @@ impl JsonPrintable for Document<'_, String> {
                 Definition::Operation(op) => {
                     op.print_json(&mut definitions_writer.object());
                 }
-                _ => {
-                    todo!("operation definition")
+                Definition::Fragment(fd) => {
+                    fd.print_json(&mut definitions_writer.object());
                 }
             }
         }
@@ -53,8 +53,67 @@ impl JsonPrintable for OperationDefinition<'_, String> {
                 directives_writer.end();
                 write_selection_set(&query.selection_set, writer);
             }
-            _ => {}
+            OperationDefinition::Mutation(mutation) => {
+                writer.value("operation", "mutation");
+                if let Some(name) = &mutation.name {
+                    writer.value("name", JSONValue(&Name(name.as_str())));
+                }
+                let mut variable_definitions_writer = writer.array("variableDefinitions");
+                for v in &mutation.variable_definitions {
+                    v.print_json(&mut variable_definitions_writer.object());
+                }
+                variable_definitions_writer.end();
+                let mut directives_writer = writer.array("directives");
+                for v in &mutation.directives {
+                    v.print_json(&mut directives_writer.object());
+                }
+                directives_writer.end();
+                write_selection_set(&mutation.selection_set, writer);
+            }
+            OperationDefinition::Subscription(subscription) => {
+                writer.value("operation", "subscription");
+                if let Some(name) = &subscription.name {
+                    writer.value("name", JSONValue(&Name(name.as_str())));
+                }
+                let mut variable_definitions_writer = writer.array("variableDefinitions");
+                for v in &subscription.variable_definitions {
+                    v.print_json(&mut variable_definitions_writer.object());
+                }
+                variable_definitions_writer.end();
+                let mut directives_writer = writer.array("directives");
+                for v in &subscription.directives {
+                    v.print_json(&mut directives_writer.object());
+                }
+                directives_writer.end();
+                write_selection_set(&subscription.selection_set, writer);
+            }
+            OperationDefinition::SelectionSet(selection_set) => {
+                // Query shorthand syntax
+                writer.value("operation", "query");
+                writer.array("variableDefinitions").end();
+                writer.array("directives").end();
+                write_selection_set(&selection_set, writer);
+            }
         }
+    }
+}
+
+impl JsonPrintable for FragmentDefinition<'_, String> {
+    fn print_json(&self, writer: &mut JSONObjectWriter) {
+        writer.value("kind", "FragmentDefinition");
+        writer.value("name", JSONValue(&Name(&self.name)));
+        match &self.type_condition {
+            TypeCondition::On(ty) => {
+                Type::NamedType::<String>(ty.clone())
+                    .print_json(&mut writer.object("typeCondition"));
+            }
+        }
+        let mut directives_writer = writer.array("directives");
+        for d in self.directives.iter() {
+            d.print_json(&mut directives_writer.object());
+        }
+        directives_writer.end();
+        write_selection_set(&self.selection_set, writer);
     }
 }
 

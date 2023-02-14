@@ -5,9 +5,20 @@ use graphql_parser::query::{parse_query, ParseError};
 use crate::printer::print_query;
 
 fn main() -> Result<(), ParseError> {
+    //     let ast = parse_query::<String>(
+    //         r#"
+    // query {
+    //     foo {
+    //         bar
+    //         baz
+    //     }
+    // }
+    // "#,
+    //     )?
+    //     .to_owned();
     let ast = parse_query::<String>(
         r#"
-query {
+fragment A on B {
     foo {
         bar
         baz
