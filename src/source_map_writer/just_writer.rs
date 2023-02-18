@@ -4,7 +4,7 @@ pub struct JustWriter<'a> {
     pub buffer: &'a mut String,
     indent: usize,
     indent_str: String,
-    last_indent_flag: bool,
+    has_indent_flag: bool,
 }
 
 impl JustWriter<'_> {
@@ -13,7 +13,7 @@ impl JustWriter<'_> {
             buffer,
             indent: 0,
             indent_str: String::new(),
-            last_indent_flag: false,
+            has_indent_flag: false,
         }
     }
 }
@@ -23,16 +23,14 @@ impl SourceMapWriter for JustWriter<'_> {
         for (idx, line) in chunk.split('\n').enumerate() {
             if idx > 0 {
                 self.buffer.push('\n');
-                if line.is_empty() {
-                    self.last_indent_flag = true;
-                    continue;
-                }
-                self.buffer.push_str(&self.indent_str);
-                self.last_indent_flag = false;
+                self.has_indent_flag = true;
             }
-            if !line.is_empty() && self.last_indent_flag {
+            if line.is_empty() {
+                continue;
+            }
+            if self.has_indent_flag {
                 self.buffer.push_str(&self.indent_str);
-                self.last_indent_flag = false;
+                self.has_indent_flag = false;
             }
             self.buffer.push_str(line);
         }
