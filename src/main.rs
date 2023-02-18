@@ -17,7 +17,13 @@ fn main() -> Result<(), ParseError> {
         foo {
             bar
             baz
+            ...U
         }
+    }
+
+    fragment U on Foo {
+        abc
+        def
     }
     "#,
     )?

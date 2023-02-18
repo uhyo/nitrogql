@@ -1,5 +1,6 @@
 use graphql_parser::query::{
-    Definition, Document, OperationDefinition, Query, Selection, SelectionSet, TypeCondition,
+    Definition, Document, FragmentDefinition, Mutation, OperationDefinition, Query, Selection,
+    SelectionSet, Subscription, TypeCondition,
 };
 
 use crate::{source_map_writer::writer::SourceMapWriter, utils::capitalize::capitalize};
@@ -23,9 +24,24 @@ impl TypePrinter for Definition<'_, String> {
         match self {
             Definition::Operation(ref op) => match op {
                 OperationDefinition::Query(ref query) => query.print_type(options, writer),
-                _ => todo!(),
+                OperationDefinition::Mutation(ref mutation) => mutation.print_type(options, writer),
+                OperationDefinition::Subscription(ref subscription) => {
+                    subscription.print_type(options, writer)
+                }
+                OperationDefinition::SelectionSet(ref selection_set) => {
+                    let actual_query = Query {
+                        position: selection_set.span.0,
+                        name: None,
+                        variable_definitions: vec![],
+                        directives: vec![],
+                        selection_set: selection_set.clone(),
+                    };
+                    actual_query.print_type(options, writer)
+                }
             },
-            _ => todo!(),
+            Definition::Fragment(ref fragment) => {
+                fragment.print_type(options, writer);
+            }
         }
     }
 }
@@ -47,6 +63,64 @@ impl TypePrinter for Query<'_, String> {
             TSType::TypeVariable(options.schema_root.clone()),
         )
         .print_type(options, writer);
+        writer.write(";\n\n");
+    }
+}
+
+impl TypePrinter for Subscription<'_, String> {
+    fn print_type(&self, options: &QueryTypePrinterOptions, writer: &mut impl SourceMapWriter) {
+        let query_name = self
+            .name
+            .as_ref()
+            .map(|name| capitalize(name))
+            .unwrap_or(String::new());
+        let query_type_name = format!("{}{}", query_name, options.subscription_result_suffix);
+
+        writer.write("type ");
+        writer.write(&query_type_name);
+        writer.write(" = ");
+        get_type_for_selection_set(
+            &self.selection_set,
+            TSType::TypeVariable(options.schema_root.clone()),
+        )
+        .print_type(options, writer);
+        writer.write(";\n\n");
+    }
+}
+
+impl TypePrinter for Mutation<'_, String> {
+    fn print_type(&self, options: &QueryTypePrinterOptions, writer: &mut impl SourceMapWriter) {
+        let query_name = self
+            .name
+            .as_ref()
+            .map(|name| capitalize(name))
+            .unwrap_or(String::new());
+        let query_type_name = format!("{}{}", query_name, options.mutation_result_suffix);
+
+        writer.write("type ");
+        writer.write(&query_type_name);
+        writer.write(" = ");
+        get_type_for_selection_set(
+            &self.selection_set,
+            TSType::TypeVariable(options.schema_root.clone()),
+        )
+        .print_type(options, writer);
+        writer.write(";\n\n");
+    }
+}
+
+impl TypePrinter for FragmentDefinition<'_, String> {
+    fn print_type(&self, options: &QueryTypePrinterOptions, writer: &mut impl SourceMapWriter) {
+        writer.write("type ");
+        writer.write(&self.name);
+        writer.write(" = ");
+
+        let TypeCondition::On(ref type_name) = self.type_condition;
+        let parent_type = TSType::IndexType(
+            Box::new(TSType::TypeVariable(options.schema_root.clone())),
+            Box::new(TSType::StringLiteral(type_name.clone())),
+        );
+        get_type_for_selection_set(&self.selection_set, parent_type).print_type(options, writer);
         writer.write(";\n\n");
     }
 }
