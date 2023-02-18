@@ -67,7 +67,8 @@ fn get_type_for_selection_set(
                 let property_name = field.alias.clone().unwrap_or_else(|| field.name.clone());
                 let key = TSType::StringLiteral(field.name.clone());
                 let field_type = TSType::IndexType(Box::new(parent_type.clone()), Box::new(key));
-                TSType::Object(vec![(property_name, field_type)])
+                let field_sel_type = get_type_for_selection_set(&field.selection_set, field_type);
+                TSType::Object(vec![(property_name, field_sel_type)])
             }
             Selection::FragmentSpread(ref fragment) => {
                 TSType::TypeVariable(fragment.fragment_name.clone())
