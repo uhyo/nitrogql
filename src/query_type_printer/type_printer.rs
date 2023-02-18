@@ -1,5 +1,5 @@
 use graphql_parser::query::{
-    Definition, Document, OperationDefinition, Query, Selection, SelectionSet,
+    Definition, Document, OperationDefinition, Query, Selection, SelectionSet, TypeCondition,
 };
 
 use crate::{source_map_writer::writer::SourceMapWriter, utils::capitalize::capitalize};
@@ -41,7 +41,7 @@ impl TypePrinter for Query<'_, String> {
 
         writer.write("type ");
         writer.write(&query_type_name);
-        writer.write(" =");
+        writer.write(" = ");
         get_type_for_selection_set(
             &self.selection_set,
             TSType::TypeVariable(options.schema_root.clone()),
@@ -69,7 +69,20 @@ fn get_type_for_selection_set(
                 let field_type = TSType::IndexType(Box::new(parent_type.clone()), Box::new(key));
                 TSType::Object(vec![(property_name, field_type)])
             }
-            _ => todo!(),
+            Selection::FragmentSpread(ref fragment) => {
+                TSType::TypeVariable(fragment.fragment_name.clone())
+            }
+            Selection::InlineFragment(ref fragment) => match fragment.type_condition {
+                None => get_type_for_selection_set(&fragment.selection_set, parent_type.clone()),
+                Some(TypeCondition::On(ref cond)) =>
+                // TODO: this isn't correct
+                {
+                    get_type_for_selection_set(
+                        &fragment.selection_set,
+                        TSType::TypeVariable(cond.clone()),
+                    )
+                }
+            },
         })
         .collect();
     ts_intersection(types_for_each_field)
