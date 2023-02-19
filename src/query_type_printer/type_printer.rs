@@ -1,11 +1,17 @@
-use graphql_parser::query::{
-    Definition, Document, FragmentDefinition, Mutation, OperationDefinition, Query, Selection,
-    SelectionSet, Subscription, TypeCondition,
+use graphql_parser::{
+    query::{
+        Definition, Document, FragmentDefinition, Mutation, OperationDefinition, Query, Selection,
+        SelectionSet, Subscription, TypeCondition, VariableDefinition,
+    },
+    schema::Type,
 };
 
 use crate::{source_map_writer::writer::SourceMapWriter, utils::capitalize::capitalize};
 
-use super::{printer::QueryTypePrinterOptions, ts_types::TSType, ts_types_util::ts_intersection};
+use super::{
+    printer::QueryTypePrinterOptions, ts_types::TSType, ts_types_util::ts_intersection,
+    type_to_ts_type::get_ts_type_of_type,
+};
 
 pub trait TypePrinter {
     fn print_type(&self, options: &QueryTypePrinterOptions, writer: &mut impl SourceMapWriter);
@@ -65,12 +71,23 @@ impl TypePrinter for Query<'_, String> {
         .print_type(options, writer);
         writer.write(";\n\n");
 
+        let input_variable_type = get_type_for_variable_definitions(&self.variable_definitions);
+        let input_variable_name = format!("{}{}", query_name, options.variable_type_suffix);
+
+        writer.write("type ");
+        writer.write(&input_variable_name);
+        writer.write(" = ");
+        input_variable_type.print_type(options, writer);
+        writer.write(";\n\n");
+
         let query_var_name = format!("{}{}", query_name, options.query_variable_suffix);
 
         writer.write("export const ");
         writer.write(&query_var_name);
         writer.write(": TypedDocumentNode<");
         writer.write(&query_type_name);
+        writer.write(", ");
+        writer.write(&input_variable_name);
         writer.write(">;\n\n");
     }
 }
@@ -169,4 +186,21 @@ fn get_type_for_selection_set(
         })
         .collect();
     ts_intersection(types_for_each_field)
+}
+
+fn get_type_for_variable_definitions(definitions: &[VariableDefinition<'_, String>]) -> TSType {
+    let types_for_each_field: Vec<_> = definitions
+        .iter()
+        .map(|def| {
+            let property_name = def.name.clone();
+            let field_type = get_ts_type_of_type(&def.var_type);
+            TSType::Object(vec![(property_name, field_type)])
+        })
+        .collect();
+
+    if types_for_each_field.is_empty() {
+        TSType::Object(vec![])
+    } else {
+        ts_intersection(types_for_each_field)
+    }
 }

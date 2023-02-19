@@ -12,8 +12,18 @@ pub enum TSType {
     IndexType(Box<TSType>, Box<TSType>),
     /// Object type
     Object(Vec<(String, TSType)>),
+    /// Array Type
+    Array(Box<TSType>),
+    /// Union type
+    Union(Vec<TSType>),
     /// Intersection type
     Intersection(Vec<TSType>),
+    /// Undefined
+    Undefined,
+    /// Null
+    Null,
+    /// Never
+    Never,
     /// Unknown
     Unknown,
 }
@@ -36,6 +46,11 @@ impl TypePrinter for TSType {
                 writer.write("]");
             }
             TSType::Object(ref properties) => {
+                if properties.is_empty() {
+                    writer.write("{}");
+                    return;
+                }
+
                 writer.write("{\n");
                 writer.indent();
                 for (key, value) in properties {
@@ -48,6 +63,11 @@ impl TypePrinter for TSType {
                 writer.dedent();
                 writer.write("}");
             }
+            TSType::Array(ref ty) => {
+                writer.write("(");
+                ty.print_type(options, writer);
+                writer.write(")[]");
+            }
             TSType::Intersection(ref types) => {
                 if types.is_empty() {
                     TSType::Unknown.print_type(options, writer);
@@ -59,6 +79,27 @@ impl TypePrinter for TSType {
                     }
                     ty.print_type(options, writer);
                 }
+            }
+            TSType::Union(ref types) => {
+                if types.is_empty() {
+                    TSType::Never.print_type(options, writer);
+                    return;
+                }
+                for (idx, ty) in types.iter().enumerate() {
+                    if idx > 0 {
+                        writer.write(" | ");
+                    }
+                    ty.print_type(options, writer);
+                }
+            }
+            TSType::Undefined => {
+                writer.write("undefined");
+            }
+            TSType::Null => {
+                writer.write("null");
+            }
+            TSType::Never => {
+                writer.write("never");
             }
             TSType::Unknown => {
                 writer.write("unknown");
