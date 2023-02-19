@@ -5,13 +5,19 @@ use graphql_parser::{
 };
 
 pub trait HasPos {
+    /// Position in source code (zero-based)
     fn position(&self) -> Pos;
     fn name(&self) -> Option<&str>;
 }
 
 impl<'a, T: Text<'a>> HasPos for Query<'a, T> {
     fn position(&self) -> Pos {
-        self.position
+        // original Pos is 1-based so we need to convert
+        let pos = self.position;
+        Pos {
+            line: pos.line - 1,
+            column: pos.column - 1,
+        }
     }
     fn name(&self) -> Option<&str> {
         self.name.as_ref().map(|n| n.as_ref())

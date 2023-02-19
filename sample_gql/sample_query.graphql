@@ -1,4 +1,4 @@
-query sampleQuery {
+query sample {
   foo
   bar
   ...F
