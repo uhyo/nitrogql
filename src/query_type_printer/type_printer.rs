@@ -54,84 +54,88 @@ impl TypePrinter for Definition<'_, String> {
 
 impl TypePrinter for Query<'_, String> {
     fn print_type(&self, options: &QueryTypePrinterOptions, writer: &mut impl SourceMapWriter) {
-        let query_name = self
-            .name
-            .as_ref()
-            .map(|name| capitalize(name))
-            .unwrap_or(String::new());
-        let query_type_name = format!("{}{}", query_name, options.query_result_suffix);
-
-        writer.write("type ");
-        writer.write(&query_type_name);
-        writer.write(" = ");
-        get_type_for_selection_set(
+        print_operation_type(
+            self.name.as_ref(),
             &self.selection_set,
-            TSType::TypeVariable(options.schema_root.clone()),
-        )
-        .print_type(options, writer);
-        writer.write(";\n\n");
-
-        let input_variable_type = get_type_for_variable_definitions(&self.variable_definitions);
-        let input_variable_name = format!("{}{}", query_name, options.variable_type_suffix);
-
-        writer.write("type ");
-        writer.write(&input_variable_name);
-        writer.write(" = ");
-        input_variable_type.print_type(options, writer);
-        writer.write(";\n\n");
-
-        let query_var_name = format!("{}{}", query_name, options.query_variable_suffix);
-
-        writer.write("export const ");
-        writer.write(&query_var_name);
-        writer.write(": TypedDocumentNode<");
-        writer.write(&query_type_name);
-        writer.write(", ");
-        writer.write(&input_variable_name);
-        writer.write(">;\n\n");
+            &self.variable_definitions,
+            options,
+            &options.query_result_suffix,
+            &options.query_variable_suffix,
+            writer,
+        );
     }
 }
 
 impl TypePrinter for Subscription<'_, String> {
     fn print_type(&self, options: &QueryTypePrinterOptions, writer: &mut impl SourceMapWriter) {
-        let query_name = self
-            .name
-            .as_ref()
-            .map(|name| capitalize(name))
-            .unwrap_or(String::new());
-        let query_type_name = format!("{}{}", query_name, options.subscription_result_suffix);
-
-        writer.write("type ");
-        writer.write(&query_type_name);
-        writer.write(" = ");
-        get_type_for_selection_set(
+        print_operation_type(
+            self.name.as_ref(),
             &self.selection_set,
-            TSType::TypeVariable(options.schema_root.clone()),
-        )
-        .print_type(options, writer);
-        writer.write(";\n\n");
+            &self.variable_definitions,
+            options,
+            &options.subscription_result_suffix,
+            &options.subscription_variable_suffix,
+            writer,
+        );
     }
 }
 
 impl TypePrinter for Mutation<'_, String> {
     fn print_type(&self, options: &QueryTypePrinterOptions, writer: &mut impl SourceMapWriter) {
-        let query_name = self
-            .name
-            .as_ref()
-            .map(|name| capitalize(name))
-            .unwrap_or(String::new());
-        let query_type_name = format!("{}{}", query_name, options.mutation_result_suffix);
-
-        writer.write("type ");
-        writer.write(&query_type_name);
-        writer.write(" = ");
-        get_type_for_selection_set(
+        print_operation_type(
+            self.name.as_ref(),
             &self.selection_set,
-            TSType::TypeVariable(options.schema_root.clone()),
-        )
-        .print_type(options, writer);
-        writer.write(";\n\n");
+            &self.variable_definitions,
+            options,
+            &options.mutation_result_suffix,
+            &options.mutation_variable_suffix,
+            writer,
+        );
     }
+}
+
+fn print_operation_type(
+    operation_name: Option<&String>,
+    selection_set: &SelectionSet<'_, String>,
+    variable_definitions: &[VariableDefinition<'_, String>],
+    options: &QueryTypePrinterOptions,
+    result_type_suffix: &str,
+    variable_suffix: &str,
+    writer: &mut impl SourceMapWriter,
+) {
+    let query_name = operation_name
+        .map(|name| capitalize(name))
+        .unwrap_or(String::new());
+    let query_type_name = format!("{}{}", query_name, result_type_suffix);
+
+    writer.write("type ");
+    writer.write(&query_type_name);
+    writer.write(" = ");
+    get_type_for_selection_set(
+        &selection_set,
+        TSType::TypeVariable(options.schema_root.clone()),
+    )
+    .print_type(options, writer);
+    writer.write(";\n\n");
+
+    let input_variable_type = get_type_for_variable_definitions(&variable_definitions);
+    let input_variable_name = format!("{}{}", query_name, options.variable_type_suffix);
+
+    writer.write("type ");
+    writer.write(&input_variable_name);
+    writer.write(" = ");
+    input_variable_type.print_type(options, writer);
+    writer.write(";\n\n");
+
+    let query_var_name = format!("{}{}", query_name, variable_suffix);
+
+    writer.write("export const ");
+    writer.write(&query_var_name);
+    writer.write(": TypedDocumentNode<");
+    writer.write(&query_type_name);
+    writer.write(", ");
+    writer.write(&input_variable_name);
+    writer.write(">;\n\n");
 }
 
 impl TypePrinter for FragmentDefinition<'_, String> {
