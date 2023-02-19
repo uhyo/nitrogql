@@ -109,6 +109,7 @@ pub fn print_source_map_json(
     let mut json_writer = JSONObjectWriter::new(buffer);
     json_writer.value("version", 3);
     json_writer.value("file", file);
+    json_writer.value("sourceRoot", "");
     json_writer.value("sources", &vec![source_file]);
     json_writer.value("names", names);
     json_writer.value("mappings", source_map);

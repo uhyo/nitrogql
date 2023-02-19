@@ -1,0 +1,9 @@
+query sampleQuery {
+  foo
+  bar
+  ...F
+}
+
+fragment F on A {
+  faz
+}
