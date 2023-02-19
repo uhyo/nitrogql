@@ -145,7 +145,7 @@ fn print_operation_type(
 impl TypePrinter for FragmentDefinition<'_, String> {
     fn print_type(&self, options: &QueryTypePrinterOptions, writer: &mut impl SourceMapWriter) {
         writer.write("type ");
-        writer.write(&self.name);
+        writer.write_for(&self.name, self);
         writer.write(" = ");
 
         let TypeCondition::On(ref type_name) = self.type_condition;

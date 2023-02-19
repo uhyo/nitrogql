@@ -1,5 +1,5 @@
 use graphql_parser::{
-    query::{Field, Mutation, Query, Subscription},
+    query::{Field, FragmentDefinition, Mutation, Query, Subscription},
     schema::Text,
     Pos,
 };
@@ -33,6 +33,15 @@ impl<'a, T: Text<'a>> HasPos for Subscription<'a, T> {
     }
     fn name(&self) -> Option<&str> {
         self.name.as_ref().map(|n| n.as_ref())
+    }
+}
+
+impl<'a, T: Text<'a>> HasPos for FragmentDefinition<'a, T> {
+    fn position(&self) -> Pos {
+        self.position
+    }
+    fn name(&self) -> Option<&str> {
+        Some(self.name.as_ref())
     }
 }
 
