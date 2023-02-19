@@ -64,6 +64,14 @@ impl TypePrinter for Query<'_, String> {
         )
         .print_type(options, writer);
         writer.write(";\n\n");
+
+        let query_var_name = format!("{}{}", query_name, options.query_variable_suffix);
+
+        writer.write("export const ");
+        writer.write(&query_var_name);
+        writer.write(": TypedDocumentNode<");
+        writer.write(&query_type_name);
+        writer.write(">;\n\n");
     }
 }
 

@@ -21,6 +21,8 @@ pub struct QueryTypePrinterOptions {
     pub mutation_variable_suffix: String,
     /// Suffix for variable of subscription.
     pub subscription_variable_suffix: String,
+    /// Source of TypedDocumentNode to import from.
+    pub typed_document_node_source: String,
 }
 
 impl Default for QueryTypePrinterOptions {
@@ -34,6 +36,7 @@ impl Default for QueryTypePrinterOptions {
             query_variable_suffix: "Query".into(),
             mutation_variable_suffix: "Mutation".into(),
             subscription_variable_suffix: "Subscription".into(),
+            typed_document_node_source: "@graphql-typed-document-node/core".into(),
         }
     }
 }
@@ -52,6 +55,10 @@ where
     }
 
     pub fn print_document(&mut self, document: &Document<'_, String>) {
+        self.writer.write(&format!(
+            "import type {{ TypedDocumentNode }} from \"{}\";\n\n",
+            self.options.typed_document_node_source
+        ));
         document.print_type(&self.options, self.writer);
     }
 }
