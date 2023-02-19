@@ -8,3 +8,4 @@ edition = "2021"
 [dependencies]
 graphql-parser = "0.4.0"
 json-writer = "0.2.1"
+lru = "0.9.0"

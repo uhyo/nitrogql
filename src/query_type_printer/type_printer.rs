@@ -1,12 +1,12 @@
-use graphql_parser::{
-    query::{
-        Definition, Document, FragmentDefinition, Mutation, OperationDefinition, Query, Selection,
-        SelectionSet, Subscription, TypeCondition, VariableDefinition,
-    },
-    schema::Type,
+use graphql_parser::query::{
+    Definition, Document, FragmentDefinition, Mutation, OperationDefinition, Query, Selection,
+    SelectionSet, Subscription, TypeCondition, VariableDefinition,
 };
 
-use crate::{source_map_writer::writer::SourceMapWriter, utils::capitalize::capitalize};
+use crate::{
+    source_map_writer::{has_pos::HasPos, writer::SourceMapWriter},
+    utils::capitalize::capitalize,
+};
 
 use super::{
     printer::QueryTypePrinterOptions, ts_types::TSType, ts_types_util::ts_intersection,
@@ -55,6 +55,7 @@ impl TypePrinter for Definition<'_, String> {
 impl TypePrinter for Query<'_, String> {
     fn print_type(&self, options: &QueryTypePrinterOptions, writer: &mut impl SourceMapWriter) {
         print_operation_type(
+            self,
             self.name.as_ref(),
             &self.selection_set,
             &self.variable_definitions,
@@ -69,6 +70,7 @@ impl TypePrinter for Query<'_, String> {
 impl TypePrinter for Subscription<'_, String> {
     fn print_type(&self, options: &QueryTypePrinterOptions, writer: &mut impl SourceMapWriter) {
         print_operation_type(
+            self,
             self.name.as_ref(),
             &self.selection_set,
             &self.variable_definitions,
@@ -83,6 +85,7 @@ impl TypePrinter for Subscription<'_, String> {
 impl TypePrinter for Mutation<'_, String> {
     fn print_type(&self, options: &QueryTypePrinterOptions, writer: &mut impl SourceMapWriter) {
         print_operation_type(
+            self,
             self.name.as_ref(),
             &self.selection_set,
             &self.variable_definitions,
@@ -95,6 +98,7 @@ impl TypePrinter for Mutation<'_, String> {
 }
 
 fn print_operation_type(
+    node: &impl HasPos,
     operation_name: Option<&String>,
     selection_set: &SelectionSet<'_, String>,
     variable_definitions: &[VariableDefinition<'_, String>],
@@ -109,7 +113,7 @@ fn print_operation_type(
     let query_type_name = format!("{}{}", query_name, result_type_suffix);
 
     writer.write("type ");
-    writer.write(&query_type_name);
+    writer.write_for(&query_type_name, node);
     writer.write(" = ");
     get_type_for_selection_set(
         &selection_set,
@@ -122,7 +126,7 @@ fn print_operation_type(
     let input_variable_name = format!("{}{}", query_name, options.variable_type_suffix);
 
     writer.write("type ");
-    writer.write(&input_variable_name);
+    writer.write_for(&input_variable_name, node);
     writer.write(" = ");
     input_variable_type.print_type(options, writer);
     writer.write(";\n\n");
@@ -130,7 +134,7 @@ fn print_operation_type(
     let query_var_name = format!("{}{}", query_name, variable_suffix);
 
     writer.write("export const ");
-    writer.write(&query_var_name);
+    writer.write_for(&query_var_name, node);
     writer.write(": TypedDocumentNode<");
     writer.write(&query_type_name);
     writer.write(", ");
