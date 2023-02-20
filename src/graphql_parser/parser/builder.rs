@@ -2,7 +2,7 @@
 //!
 
 use crate::{
-    graphql_parser::ast::{OperationDefinition, OperationDocument},
+    graphql_parser::ast::{operations::OperationType, OperationDefinition, OperationDocument},
     parts,
 };
 
@@ -19,7 +19,7 @@ pub fn build_operation_document(pairs: Pairs<Rule>) -> OperationDocument {
             Rule::ExecutableDocument => {
                 let definitions: Vec<_> = pair
                     .into_inner()
-                    .filter(|pair| pair.as_rule() == Rule::ExecutableDefinition)
+                    .filter(|pair| pair.is_rule(Rule::ExecutableDefinition))
                     .map(|pair| build_executable_definition(pair))
                     .collect();
                 return OperationDocument { definitions };
@@ -42,6 +42,16 @@ fn build_executable_definition(pair: Pair<Rule>) -> OperationDefinition {
         SelectionSet
     );
     OperationDefinition {
+        operation_type: str_to_operation_type(operation_type.as_str()),
         source: operation_type.as_str(),
+    }
+}
+
+fn str_to_operation_type(o: &str) -> OperationType {
+    match o {
+        "query" => OperationType::Query,
+        "mutation" => OperationType::Mutation,
+        "subscription" => OperationType::Subscription,
+        _ => panic!("Unknown operation type {}", o),
     }
 }

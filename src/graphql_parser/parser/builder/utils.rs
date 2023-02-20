@@ -6,6 +6,8 @@ use pest::iterators::Pair;
 pub trait PairExt<'a> {
     /// Returns Pair's only child when it matches given rule. Panics otherwise.
     fn only_child(self) -> Pair<'a, Rule>;
+    /// Returns whether this Pair is of given rule.
+    fn is_rule(&self, rule: Rule) -> bool;
 }
 
 impl<'a> PairExt<'a> for Pair<'a, Rule> {
@@ -19,6 +21,9 @@ impl<'a> PairExt<'a> for Pair<'a, Rule> {
             panic!("Expected 1 child for {:?}, actual 2 or more", self_rule)
         };
         fst
+    }
+    fn is_rule(&self, rule: Rule) -> bool {
+        self.as_rule() == rule
     }
 }
 
@@ -55,7 +60,7 @@ macro_rules! parts {
                         let next_pair = pairs.peek();
                         match next_pair {
                             None => Err(None),
-                            Some(pair) if pair.as_rule() == rule => {
+                            Some(pair) if pair.is_rule(rule) => {
                                 Ok(pairs.next().unwrap())
                             },
                             Some(pair) => {
