@@ -1,0 +1,120 @@
+// B.3 Lexical Tokens
+
+WHITESPACE = _{ "\u{FEFF}" | "\u{0009}" | " " | NEWLINE | "," }
+COMMENT = _{ "#" ~ CommentCharacter* ~ NEWLINE }
+CommentCharacter = { !NEWLINE ~ ANY }
+
+
+Token = { Punctuator | Name | IntValue | FloatValue | StringValue }
+Punctuator = { "!" | "$" | "&" | "(" | ")" | "..." | ":" | "=" | "@" | "[" | "]" | "{" | "|" | "}" }
+Name = @{ NameStart ~ NameContinue* }
+NameStart = @{ ASCII_ALPHA | "_" }
+NameContinue = @{ ASCII_ALPHANUMERIC | "_" }
+
+IntValue = @{ IntegerPart ~ !("." | NameStart) }
+IntegerPart = @{ "-"? ~ ( "0" | (ASCII_NONZERO_DIGIT ~ ASCII_DIGIT*)) }
+
+FloatValue = @{
+  (IntegerPart ~ FractionalPart ~ ExponentPart ~ !("." | NameStart) ) |
+  (IntegerPart ~ FractionalPart ~ !("." | NameStart) ) |
+  (IntegerPart ~ ExponentPart ~ !("." | NameStart) )
+}
+FractionalPart = @{ "." ~ ASCII_DIGIT* }
+ExponentPart = @{ ^"e" ~ ("+" | "-")? ~ ASCII_DIGIT+ }
+
+StringValue = @{
+  "\"\"" ~ !("\"") |
+  "\"" ~ StringCharacter+ ~ "\"" |
+  "\"\"\"" ~ BlockStringCharacter* ~ "\"\"\""
+}
+StringCharacter = @{
+  "\\u" ~ "{" ~ ASCII_HEX_DIGIT+ ~ "}" |
+  "\\u" ~ ASCII_HEX_DIGIT{4} |
+  "\\" ~ ("\"" | "\\" | "/"	| "b" | "f" | "n" | "r" | "t") | 
+  !("\"" | "\\" | NEWLINE ) ~ ANY
+}
+BlockStringCharacter = @{
+  !"\"\"\"" ~
+  ("\\\"\"\"" | ANY)
+}
+
+// keywords
+KEYWORD_query = @{ "query" ~ !NameContinue }
+KEYWORD_mutation = @{ "mutation" ~ !NameContinue }
+KEYWORD_subscription = @{ "subscription" ~ !NameContinue }
+KEYWORD_fragment = @{ "fragment" ~ !NameContinue }
+KEYWORD_on = @{ "on" ~ !NameContinue }
+KEYWORD_true = @{ "true" ~ !NameContinue }
+KEYWORD_false = @{ "false" ~ !NameContinue }
+KEYWORD_null = @{ "null" ~ !NameContinue }
+
+// B.4 Document Syntax
+
+// Document = { Definition+ }
+// Definition = { ExecutableDefinition | TypeSystemDefinitionOrExtension }
+
+ExecutableDocument = { SOI ~ ExecutableDefinition+ ~ EOI }
+
+ExecutableDefinition = { OperationDefinition | FragmentDefinition }
+OperationDefinition = {
+  OperationType ~ Name? ~ VariablesDefinition? ~ Directives? ~ SelectionSet | SelectionSet
+}
+
+OperationType = { KEYWORD_query | KEYWORD_mutation| KEYWORD_subscription }
+SelectionSet = { "{" ~ Selection+ ~ "}"}
+
+Selection = { Field | FragmentSpread | InlineFragment }
+
+Field = { Alias? ~ Name ~ Arguments? ~ Directives? ~ SelectionSet? }
+Alias = { Name ~ ":" }
+Arguments = { "(" ~ Argument+ ~ ")" }
+Argument = { Name ~ ":" ~ Value }
+
+FragmentSpread = { "..." ~ FragmentName ~ Directives? }
+InlineFragment = { "..." ~ TypeCondition? ~ Directives? ~ SelectionSet }
+
+FragmentDefinition = { KEYWORD_fragment ~ FragmentName ~ TypeCondition ~ Directives? ~ SelectionSet }
+
+FragmentName = { !KEYWORD_on ~ Name }
+TypeCondition = { KEYWORD_on ~ NamedType }
+
+Value = {
+  Variable |
+  IntValue |
+  FloatValue |
+  StringValue |
+  BooleanValue |
+  NullValue |
+  EnumValue |
+  ListValue |
+  ObjectValue
+}
+
+BooleanValue = { KEYWORD_true | KEYWORD_false }
+NullValue = { KEYWORD_null }
+EnumValue = { !(KEYWORD_true | KEYWORD_false | KEYWORD_null) ~ Name }
+
+ListValue = {
+  "[" ~ "]" |
+  "[" ~ Value+ ~ "]"
+}
+ObjectValue = {
+  "{" ~ "}" |
+  "{" ~ ObjectField+ ~ "}"
+}
+ObjectField = { Name ~ ":" ~ Value }
+
+VariablesDefinition = { "(" ~ VariableDefinition+ ~ ")" }
+VariableDefinition = { Variable ~ ":" ~ Type ~ DefaultValue? ~ Directives? }
+
+Variable = { "$" ~ Name }
+
+DefaultValue = { "=" ~ Value }
+
+Type = { NamedType | ListType | NonNullType }
+NamedType = { Name }
+ListType = { "[" ~ Type ~ "]" }
+NonNullType = { NamedType ~ "!" | ListType ~ "!" }
+
+Directives = { Directive+ }
+Directive = { "@" ~ Name ~ Arguments? }

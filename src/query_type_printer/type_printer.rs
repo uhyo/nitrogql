@@ -114,7 +114,7 @@ fn print_operation_type(
 
     writer.write("type ");
     writer.write_for(&query_type_name, node);
-    writer.write(" = ");
+    writer.write_for(" = ", selection_set);
     get_type_for_selection_set(
         &selection_set,
         TSType::TypeVariable(options.schema_root.clone()),

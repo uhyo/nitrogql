@@ -1,4 +1,5 @@
 mod base64_vlq;
+mod graphql_parser;
 mod json_printer;
 mod query_type_printer;
 mod source_map_writer;
@@ -7,8 +8,9 @@ mod utils;
 use std::fs::{self, File};
 use std::io::Write;
 
+use crate::graphql_parser::parser::parse_operation_document;
+use ::graphql_parser::query::parse_query;
 use glob::glob;
-use graphql_parser::query::parse_query;
 
 use crate::{
     query_type_printer::{QueryTypePrinter, QueryTypePrinterOptions},
@@ -16,6 +18,16 @@ use crate::{
 };
 
 fn main() -> anyhow::Result<()> {
+    println!(
+        "{:?}",
+        parse_operation_document(
+            "
+    query sample {
+        foo
+    }",
+        )?
+    );
+
     let target_files = glob("./**/*.graphql")?;
     for path in target_files {
         let path = path?;

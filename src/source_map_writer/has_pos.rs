@@ -1,5 +1,5 @@
 use graphql_parser::{
-    query::{Field, FragmentDefinition, Mutation, Query, Subscription},
+    query::{Field, FragmentDefinition, Mutation, Query, SelectionSet, Subscription},
     schema::Text,
     Pos,
 };
@@ -57,5 +57,14 @@ impl<'a, T: Text<'a>> HasPos for Field<'a, T> {
     }
     fn name(&self) -> Option<&str> {
         Some(self.name.as_ref())
+    }
+}
+
+impl<'a, T: Text<'a>> HasPos for SelectionSet<'a, T> {
+    fn position(&self) -> Pos {
+        self.span.0
+    }
+    fn name(&self) -> Option<&str> {
+        None
     }
 }
