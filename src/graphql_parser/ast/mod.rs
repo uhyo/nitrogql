@@ -2,11 +2,13 @@ use self::{
     base::Ident,
     directive::Directive,
     operations::{OperationType, VariablesDefinition},
+    selection_set::SelectionSet,
 };
 
 pub mod base;
 pub mod directive;
 pub mod operations;
+pub mod selection_set;
 pub mod r#type;
 pub mod value;
 
@@ -21,4 +23,5 @@ pub struct OperationDefinition<'a> {
     pub name: Option<Ident<'a>>,
     pub variables_definition: Option<VariablesDefinition<'a>>,
     pub directives: Vec<Directive<'a>>,
+    pub selection_set: SelectionSet<'a>,
 }
