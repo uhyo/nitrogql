@@ -6,7 +6,7 @@ use crate::{
     parts,
 };
 
-use super::{base::build_variable, r#type::build_type, utils::PairExt, Rule};
+use super::{base::build_variable, r#type::build_type, utils::PairExt, value::build_value, Rule};
 use pest::iterators::Pair;
 
 /// Parses a VariablesDefinition Pair.
@@ -34,5 +34,9 @@ pub fn build_variable_definition(pair: Pair<Rule>) -> VariableDefinition {
         pos,
         name: build_variable(variable),
         r#type: build_type(ty),
+        default_value: default_value.map(|pair| {
+            let child = pair.only_child();
+            build_value(child)
+        }),
     }
 }

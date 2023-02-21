@@ -6,6 +6,7 @@ use self::{
 pub mod base;
 pub mod operations;
 pub mod r#type;
+pub mod value;
 
 #[derive(Clone, Debug)]
 pub struct OperationDocument<'a> {

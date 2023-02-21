@@ -15,6 +15,7 @@ mod base;
 mod operation;
 mod r#type;
 mod utils;
+mod value;
 
 pub fn build_operation_document(pairs: Pairs<Rule>) -> OperationDocument {
     for pair in pairs {
