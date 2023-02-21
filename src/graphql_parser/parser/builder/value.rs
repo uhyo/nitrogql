@@ -5,8 +5,8 @@ use crate::{
     graphql_parser::ast::{
         base::Pos,
         value::{
-            BooleanValue, EnumValue, FloatValue, IntValue, ListValue, NullValue, ObjectValue,
-            StringValue, Value,
+            Arguments, BooleanValue, EnumValue, FloatValue, IntValue, ListValue, NullValue,
+            ObjectValue, StringValue, Value,
         },
     },
     parts,
@@ -62,5 +62,21 @@ pub fn build_value(pair: Pair<Rule>) -> Value {
             Value::ObjectValue(ObjectValue { position, fields })
         }
         rule => panic!("Unexpected rule {:?} as a child of Value", rule),
+    }
+}
+
+/// Builds Arguments from given Pair for Arguments.
+pub fn build_arguments(pair: Pair<Rule>) -> Arguments {
+    let position: Pos = (&pair).into();
+    Arguments {
+        position,
+        arguments: pair
+            .all_children(Rule::Argument)
+            .into_iter()
+            .map(|pair| {
+                let (name, value) = parts!(pair.into_inner(), Name, Value);
+                (name.into(), build_value(value))
+            })
+            .collect(),
     }
 }

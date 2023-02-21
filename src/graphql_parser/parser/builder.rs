@@ -6,12 +6,13 @@ use crate::{
     parts,
 };
 
-use self::{operation::build_variables_definition, utils::PairExt};
+use self::{directives::build_directives, operation::build_variables_definition, utils::PairExt};
 
 use super::Rule;
 use pest::iterators::{Pair, Pairs};
 
 mod base;
+mod directives;
 mod operation;
 mod r#type;
 mod utils;
@@ -46,10 +47,10 @@ fn build_executable_definition(pair: Pair<Rule>) -> OperationDefinition {
         SelectionSet
     );
     OperationDefinition {
-        source: operation_type.as_str(),
         operation_type: str_to_operation_type(operation_type.as_str()),
         name: name.map(|pair| pair.into()),
         variables_definition: variables_definition.map(build_variables_definition),
+        directives: directives.map_or(vec![], build_directives),
     }
 }
 

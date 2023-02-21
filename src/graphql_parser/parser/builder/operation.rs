@@ -6,7 +6,10 @@ use crate::{
     parts,
 };
 
-use super::{base::build_variable, r#type::build_type, utils::PairExt, value::build_value, Rule};
+use super::{
+    base::build_variable, directives::build_directives, r#type::build_type, utils::PairExt,
+    value::build_value, Rule,
+};
 use pest::iterators::Pair;
 
 /// Parses a VariablesDefinition Pair.
@@ -38,5 +41,6 @@ pub fn build_variable_definition(pair: Pair<Rule>) -> VariableDefinition {
             let child = pair.only_child();
             build_value(child)
         }),
+        directives: directives.map_or(vec![], build_directives),
     }
 }

@@ -1,9 +1,11 @@
 use self::{
     base::Ident,
+    directive::Directive,
     operations::{OperationType, VariablesDefinition},
 };
 
 pub mod base;
+pub mod directive;
 pub mod operations;
 pub mod r#type;
 pub mod value;
@@ -18,5 +20,5 @@ pub struct OperationDefinition<'a> {
     pub operation_type: OperationType,
     pub name: Option<Ident<'a>>,
     pub variables_definition: Option<VariablesDefinition<'a>>,
-    pub source: &'a str,
+    pub directives: Vec<Directive<'a>>,
 }

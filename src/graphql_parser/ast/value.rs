@@ -61,3 +61,9 @@ pub struct ObjectValue<'a> {
     pub position: Pos,
     pub fields: Vec<(Ident<'a>, Value<'a>)>,
 }
+
+#[derive(Clone, Debug)]
+pub struct Arguments<'a> {
+    pub position: Pos,
+    pub arguments: Vec<(Ident<'a>, Value<'a>)>,
+}

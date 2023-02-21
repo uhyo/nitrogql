@@ -22,7 +22,9 @@ fn main() -> anyhow::Result<()> {
         "{:?}",
         parse_operation_document(
             "
-    query sample($foo: Int! =3) {
+    query sample($foo: Int! =3)
+    @a(foo: A)
+    {
         foo
     }",
         )?

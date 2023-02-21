@@ -1,5 +1,6 @@
 use super::{
     base::{Pos, Variable},
+    directive::Directive,
     r#type::Type,
     value::Value,
 };
@@ -23,4 +24,5 @@ pub struct VariableDefinition<'a> {
     pub name: Variable<'a>,
     pub r#type: Type<'a>,
     pub default_value: Option<Value<'a>>,
+    pub directives: Vec<Directive<'a>>,
 }
