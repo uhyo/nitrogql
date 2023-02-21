@@ -18,21 +18,21 @@ use crate::{
 };
 
 fn main() -> anyhow::Result<()> {
-    println!(
-        "{:?}",
-        parse_operation_document(
-            "
-query sample($foo: Int! =3) @a(foo: A)
-{
-    foo
-    bar:baz
-    ... one
-    ... on A {
-        abc
-    }
-}",
-        )?
-    );
+    //     println!(
+    //         "{:?}",
+    //         parse_operation_document(
+    //             "
+    // query sample($foo: Int! =3) @a(foo: A)
+    // {
+    //     foo
+    //     bar:baz
+    //     ... one
+    //     ... on A {
+    //         abc
+    //     }
+    // }",
+    //         )?
+    //     );
 
     let target_files = glob("./**/*.graphql")?;
     for path in target_files {
@@ -51,6 +51,8 @@ query sample($foo: Int! =3) @a(foo: A)
         let decl_file_name = decl_file_path.file_name().unwrap();
 
         let file_content = fs::read_to_string(&path)?;
+        println!("{:?}", parse_operation_document(&file_content));
+
         let ast = parse_query::<String>(&file_content)?;
         let mut writer = SourceWriter::new();
         let mut printer = QueryTypePrinter::new(QueryTypePrinterOptions::default(), &mut writer);

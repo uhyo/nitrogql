@@ -1,14 +1,17 @@
 use crate::{
     graphql_parser::ast::{
         base::Pos,
-        operations::{VariableDefinition, VariablesDefinition},
+        operations::{
+            ExecutableDefinition, FragmentDefinition, OperationDefinition, OperationType,
+            VariableDefinition, VariablesDefinition,
+        },
     },
     parts,
 };
 
 use super::{
-    base::build_variable, directives::build_directives, r#type::build_type, utils::PairExt,
-    value::build_value, Rule,
+    base::build_variable, directives::build_directives, r#type::build_type,
+    selection_set::build_selection_set, utils::PairExt, value::build_value, Rule,
 };
 use pest::iterators::Pair;
 
@@ -42,5 +45,57 @@ pub fn build_variable_definition(pair: Pair<Rule>) -> VariableDefinition {
             build_value(child)
         }),
         directives: directives.map_or(vec![], build_directives),
+    }
+}
+
+pub fn build_executable_definition(pair: Pair<Rule>) -> ExecutableDefinition {
+    let pair = pair.only_child();
+    match pair.as_rule() {
+        Rule::OperationDefinition => {
+            // TODO: handling of OperationSet (abbreviated syntax)
+            let (operation_type, name, variables_definition, directives, selection_set) = parts!(
+                pair.into_inner(),
+                OperationType,
+                Name opt,
+                VariablesDefinition opt,
+                Directives opt,
+                SelectionSet
+            );
+            ExecutableDefinition::OperationDefinition(OperationDefinition {
+                operation_type: str_to_operation_type(operation_type.as_str()),
+                name: name.map(|pair| pair.into()),
+                variables_definition: variables_definition.map(build_variables_definition),
+                directives: directives.map_or(vec![], build_directives),
+                selection_set: build_selection_set(selection_set),
+            })
+        }
+        Rule::FragmentDefinition => {
+            let position = (&pair).into();
+            let (_, name, type_condition, directives, selection_set) = parts!(
+                pair.into_inner(),
+                KEYWORD_fragment,
+                FragmentName,
+                TypeCondition,
+                Directives opt,
+                SelectionSet
+            );
+            ExecutableDefinition::FragmentDefinition(FragmentDefinition {
+                position,
+                name: name.into(),
+                type_condition: type_condition.into(),
+                directives: directives.map_or(vec![], build_directives),
+                selection_set: build_selection_set(selection_set),
+            })
+        }
+        rule => panic!("Unexpected {:?} as a child of ExecutableDefinition", rule),
+    }
+}
+
+fn str_to_operation_type(o: &str) -> OperationType {
+    match o {
+        "query" => OperationType::Query,
+        "mutation" => OperationType::Mutation,
+        "subscription" => OperationType::Subscription,
+        _ => panic!("Unknown operation type {}", o),
     }
 }
