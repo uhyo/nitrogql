@@ -1,9 +1,4 @@
-use self::{
-    base::Ident,
-    directive::Directive,
-    operations::{ExecutableDefinition, OperationType, VariablesDefinition},
-    selection_set::SelectionSet,
-};
+use self::operations::ExecutableDefinition;
 
 pub mod base;
 pub mod directive;

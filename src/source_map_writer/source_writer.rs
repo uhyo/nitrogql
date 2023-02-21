@@ -1,5 +1,3 @@
-use std::fmt::Write;
-
 use self::{mapping_writer::MappingWriter, name_mapper::NameMapper};
 
 use super::writer::SourceMapWriter;

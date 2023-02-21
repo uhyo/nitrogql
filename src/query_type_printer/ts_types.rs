@@ -18,8 +18,8 @@ pub enum TSType {
     Union(Vec<TSType>),
     /// Intersection type
     Intersection(Vec<TSType>),
-    /// Undefined
-    Undefined,
+    // /// Undefined
+    // Undefined,
     /// Null
     Null,
     /// Never
@@ -91,9 +91,6 @@ impl TypePrinter for TSType {
                     }
                     ty.print_type(options, writer);
                 }
-            }
-            TSType::Undefined => {
-                writer.write("undefined");
             }
             TSType::Null => {
                 writer.write("null");

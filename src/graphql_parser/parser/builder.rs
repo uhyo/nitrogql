@@ -1,20 +1,12 @@
 //! This module builds ast from raw parser result.
 //!
 
-use crate::{
-    graphql_parser::ast::{operations::OperationType, OperationDocument},
-    parts,
-};
+use crate::graphql_parser::ast::OperationDocument;
 
-use self::{
-    directives::build_directives,
-    operation::{build_executable_definition, build_variables_definition},
-    selection_set::build_selection_set,
-    utils::PairExt,
-};
+use self::{operation::build_executable_definition, utils::PairExt};
 
 use super::Rule;
-use pest::iterators::{Pair, Pairs};
+use pest::iterators::Pairs;
 
 mod base;
 mod directives;
