@@ -1,6 +1,4 @@
-use graphql_parser::query::Document;
-
-use crate::source_map_writer::writer::SourceMapWriter;
+use crate::{graphql_parser::ast::OperationDocument, source_map_writer::writer::SourceMapWriter};
 
 use super::type_printer::TypePrinter;
 
@@ -54,7 +52,7 @@ where
         QueryTypePrinter { options, writer }
     }
 
-    pub fn print_document(&mut self, document: &Document<'_, String>) {
+    pub fn print_document(&mut self, document: &OperationDocument) {
         self.writer.write(&format!(
             "import type {{ TypedDocumentNode }} from \"{}\";\n\n",
             self.options.typed_document_node_source

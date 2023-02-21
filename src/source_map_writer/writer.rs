@@ -1,4 +1,4 @@
-use super::has_pos::HasPos;
+use crate::graphql_parser::ast::base::HasPos;
 
 pub trait SourceMapWriter {
     fn write(&mut self, chunk: &str);

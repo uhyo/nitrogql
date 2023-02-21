@@ -1,8 +1,8 @@
-use graphql_parser::schema::Type;
+use crate::graphql_parser::ast::r#type::Type;
 
 use super::ts_types::TSType;
 
-pub fn get_ts_type_of_type(ty: &Type<'_, String>) -> TSType {
+pub fn get_ts_type_of_type(ty: &Type) -> TSType {
     let (ty, nullable) = get_ts_type_of_type_impl(ty);
     if nullable {
         TSType::Union(vec![ty, TSType::Null])
@@ -12,12 +12,15 @@ pub fn get_ts_type_of_type(ty: &Type<'_, String>) -> TSType {
 }
 
 /// With nullability flag
-fn get_ts_type_of_type_impl(ty: &Type<'_, String>) -> (TSType, bool) {
+fn get_ts_type_of_type_impl(ty: &Type) -> (TSType, bool) {
     match ty {
-        Type::NamedType(name) => (TSType::TypeVariable(name.clone()), true),
-        Type::ListType(ty) => (TSType::Array(Box::new(get_ts_type_of_type(ty))), true),
-        Type::NonNullType(ty) => {
-            let (tsty, _) = get_ts_type_of_type_impl(ty);
+        Type::Named(name) => (TSType::TypeVariable(name.name.name.to_owned()), true),
+        Type::List(ty) => (
+            TSType::Array(Box::new(get_ts_type_of_type(&ty.r#type))),
+            true,
+        ),
+        Type::NonNull(ty) => {
+            let (tsty, _) = get_ts_type_of_type_impl(&ty.r#type);
             (tsty, false)
         }
     }

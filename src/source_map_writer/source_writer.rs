@@ -1,3 +1,5 @@
+use crate::graphql_parser::ast::base::HasPos;
+
 use self::{mapping_writer::MappingWriter, name_mapper::NameMapper};
 
 use super::writer::SourceMapWriter;
@@ -73,7 +75,7 @@ impl SourceMapWriter for SourceWriter {
             self.current_column += utf16_len(line);
         }
     }
-    fn write_for(&mut self, chunk: &str, node: &impl super::has_pos::HasPos) {
+    fn write_for(&mut self, chunk: &str, node: &impl HasPos) {
         let original_pos = node.position();
         let original_name = node.name().map(|name| self.name_mapper.map_name(name));
         self.mapping.add_entry(

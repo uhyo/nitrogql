@@ -1,5 +1,5 @@
 use super::{
-    base::{Ident, Pos, Variable},
+    base::{HasPos, Ident, Pos, Variable},
     directive::Directive,
     r#type::Type,
     selection_set::SelectionSet,
@@ -36,11 +36,21 @@ pub enum ExecutableDefinition<'a> {
 
 #[derive(Clone, Debug)]
 pub struct OperationDefinition<'a> {
+    pub position: Pos,
     pub operation_type: OperationType,
     pub name: Option<Ident<'a>>,
     pub variables_definition: Option<VariablesDefinition<'a>>,
     pub directives: Vec<Directive<'a>>,
     pub selection_set: SelectionSet<'a>,
+}
+
+impl HasPos for OperationDefinition<'_> {
+    fn position(&self) -> &Pos {
+        &self.position
+    }
+    fn name(&self) -> Option<&str> {
+        self.name.map(|name| name.name)
+    }
 }
 
 #[derive(Clone, Debug)]
@@ -50,4 +60,13 @@ pub struct FragmentDefinition<'a> {
     pub type_condition: Ident<'a>,
     pub directives: Vec<Directive<'a>>,
     pub selection_set: SelectionSet<'a>,
+}
+
+impl HasPos for FragmentDefinition<'_> {
+    fn name(&self) -> Option<&str> {
+        Some(self.name.name)
+    }
+    fn position(&self) -> &Pos {
+        &self.position
+    }
 }

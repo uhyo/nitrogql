@@ -9,7 +9,6 @@ use std::fs::{self, File};
 use std::io::Write;
 
 use crate::graphql_parser::parser::parse_operation_document;
-use ::graphql_parser::query::parse_query;
 use glob::glob;
 
 use crate::{
@@ -51,9 +50,8 @@ fn main() -> anyhow::Result<()> {
         let decl_file_name = decl_file_path.file_name().unwrap();
 
         let file_content = fs::read_to_string(&path)?;
-        println!("{:?}", parse_operation_document(&file_content));
+        let ast = parse_operation_document(&file_content)?;
 
-        let ast = parse_query::<String>(&file_content)?;
         let mut writer = SourceWriter::new();
         let mut printer = QueryTypePrinter::new(QueryTypePrinterOptions::default(), &mut writer);
         printer.print_document(&ast);

@@ -50,6 +50,7 @@ pub fn build_variable_definition(pair: Pair<Rule>) -> VariableDefinition {
 
 pub fn build_executable_definition(pair: Pair<Rule>) -> ExecutableDefinition {
     let pair = pair.only_child();
+    let position = (&pair).into();
     match pair.as_rule() {
         Rule::OperationDefinition => {
             // TODO: handling of OperationSet (abbreviated syntax)
@@ -62,6 +63,7 @@ pub fn build_executable_definition(pair: Pair<Rule>) -> ExecutableDefinition {
                 SelectionSet
             );
             ExecutableDefinition::OperationDefinition(OperationDefinition {
+                position,
                 operation_type: str_to_operation_type(operation_type.as_str()),
                 name: name.map(|pair| pair.into()),
                 variables_definition: variables_definition.map(build_variables_definition),
@@ -70,7 +72,6 @@ pub fn build_executable_definition(pair: Pair<Rule>) -> ExecutableDefinition {
             })
         }
         Rule::FragmentDefinition => {
-            let position = (&pair).into();
             let (_, name, type_condition, directives, selection_set) = parts!(
                 pair.into_inner(),
                 KEYWORD_fragment,
@@ -82,7 +83,10 @@ pub fn build_executable_definition(pair: Pair<Rule>) -> ExecutableDefinition {
             ExecutableDefinition::FragmentDefinition(FragmentDefinition {
                 position,
                 name: name.into(),
-                type_condition: type_condition.into(),
+                type_condition: {
+                    let (_, name) = parts!(type_condition.into_inner(), KEYWORD_on, NamedType);
+                    name.into()
+                },
                 directives: directives.map_or(vec![], build_directives),
                 selection_set: build_selection_set(selection_set),
             })

@@ -1,5 +1,5 @@
 use super::{
-    base::{Ident, Pos},
+    base::{HasPos, Ident, Pos},
     directive::Directive,
     value::Arguments,
 };
@@ -8,6 +8,15 @@ use super::{
 pub struct SelectionSet<'a> {
     pub position: Pos,
     pub selections: Vec<Selection<'a>>,
+}
+
+impl HasPos for SelectionSet<'_> {
+    fn position(&self) -> &Pos {
+        &self.position
+    }
+    fn name(&self) -> Option<&str> {
+        None
+    }
 }
 
 #[derive(Clone, Debug)]
