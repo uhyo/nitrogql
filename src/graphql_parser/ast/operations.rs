@@ -1,5 +1,5 @@
 use super::{
-    base::{HasPos, Ident, Pos, Variable},
+    base::{HasPos, Ident, NamePos, Pos, Variable},
     directive::Directive,
     r#type::Type,
     selection_set::SelectionSet,
@@ -50,6 +50,22 @@ impl HasPos for OperationDefinition<'_> {
     }
     fn name(&self) -> Option<&str> {
         self.name.map(|name| name.name)
+    }
+}
+
+impl OperationDefinition<'_> {
+    /// Returns Pos for its name.
+    pub fn name_pos(&self) -> NamePos {
+        match self.name {
+            None => NamePos {
+                pos: *self.position(),
+                name: None,
+            },
+            Some(ref name) => NamePos {
+                pos: *name.position(),
+                name: Some(&name.name),
+            },
+        }
     }
 }
 

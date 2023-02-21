@@ -56,7 +56,7 @@ impl TypePrinter for OperationDefinition<'_> {
         );
 
         writer.write("type ");
-        writer.write_for(&query_type_name, self);
+        writer.write_for(&query_type_name, &self.name_pos());
         writer.write_for(" = ", &self.selection_set);
         get_type_for_selection_set(
             &self.selection_set,
@@ -72,8 +72,8 @@ impl TypePrinter for OperationDefinition<'_> {
         let input_variable_name = format!("{}{}", query_name, options.variable_type_suffix);
 
         writer.write("type ");
-        writer.write_for(&input_variable_name, self);
-        writer.write(" = ");
+        writer.write_for(&input_variable_name, &self.name_pos());
+        writer.write_for(" = ", &self.selection_set);
         input_variable_type.print_type(options, writer);
         writer.write(";\n\n");
 
@@ -88,8 +88,9 @@ impl TypePrinter for OperationDefinition<'_> {
         );
 
         writer.write("export const ");
-        writer.write_for(&query_var_name, self);
-        writer.write(": TypedDocumentNode<");
+        writer.write_for(&query_var_name, &self.name_pos());
+        writer.write_for(": ", &self.selection_set);
+        writer.write("TypedDocumentNode<");
         writer.write(&query_type_name);
         writer.write(", ");
         writer.write(&input_variable_name);
@@ -99,7 +100,7 @@ impl TypePrinter for OperationDefinition<'_> {
 
 impl TypePrinter for FragmentDefinition<'_> {
     fn print_type(&self, options: &QueryTypePrinterOptions, writer: &mut impl SourceMapWriter) {
-        writer.write("type ");
+        writer.write("export type ");
         writer.write_for(&self.name.name, self);
         writer.write(" = ");
 

@@ -41,6 +41,21 @@ impl<T: HasSpan> HasPos for T {
     }
 }
 
+/// Carrier of name and pos
+pub struct NamePos<'a> {
+    pub name: Option<&'a str>,
+    pub pos: Pos,
+}
+
+impl HasPos for NamePos<'_> {
+    fn name(&self) -> Option<&str> {
+        self.name
+    }
+    fn position(&self) -> &Pos {
+        &self.pos
+    }
+}
+
 /// Punctuation
 #[derive(Copy, Clone, Debug)]
 pub struct Punc<'a> {
