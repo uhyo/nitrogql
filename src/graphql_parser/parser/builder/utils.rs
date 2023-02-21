@@ -8,6 +8,8 @@ pub trait PairExt<'a> {
     fn only_child(self) -> Pair<'a, Rule>;
     /// Returns whether this Pair is of given rule.
     fn is_rule(&self, rule: Rule) -> bool;
+    /// Validates that all inner Pairs are of given rule and returns them.
+    fn all_children(self, rule: Rule) -> Vec<Pair<'a, Rule>>;
 }
 
 impl<'a> PairExt<'a> for Pair<'a, Rule> {
@@ -24,6 +26,22 @@ impl<'a> PairExt<'a> for Pair<'a, Rule> {
     }
     fn is_rule(&self, rule: Rule) -> bool {
         self.as_rule() == rule
+    }
+    /// Validates that all inner Pairs are of given rule and returns them.
+    fn all_children(self, rule: Rule) -> Vec<Pair<'a, Rule>> {
+        self.into_inner()
+            .into_iter()
+            .filter(|pair| {
+                if !pair.is_rule(rule) {
+                    panic!(
+                        "Expected a child of {:?}, actual {:?}",
+                        rule,
+                        pair.as_rule()
+                    );
+                }
+                true
+            })
+            .collect()
     }
 }
 

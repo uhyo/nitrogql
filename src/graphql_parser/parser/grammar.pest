@@ -111,10 +111,10 @@ Variable = { "$" ~ Name }
 
 DefaultValue = { "=" ~ Value }
 
-Type = { NamedType | ListType | NonNullType }
+Type = { NonNullType | NamedType | ListType }
 NamedType = { Name }
 ListType = { "[" ~ Type ~ "]" }
-NonNullType = { NamedType ~ "!" | ListType ~ "!" }
+NonNullType = { (NamedType ~ "!") | (ListType ~ "!") }
 
 Directives = { Directive+ }
 Directive = { "@" ~ Name ~ Arguments? }

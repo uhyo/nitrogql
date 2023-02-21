@@ -6,11 +6,14 @@ use crate::{
     parts,
 };
 
-use self::utils::PairExt;
+use self::{operation::build_variables_definition, utils::PairExt};
 
 use super::Rule;
 use pest::iterators::{Pair, Pairs};
 
+mod base;
+mod operation;
+mod r#type;
 mod utils;
 
 pub fn build_operation_document(pairs: Pairs<Rule>) -> OperationDocument {
@@ -42,8 +45,10 @@ fn build_executable_definition(pair: Pair<Rule>) -> OperationDefinition {
         SelectionSet
     );
     OperationDefinition {
-        operation_type: str_to_operation_type(operation_type.as_str()),
         source: operation_type.as_str(),
+        operation_type: str_to_operation_type(operation_type.as_str()),
+        name: name.map(|pair| pair.into()),
+        variables_definition: variables_definition.map(build_variables_definition),
     }
 }
 
