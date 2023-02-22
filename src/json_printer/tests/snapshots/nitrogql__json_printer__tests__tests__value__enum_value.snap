@@ -1,5 +1,5 @@
 ---
-source: src/json_printer/tests.rs
+source: src/json_printer/tests/mod.rs
 expression: "print_json_to_string(Value::EnumValue(EnumValue {\n            position: POS,\n            value: \"A\",\n        }))"
 ---
 {"kind":"EnumValue","value":"A"}
