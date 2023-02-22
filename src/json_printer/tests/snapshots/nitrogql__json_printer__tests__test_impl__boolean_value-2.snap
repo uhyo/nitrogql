@@ -1,0 +1,5 @@
+---
+source: src/json_printer/tests.rs
+expression: "print_json_to_string(Value::BooleanValue(BooleanValue {\n            position: POS,\n            keyword: \"true\",\n            value: true,\n        }))"
+---
+{"kind":"BooleanValue","value":true}

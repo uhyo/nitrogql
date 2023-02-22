@@ -1,7 +1,8 @@
 //! Structs for printing GraphQL ASTs into JSON
 
-use graphql_parser::schema::Value;
 use json_writer::{JSONObjectWriter, JSONWriterValue};
+
+use crate::graphql_parser::ast::value::Value;
 
 use super::to_json::JsonPrintable;
 
@@ -46,11 +47,11 @@ impl JsonPrintable for Variable<'_> {
 
 pub struct Argument<'a, 'b> {
     name: &'a str,
-    value: &'a Value<'b, String>,
+    value: &'a Value<'b>,
 }
 
 impl<'a, 'b> Argument<'a, 'b> {
-    pub fn new(name: &'a str, value: &'a Value<'b, String>) -> Argument<'a, 'b> {
+    pub fn new(name: &'a str, value: &'a Value<'b>) -> Argument<'a, 'b> {
         Argument { name, value }
     }
 }

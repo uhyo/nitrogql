@@ -1,11 +1,13 @@
-use graphql_parser::{
-    query::{
-        Definition, Document, Field, FragmentDefinition, FragmentSpread, InlineFragment,
-        OperationDefinition, Selection, SelectionSet, TypeCondition, VariableDefinition,
-    },
-    schema::{Directive, Text, Type, Value},
-};
 use json_writer::JSONObjectWriter;
+
+use crate::graphql_parser::ast::{
+    directive::Directive,
+    operations::{ExecutableDefinition, VariableDefinition},
+    r#type::{NamedType, Type},
+    selection_set::{Field, FragmentSpread, InlineFragment, Selection, SelectionSet},
+    value::Value,
+    OperationDocument,
+};
 
 use super::helpers::{Argument, JSONValue, Name, Variable};
 
@@ -14,117 +16,63 @@ pub trait JsonPrintable {
     fn print_json(&self, writer: &mut JSONObjectWriter);
 }
 
-impl JsonPrintable for Document<'_, String> {
+impl JsonPrintable for OperationDocument<'_> {
     fn print_json(&self, writer: &mut JSONObjectWriter) {
         writer.value("kind", "Document");
 
         let mut definitions_writer = writer.array("definitions");
         for d in &self.definitions {
-            match d {
-                Definition::Operation(op) => {
-                    op.print_json(&mut definitions_writer.object());
-                }
-                Definition::Fragment(fd) => {
-                    fd.print_json(&mut definitions_writer.object());
-                }
-            }
+            d.print_json(&mut definitions_writer.object());
         }
     }
 }
 
-impl JsonPrintable for OperationDefinition<'_, String> {
+impl JsonPrintable for ExecutableDefinition<'_> {
     fn print_json(&self, writer: &mut JSONObjectWriter) {
         writer.value("kind", "OperationDefinition");
         match self {
-            OperationDefinition::Query(query) => {
-                writer.value("operation", "query");
-                if let Some(name) = &query.name {
-                    writer.value("name", JSONValue(&Name(name.as_str())));
+            ExecutableDefinition::OperationDefinition(op) => {
+                writer.value("operation", op.operation_type.as_str());
+                if let Some(name) = &op.name {
+                    writer.value("name", JSONValue(&Name(name.name)));
                 }
                 let mut variable_definitions_writer = writer.array("variableDefinitions");
-                for v in &query.variable_definitions {
-                    v.print_json(&mut variable_definitions_writer.object());
+                if let Some(ref def) = op.variables_definition {
+                    for v in def.definitions.iter() {
+                        v.print_json(&mut variable_definitions_writer.object());
+                    }
                 }
                 variable_definitions_writer.end();
                 let mut directives_writer = writer.array("directives");
-                for v in &query.directives {
+                for v in &op.directives {
                     v.print_json(&mut directives_writer.object());
                 }
                 directives_writer.end();
-                write_selection_set(&query.selection_set, writer);
+                write_selection_set(&op.selection_set, writer);
             }
-            OperationDefinition::Mutation(mutation) => {
-                writer.value("operation", "mutation");
-                if let Some(name) = &mutation.name {
-                    writer.value("name", JSONValue(&Name(name.as_str())));
-                }
-                let mut variable_definitions_writer = writer.array("variableDefinitions");
-                for v in &mutation.variable_definitions {
-                    v.print_json(&mut variable_definitions_writer.object());
-                }
-                variable_definitions_writer.end();
+            ExecutableDefinition::FragmentDefinition(fragment) => {
+                writer.value("kind", "FragmentDefinition");
+                writer.value("name", JSONValue(&Name(&fragment.name.name)));
+                Type::Named(NamedType {
+                    name: fragment.type_condition.clone(),
+                })
+                .print_json(&mut writer.object("typeCondition"));
                 let mut directives_writer = writer.array("directives");
-                for v in &mutation.directives {
-                    v.print_json(&mut directives_writer.object());
+                for d in fragment.directives.iter() {
+                    d.print_json(&mut directives_writer.object());
                 }
                 directives_writer.end();
-                write_selection_set(&mutation.selection_set, writer);
-            }
-            OperationDefinition::Subscription(subscription) => {
-                writer.value("operation", "subscription");
-                if let Some(name) = &subscription.name {
-                    writer.value("name", JSONValue(&Name(name.as_str())));
-                }
-                let mut variable_definitions_writer = writer.array("variableDefinitions");
-                for v in &subscription.variable_definitions {
-                    v.print_json(&mut variable_definitions_writer.object());
-                }
-                variable_definitions_writer.end();
-                let mut directives_writer = writer.array("directives");
-                for v in &subscription.directives {
-                    v.print_json(&mut directives_writer.object());
-                }
-                directives_writer.end();
-                write_selection_set(&subscription.selection_set, writer);
-            }
-            OperationDefinition::SelectionSet(selection_set) => {
-                // Query shorthand syntax
-                writer.value("operation", "query");
-                writer.array("variableDefinitions").end();
-                writer.array("directives").end();
-                write_selection_set(&selection_set, writer);
+                write_selection_set(&fragment.selection_set, writer);
             }
         }
     }
 }
 
-impl JsonPrintable for FragmentDefinition<'_, String> {
-    fn print_json(&self, writer: &mut JSONObjectWriter) {
-        writer.value("kind", "FragmentDefinition");
-        writer.value("name", JSONValue(&Name(&self.name)));
-        match &self.type_condition {
-            TypeCondition::On(ty) => {
-                Type::NamedType::<String>(ty.clone())
-                    .print_json(&mut writer.object("typeCondition"));
-            }
-        }
-        let mut directives_writer = writer.array("directives");
-        for d in self.directives.iter() {
-            d.print_json(&mut directives_writer.object());
-        }
-        directives_writer.end();
-        write_selection_set(&self.selection_set, writer);
-    }
-}
-
-impl JsonPrintable for VariableDefinition<'_, String> {
+impl JsonPrintable for VariableDefinition<'_> {
     fn print_json(&self, writer: &mut JSONObjectWriter) {
         writer.value("kind", "VariableDefinition");
-        writer.value(
-            "variable",
-            JSONValue(&Variable::new(Name(self.name.as_str()))),
-        );
-        writer.value("type", JSONValue(&self.var_type));
+        writer.value("variable", JSONValue(&Variable::new(Name(self.name.name))));
+        writer.value("type", JSONValue(&self.r#type));
         if let Some(ref value) = self.default_value {
             value.print_json(&mut writer.object("defaultValue"));
         }
@@ -132,100 +80,99 @@ impl JsonPrintable for VariableDefinition<'_, String> {
     }
 }
 
-impl JsonPrintable for Directive<'_, String> {
+impl JsonPrintable for Directive<'_> {
     fn print_json(&self, writer: &mut JSONObjectWriter) {
         writer.value("kind", "Directive");
-        writer.value("name", JSONValue(&Name(self.name.as_str())));
+        writer.value("name", JSONValue(&Name(self.name.name)));
         let mut arguments_writer = writer.array("arguments");
-        for (name, value) in &self.arguments {
-            Argument::new(name, value).print_json(&mut arguments_writer.object());
+        if let Some(ref arguments) = self.arguments {
+            for (name, value) in arguments.arguments.iter() {
+                Argument::new(name.name, value).print_json(&mut arguments_writer.object());
+            }
         }
     }
 }
 
-impl<'a, T> JsonPrintable for Type<'a, T>
-where
-    T: Text<'a>,
-{
+impl JsonPrintable for Type<'_> {
     fn print_json(&self, writer: &mut JSONObjectWriter) {
         match self {
-            Type::NonNullType(inner) => {
+            Type::NonNull(inner) => {
                 writer.value("kind", "NonNullType");
-                inner.print_json(&mut writer.object("type"));
+                inner.r#type.print_json(&mut writer.object("type"));
             }
-            Type::NamedType(inner) => {
+            Type::Named(inner) => {
                 writer.value("kind", "NamedType");
-                writer.value("name", JSONValue(&Name(inner.as_ref())));
+                writer.value("name", JSONValue(&Name(inner.name.name)));
             }
-            Type::ListType(inner) => {
+            Type::List(inner) => {
                 writer.value("kind", "ListType");
-                inner.print_json(&mut writer.object("type"));
+                inner.r#type.print_json(&mut writer.object("type"));
             }
         }
     }
 }
 
-impl JsonPrintable for Value<'_, String> {
+impl JsonPrintable for Value<'_> {
     fn print_json(&self, writer: &mut JSONObjectWriter) {
         match self {
             Value::Variable(v) => {
-                Variable::new(Name(v)).print_json(writer);
+                Variable::new(Name(v.name)).print_json(writer);
             }
-            Value::Boolean(b) => {
+            Value::BooleanValue(b) => {
                 writer.value("kind", "BooleanValue");
-                writer.value("value", *b);
+                writer.value("value", b.value);
             }
-            Value::Int(i) => {
+            Value::IntValue(i) => {
                 writer.value("kind", "IntValue");
-                writer.value("value", &i.as_i64().unwrap().to_string());
+                writer.value("value", i.value);
             }
-            Value::Float(f) => {
+            Value::FloatValue(f) => {
                 writer.value("kind", "FloatValue");
-                writer.value("value", &f.to_string());
+                writer.value("value", &f.value);
             }
-            Value::String(s) => {
+            Value::StringValue(s) => {
                 writer.value("kind", "StringValue");
-                writer.value("value", s);
+                writer.value("value", s.value);
             }
-            Value::Null => {
-                writer.value("kind", "NulLValue");
+            Value::NullValue(_) => {
+                writer.value("kind", "NullValue");
             }
-            Value::List(list) => {
+            Value::ListValue(list) => {
                 writer.value("kind", "ListValue");
                 let mut values_writer = writer.array("values");
-                for v in list {
+                for v in list.values.iter() {
                     v.print_json(&mut values_writer.object());
                 }
             }
-            Value::Object(obj) => {
+            Value::ObjectValue(obj) => {
                 writer.value("kind", "ObjectValue");
                 let mut fields_writer = writer.array("fields");
-                for (key, value) in obj {
+                for (key, value) in obj.fields.iter() {
                     let mut field_writer = fields_writer.object();
                     field_writer.value("kind", "ObjectField");
-                    field_writer.value("name", JSONValue(&Name(key)));
+                    field_writer.value("name", JSONValue(&Name(&key.name)));
                     value.print_json(&mut field_writer.object("value"));
                 }
             }
-            Value::Enum(e) => {
+            Value::EnumValue(e) => {
                 writer.value("kind", "EnumValue");
-                writer.value("value", e);
+                writer.value("value", e.value);
             }
         }
     }
 }
 
-impl JsonPrintable for SelectionSet<'_, String> {
+impl JsonPrintable for SelectionSet<'_> {
     fn print_json(&self, writer: &mut JSONObjectWriter) {
         writer.value("kind", "SelectionSet");
         let mut selections_writer = writer.array("selections");
-        for selection in self.items.iter() {
+        for selection in self.selections.iter() {
             selection.print_json(&mut selections_writer.object());
         }
     }
 }
 
-impl JsonPrintable for Selection<'_, String> {
+impl JsonPrintable for Selection<'_> {
     fn print_json(&self, writer: &mut JSONObjectWriter) {
         match self {
             Selection::Field(field) => {
@@ -241,17 +188,19 @@ impl JsonPrintable for Selection<'_, String> {
     }
 }
 
-impl JsonPrintable for Field<'_, String> {
+impl JsonPrintable for Field<'_> {
     fn print_json(&self, writer: &mut JSONObjectWriter) {
         writer.value("kind", "Field");
-        writer.value("name", JSONValue(&Name(&self.name)));
+        writer.value("name", JSONValue(&Name(self.name.name)));
         if let Some(ref alias) = self.alias {
-            writer.value("alias", JSONValue(&Name(alias)));
+            writer.value("alias", JSONValue(&Name(alias.name)));
         }
 
-        let mut arguments_writer = writer.array("arguments");
-        for (name, value) in self.arguments.iter() {
-            Argument::new(name, value).print_json(&mut arguments_writer.object());
+        let mut arguments_writer = writer.array(".arguments");
+        if let Some(ref arguments) = self.arguments {
+            for (name, value) in arguments.arguments.iter() {
+                Argument::new(name.name, value).print_json(&mut arguments_writer.object());
+            }
         }
         arguments_writer.end();
         let mut directives_writer = writer.array("directives");
@@ -259,14 +208,16 @@ impl JsonPrintable for Field<'_, String> {
             d.print_json(&mut directives_writer.object());
         }
         directives_writer.end();
-        write_selection_set(&self.selection_set, writer);
+        if let Some(ref selection_set) = self.selection_set {
+            write_selection_set(selection_set, writer);
+        }
     }
 }
 
-impl JsonPrintable for FragmentSpread<'_, String> {
+impl JsonPrintable for FragmentSpread<'_> {
     fn print_json(&self, writer: &mut JSONObjectWriter) {
         writer.value("kind", "FragmentSpread");
-        writer.value("name", JSONValue(&Name(&self.fragment_name)));
+        writer.value("name", JSONValue(&Name(&self.fragment_name.name)));
         let mut directives_writer = writer.array("directives");
         for d in self.directives.iter() {
             d.print_json(&mut directives_writer.object());
@@ -274,16 +225,12 @@ impl JsonPrintable for FragmentSpread<'_, String> {
     }
 }
 
-impl JsonPrintable for InlineFragment<'_, String> {
+impl JsonPrintable for InlineFragment<'_> {
     fn print_json(&self, writer: &mut JSONObjectWriter) {
         writer.value("kind", "InlineFragment");
         if let Some(ref cond) = self.type_condition {
-            match cond {
-                TypeCondition::On(ref ty) => {
-                    let mut type_condition_writer = writer.object("typeCondition");
-                    Type::NamedType::<&str>(ty).print_json(&mut type_condition_writer);
-                }
-            }
+            let mut type_condition_writer = writer.object("typeCondition");
+            Type::Named(NamedType { name: cond.clone() }).print_json(&mut type_condition_writer);
         }
         let mut directives_writer = writer.array("directives");
         for d in self.directives.iter() {
@@ -294,8 +241,8 @@ impl JsonPrintable for InlineFragment<'_, String> {
     }
 }
 
-fn write_selection_set(set: &SelectionSet<'_, String>, writer: &mut JSONObjectWriter) {
-    if set.items.is_empty() {
+fn write_selection_set(set: &SelectionSet<'_>, writer: &mut JSONObjectWriter) {
+    if set.selections.is_empty() {
         return;
     }
     let mut selection_set_writer = writer.object("selectionSet");

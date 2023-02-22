@@ -30,10 +30,18 @@ pub fn build_value(pair: Pair<Rule>) -> Value {
             position,
             value: pair.as_str(),
         }),
-        Rule::BooleanValue => Value::BooleanValue(BooleanValue {
-            position,
-            keyword: pair.as_str(),
-        }),
+        Rule::BooleanValue => {
+            let keyword = pair.only_child();
+            Value::BooleanValue(BooleanValue {
+                position,
+                keyword: keyword.as_str(),
+                value: match keyword.as_rule() {
+                    Rule::KEYWORD_false => false,
+                    Rule::KEYWORD_true => true,
+                    rule => panic!("Unexpected rule {:?} as a child of BooleanValue", rule),
+                },
+            })
+        }
         Rule::NullValue => Value::NullValue(NullValue {
             position,
             keyword: pair.as_str(),

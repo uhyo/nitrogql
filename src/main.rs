@@ -1,6 +1,6 @@
 mod base64_vlq;
 mod graphql_parser;
-// mod json_printer;
+mod json_printer;
 mod query_type_printer;
 mod source_map_writer;
 mod utils;

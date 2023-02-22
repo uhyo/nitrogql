@@ -13,6 +13,16 @@ pub enum OperationType {
     Subscription,
 }
 
+impl OperationType {
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            OperationType::Query => "query",
+            OperationType::Mutation => "mutation",
+            OperationType::Subscription => "subscription",
+        }
+    }
+}
+
 #[derive(Clone, Debug)]
 pub struct VariablesDefinition<'a> {
     pub position: Pos,

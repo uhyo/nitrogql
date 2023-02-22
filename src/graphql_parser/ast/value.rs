@@ -36,6 +36,7 @@ pub struct StringValue<'a> {
 pub struct BooleanValue<'a> {
     pub position: Pos,
     pub keyword: &'a str,
+    pub value: bool,
 }
 
 #[derive(Copy, Clone, Debug)]
