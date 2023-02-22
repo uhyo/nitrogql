@@ -1,3 +1,5 @@
+use crate::graphql_parser::ast::base::HasPos;
+
 use super::writer::SourceMapWriter;
 
 pub struct JustWriter<'a> {
@@ -35,7 +37,7 @@ impl SourceMapWriter for JustWriter<'_> {
             self.buffer.push_str(line);
         }
     }
-    fn write_for(&mut self, chunk: &str, _node: &impl super::has_pos::HasPos) {
+    fn write_for(&mut self, chunk: &str, _node: &impl HasPos) {
         self.write(chunk);
     }
     fn indent(&mut self) {

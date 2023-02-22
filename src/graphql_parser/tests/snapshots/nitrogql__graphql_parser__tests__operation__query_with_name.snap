@@ -1,0 +1,12 @@
+---
+source: src/graphql_parser/tests/mod.rs
+expression: "print_graphql(parse_operation_document(\"\n                query sample {\n                    foo\n                    bar {\n                        nested1\n                        nested2\n                    }\n                 }\n\").unwrap())"
+---
+query sample {
+  foo
+  bar {
+    nested1
+    nested2
+  }
+}
+

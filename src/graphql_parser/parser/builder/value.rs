@@ -17,7 +17,7 @@ pub fn build_value(pair: Pair<Rule>) -> Value {
     let pair = pair.only_child();
     let position: Pos = (&pair).into();
     match pair.as_rule() {
-        Rule::Variable => Value::Variable(build_variable(pair.only_child())),
+        Rule::Variable => Value::Variable(build_variable(pair)),
         Rule::IntValue => Value::IntValue(IntValue {
             position,
             value: pair.as_str(),

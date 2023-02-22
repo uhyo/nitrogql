@@ -1,4 +1,4 @@
-use super::base::{Ident, Pos, Variable};
+use super::base::{HasPos, Ident, Pos, Variable};
 
 #[derive(Clone, Debug)]
 pub enum Value<'a> {
@@ -11,6 +11,29 @@ pub enum Value<'a> {
     EnumValue(EnumValue<'a>),
     ListValue(ListValue<'a>),
     ObjectValue(ObjectValue<'a>),
+}
+
+impl HasPos for Value<'_> {
+    fn name(&self) -> Option<&str> {
+        match self {
+            Value::Variable(v) => Some(v.name),
+            Value::EnumValue(v) => Some(v.value),
+            _ => None,
+        }
+    }
+    fn position(&self) -> &Pos {
+        match self {
+            Value::Variable(v) => v.position(),
+            Value::BooleanValue(v) => &v.position,
+            Value::IntValue(v) => &v.position,
+            Value::FloatValue(v) => &v.position,
+            Value::StringValue(v) => &v.position,
+            Value::NullValue(v) => &v.position,
+            Value::EnumValue(v) => &v.position,
+            Value::ListValue(v) => &v.position,
+            Value::ObjectValue(v) => &v.position,
+        }
+    }
 }
 
 #[derive(Copy, Clone, Debug)]
