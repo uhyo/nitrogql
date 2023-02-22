@@ -196,7 +196,7 @@ impl JsonPrintable for Field<'_> {
             writer.value("alias", JSONValue(&Name(alias.name)));
         }
 
-        let mut arguments_writer = writer.array(".arguments");
+        let mut arguments_writer = writer.array("arguments");
         if let Some(ref arguments) = self.arguments {
             for (name, value) in arguments.arguments.iter() {
                 Argument::new(name.name, value).print_json(&mut arguments_writer.object());

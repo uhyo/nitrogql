@@ -164,6 +164,189 @@ mod tests {
         }
     }
 
+    mod selection_set {
+        use insta::assert_snapshot;
+
+        use crate::graphql_parser::ast::{
+            base::Ident,
+            directive::Directive,
+            selection_set::{Field, FragmentSpread, InlineFragment, Selection, SelectionSet},
+            value::{Arguments, IntValue, StringValue, Value},
+        };
+
+        use super::{print_json_to_string, POS};
+
+        #[test]
+        fn simple_field() {
+            assert_snapshot!(print_json_to_string(Field {
+                alias: None,
+                name: Ident {
+                    position: POS,
+                    name: "field"
+                },
+                arguments: None,
+                directives: vec![],
+                selection_set: None
+            }))
+        }
+
+        #[test]
+        fn aliased_field() {
+            assert_snapshot!(print_json_to_string(Field {
+                alias: Some(Ident {
+                    position: POS,
+                    name: "orig"
+                }),
+                name: Ident {
+                    position: POS,
+                    name: "field"
+                },
+                arguments: None,
+                directives: vec![],
+                selection_set: None
+            }))
+        }
+
+        #[test]
+        fn field_with_arguments() {
+            assert_snapshot!(print_json_to_string(Field {
+                alias: None,
+                name: Ident {
+                    position: POS,
+                    name: "field"
+                },
+                arguments: Some(Arguments {
+                    position: POS,
+                    arguments: vec![(
+                        Ident {
+                            name: "a1",
+                            position: POS
+                        },
+                        Value::StringValue(StringValue {
+                            position: POS,
+                            value: "aaa"
+                        })
+                    )]
+                }),
+                directives: vec![],
+                selection_set: None
+            }))
+        }
+
+        #[test]
+        fn field_with_directives() {
+            assert_snapshot!(print_json_to_string(Field {
+                alias: None,
+                name: Ident {
+                    position: POS,
+                    name: "field"
+                },
+                arguments: None,
+                directives: vec![
+                    Directive {
+                        position: POS,
+                        name: Ident {
+                            name: "dedede",
+                            position: POS
+                        },
+                        arguments: None
+                    },
+                    Directive {
+                        position: POS,
+                        name: Ident {
+                            name: "dedede2",
+                            position: POS
+                        },
+                        arguments: Some(Arguments {
+                            position: POS,
+                            arguments: vec![(
+                                Ident {
+                                    name: "limit",
+                                    position: POS
+                                },
+                                Value::IntValue(IntValue {
+                                    position: POS,
+                                    value: "10"
+                                })
+                            )]
+                        })
+                    }
+                ],
+                selection_set: None
+            }))
+        }
+
+        #[test]
+        fn fragment_spread() {
+            assert_snapshot!(print_json_to_string(FragmentSpread {
+                position: POS,
+                fragment_name: Ident {
+                    position: POS,
+                    name: "F"
+                },
+                directives: vec![]
+            }))
+        }
+
+        #[test]
+        fn fragment_spread_with_directives() {
+            assert_snapshot!(print_json_to_string(FragmentSpread {
+                position: POS,
+                fragment_name: Ident {
+                    position: POS,
+                    name: "F"
+                },
+                directives: vec![Directive {
+                    position: POS,
+                    name: Ident {
+                        name: "abc",
+                        position: POS
+                    },
+                    arguments: None
+                },]
+            }))
+        }
+
+        #[test]
+        fn simple_selection_set() {
+            assert_snapshot!(print_json_to_string(SelectionSet {
+                position: POS,
+                selections: vec![Selection::Field(Field {
+                    alias: None,
+                    name: Ident {
+                        position: POS,
+                        name: "field"
+                    },
+                    arguments: None,
+                    directives: vec![],
+                    selection_set: None
+                })]
+            }))
+        }
+
+        #[test]
+        fn inline_fragment() {
+            assert_snapshot!(print_json_to_string(InlineFragment {
+                position: POS,
+                type_condition: None,
+                directives: vec![],
+                selection_set: SelectionSet {
+                    position: POS,
+                    selections: vec![Selection::Field(Field {
+                        alias: None,
+                        name: Ident {
+                            position: POS,
+                            name: "field"
+                        },
+                        arguments: None,
+                        directives: vec![],
+                        selection_set: None
+                    })]
+                }
+            }));
+        }
+    }
+
     fn print_json_to_string<V>(value: V) -> String
     where
         V: JsonPrintable,

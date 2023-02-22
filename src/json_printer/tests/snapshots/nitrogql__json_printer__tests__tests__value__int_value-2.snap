@@ -1,0 +1,5 @@
+---
+source: src/json_printer/tests/mod.rs
+expression: "print_json_to_string(Value::IntValue(IntValue { position: POS, value: \"-5\" }))"
+---
+{"kind":"IntValue","value":"-5"}

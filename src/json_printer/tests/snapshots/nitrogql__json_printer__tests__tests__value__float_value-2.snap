@@ -1,0 +1,5 @@
+---
+source: src/json_printer/tests/mod.rs
+expression: "print_json_to_string(Value::FloatValue(FloatValue {\n            position: POS,\n            value: \"-0.05\",\n        }))"
+---
+{"kind":"FloatValue","value":"-0.05"}
