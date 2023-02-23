@@ -594,7 +594,7 @@ impl GraphQLPrinter for TypeExtension<'_> {
                 writer.write("\n");
             }
             TypeExtension::Enum(def) => {
-                writer.write("enum ");
+                writer.write("extend enum ");
                 def.name.print_graphql(writer);
                 for d in def.directives.iter() {
                     writer.write(" ");
@@ -613,7 +613,7 @@ impl GraphQLPrinter for TypeExtension<'_> {
                 writer.write("\n");
             }
             TypeExtension::InputObject(def) => {
-                writer.write("input ");
+                writer.write("extend input ");
                 def.name.print_graphql(writer);
                 for d in def.directives.iter() {
                     writer.write(" ");

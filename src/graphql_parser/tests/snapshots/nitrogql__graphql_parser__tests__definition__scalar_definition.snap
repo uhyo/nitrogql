@@ -1,10 +1,12 @@
 ---
 source: src/graphql_parser/tests/mod.rs
-expression: "print_graphql(parse_type_system_document(\"\n                scalar Int\n                \\\"Description\\\"\n                scalar String @string\n                \").unwrap())"
+expression: "print_graphql(parse_type_system_document(\"\n                scalar Int\n                \\\"Description\\\"\n                scalar String @string\n\n                extend scalar Int @heyhey(foo: \\\"bar\\\")\n                \").unwrap())"
 ---
 scalar Int
 
 "Description"
 scalar String @string
+
+extend scalar Int @heyhey(foo: "bar")
 
 

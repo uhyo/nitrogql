@@ -1,6 +1,6 @@
 ---
 source: src/graphql_parser/tests/mod.rs
-expression: "print_graphql(parse_type_system_document(\"\n                enum Ehh { E H h }\n                \\\"This\\\\nis\\\\nenum\\\" enum EEE {\n                    E @desc(message: \\\"Hello\\\")\n                    E2 @desc(message: null)\n                    E3 @desc(message: false)\n                }\n                \").unwrap())"
+expression: "print_graphql(parse_type_system_document(\"\n                enum Ehh { E H h }\n                \\\"This\\\\nis\\\\nenum\\\" enum EEE {\n                    E @desc(message: \\\"Hello\\\")\n                    E2 @desc(message: null)\n                    E3 @desc(message: false)\n                }\n\n                extend enum Ehh { EEEEE, EEEE, \\\"heyhey\\\" EEE }\n                extend enum EEE @eeeee\n                \").unwrap())"
 ---
 enum Ehh {
   E
@@ -16,5 +16,14 @@ enum EEE {
   E2 @desc(message: null)
   E3 @desc(message: false)
 }
+
+extend enum Ehh {
+  EEEEE
+  EEEE
+  "heyhey"
+  EEE
+}
+
+extend enum EEE @eeeee
 
 

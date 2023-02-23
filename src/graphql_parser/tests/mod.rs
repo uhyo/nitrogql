@@ -115,6 +115,8 @@ mod definition {
                 scalar Int
                 \"Description\"
                 scalar String @string
+
+                extend scalar Int @heyhey(foo: \"bar\")
                 "
             )
             .unwrap()
@@ -139,6 +141,12 @@ mod definition {
                 type Baz implements I & J {
                     func(arg1: Int): Int
                 }
+
+                extend type Foo {
+                    foo2: String!
+                }
+                extend type Bar implements J & K & L
+                extend type Baz @wow
                 "
             )
             .unwrap()
@@ -158,6 +166,12 @@ mod definition {
                     foobar: [[[Int]]]
                 }
                 interface aiu implements MyI & _Lion @wow
+
+                extend interface MyI {
+                    hey: Hey!
+                }
+                extend interface _Lion implements MyI2 @abc
+                extend interface aiu @heyhey
                 "
             )
             .unwrap()
@@ -172,6 +186,9 @@ mod definition {
                 union ABC = A | B | C,
                 \"XYZ Dragon Cannon\"union XYZ @x @y @z = | X | Y
                 | Z
+
+                extend union ABC = D
+                extend union XYZ @xyz
                 "
             )
             .unwrap()
@@ -189,6 +206,9 @@ mod definition {
                     E2 @desc(message: null)
                     E3 @desc(message: false)
                 }
+
+                extend enum Ehh { EEEEE, EEEE, \"heyhey\" EEE }
+                extend enum EEE @eeeee
                 "
             )
             .unwrap()
@@ -214,6 +234,11 @@ mod definition {
                 input Baz {
                     baz: Int! = 3
                 }
+
+                extend input Foo {
+                    foo2: String! @foo(num: 2)
+                }
+                extend input Bar @barber
                 "
             )
             .unwrap()

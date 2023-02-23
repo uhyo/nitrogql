@@ -205,7 +205,7 @@ InterfaceTypeExtension = {
 UnionTypeDefinition = { Description? ~ KEYWORD_union ~ Name ~ Directives? ~ "=" ~ UnionMemberTypes? }
 UnionMemberTypes = { "|"? ~ NamedType ~ ("|" ~ NamedType)* }
 UnionTypeExtension = {
-  KEYWORD_extend ~ KEYWORD_union ~ Name ~ Directives? ~ "~" ~ UnionMemberTypes |
+  KEYWORD_extend ~ KEYWORD_union ~ Name ~ Directives? ~ "=" ~ UnionMemberTypes |
   KEYWORD_extend ~ KEYWORD_union ~ Name ~ Directives
 }
 

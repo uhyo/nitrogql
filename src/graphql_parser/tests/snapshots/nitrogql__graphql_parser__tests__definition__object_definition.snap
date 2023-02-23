@@ -1,6 +1,6 @@
 ---
 source: src/graphql_parser/tests/mod.rs
-expression: "print_graphql(parse_type_system_document(\"\n                type Foo {\n                    foo: String!\n                    bar: String!\n                }\n                type Bar implements I @wow {\n                    \\\"this is foo\\\" foo: String @wow \n                }\n                \\\"\\\"\\\"\n                Description of type\n                \\\"\\\"\\\"\n                type Baz implements I & J {\n                    func(arg1: Int): Int\n                }\n                \").unwrap())"
+expression: "print_graphql(parse_type_system_document(\"\n                type Foo {\n                    foo: String!\n                    bar: String!\n                }\n                type Bar implements I @wow {\n                    \\\"this is foo\\\" foo: String @wow \n                }\n                \\\"\\\"\\\"\n                Description of type\n                \\\"\\\"\\\"\n                type Baz implements I & J {\n                    func(arg1: Int): Int\n                }\n\n                extend type Foo {\n                    foo2: String!\n                }\n                extend type Bar implements J & K & L\n                extend type Baz @wow\n                \").unwrap())"
 ---
 type Foo {
   foo: String!
@@ -18,5 +18,13 @@ type Bar implements & I @wow {
 type Baz implements & I & J {
   func(arg1: Int): Int
 }
+
+extend type Foo {
+  foo2: String!
+}
+
+extend type Bar implements & J & K & L
+
+extend type Baz @wow
 
 
