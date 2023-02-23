@@ -12,7 +12,9 @@ type Bar implements & I @wow {
   foo: String @wow
 }
 
-"\n                Description of type\n                "
+"""
+                Description of type
+                """
 type Baz implements & I & J {
   func(arg1: Int): Int
 }

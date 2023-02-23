@@ -43,9 +43,7 @@ impl GraphQLPrinter for Value<'_> {
                 writer.write(value.value);
             }
             Value::StringValue(value) => {
-                let mut escaped = String::new();
-                value.value.write_json(&mut escaped);
-                writer.write(&escaped);
+                value.print_graphql(writer);
             }
             Value::EnumValue(value) => {
                 writer.write_for(value.value, self);
@@ -93,9 +91,50 @@ impl GraphQLPrinter for Value<'_> {
 
 impl GraphQLPrinter for StringValue {
     fn print_graphql(&self, writer: &mut impl SourceMapWriter) {
-        let mut escaped = String::new();
-        self.value.write_json(&mut escaped);
-        writer.write(&escaped);
+        let mut result = String::with_capacity(self.value.capacity());
+        let is_multiline = self.value.find('\n').is_some();
+        if is_multiline {
+            // print as multiline string
+            result.push_str("\"\"\"");
+            let mut dq_count: usize = 0;
+            for c in self.value.chars() {
+                if c != '"' {
+                    if dq_count > 0 {
+                        result.push_str(&"\"".repeat(dq_count));
+                        dq_count = 0;
+                    }
+                    result.push(c);
+                    continue;
+                }
+                dq_count += 1;
+                if dq_count == 3 {
+                    // """ in string
+                    result.push_str("\\\"\"\"");
+                    dq_count = 0;
+                }
+            }
+            if dq_count > 0 {
+                result.push_str(&"\"".repeat(dq_count));
+                dq_count = 0;
+            }
+            result.push_str("\"\"\"");
+            writer.write(&result);
+        } else {
+            // single line string
+            result.push('"');
+            for c in self.value.chars() {
+                match c {
+                    '\r' => result.push_str("\\r"),
+                    '\n' => result.push_str("\\n"),
+                    c if c.is_control() => {
+                        result.push_str(&format!("\\u{{{:x}}}", c as u32));
+                    }
+                    c => result.push(c),
+                }
+            }
+            result.push('"');
+            writer.write(&result);
+        }
     }
 }
 
