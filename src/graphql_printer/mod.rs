@@ -297,7 +297,7 @@ impl GraphQLPrinter for TypeDefinition<'_> {
                     d.print_graphql(writer);
                 }
                 if !def.fields.is_empty() {
-                    writer.write("{\n");
+                    writer.write(" {\n");
                     writer.indent();
                     for f in def.fields.iter() {
                         f.print_graphql(writer);
@@ -542,7 +542,7 @@ impl GraphQLPrinter for TypeExtension<'_> {
                     d.print_graphql(writer);
                 }
                 if !def.fields.is_empty() {
-                    writer.write("{\n");
+                    writer.write(" {\n");
                     writer.indent();
                     for f in def.fields.iter() {
                         f.print_graphql(writer);

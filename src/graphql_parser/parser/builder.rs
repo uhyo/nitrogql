@@ -26,7 +26,7 @@ pub fn build_operation_document(pairs: Pairs<Rule>) -> OperationDocument {
             Rule::ExecutableDocument => {
                 let definitions: Vec<_> = pair
                     .into_inner()
-                    .filter(|pair| pair.is_rule(Rule::TypeSystemDefinitionOrExtension))
+                    .filter(|pair| pair.is_rule(Rule::ExecutableDefinition))
                     .map(|pair| build_executable_definition(pair))
                     .collect();
                 return OperationDocument { definitions };

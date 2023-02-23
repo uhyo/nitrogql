@@ -151,7 +151,7 @@ pub fn build_implements_interfaces(pair: Pair<Rule>) -> Vec<Ident> {
     let Some(first_pair) = pairs.next() else {
         panic!("No child of ImplementsInterfaces, expected KEYWORD_implements");
     };
-    if first_pair.as_rule() != Rule::KEYWORD_extend {
+    if first_pair.as_rule() != Rule::KEYWORD_implements {
         panic!(
             "Unexpected child {:?} of ImplementsInterfaces, expected KEYWORD_implements",
             first_pair.as_rule()

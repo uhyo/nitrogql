@@ -98,3 +98,57 @@ mod operation {
         result
     }
 }
+
+#[cfg(test)]
+mod definition {
+    use crate::{
+        graphql_parser::parser::parse_type_system_document, graphql_printer::GraphQLPrinter,
+        source_map_writer::just_writer::JustWriter,
+    };
+    use insta::assert_snapshot;
+
+    #[test]
+    fn scalar_definition() {
+        assert_snapshot!(print_graphql(
+            parse_type_system_document(
+                "
+                scalar Int
+                \"Description\"
+                scalar String @string
+                "
+            )
+            .unwrap()
+        ));
+    }
+
+    #[test]
+    fn object_definition() {
+        assert_snapshot!(print_graphql(
+            parse_type_system_document(
+                "
+                type Foo {
+                    foo: String!
+                    bar: String!
+                }
+                type Bar implements I @wow {
+                    \"this is foo\" foo: String @wow 
+                }
+                \"\"\"
+                Description of type
+                \"\"\"
+                type Baz implements I & J {
+                    func(arg1: Int): Int
+                }
+                "
+            )
+            .unwrap()
+        ));
+    }
+
+    fn print_graphql<T: GraphQLPrinter>(value: T) -> String {
+        let mut result = String::new();
+        let mut writer = JustWriter::new(&mut result);
+        value.print_graphql(&mut writer);
+        result
+    }
+}
