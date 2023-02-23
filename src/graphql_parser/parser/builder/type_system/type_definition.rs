@@ -253,7 +253,7 @@ pub fn build_input_fields_definition(pair: Pair<Rule>) -> Vec<InputValueDefiniti
                 description: description.map(build_description),
                 name: name.into(),
                 r#type: build_type(ty),
-                default_value: default_value.map(build_value),
+                default_value: default_value.map(|pair| build_value(pair.only_child())),
                 directives: directives.map_or(vec![], build_directives),
             }
         })

@@ -202,10 +202,10 @@ InterfaceTypeExtension = {
   KEYWORD_extend ~ KEYWORD_interface ~ Name ~ ImplementsInterfaces ~ !"{"
 }
 
-UnionTypeDefinition = { Description? ~ KEYWORD_union ~ Name ~ Directives? ~ UnionMemberTypes? }
+UnionTypeDefinition = { Description? ~ KEYWORD_union ~ Name ~ Directives? ~ "=" ~ UnionMemberTypes? }
 UnionMemberTypes = { "|"? ~ NamedType ~ ("|" ~ NamedType)* }
 UnionTypeExtension = {
-  KEYWORD_extend ~ KEYWORD_union ~ Name ~ Directives? ~ UnionMemberTypes |
+  KEYWORD_extend ~ KEYWORD_union ~ Name ~ Directives? ~ "~" ~ UnionMemberTypes |
   KEYWORD_extend ~ KEYWORD_union ~ Name ~ Directives
 }
 
@@ -224,7 +224,7 @@ InputObjectTypeDefinition = {
   Description? ~ KEYWORD_input ~ Name ~ Directives? ~ InputFieldsDefinition |
   Description? ~ KEYWORD_input ~ Name ~ Directives? ~ !"{"
 }
-InputFieldsDefinition = { "{" ~ InputValueDefinition ~ "}" }
+InputFieldsDefinition = { "{" ~ InputValueDefinition+ ~ "}" }
 InputObjectTypeExtension = {
   KEYWORD_extend ~ KEYWORD_input ~ Name ~ Directives? ~ InputFieldsDefinition |
   KEYWORD_extend ~ KEYWORD_input ~ Name ~ Directives? ~ !"{"

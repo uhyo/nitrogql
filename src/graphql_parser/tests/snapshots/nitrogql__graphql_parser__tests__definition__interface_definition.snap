@@ -1,0 +1,17 @@
+---
+source: src/graphql_parser/tests/mod.rs
+expression: "print_graphql(parse_type_system_document(\"\n                interface MyI {\n                    foo: String!\n                    bar: [Int!]!\n                }\n                \\\"Gaooo 🦁\\\" interface _Lion implements MyI {\n                    foobar: [[[Int]]]\n                }\n                interface aiu implements MyI & _Lion @wow\n                \").unwrap())"
+---
+interface MyI {
+  foo: String!
+  bar: [Int!]!
+}
+
+"Gaooo 🦁"
+interface _Lion implements & MyI {
+  foobar: [[[Int]]]
+}
+
+interface aiu implements & MyI & _Lion @wow
+
+

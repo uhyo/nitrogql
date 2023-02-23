@@ -1,0 +1,10 @@
+---
+source: src/graphql_parser/tests/mod.rs
+expression: "print_graphql(parse_type_system_document(\"\n                union ABC = A | B | C,\n                \\\"XYZ Dragon Cannon\\\"union XYZ @x @y @z = | X | Y\n                | Z\n                \").unwrap())"
+---
+union ABC = | A | B | C
+
+"XYZ Dragon Cannon"
+union XYZ @x @y @z = | X | Y | Z
+
+

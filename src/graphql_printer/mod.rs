@@ -327,7 +327,7 @@ impl GraphQLPrinter for TypeDefinition<'_> {
                     d.print_graphql(writer);
                 }
                 if !def.fields.is_empty() {
-                    writer.write("{\n");
+                    writer.write(" {\n");
                     writer.indent();
                     for f in def.fields.iter() {
                         f.print_graphql(writer);
@@ -349,9 +349,9 @@ impl GraphQLPrinter for TypeDefinition<'_> {
                     writer.write(" ");
                     d.print_graphql(writer);
                 }
-                writer.write(" = ");
+                writer.write(" =");
                 for f in def.members.iter() {
-                    writer.write("| ");
+                    writer.write(" | ");
                     f.print_graphql(writer);
                 }
                 writer.write("\n");
@@ -368,7 +368,7 @@ impl GraphQLPrinter for TypeDefinition<'_> {
                     d.print_graphql(writer);
                 }
                 if !def.values.is_empty() {
-                    writer.write("{\n");
+                    writer.write(" {\n");
                     writer.indent();
                     for v in def.values.iter() {
                         v.print_graphql(writer);
@@ -391,7 +391,7 @@ impl GraphQLPrinter for TypeDefinition<'_> {
                     d.print_graphql(writer);
                 }
                 if !def.fields.is_empty() {
-                    writer.write("{\n");
+                    writer.write(" {\n");
                     writer.indent();
                     for f in def.fields.iter() {
                         f.print_graphql(writer);
@@ -568,7 +568,7 @@ impl GraphQLPrinter for TypeExtension<'_> {
                     d.print_graphql(writer);
                 }
                 if !def.fields.is_empty() {
-                    writer.write("{\n");
+                    writer.write(" {\n");
                     writer.indent();
                     for f in def.fields.iter() {
                         f.print_graphql(writer);
@@ -586,9 +586,9 @@ impl GraphQLPrinter for TypeExtension<'_> {
                     writer.write(" ");
                     d.print_graphql(writer);
                 }
-                writer.write(" = ");
+                writer.write(" =");
                 for f in def.members.iter() {
-                    writer.write("| ");
+                    writer.write(" | ");
                     f.print_graphql(writer);
                 }
                 writer.write("\n");
@@ -601,7 +601,7 @@ impl GraphQLPrinter for TypeExtension<'_> {
                     d.print_graphql(writer);
                 }
                 if !def.values.is_empty() {
-                    writer.write("{\n");
+                    writer.write(" {\n");
                     writer.indent();
                     for v in def.values.iter() {
                         v.print_graphql(writer);
@@ -620,7 +620,7 @@ impl GraphQLPrinter for TypeExtension<'_> {
                     d.print_graphql(writer);
                 }
                 if !def.fields.is_empty() {
-                    writer.write("{\n");
+                    writer.write(" {\n");
                     writer.indent();
                     for f in def.fields.iter() {
                         f.print_graphql(writer);

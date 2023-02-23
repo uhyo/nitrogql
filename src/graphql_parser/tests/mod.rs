@@ -145,6 +145,81 @@ mod definition {
         ));
     }
 
+    #[test]
+    fn interface_definition() {
+        assert_snapshot!(print_graphql(
+            parse_type_system_document(
+                "
+                interface MyI {
+                    foo: String!
+                    bar: [Int!]!
+                }
+                \"Gaooo 🦁\" interface _Lion implements MyI {
+                    foobar: [[[Int]]]
+                }
+                interface aiu implements MyI & _Lion @wow
+                "
+            )
+            .unwrap()
+        ));
+    }
+
+    #[test]
+    fn union_definition() {
+        assert_snapshot!(print_graphql(
+            parse_type_system_document(
+                "
+                union ABC = A | B | C,
+                \"XYZ Dragon Cannon\"union XYZ @x @y @z = | X | Y
+                | Z
+                "
+            )
+            .unwrap()
+        ));
+    }
+
+    #[test]
+    fn enum_definition() {
+        assert_snapshot!(print_graphql(
+            parse_type_system_document(
+                "
+                enum Ehh { E H h }
+                \"This\\nis\\nenum\" enum EEE {
+                    E @desc(message: \"Hello\")
+                    E2 @desc(message: null)
+                    E3 @desc(message: false)
+                }
+                "
+            )
+            .unwrap()
+        ));
+    }
+
+    #[test]
+    fn input_object_definition() {
+        assert_snapshot!(print_graphql(
+            parse_type_system_document(
+                "
+                input Foo {
+                    foo: String!
+                    bar: String!
+                }
+                input Bar @wow {
+                    \"this is foo\" foo: String = \"aaa\"  @wow
+                    bar: Bar
+                }
+                \"\"\"
+                Description of type
+                \"\"\"
+                input Baz {
+                    baz: Int! = 3
+                }
+                "
+            )
+            .unwrap()
+        ));
+    }
+
     fn print_graphql<T: GraphQLPrinter>(value: T) -> String {
         let mut result = String::new();
         let mut writer = JustWriter::new(&mut result);
