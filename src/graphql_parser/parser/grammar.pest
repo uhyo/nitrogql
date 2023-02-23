@@ -235,12 +235,12 @@ DirectiveDefinition = {
 }
 DirectiveLocations = { "|"? ~ DirectiveLocation ~ ("|" ~ DirectiveLocation)* }
 DirectiveLocation = { ExecutableDirectiveLocation | TypeSystemDirectiveLocation }
-ExecutableDirectiveLocation = {
+ExecutableDirectiveLocation = @{
   ("QUERY" | "MUTATION" | "SUBSCRIPTION" | "FIELD" | "FRAGMENT_DEFINITION" |
   "FRAGMENT_SPREAD" | "INLINE_FRAGMENT" | "VARIABLE_DEFINITION"
   ) ~ !NameContinue
 }
-TypeSystemDirectiveLocation = {
+TypeSystemDirectiveLocation = @{
   ("SCHEMA" | "SCALAR" | "OBJECT" | "FIELD_DEFINITION" | "ARGUMENT_DEFINITION" |
   "INTERFACE" | "UNION" | "ENUM" | "ENUM_VALUE" | "INPUT_OBJECT" | "INPUT_FIELD_DEFINITION"
   ) ~ !NameContinue

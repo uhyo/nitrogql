@@ -245,6 +245,23 @@ mod definition {
         ));
     }
 
+    #[test]
+    fn directive_definition() {
+        assert_snapshot!(print_graphql(
+            parse_type_system_document(
+                "
+                directive @foo on QUERY | MUTATION | SUBSCRIPTION
+                \"\"\"
+                Hey \"\"hey\"\" \\\"\"\"Hey\\\"\"\"
+                \"\"\"
+                directive @bar repeatable on INPUT_FIELD_DEFINITION
+                directive @baz(arg1: Int! @arg, arg2: Int! @arg) on INPUT_OBJECT
+                "
+            )
+            .unwrap()
+        ));
+    }
+
     fn print_graphql<T: GraphQLPrinter>(value: T) -> String {
         let mut result = String::new();
         let mut writer = JustWriter::new(&mut result);

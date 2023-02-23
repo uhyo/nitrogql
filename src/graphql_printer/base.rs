@@ -1,5 +1,3 @@
-use json_writer::JSONWriterValue;
-
 use crate::{
     graphql_parser::ast::{
         base::Ident,

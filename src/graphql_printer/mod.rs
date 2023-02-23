@@ -487,9 +487,9 @@ impl GraphQLPrinter for DirectiveDefinition<'_> {
             writer.write(" ");
             token.print_graphql(writer);
         }
-        writer.write(" on ");
+        writer.write(" on");
         for loc in self.locations.iter() {
-            writer.write("| ");
+            writer.write(" | ");
             loc.print_graphql(writer);
         }
         writer.write("\n");
