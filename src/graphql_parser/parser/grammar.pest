@@ -47,6 +47,17 @@ KEYWORD_on = @{ "on" ~ !NameContinue }
 KEYWORD_true = @{ "true" ~ !NameContinue }
 KEYWORD_false = @{ "false" ~ !NameContinue }
 KEYWORD_null = @{ "null" ~ !NameContinue }
+KEYWORD_extend = @{ "extend" ~ !NameContinue }
+KEYWORD_schema = @{ "schema" ~ !NameContinue }
+KEYWORD_scalar = @{ "scalar" ~ !NameContinue }
+KEYWORD_type = @{ "type" ~ !NameContinue }
+KEYWORD_implements = @{ "implements" ~ !NameContinue }
+KEYWORD_interface = @{ "interface" ~ !NameContinue }
+KEYWORD_union = @{ "union" ~ !NameContinue }
+KEYWORD_enum = @{ "enum" ~ !NameContinue }
+KEYWORD_input = @{ "input" ~ !NameContinue }
+KEYWORD_directive = @{ "directive" ~ !NameContinue }
+KEYWORD_repeatable = @{ "repeatable" ~ !NameContinue }
 
 // B.4 Document Syntax
 
@@ -118,3 +129,113 @@ NonNullType = { (NamedType ~ "!") | (ListType ~ "!") }
 
 Directives = { Directive+ }
 Directive = { "@" ~ Name ~ Arguments? }
+
+
+TypeSystemExtensionDocument = { SOI ~ TypeSystemDefinitionOrExtension+ ~ EOI }
+
+TypeSystemDefinitionOrExtension = { TypeSystemDefinition | TypeSystemExtension }
+TypeSystemDefinition = { SchemaDefinition | TypeDefinition | DirectiveDefinition }
+TypeSystemExtension = { SchameExtension | TypeExtension }
+
+SchemaDefinition = { Description? ~ KEYWORD_schema ~ Directives? ~ "{" ~ RootOperationTypeDefinition+ ~ "}" }
+SchameExtension = {
+  (KEYWORD_extend ~ KEYWORD_schema ~ Directives? ~ "{" ~ RootOperationTypeDefinition+ ~ "}") |
+  (KEYWORD_extend ~ KEYWORD_schema ~ Directives ~ !"{")
+}
+
+RootOperationTypeDefinition = { OperationType ~ ":" ~ NamedType }
+Description = { StringValue }
+
+TypeDefinition = {
+  ScalarTypeDefinition |
+  ObjectTypeDefinition |
+  InterfaceTypeDefinition |
+  UnionTypeDefinition |
+  EnumTypeDefinition |
+  InputObjectTypeDefinition
+}
+
+TypeExtension = {
+  ScalarTypeExtension |
+  ObjectTypeExtension |
+  InterfaceTypeExtension |
+  UnionTypeExtension |
+  EnumTypeExtension |
+  InputObjectTypeExtension
+}
+
+ScalarTypeDefinition = { Description? ~ KEYWORD_scalar ~ Name ~ Directives? }
+ScalarTypeExtension = { KEYWORD_extend ~ KEYWORD_scalar ~ Name ~ Directives? }
+
+ObjectTypeDefinition = {
+  Description? ~ KEYWORD_type ~ Name ~ ImplementsInterfaces? ~ Directives? ~ FieldsDefinition |
+  Description? ~ KEYWORD_type ~ Name ~ ImplementsInterfaces? ~ Directives ~ !("{")
+}
+ObjectTypeExtension = {
+  KEYWORD_extend ~ KEYWORD_type ~ Name ~ ImplementsInterfaces? ~ Directives? ~ FieldsDefinition |
+  KEYWORD_extend ~ KEYWORD_type ~ Name ~ ImplementsInterfaces? ~ Directives ~ !("{") |
+  KEYWORD_extend ~ KEYWORD_type ~ Name ~ ImplementsInterfaces ~ !("{")
+}
+
+ImplementsInterfaces = { KEYWORD_implements ~ "&"? ~ NamedType ~ ("&" ~ NamedType)* }
+
+FieldsDefinition = { "{" ~ FieldDefinition+ ~ "}" }
+FieldDefinition = { Description? ~ Name ~ ArgumentsDefinition? ~ ":" ~ Type ~ Directives? }
+
+ArgumentsDefinition = { "(" ~ InputValueDefinition+ ~ ")" }
+
+InputValueDefinition = { Description? ~ Name ~ ":" ~ Type ~ DefaultValue? ~ Directives? }
+
+InterfaceTypeDefinition = {
+  Description? ~ KEYWORD_interface ~ Name ~ ImplementsInterfaces? ~ Directives? ~ FieldsDefinition |
+  Description? ~ KEYWORD_interface ~ Name ~ ImplementsInterfaces? ~ Directives? ~ !"{"
+}
+InterfaceTypeExtension = {
+  KEYWORD_extend ~ KEYWORD_interface ~ Name ~ ImplementsInterfaces? ~ Directives? ~ FieldsDefinition |
+  KEYWORD_extend ~ KEYWORD_interface ~ Name ~ ImplementsInterfaces? ~ Directives? ~ !"{" |
+  KEYWORD_extend ~ KEYWORD_interface ~ Name ~ ImplementsInterfaces ~ !"{"
+}
+
+UnionTypeDefinition = { Description? ~ KEYWORD_union ~ Name ~ Directives? ~ UnionMemberTypes? }
+UnionMemberTypes = { "|"? ~ NamedType ~ ("|" ~ NamedType)* }
+UnionTypeExtension = {
+  KEYWORD_extend ~ KEYWORD_union ~ Name ~ Directives? ~ UnionMemberTypes |
+  KEYWORD_extend ~ KEYWORD_union ~ Name ~ Directives
+}
+
+EnumTypeDefinition = {
+  Description? ~ KEYWORD_enum ~ Name ~ Directives? ~ EnumValuesDefinition |
+  Description? ~ KEYWORD_enum ~ Name ~ Directives? ~ !"{"
+}
+EnumValuesDefinition = { "{" ~ EnumValueDefinition+ ~ "}" }
+EnumValueDefinition = { Description? ~ EnumValue ~ Directives? }
+EnumTypeExtension = {
+  KEYWORD_extend ~ KEYWORD_enum ~ Name ~ Directives? ~ EnumValuesDefinition |
+  KEYWORD_extend ~ KEYWORD_enum ~ Name ~ Directives? ~ !"{"
+}
+
+InputObjectTypeDefinition = {
+  Description? ~ KEYWORD_input ~ Name ~ Directives? ~ InputFieldsDefinition |
+  Description? ~ KEYWORD_input ~ Name ~ Directives? ~ !"{"
+}
+InputFieldsDefinition = { "{" ~ InputValueDefinition ~ "}" }
+InputObjectTypeExtension = {
+  KEYWORD_extend ~ KEYWORD_input ~ Name ~ Directives? ~ InputFieldsDefinition |
+  KEYWORD_extend ~ KEYWORD_input ~ Name ~ Directives? ~ !"{"
+}
+
+DirectiveDefinition = {
+  Description? ~ KEYWORD_directive ~ "@" ~ Name ~ ArgumentsDefinition? ~ KEYWORD_repeatable? ~ KEYWORD_on ~ DirectiveLocations
+}
+DirectiveLocations = { "|"? ~ DirectiveLocation ~ ("|" ~ DirectiveLocation)* }
+DirectiveLocation = { ExecutableDirectiveLocation | TypeSystemDirectiveLocation }
+ExecutableDirectiveLocation = {
+  ("QUERY" | "MUTATION" | "SUBSCRIPTION" | "FIELD" | "FRAGMENT_DEFINITION" |
+  "FRAGMENT_SPREAD" | "INLINE_FRAGMENT" | "VARIABLE_DEFINITION"
+  ) ~ !NameContinue
+}
+TypeSystemDirectiveLocation = {
+  ("SCHEMA" | "SCALAR" | "OBJECT" | "FIELD_DEFINITION" | "ARGUMENT_DEFINITION" |
+  "INTERFACE" | "UNION" | "ENUM" | "ENUM_VALUE" | "INPUT_OBJECT" | "INPUT_FIELD_DEFINITION"
+  ) ~ !NameContinue
+}
