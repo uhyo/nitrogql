@@ -6,8 +6,9 @@ use crate::{
         ast::{
             base::Ident,
             type_system::{
-                FieldDefinition, InputValueDefinition, ObjectTypeDefinition, ScalarTypeDefinition,
-                TypeDefinition,
+                EnumTypeDefinition, EnumValueDefinition, FieldDefinition,
+                InputObjectTypeDefinition, InputValueDefinition, InterfaceTypeDefinition,
+                ObjectTypeDefinition, ScalarTypeDefinition, TypeDefinition, UnionTypeDefinition,
             },
         },
         parser::builder::{
@@ -22,6 +23,14 @@ pub fn build_type_definition(pair: Pair<Rule>) -> TypeDefinition {
     match pair.as_rule() {
         Rule::ScalarTypeDefinition => TypeDefinition::Scalar(build_scalar_type_definition(pair)),
         Rule::ObjectTypeDefinition => TypeDefinition::Object(build_object_type_definition(pair)),
+        Rule::InterfaceTypeDefinition => {
+            TypeDefinition::Interface(build_interface_type_definition(pair))
+        }
+        Rule::UnionTypeDefinition => TypeDefinition::Union(build_union_type_definition(pair)),
+        Rule::EnumTypeDefinition => TypeDefinition::Enum(build_enum_type_definition(pair)),
+        Rule::InputObjectTypeDefinition => {
+            TypeDefinition::InputObject(build_input_object_type_definition(pair))
+        }
     }
 }
 
@@ -57,6 +66,82 @@ fn build_object_type_definition(pair: Pair<Rule>) -> ObjectTypeDefinition {
         implements: implements.map_or(vec![], build_implements_interfaces),
         directives: directives.map_or(vec![], build_directives),
         fields: fields.map_or(vec![], build_fields_definition),
+    }
+}
+
+fn build_interface_type_definition(pair: Pair<Rule>) -> InterfaceTypeDefinition {
+    let (description, _, name, implements, directives, fields) = parts!(
+        pair,
+        Description opt,
+        KEYWORD_interface,
+        Name,
+        ImplementsInterfaces opt,
+        Directives opt,
+        FieldsDefinition opt
+    );
+    InterfaceTypeDefinition {
+        description: description.map(build_description),
+        name: name.into(),
+        implements: implements.map_or(vec![], build_implements_interfaces),
+        directives: directives.map_or(vec![], build_directives),
+        fields: fields.map_or(vec![], build_fields_definition),
+    }
+}
+
+fn build_union_type_definition(pair: Pair<Rule>) -> UnionTypeDefinition {
+    let (description, _, name, directives, members) = parts!(
+        pair,
+        Description opt,
+        KEYWORD_union,
+        Name,
+        Directives opt,
+        UnionMemberTypes opt
+    );
+    UnionTypeDefinition {
+        description: description.map(build_description),
+        name: name.into(),
+        directives: directives.map_or(vec![], build_directives),
+        members: members.map_or(vec![], |members| {
+            let pairs = members.all_children(Rule::NamedType);
+            pairs.into_iter().map(|pair| pair.into()).collect()
+        }),
+    }
+}
+
+fn build_enum_type_definition(pair: Pair<Rule>) -> EnumTypeDefinition {
+    let (description, _, name, directives, values) = parts!(
+        pair,
+        Description opt,
+        KEYWORD_enum,
+        Name,
+        Directives opt,
+        EnumValuesDefinition opt
+    );
+    EnumTypeDefinition {
+        description: description.map(build_description),
+        name: name.into(),
+        directives: directives.map_or(vec![], build_directives),
+        values: values.map_or(vec![], |pair| {
+            let pairs = pair.all_children(Rule::EnumValueDefinition);
+            pairs.into_iter().map(build_enum_value_definition).collect()
+        }),
+    }
+}
+
+fn build_input_object_type_definition(pair: Pair<Rule>) -> InputObjectTypeDefinition {
+    let (description, _, name, directives, fields) = parts!(
+        pair,
+        Description opt,
+        KEYWORD_input,
+        Name,
+        Directives opt,
+        InputFieldsDefinition opt
+    );
+    InputObjectTypeDefinition {
+        description: description.map(build_description),
+        name: name.into(),
+        directives: directives.map_or(vec![], build_directives),
+        fields: fields.map_or(vec![], build_input_fields_definition),
     }
 }
 
@@ -129,6 +214,44 @@ fn build_arguments_definition(pair: Pair<Rule>) -> Vec<InputValueDefinition> {
                     let child = pair.only_child();
                     build_value(child)
                 }),
+                directives: directives.map_or(vec![], build_directives),
+            }
+        })
+        .collect()
+}
+
+fn build_enum_value_definition(pair: Pair<Rule>) -> EnumValueDefinition {
+    let (description, value, directives) = parts!(
+        pair,
+        Description opt,
+        EnumValue,
+        Directives opt
+    );
+    EnumValueDefinition {
+        description: description.map(build_description),
+        name: value.into(),
+        directives: directives.map_or(vec![], build_directives),
+    }
+}
+
+fn build_input_fields_definition(pair: Pair<Rule>) -> Vec<InputValueDefinition> {
+    let pairs = pair.all_children(Rule::InputValueDefinition);
+    pairs
+        .into_iter()
+        .map(|pair| {
+            let (description, name, ty, default_value, directives) = parts!(
+                pair,
+                Description opt,
+                Name,
+                Type,
+                DefaultValue opt,
+                Directives opt
+            );
+            InputValueDefinition {
+                description: description.map(build_description),
+                name: name.into(),
+                r#type: build_type(ty),
+                default_value: default_value.map(build_value),
                 directives: directives.map_or(vec![], build_directives),
             }
         })
