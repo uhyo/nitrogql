@@ -17,3 +17,9 @@ pub fn parse_operation_document(document: &str) -> Result<OperationDocument> {
 
     Ok(build_operation_document(res))
 }
+
+pub fn parse_type_system_document(document: &str) -> Result<OperationDocument> {
+    let res = RawParser::parse(Rule::TypeSystemExtensionDocument, document)?;
+
+    Ok(build_operation_document(res))
+}

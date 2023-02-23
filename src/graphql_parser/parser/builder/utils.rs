@@ -62,14 +62,14 @@ macro_rules! parts_mod {
 #[macro_export]
 macro_rules! parts {
     (
-        $pairs:expr,
+        $pair:expr,
         $(
             $rule:ident
             $($ident:ident)?
         ),*
     ) => {{
         use crate::parts_mod;
-        let mut pairs = $pairs.into_iter().peekable();
+        let mut pairs = $pair.into_inner().into_iter().peekable();
         (
             $(
                 parts_mod!(

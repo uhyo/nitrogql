@@ -30,7 +30,7 @@ pub fn build_selection_set(pair: Pair<Rule>) -> SelectionSet {
 
 fn build_field(pair: Pair<Rule>) -> Field {
     let (alias, name, arguments, directives, selection_set) = parts!(
-        pair.into_inner(),
+        pair,
         Alias opt,
         Name,
         Arguments opt,
@@ -52,7 +52,7 @@ fn build_field(pair: Pair<Rule>) -> Field {
 fn build_fragment_spread(pair: Pair<Rule>) -> FragmentSpread {
     let position = (&pair).into();
     let (name, directives) = parts!(
-        pair.into_inner(),
+        pair,
         FragmentName,
         Directives opt
     );
@@ -66,7 +66,7 @@ fn build_fragment_spread(pair: Pair<Rule>) -> FragmentSpread {
 fn build_inline_fragment(pair: Pair<Rule>) -> InlineFragment {
     let position = (&pair).into();
     let (type_condition, directives, selection_set) = parts!(
-        pair.into_inner(),
+        pair,
         TypeCondition opt,
         Directives opt,
         SelectionSet
@@ -74,7 +74,7 @@ fn build_inline_fragment(pair: Pair<Rule>) -> InlineFragment {
     InlineFragment {
         position,
         type_condition: type_condition.map(|type_condition_pair| {
-            let (_, name) = parts!(type_condition_pair.into_inner(), KEYWORD_on, NamedType);
+            let (_, name) = parts!(type_condition_pair, KEYWORD_on, NamedType);
             name.into()
         }),
         directives: directives.map_or(vec![], build_directives),

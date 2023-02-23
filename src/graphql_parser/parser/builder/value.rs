@@ -63,7 +63,7 @@ pub fn build_value(pair: Pair<Rule>) -> Value {
                 .all_children(Rule::ObjectField)
                 .into_iter()
                 .map(|field| {
-                    let (name, value) = parts!(field.into_inner(), Name, Value);
+                    let (name, value) = parts!(field, Name, Value);
                     (name.into(), build_value(value))
                 })
                 .collect();
@@ -82,7 +82,7 @@ pub fn build_arguments(pair: Pair<Rule>) -> Arguments {
             .all_children(Rule::Argument)
             .into_iter()
             .map(|pair| {
-                let (name, value) = parts!(pair.into_inner(), Name, Value);
+                let (name, value) = parts!(pair, Name, Value);
                 (name.into(), build_value(value))
             })
             .collect(),

@@ -13,17 +13,18 @@ mod directives;
 mod operation;
 mod selection_set;
 mod r#type;
+mod type_system;
 mod utils;
 mod value;
 
-pub fn build_operation_document(pairs: Pairs<Rule>) -> OperationDocument {
+pub fn build_type_system_or_extension_document(pairs: Pairs<Rule>) -> OperationDocument {
     for pair in pairs {
         match pair.as_rule() {
-            Rule::ExecutableDocument => {
+            Rule::TypeSystemExtensionDocument => {
                 let definitions: Vec<_> = pair
                     .into_inner()
-                    .filter(|pair| pair.is_rule(Rule::ExecutableDefinition))
-                    .map(|pair| build_executable_definition(pair))
+                    .filter(|pair| pair.is_rule(Rule::TypeSystemDefinitionOrExtension))
+                    .map(|pair| build_type_system_definition_or_extension(pair))
                     .collect();
                 return OperationDocument { definitions };
             }

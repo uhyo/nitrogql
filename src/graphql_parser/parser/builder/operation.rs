@@ -29,7 +29,7 @@ pub fn build_variables_definition(pair: Pair<Rule>) -> VariablesDefinition {
 pub fn build_variable_definition(pair: Pair<Rule>) -> VariableDefinition {
     let pos: Pos = (&pair).into();
     let (variable, ty, default_value, directives) = parts!(
-        pair.into_inner(),
+        pair,
         Variable,
         Type,
         DefaultValue opt,
@@ -55,7 +55,7 @@ pub fn build_executable_definition(pair: Pair<Rule>) -> ExecutableDefinition {
         Rule::OperationDefinition => {
             // TODO: handling of OperationSet (abbreviated syntax)
             let (operation_type, name, variables_definition, directives, selection_set) = parts!(
-                pair.into_inner(),
+                pair,
                 OperationType,
                 Name opt,
                 VariablesDefinition opt,
@@ -73,7 +73,7 @@ pub fn build_executable_definition(pair: Pair<Rule>) -> ExecutableDefinition {
         }
         Rule::FragmentDefinition => {
             let (_, name, type_condition, directives, selection_set) = parts!(
-                pair.into_inner(),
+                pair,
                 KEYWORD_fragment,
                 FragmentName,
                 TypeCondition,
@@ -84,7 +84,7 @@ pub fn build_executable_definition(pair: Pair<Rule>) -> ExecutableDefinition {
                 position,
                 name: name.into(),
                 type_condition: {
-                    let (_, name) = parts!(type_condition.into_inner(), KEYWORD_on, NamedType);
+                    let (_, name) = parts!(type_condition, KEYWORD_on, NamedType);
                     name.into()
                 },
                 directives: directives.map_or(vec![], build_directives),
@@ -95,7 +95,7 @@ pub fn build_executable_definition(pair: Pair<Rule>) -> ExecutableDefinition {
     }
 }
 
-fn str_to_operation_type(o: &str) -> OperationType {
+pub fn str_to_operation_type(o: &str) -> OperationType {
     match o {
         "query" => OperationType::Query,
         "mutation" => OperationType::Mutation,

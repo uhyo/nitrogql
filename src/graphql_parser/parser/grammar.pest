@@ -137,12 +137,13 @@ TypeSystemDefinitionOrExtension = { TypeSystemDefinition | TypeSystemExtension }
 TypeSystemDefinition = { SchemaDefinition | TypeDefinition | DirectiveDefinition }
 TypeSystemExtension = { SchameExtension | TypeExtension }
 
-SchemaDefinition = { Description? ~ KEYWORD_schema ~ Directives? ~ "{" ~ RootOperationTypeDefinition+ ~ "}" }
+SchemaDefinition = { Description? ~ KEYWORD_schema ~ Directives? ~ RootOperationTypeDefinitions }
 SchameExtension = {
   (KEYWORD_extend ~ KEYWORD_schema ~ Directives? ~ "{" ~ RootOperationTypeDefinition+ ~ "}") |
   (KEYWORD_extend ~ KEYWORD_schema ~ Directives ~ !"{")
 }
 
+RootOperationTypeDefinitions = { "{" ~ RootOperationTypeDefinition+ ~ "}" }
 RootOperationTypeDefinition = { OperationType ~ ":" ~ NamedType }
 Description = { StringValue }
 

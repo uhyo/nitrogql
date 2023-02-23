@@ -12,7 +12,7 @@ pub fn build_directives(pair: Pair<Rule>) -> Vec<Directive> {
         .map(|pair| {
             let position: Pos = (&pair).into();
             let (name, arguments) = parts!(
-                pair.into_inner(),
+                pair,
                 Name,
                 Arguments opt
             );
