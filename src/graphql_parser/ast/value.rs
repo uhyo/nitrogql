@@ -5,7 +5,7 @@ pub enum Value<'a> {
     Variable(Variable<'a>),
     IntValue(IntValue<'a>),
     FloatValue(FloatValue<'a>),
-    StringValue(StringValue<'a>),
+    StringValue(StringValue),
     BooleanValue(BooleanValue<'a>),
     NullValue(NullValue<'a>),
     EnumValue(EnumValue<'a>),
@@ -48,11 +48,11 @@ pub struct FloatValue<'a> {
     pub value: &'a str,
 }
 
-#[derive(Copy, Clone, Debug)]
-pub struct StringValue<'a> {
+#[derive(Clone, Debug)]
+pub struct StringValue {
     pub position: Pos,
-    // Includes quotations
-    pub value: &'a str,
+    /// Parsed value of string literal
+    pub value: String,
 }
 
 #[derive(Copy, Clone, Debug)]

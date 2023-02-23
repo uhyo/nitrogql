@@ -65,11 +65,11 @@ mod tests {
         fn string_value() {
             assert_snapshot!(print_json_to_string(Value::StringValue(StringValue {
                 position: POS,
-                value: ""
+                value: String::from("")
             })));
             assert_snapshot!(print_json_to_string(Value::StringValue(StringValue {
                 position: POS,
-                value: "foobar"
+                value: String::from("foobar")
             })));
         }
         #[test]
@@ -224,7 +224,7 @@ mod tests {
                         },
                         Value::StringValue(StringValue {
                             position: POS,
-                            value: "aaa"
+                            value: String::from("aaa")
                         })
                     )]
                 }),

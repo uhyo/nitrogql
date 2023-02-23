@@ -132,7 +132,7 @@ impl JsonPrintable for Value<'_> {
             }
             Value::StringValue(s) => {
                 writer.value("kind", "StringValue");
-                writer.value("value", s.value);
+                writer.value("value", &s.value);
             }
             Value::NullValue(_) => {
                 writer.value("kind", "NullValue");

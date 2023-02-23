@@ -4,7 +4,7 @@ expression: "print_graphql(parse_type_system_document(\"\n                scalar
 ---
 scalar Int
 
-"\"Description\""
+"Description"
 scalar String @string
 
 

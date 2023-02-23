@@ -91,7 +91,7 @@ impl GraphQLPrinter for Value<'_> {
     }
 }
 
-impl GraphQLPrinter for StringValue<'_> {
+impl GraphQLPrinter for StringValue {
     fn print_graphql(&self, writer: &mut impl SourceMapWriter) {
         let mut escaped = String::new();
         self.value.write_json(&mut escaped);

@@ -24,7 +24,7 @@ pub enum TypeSystemDefinitionOrExtension<'a> {
 
 #[derive(Clone, Debug)]
 pub struct SchemaDefinition<'a> {
-    pub description: Option<StringValue<'a>>,
+    pub description: Option<StringValue>,
     pub position: Pos,
     pub directives: Vec<Directive<'a>>,
     pub definitions: Vec<(OperationType, Ident<'a>)>,
@@ -42,14 +42,14 @@ pub enum TypeDefinition<'a> {
 
 #[derive(Clone, Debug)]
 pub struct ScalarTypeDefinition<'a> {
-    pub description: Option<StringValue<'a>>,
+    pub description: Option<StringValue>,
     pub name: Ident<'a>,
     pub directives: Vec<Directive<'a>>,
 }
 
 #[derive(Clone, Debug)]
 pub struct ObjectTypeDefinition<'a> {
-    pub description: Option<StringValue<'a>>,
+    pub description: Option<StringValue>,
     pub name: Ident<'a>,
     pub implements: Vec<Ident<'a>>,
     pub directives: Vec<Directive<'a>>,
@@ -58,7 +58,7 @@ pub struct ObjectTypeDefinition<'a> {
 
 #[derive(Clone, Debug)]
 pub struct FieldDefinition<'a> {
-    pub description: Option<StringValue<'a>>,
+    pub description: Option<StringValue>,
     pub name: Ident<'a>,
     pub arguments: Option<ArgumentsDefinition<'a>>,
     pub r#type: Type<'a>,
@@ -67,7 +67,7 @@ pub struct FieldDefinition<'a> {
 
 #[derive(Clone, Debug)]
 pub struct InterfaceTypeDefinition<'a> {
-    pub description: Option<StringValue<'a>>,
+    pub description: Option<StringValue>,
     pub name: Ident<'a>,
     pub implements: Vec<Ident<'a>>,
     pub directives: Vec<Directive<'a>>,
@@ -76,7 +76,7 @@ pub struct InterfaceTypeDefinition<'a> {
 
 #[derive(Clone, Debug)]
 pub struct UnionTypeDefinition<'a> {
-    pub description: Option<StringValue<'a>>,
+    pub description: Option<StringValue>,
     pub name: Ident<'a>,
     pub directives: Vec<Directive<'a>>,
     pub members: Vec<Ident<'a>>,
@@ -84,7 +84,7 @@ pub struct UnionTypeDefinition<'a> {
 
 #[derive(Clone, Debug)]
 pub struct DirectiveDefinition<'a> {
-    pub description: Option<StringValue<'a>>,
+    pub description: Option<StringValue>,
     pub name: Ident<'a>,
     pub arguments: Option<ArgumentsDefinition<'a>>,
     pub repeatable: Option<Ident<'a>>,
@@ -98,7 +98,7 @@ pub struct ArgumentsDefinition<'a> {
 
 #[derive(Clone, Debug)]
 pub struct InputValueDefinition<'a> {
-    pub description: Option<StringValue<'a>>,
+    pub description: Option<StringValue>,
     pub name: Ident<'a>,
     pub r#type: Type<'a>,
     pub default_value: Option<Value<'a>>,
@@ -107,7 +107,7 @@ pub struct InputValueDefinition<'a> {
 
 #[derive(Clone, Debug)]
 pub struct EnumTypeDefinition<'a> {
-    pub description: Option<StringValue<'a>>,
+    pub description: Option<StringValue>,
     pub name: Ident<'a>,
     pub directives: Vec<Directive<'a>>,
     pub values: Vec<EnumValueDefinition<'a>>,
@@ -115,14 +115,14 @@ pub struct EnumTypeDefinition<'a> {
 
 #[derive(Clone, Debug)]
 pub struct EnumValueDefinition<'a> {
-    pub description: Option<StringValue<'a>>,
+    pub description: Option<StringValue>,
     pub name: Ident<'a>,
     pub directives: Vec<Directive<'a>>,
 }
 
 #[derive(Clone, Debug)]
 pub struct InputObjectTypeDefinition<'a> {
-    pub description: Option<StringValue<'a>>,
+    pub description: Option<StringValue>,
     pub name: Ident<'a>,
     pub directives: Vec<Directive<'a>>,
     pub fields: Vec<InputValueDefinition<'a>>,

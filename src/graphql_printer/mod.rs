@@ -408,7 +408,7 @@ impl GraphQLPrinter for TypeDefinition<'_> {
 
 impl GraphQLPrinter for FieldDefinition<'_> {
     fn print_graphql(&self, writer: &mut impl SourceMapWriter) {
-        if let Some(description) = self.description {
+        if let Some(ref description) = self.description {
             description.print_graphql(writer);
             writer.write("\n");
         }

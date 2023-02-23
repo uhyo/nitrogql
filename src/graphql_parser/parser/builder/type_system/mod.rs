@@ -5,7 +5,10 @@ use self::{
     type_extension::build_type_extension,
 };
 
-use super::{directives::build_directives, operation::str_to_operation_type, utils::PairExt, Rule};
+use super::{
+    directives::build_directives, operation::str_to_operation_type, utils::PairExt,
+    value::build_string_value, Rule,
+};
 use crate::{
     graphql_parser::ast::{
         base::Ident,
@@ -138,9 +141,5 @@ pub fn build_description(pair: Pair<Rule>) -> StringValue {
     if pair.as_rule() != Rule::StringValue {
         panic!("Unexpected child of Description: {:?}", pair.as_rule())
     }
-    let position = (&pair).into();
-    StringValue {
-        position,
-        value: pair.as_str(),
-    }
+    build_string_value(pair)
 }

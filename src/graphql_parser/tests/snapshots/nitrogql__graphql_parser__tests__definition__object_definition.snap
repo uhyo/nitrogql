@@ -8,11 +8,11 @@ type Foo {
 }
 
 type Bar implements & I @wow {
-  "\"this is foo\""
+  "this is foo"
   foo: String @wow
 }
 
-"\"\"\"\n                Description of type\n                \"\"\""
+"\n                Description of type\n                "
 type Baz implements & I & J {
   func(arg1: Int): Int
 }

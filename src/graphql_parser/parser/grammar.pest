@@ -22,21 +22,26 @@ FloatValue = @{
 FractionalPart = @{ "." ~ ASCII_DIGIT* }
 ExponentPart = @{ ^"e" ~ ("+" | "-")? ~ ASCII_DIGIT+ }
 
-StringValue = @{
-  "\"\"" ~ !("\"") |
-  "\"" ~ StringCharacter+ ~ "\"" |
-  "\"\"\"" ~ BlockStringCharacter* ~ "\"\"\""
-}
-StringCharacter = @{
-  "\\u" ~ "{" ~ ASCII_HEX_DIGIT+ ~ "}" |
-  "\\u" ~ ASCII_HEX_DIGIT{4} |
-  "\\" ~ ("\"" | "\\" | "/"	| "b" | "f" | "n" | "r" | "t") | 
-  !("\"" | "\\" | NEWLINE ) ~ ANY
+StringValue = ${ EmptyStringValue | NormalStringValue | BlockStringValue }
+EmptyStringValue = @{ "\"\"" ~ !("\"") }
+BlockStringValue = @{ "\"\"\"" ~ BlockStringCharacter* ~ "\"\"\"" }
+NormalStringValue = ${ "\"" ~ StringCharacter+ ~ "\"" }
+StringCharacter = ${
+  EscapedUnicodeBrace |
+  EscapedUnicode4 |
+  EscapedCharacter | 
+  NormalStringCharacter
 }
 BlockStringCharacter = @{
   !"\"\"\"" ~
   ("\\\"\"\"" | ANY)
 }
+
+EscapedUnicodeBrace = ${ "\\u" ~ "{" ~ EscapedUnicodeBraceDigits ~ "}" }
+EscapedUnicodeBraceDigits = @{ ASCII_HEX_DIGIT+ }
+EscapedUnicode4 = @{ "\\u" ~ ASCII_HEX_DIGIT{4} }
+EscapedCharacter = @{ "\\" ~ ("\"" | "\\" | "/"	| "b" | "f" | "n" | "r" | "t") }
+NormalStringCharacter = @{ !("\"" | "\\" | NEWLINE ) ~ ANY }
 
 // keywords
 KEYWORD_query = @{ "query" ~ !NameContinue }
