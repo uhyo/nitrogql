@@ -135,11 +135,11 @@ TypeSystemExtensionDocument = { SOI ~ TypeSystemDefinitionOrExtension+ ~ EOI }
 
 TypeSystemDefinitionOrExtension = { TypeSystemDefinition | TypeSystemExtension }
 TypeSystemDefinition = { SchemaDefinition | TypeDefinition | DirectiveDefinition }
-TypeSystemExtension = { SchameExtension | TypeExtension }
+TypeSystemExtension = { SchemaExtension | TypeExtension }
 
 SchemaDefinition = { Description? ~ KEYWORD_schema ~ Directives? ~ RootOperationTypeDefinitions }
-SchameExtension = {
-  (KEYWORD_extend ~ KEYWORD_schema ~ Directives? ~ "{" ~ RootOperationTypeDefinition+ ~ "}") |
+SchemaExtension = {
+  (KEYWORD_extend ~ KEYWORD_schema ~ Directives? ~ RootOperationTypeDefinitions) |
   (KEYWORD_extend ~ KEYWORD_schema ~ Directives ~ !"{")
 }
 

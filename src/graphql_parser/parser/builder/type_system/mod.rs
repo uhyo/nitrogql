@@ -1,19 +1,26 @@
 use pest::iterators::Pair;
 
-use self::type_definition::build_type_definition;
+use self::{
+    type_definition::{build_arguments_definition, build_type_definition},
+    type_extension::build_type_extension,
+};
 
 use super::{directives::build_directives, operation::str_to_operation_type, utils::PairExt, Rule};
 use crate::{
     graphql_parser::ast::{
         base::Ident,
         operations::OperationType,
-        type_system::{SchemaDefinition, TypeDefinition, TypeSystemDefinitionOrExtension},
+        type_system::{
+            DirectiveDefinition, SchemaDefinition, SchemaExtension, TypeDefinition,
+            TypeSystemDefinitionOrExtension,
+        },
         value::StringValue,
     },
     parts,
 };
 
 mod type_definition;
+mod type_extension;
 
 /// Builds a TypeSystemDefinitionOrExtension from a Pair for TypeSystemDefinitionOrExtension.
 pub fn build_type_system_definition_or_extension(
@@ -30,11 +37,24 @@ pub fn build_type_system_definition_or_extension(
                 Rule::TypeDefinition => {
                     TypeSystemDefinitionOrExtension::TypeDefinition(build_type_definition(pair))
                 }
-                Rule::DirectiveDefinition => {}
+                Rule::DirectiveDefinition => TypeSystemDefinitionOrExtension::DirectiveDefinition(
+                    build_directive_definition(pair),
+                ),
                 rule => panic!("Unexpected child of TypeSystemDefinition: {:?}", rule),
             }
         }
-        Rule::TypeSystemExtension => {}
+        Rule::TypeSystemExtension => {
+            let pair = pair.only_child();
+            match pair.as_rule() {
+                Rule::SchemaExtension => {
+                    TypeSystemDefinitionOrExtension::SchemaExtension(build_schema_extension(pair))
+                }
+                Rule::TypeExtension => {
+                    TypeSystemDefinitionOrExtension::TypeExtension(build_type_extension(pair))
+                }
+                rule => panic!("Unexpected child of TypeSystemExtension: {:?}", rule),
+            }
+        }
         rule => panic!(
             "Unexpected child of TypeSystemDefinitionOrExtension: {:?}",
             rule
@@ -53,9 +73,50 @@ fn build_schema_definition(pair: Pair<Rule>) -> SchemaDefinition {
     );
     let definitions = build_root_operation_type_definitions(root_operation_type_definitions);
     SchemaDefinition {
+        description: description.map(build_description),
         position,
         directives: directives.map_or(vec![], build_directives),
         definitions,
+    }
+}
+
+fn build_directive_definition(pair: Pair<Rule>) -> DirectiveDefinition {
+    let (description, _, name, arguments, repeatable, _, locations) = parts!(
+        pair,
+        Description opt,
+        KEYWORD_directive,
+        Name,
+        ArgumentsDefinition opt,
+        KEYWORD_repeatable opt,
+        KEYWORD_on,
+        DirectiveLocations
+    );
+    DirectiveDefinition {
+        description: description.map(build_description),
+        name: name.into(),
+        arguments: arguments.map(build_arguments_definition),
+        repeatable: repeatable.map(|pair| pair.into()),
+        locations: {
+            let locations = locations.all_children(Rule::DirectiveLocation);
+            locations.into_iter().map(|pair| pair.into()).collect()
+        },
+    }
+}
+
+fn build_schema_extension(pair: Pair<Rule>) -> SchemaExtension {
+    let position = (&pair).into();
+    let (_, _, directives, root_operation_type_definition) = parts!(
+        pair,
+        KEYWORD_extend,
+        KEYWORD_schema,
+        Directives opt,
+        RootOperationTypeDefinitions opt
+    );
+    SchemaExtension {
+        position,
+        directives: directives.map_or(vec![], build_directives),
+        definitions: root_operation_type_definition
+            .map_or(vec![], build_root_operation_type_definitions),
     }
 }
 

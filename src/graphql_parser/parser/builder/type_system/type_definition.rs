@@ -6,7 +6,7 @@ use crate::{
         ast::{
             base::Ident,
             type_system::{
-                EnumTypeDefinition, EnumValueDefinition, FieldDefinition,
+                ArgumentsDefinition, EnumTypeDefinition, EnumValueDefinition, FieldDefinition,
                 InputObjectTypeDefinition, InputValueDefinition, InterfaceTypeDefinition,
                 ObjectTypeDefinition, ScalarTypeDefinition, TypeDefinition, UnionTypeDefinition,
             },
@@ -31,6 +31,7 @@ pub fn build_type_definition(pair: Pair<Rule>) -> TypeDefinition {
         Rule::InputObjectTypeDefinition => {
             TypeDefinition::InputObject(build_input_object_type_definition(pair))
         }
+        rule => panic!("Unexpected child of TypeDefinition: {:?}", rule),
     }
 }
 
@@ -145,7 +146,7 @@ fn build_input_object_type_definition(pair: Pair<Rule>) -> InputObjectTypeDefini
     }
 }
 
-fn build_implements_interfaces(pair: Pair<Rule>) -> Vec<Ident> {
+pub fn build_implements_interfaces(pair: Pair<Rule>) -> Vec<Ident> {
     let mut pairs = pair.into_inner();
     let Some(first_pair) = pairs.next() else {
         panic!("No child of ImplementsInterfaces, expected KEYWORD_implements");
@@ -169,7 +170,7 @@ fn build_implements_interfaces(pair: Pair<Rule>) -> Vec<Ident> {
         .collect()
 }
 
-fn build_fields_definition(pair: Pair<Rule>) -> Vec<FieldDefinition> {
+pub fn build_fields_definition(pair: Pair<Rule>) -> Vec<FieldDefinition> {
     let pairs = pair.all_children(Rule::FieldDefinition);
     pairs
         .into_iter()
@@ -185,7 +186,7 @@ fn build_fields_definition(pair: Pair<Rule>) -> Vec<FieldDefinition> {
             FieldDefinition {
                 description: description.map(build_description),
                 name: name.into(),
-                arguments: arguments.map_or(vec![], build_arguments_definition),
+                arguments: arguments.map(build_arguments_definition),
                 r#type: build_type(ty),
                 directives: directives.map_or(vec![], build_directives),
             }
@@ -193,9 +194,9 @@ fn build_fields_definition(pair: Pair<Rule>) -> Vec<FieldDefinition> {
         .collect()
 }
 
-fn build_arguments_definition(pair: Pair<Rule>) -> Vec<InputValueDefinition> {
+pub fn build_arguments_definition(pair: Pair<Rule>) -> ArgumentsDefinition {
     let pairs = pair.all_children(Rule::InputValueDefinition);
-    pairs
+    let input_values = pairs
         .into_iter()
         .map(|pair| {
             let (description, name, ty, default_value, directives) = parts!(
@@ -217,10 +218,11 @@ fn build_arguments_definition(pair: Pair<Rule>) -> Vec<InputValueDefinition> {
                 directives: directives.map_or(vec![], build_directives),
             }
         })
-        .collect()
+        .collect();
+    ArgumentsDefinition { input_values }
 }
 
-fn build_enum_value_definition(pair: Pair<Rule>) -> EnumValueDefinition {
+pub fn build_enum_value_definition(pair: Pair<Rule>) -> EnumValueDefinition {
     let (description, value, directives) = parts!(
         pair,
         Description opt,
@@ -234,7 +236,7 @@ fn build_enum_value_definition(pair: Pair<Rule>) -> EnumValueDefinition {
     }
 }
 
-fn build_input_fields_definition(pair: Pair<Rule>) -> Vec<InputValueDefinition> {
+pub fn build_input_fields_definition(pair: Pair<Rule>) -> Vec<InputValueDefinition> {
     let pairs = pair.all_children(Rule::InputValueDefinition);
     pairs
         .into_iter()

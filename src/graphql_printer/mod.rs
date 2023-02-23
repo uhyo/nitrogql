@@ -1,20 +1,24 @@
-use json_writer::JSONWriterValue;
-
 use crate::{
     graphql_parser::ast::{
-        base::{Ident, Variable},
+        base::Variable,
         directive::Directive,
         operations::{
             ExecutableDefinition, FragmentDefinition, OperationDefinition, VariableDefinition,
             VariablesDefinition,
         },
-        r#type::Type,
         selection_set::{Selection, SelectionSet},
-        value::{Arguments, Value},
-        OperationDocument,
+        type_system::{
+            ArgumentsDefinition, DirectiveDefinition, EnumValueDefinition, FieldDefinition,
+            InputValueDefinition, SchemaDefinition, SchemaExtension, TypeDefinition, TypeExtension,
+            TypeSystemDefinitionOrExtension,
+        },
+        value::Arguments,
+        OperationDocument, TypeSystemOrExtensionDocument,
     },
     source_map_writer::writer::SourceMapWriter,
 };
+
+mod base;
 
 pub trait GraphQLPrinter {
     fn print_graphql(&self, writer: &mut impl SourceMapWriter);
@@ -204,88 +208,429 @@ impl GraphQLPrinter for FragmentDefinition<'_> {
     }
 }
 
-impl GraphQLPrinter for Type<'_> {
+impl GraphQLPrinter for TypeSystemOrExtensionDocument<'_> {
+    fn print_graphql(&self, writer: &mut impl SourceMapWriter) {
+        for def in self.definitions.iter() {
+            def.print_graphql(writer);
+            writer.write("\n");
+        }
+    }
+}
+
+impl GraphQLPrinter for TypeSystemDefinitionOrExtension<'_> {
     fn print_graphql(&self, writer: &mut impl SourceMapWriter) {
         match self {
-            Type::Named(name) => {
-                writer.write_for(&name.name.name, self);
+            TypeSystemDefinitionOrExtension::SchemaDefinition(def) => {
+                def.print_graphql(writer);
             }
-            Type::NonNull(non_null) => {
-                non_null.r#type.print_graphql(writer);
-                writer.write("!");
+            TypeSystemDefinitionOrExtension::TypeDefinition(def) => {
+                def.print_graphql(writer);
             }
-            Type::List(list) => {
-                writer.write("[");
-                list.r#type.print_graphql(writer);
-                writer.write("]");
+            TypeSystemDefinitionOrExtension::DirectiveDefinition(def) => {
+                def.print_graphql(writer);
+            }
+            TypeSystemDefinitionOrExtension::SchemaExtension(def) => {
+                def.print_graphql(writer);
+            }
+            TypeSystemDefinitionOrExtension::TypeExtension(def) => {
+                def.print_graphql(writer);
             }
         }
     }
 }
 
-impl GraphQLPrinter for Value<'_> {
+impl GraphQLPrinter for SchemaDefinition<'_> {
+    fn print_graphql(&self, writer: &mut impl SourceMapWriter) {
+        if let Some(ref description) = self.description {
+            description.print_graphql(writer);
+            writer.write("\n");
+        }
+        writer.write("schema ");
+        for d in self.directives.iter() {
+            d.print_graphql(writer);
+        }
+        writer.write("{\n");
+        writer.indent();
+        for (operation_type, name) in self.definitions.iter() {
+            writer.write(operation_type.as_str());
+            writer.write(": ");
+            name.print_graphql(writer);
+            writer.write("\n");
+        }
+        writer.dedent();
+        writer.write("}\n");
+    }
+}
+
+impl GraphQLPrinter for TypeDefinition<'_> {
     fn print_graphql(&self, writer: &mut impl SourceMapWriter) {
         match self {
-            Value::BooleanValue(value) => {
-                writer.write(value.keyword);
-            }
-            Value::IntValue(value) => {
-                writer.write(value.value);
-            }
-            Value::FloatValue(value) => {
-                writer.write(value.value);
-            }
-            Value::StringValue(value) => {
-                let mut escaped = String::new();
-                value.value.write_json(&mut escaped);
-                writer.write(&escaped);
-            }
-            Value::EnumValue(value) => {
-                writer.write_for(value.value, self);
-            }
-            Value::NullValue(value) => {
-                writer.write(value.keyword);
-            }
-            Value::Variable(value) => {
-                value.print_graphql(writer);
-            }
-            Value::ListValue(value) => {
-                writer.write("[");
-                for (idx, v) in value.values.iter().enumerate() {
-                    if idx > 0 {
-                        writer.write(",");
-                    }
-                    v.print_graphql(writer);
-                }
-                writer.write("]");
-            }
-            Value::ObjectValue(value) => {
-                writer.write("{");
-                if value.fields.len() < 2 {
-                    for (name, value) in value.fields.iter() {
-                        name.print_graphql(writer);
-                        writer.write(": ");
-                        value.print_graphql(writer);
-                    }
-                } else {
+            TypeDefinition::Scalar(def) => {
+                if let Some(ref description) = def.description {
+                    description.print_graphql(writer);
                     writer.write("\n");
+                }
+                writer.write("scalar ");
+                def.name.print_graphql(writer);
+                for d in def.directives.iter() {
+                    writer.write(" ");
+                    d.print_graphql(writer);
+                }
+                writer.write("\n");
+            }
+            TypeDefinition::Object(def) => {
+                if let Some(ref description) = def.description {
+                    description.print_graphql(writer);
+                    writer.write("\n");
+                }
+                writer.write("type ");
+                def.name.print_graphql(writer);
+                if !def.implements.is_empty() {
+                    writer.write(" implements");
+                    for implements in def.implements.iter() {
+                        writer.write(" & ");
+                        implements.print_graphql(writer);
+                    }
+                }
+                for d in def.directives.iter() {
+                    writer.write(" ");
+                    d.print_graphql(writer);
+                }
+                if !def.fields.is_empty() {
+                    writer.write("{\n");
                     writer.indent();
-                    for (name, value) in value.fields.iter() {
-                        name.print_graphql(writer);
-                        writer.write(": ");
-                        value.print_graphql(writer);
+                    for f in def.fields.iter() {
+                        f.print_graphql(writer);
                         writer.write("\n");
                     }
                     writer.dedent();
+                    writer.write("}")
                 }
-                writer.write("}");
+                writer.write("\n");
+            }
+            TypeDefinition::Interface(def) => {
+                if let Some(ref description) = def.description {
+                    description.print_graphql(writer);
+                    writer.write("\n");
+                }
+                writer.write("interface ");
+                def.name.print_graphql(writer);
+                if !def.implements.is_empty() {
+                    writer.write(" implements");
+                    for implements in def.implements.iter() {
+                        writer.write(" & ");
+                        implements.print_graphql(writer);
+                    }
+                }
+                for d in def.directives.iter() {
+                    writer.write(" ");
+                    d.print_graphql(writer);
+                }
+                if !def.fields.is_empty() {
+                    writer.write("{\n");
+                    writer.indent();
+                    for f in def.fields.iter() {
+                        f.print_graphql(writer);
+                        writer.write("\n");
+                    }
+                    writer.dedent();
+                    writer.write("}")
+                }
+                writer.write("\n");
+            }
+            TypeDefinition::Union(def) => {
+                if let Some(ref description) = def.description {
+                    description.print_graphql(writer);
+                    writer.write("\n");
+                }
+                writer.write("union ");
+                def.name.print_graphql(writer);
+                for d in def.directives.iter() {
+                    writer.write(" ");
+                    d.print_graphql(writer);
+                }
+                writer.write(" = ");
+                for f in def.members.iter() {
+                    writer.write("| ");
+                    f.print_graphql(writer);
+                }
+                writer.write("\n");
+            }
+            TypeDefinition::Enum(def) => {
+                if let Some(ref description) = def.description {
+                    description.print_graphql(writer);
+                    writer.write("\n");
+                }
+                writer.write("enum ");
+                def.name.print_graphql(writer);
+                for d in def.directives.iter() {
+                    writer.write(" ");
+                    d.print_graphql(writer);
+                }
+                if !def.values.is_empty() {
+                    writer.write("{\n");
+                    writer.indent();
+                    for v in def.values.iter() {
+                        v.print_graphql(writer);
+                        writer.write("\n");
+                    }
+                    writer.dedent();
+                    writer.write("}")
+                }
+                writer.write("\n");
+            }
+            TypeDefinition::InputObject(def) => {
+                if let Some(ref description) = def.description {
+                    description.print_graphql(writer);
+                    writer.write("\n");
+                }
+                writer.write("input ");
+                def.name.print_graphql(writer);
+                for d in def.directives.iter() {
+                    writer.write(" ");
+                    d.print_graphql(writer);
+                }
+                if !def.fields.is_empty() {
+                    writer.write("{\n");
+                    writer.indent();
+                    for f in def.fields.iter() {
+                        f.print_graphql(writer);
+                        writer.write("\n");
+                    }
+                    writer.dedent();
+                    writer.write("}")
+                }
+                writer.write("\n");
             }
         }
     }
 }
 
-impl GraphQLPrinter for Ident<'_> {
+impl GraphQLPrinter for FieldDefinition<'_> {
     fn print_graphql(&self, writer: &mut impl SourceMapWriter) {
-        writer.write_for(self.name, self);
+        if let Some(description) = self.description {
+            description.print_graphql(writer);
+            writer.write("\n");
+        }
+        self.name.print_graphql(writer);
+        if let Some(ref arguments) = self.arguments {
+            arguments.print_graphql(writer);
+        }
+        writer.write(": ");
+        self.r#type.print_graphql(writer);
+        for d in self.directives.iter() {
+            writer.write(" ");
+            d.print_graphql(writer);
+        }
+    }
+}
+
+impl GraphQLPrinter for ArgumentsDefinition<'_> {
+    fn print_graphql(&self, writer: &mut impl SourceMapWriter) {
+        writer.write("(");
+        for (idx, input) in self.input_values.iter().enumerate() {
+            if idx > 0 {
+                writer.write(", ");
+            }
+            input.print_graphql(writer);
+        }
+        writer.write(")");
+    }
+}
+
+impl GraphQLPrinter for EnumValueDefinition<'_> {
+    fn print_graphql(&self, writer: &mut impl SourceMapWriter) {
+        if let Some(ref description) = self.description {
+            description.print_graphql(writer);
+            writer.write("\n");
+        }
+        self.name.print_graphql(writer);
+        for d in self.directives.iter() {
+            writer.write(" ");
+            d.print_graphql(writer);
+        }
+    }
+}
+
+impl GraphQLPrinter for InputValueDefinition<'_> {
+    fn print_graphql(&self, writer: &mut impl SourceMapWriter) {
+        if let Some(ref description) = self.description {
+            description.print_graphql(writer);
+            writer.write("\n");
+        }
+        self.name.print_graphql(writer);
+        writer.write(": ");
+        self.r#type.print_graphql(writer);
+        if let Some(ref default_value) = self.default_value {
+            writer.write(" = ");
+            default_value.print_graphql(writer);
+        }
+        for d in self.directives.iter() {
+            writer.write(" ");
+            d.print_graphql(writer);
+        }
+    }
+}
+
+impl GraphQLPrinter for DirectiveDefinition<'_> {
+    fn print_graphql(&self, writer: &mut impl SourceMapWriter) {
+        if let Some(ref description) = self.description {
+            description.print_graphql(writer);
+            writer.write("\n");
+        }
+        writer.write("directive @");
+        self.name.print_graphql(writer);
+        if let Some(ref arguments_definition) = self.arguments {
+            arguments_definition.print_graphql(writer);
+        }
+        if let Some(ref token) = self.repeatable {
+            writer.write(" ");
+            token.print_graphql(writer);
+        }
+        writer.write(" on ");
+        for loc in self.locations.iter() {
+            writer.write("| ");
+            loc.print_graphql(writer);
+        }
+        writer.write("\n");
+    }
+}
+
+impl GraphQLPrinter for SchemaExtension<'_> {
+    fn print_graphql(&self, writer: &mut impl SourceMapWriter) {
+        writer.write("extend schema ");
+        for d in self.directives.iter() {
+            d.print_graphql(writer);
+        }
+        writer.write("{\n");
+        writer.indent();
+        for (operation_type, name) in self.definitions.iter() {
+            writer.write(operation_type.as_str());
+            writer.write(": ");
+            name.print_graphql(writer);
+            writer.write("\n");
+        }
+        writer.dedent();
+        writer.write("}\n");
+    }
+}
+
+impl GraphQLPrinter for TypeExtension<'_> {
+    fn print_graphql(&self, writer: &mut impl SourceMapWriter) {
+        match self {
+            TypeExtension::Scalar(def) => {
+                writer.write("extend scalar ");
+                def.name.print_graphql(writer);
+                for d in def.directives.iter() {
+                    writer.write(" ");
+                    d.print_graphql(writer);
+                }
+                writer.write("\n");
+            }
+            TypeExtension::Object(def) => {
+                writer.write("extend type ");
+                def.name.print_graphql(writer);
+                if !def.implements.is_empty() {
+                    writer.write(" implements");
+                    for implements in def.implements.iter() {
+                        writer.write(" & ");
+                        implements.print_graphql(writer);
+                    }
+                }
+                for d in def.directives.iter() {
+                    writer.write(" ");
+                    d.print_graphql(writer);
+                }
+                if !def.fields.is_empty() {
+                    writer.write("{\n");
+                    writer.indent();
+                    for f in def.fields.iter() {
+                        f.print_graphql(writer);
+                        writer.write("\n");
+                    }
+                    writer.dedent();
+                    writer.write("}")
+                }
+                writer.write("\n");
+            }
+            TypeExtension::Interface(def) => {
+                writer.write("extend interface ");
+                def.name.print_graphql(writer);
+                if !def.implements.is_empty() {
+                    writer.write(" implements");
+                    for implements in def.implements.iter() {
+                        writer.write(" & ");
+                        implements.print_graphql(writer);
+                    }
+                }
+                for d in def.directives.iter() {
+                    writer.write(" ");
+                    d.print_graphql(writer);
+                }
+                if !def.fields.is_empty() {
+                    writer.write("{\n");
+                    writer.indent();
+                    for f in def.fields.iter() {
+                        f.print_graphql(writer);
+                        writer.write("\n");
+                    }
+                    writer.dedent();
+                    writer.write("}")
+                }
+                writer.write("\n");
+            }
+            TypeExtension::Union(def) => {
+                writer.write("extend union ");
+                def.name.print_graphql(writer);
+                for d in def.directives.iter() {
+                    writer.write(" ");
+                    d.print_graphql(writer);
+                }
+                writer.write(" = ");
+                for f in def.members.iter() {
+                    writer.write("| ");
+                    f.print_graphql(writer);
+                }
+                writer.write("\n");
+            }
+            TypeExtension::Enum(def) => {
+                writer.write("enum ");
+                def.name.print_graphql(writer);
+                for d in def.directives.iter() {
+                    writer.write(" ");
+                    d.print_graphql(writer);
+                }
+                if !def.values.is_empty() {
+                    writer.write("{\n");
+                    writer.indent();
+                    for v in def.values.iter() {
+                        v.print_graphql(writer);
+                        writer.write("\n");
+                    }
+                    writer.dedent();
+                    writer.write("}")
+                }
+                writer.write("\n");
+            }
+            TypeExtension::InputObject(def) => {
+                writer.write("input ");
+                def.name.print_graphql(writer);
+                for d in def.directives.iter() {
+                    writer.write(" ");
+                    d.print_graphql(writer);
+                }
+                if !def.fields.is_empty() {
+                    writer.write("{\n");
+                    writer.indent();
+                    for f in def.fields.iter() {
+                        f.print_graphql(writer);
+                        writer.write("\n");
+                    }
+                    writer.dedent();
+                    writer.write("}")
+                }
+                writer.write("\n");
+            }
+        }
     }
 }

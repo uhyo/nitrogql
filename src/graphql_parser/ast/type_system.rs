@@ -24,6 +24,7 @@ pub enum TypeSystemDefinitionOrExtension<'a> {
 
 #[derive(Clone, Debug)]
 pub struct SchemaDefinition<'a> {
+    pub description: Option<StringValue<'a>>,
     pub position: Pos,
     pub directives: Vec<Directive<'a>>,
     pub definitions: Vec<(OperationType, Ident<'a>)>,
@@ -59,7 +60,7 @@ pub struct ObjectTypeDefinition<'a> {
 pub struct FieldDefinition<'a> {
     pub description: Option<StringValue<'a>>,
     pub name: Ident<'a>,
-    pub arguments: Vec<InputValueDefinition<'a>>,
+    pub arguments: Option<ArgumentsDefinition<'a>>,
     pub r#type: Type<'a>,
     pub directives: Vec<Directive<'a>>,
 }
@@ -129,9 +130,9 @@ pub struct InputObjectTypeDefinition<'a> {
 
 #[derive(Clone, Debug)]
 pub struct SchemaExtension<'a> {
+    pub position: Pos,
     pub directives: Vec<Directive<'a>>,
-    pub operation_type: OperationType,
-    pub type_name: Ident<'a>,
+    pub definitions: Vec<(OperationType, Ident<'a>)>,
 }
 
 #[derive(Clone, Debug)]
