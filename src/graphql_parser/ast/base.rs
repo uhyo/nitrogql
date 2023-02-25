@@ -1,7 +1,7 @@
 use super::super::parser::Rule;
 use pest::iterators::Pair;
 
-#[derive(Copy, Clone, Debug, PartialEq, Eq)]
+#[derive(Copy, Clone, Debug, Hash, PartialEq, Eq)]
 pub struct Pos {
     /// 0-based line
     pub line: usize,
@@ -72,7 +72,7 @@ impl HasPos for Punc<'_> {
     }
 }
 
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy, Clone, Debug, Hash, PartialEq, Eq)]
 pub struct Ident<'a> {
     pub name: &'a str,
     pub position: Pos,

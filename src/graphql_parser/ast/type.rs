@@ -24,6 +24,16 @@ impl HasPos for Type<'_> {
     }
 }
 
+impl Type<'_> {
+    pub fn unwrapped_type(&self) -> &NamedType {
+        match self {
+            Type::Named(name) => name,
+            Type::NonNull(inner) => inner.r#type.unwrapped_type(),
+            Type::List(inner) => inner.r#type.unwrapped_type(),
+        }
+    }
+}
+
 #[derive(Copy, Clone, Debug)]
 pub struct NamedType<'a> {
     pub name: Ident<'a>,

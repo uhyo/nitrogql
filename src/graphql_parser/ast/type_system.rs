@@ -13,6 +13,23 @@ pub enum TypeSystemDefinition<'a> {
     DirectiveDefinition(DirectiveDefinition<'a>),
 }
 
+impl HasPos for TypeSystemDefinition<'_> {
+    fn name(&self) -> Option<&str> {
+        match self {
+            TypeSystemDefinition::SchemaDefinition(def) => def.name(),
+            TypeSystemDefinition::TypeDefinition(def) => def.name(),
+            TypeSystemDefinition::DirectiveDefinition(def) => def.name(),
+        }
+    }
+    fn position(&self) -> &Pos {
+        match self {
+            TypeSystemDefinition::SchemaDefinition(def) => def.position(),
+            TypeSystemDefinition::TypeDefinition(def) => def.position(),
+            TypeSystemDefinition::DirectiveDefinition(def) => def.position(),
+        }
+    }
+}
+
 #[derive(Clone, Debug)]
 pub enum TypeSystemDefinitionOrExtension<'a> {
     SchemaDefinition(SchemaDefinition<'a>),
@@ -47,6 +64,29 @@ pub enum TypeDefinition<'a> {
     Union(UnionTypeDefinition<'a>),
     Enum(EnumTypeDefinition<'a>),
     InputObject(InputObjectTypeDefinition<'a>),
+}
+
+impl HasPos for TypeDefinition<'_> {
+    fn name(&self) -> Option<&str> {
+        match self {
+            TypeDefinition::Scalar(def) => def.name(),
+            TypeDefinition::Object(def) => def.name(),
+            TypeDefinition::Interface(def) => def.name(),
+            TypeDefinition::Union(def) => def.name(),
+            TypeDefinition::Enum(def) => def.name(),
+            TypeDefinition::InputObject(def) => def.name(),
+        }
+    }
+    fn position(&self) -> &Pos {
+        match self {
+            TypeDefinition::Scalar(def) => def.position(),
+            TypeDefinition::Object(def) => def.position(),
+            TypeDefinition::Interface(def) => def.position(),
+            TypeDefinition::Union(def) => def.position(),
+            TypeDefinition::Enum(def) => def.position(),
+            TypeDefinition::InputObject(def) => def.position(),
+        }
+    }
 }
 
 #[derive(Clone, Debug)]
