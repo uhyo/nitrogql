@@ -10,10 +10,10 @@ use crate::{
         type_system::{
             ArgumentsDefinition, DirectiveDefinition, EnumValueDefinition, FieldDefinition,
             InputValueDefinition, SchemaDefinition, SchemaExtension, TypeDefinition, TypeExtension,
-            TypeSystemDefinitionOrExtension,
+            TypeSystemDefinition, TypeSystemDefinitionOrExtension,
         },
         value::Arguments,
-        OperationDocument, TypeSystemOrExtensionDocument,
+        OperationDocument, TypeSystemDocument, TypeSystemOrExtensionDocument,
     },
     source_map_writer::writer::SourceMapWriter,
 };
@@ -217,6 +217,15 @@ impl GraphQLPrinter for TypeSystemOrExtensionDocument<'_> {
     }
 }
 
+impl GraphQLPrinter for TypeSystemDocument<'_> {
+    fn print_graphql(&self, writer: &mut impl SourceMapWriter) {
+        for def in self.definitions.iter() {
+            def.print_graphql(writer);
+            writer.write("\n");
+        }
+    }
+}
+
 impl GraphQLPrinter for TypeSystemDefinitionOrExtension<'_> {
     fn print_graphql(&self, writer: &mut impl SourceMapWriter) {
         match self {
@@ -233,6 +242,22 @@ impl GraphQLPrinter for TypeSystemDefinitionOrExtension<'_> {
                 def.print_graphql(writer);
             }
             TypeSystemDefinitionOrExtension::TypeExtension(def) => {
+                def.print_graphql(writer);
+            }
+        }
+    }
+}
+
+impl GraphQLPrinter for TypeSystemDefinition<'_> {
+    fn print_graphql(&self, writer: &mut impl SourceMapWriter) {
+        match self {
+            TypeSystemDefinition::SchemaDefinition(def) => {
+                def.print_graphql(writer);
+            }
+            TypeSystemDefinition::TypeDefinition(def) => {
+                def.print_graphql(writer);
+            }
+            TypeSystemDefinition::DirectiveDefinition(def) => {
                 def.print_graphql(writer);
             }
         }

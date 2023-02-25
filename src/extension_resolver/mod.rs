@@ -12,6 +12,7 @@ use crate::graphql_parser::ast::{
 use self::extension_list::{ExtensionError, ExtensionList};
 
 mod extension_list;
+mod tests;
 
 pub fn resolve_extensions(
     document: TypeSystemOrExtensionDocument,
