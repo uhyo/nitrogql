@@ -74,6 +74,20 @@ mod tests {
         assert_snapshot!(resolved.to_string());
     }
 
+    #[test]
+    fn error_handling2() {
+        let doc = parse_type_system_document(
+            "
+            type A { foo: Int! }
+            type A { bar: Int! }
+            ",
+        )
+        .unwrap();
+
+        let resolved = resolve_extensions(doc).unwrap_err();
+        assert_snapshot!(resolved.to_string());
+    }
+
     fn print_graphql<T: GraphQLPrinter>(value: T) -> String {
         let mut result = String::new();
         let mut writer = JustWriter::new(&mut result);

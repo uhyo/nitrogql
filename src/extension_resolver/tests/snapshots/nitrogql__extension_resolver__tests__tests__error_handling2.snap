@@ -1,0 +1,5 @@
+---
+source: src/extension_resolver/tests/mod.rs
+expression: resolved.to_string()
+---
+Duplicate declaration of type
