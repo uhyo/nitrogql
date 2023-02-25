@@ -36,7 +36,7 @@ pub fn build_type_extension(pair: Pair<Rule>) -> TypeExtension {
 }
 
 fn build_scalar_type_extension(pair: Pair<Rule>) -> ScalarTypeExtension {
-    let (_, _, name, directives) = parts!(
+    let (keyword, _, name, directives) = parts!(
         pair,
         KEYWORD_extend,
         KEYWORD_scalar,
@@ -44,13 +44,14 @@ fn build_scalar_type_extension(pair: Pair<Rule>) -> ScalarTypeExtension {
         Directives opt
     );
     ScalarTypeExtension {
+        position: (&keyword).into(),
         name: name.into(),
         directives: directives.map_or(vec![], build_directives),
     }
 }
 
 fn build_object_type_extension(pair: Pair<Rule>) -> ObjectTypeExtension {
-    let (_, _, name, implements, directives, fields) = parts!(
+    let (keyword, _, name, implements, directives, fields) = parts!(
         pair,
         KEYWORD_extend,
         KEYWORD_type,
@@ -61,6 +62,7 @@ fn build_object_type_extension(pair: Pair<Rule>) -> ObjectTypeExtension {
     );
 
     ObjectTypeExtension {
+        position: (&keyword).into(),
         name: name.into(),
         implements: implements.map_or(vec![], build_implements_interfaces),
         directives: directives.map_or(vec![], build_directives),
@@ -69,7 +71,7 @@ fn build_object_type_extension(pair: Pair<Rule>) -> ObjectTypeExtension {
 }
 
 fn build_interface_type_extension(pair: Pair<Rule>) -> InterfaceTypeExtension {
-    let (_, _, name, implements, directives, fields) = parts!(
+    let (keyword, _, name, implements, directives, fields) = parts!(
         pair,
         KEYWORD_extend,
         KEYWORD_interface,
@@ -79,6 +81,7 @@ fn build_interface_type_extension(pair: Pair<Rule>) -> InterfaceTypeExtension {
         FieldsDefinition opt
     );
     InterfaceTypeExtension {
+        position: (&keyword).into(),
         name: name.into(),
         implements: implements.map_or(vec![], build_implements_interfaces),
         directives: directives.map_or(vec![], build_directives),
@@ -87,7 +90,7 @@ fn build_interface_type_extension(pair: Pair<Rule>) -> InterfaceTypeExtension {
 }
 
 fn build_union_type_extension(pair: Pair<Rule>) -> UnionTypeExtension {
-    let (_, _, name, directives, members) = parts!(
+    let (keyword, _, name, directives, members) = parts!(
         pair,
         KEYWORD_extend,
         KEYWORD_union,
@@ -96,6 +99,7 @@ fn build_union_type_extension(pair: Pair<Rule>) -> UnionTypeExtension {
         UnionMemberTypes opt
     );
     UnionTypeExtension {
+        position: (&keyword).into(),
         name: name.into(),
         directives: directives.map_or(vec![], build_directives),
         members: members.map_or(vec![], |members| {
@@ -106,7 +110,7 @@ fn build_union_type_extension(pair: Pair<Rule>) -> UnionTypeExtension {
 }
 
 fn build_enum_type_extension(pair: Pair<Rule>) -> EnumTypeExtension {
-    let (_, _, name, directives, values) = parts!(
+    let (keyword, _, name, directives, values) = parts!(
         pair,
         KEYWORD_extend,
         KEYWORD_enum,
@@ -115,6 +119,7 @@ fn build_enum_type_extension(pair: Pair<Rule>) -> EnumTypeExtension {
         EnumValuesDefinition opt
     );
     EnumTypeExtension {
+        position: (&keyword).into(),
         name: name.into(),
         directives: directives.map_or(vec![], build_directives),
         values: values.map_or(vec![], |pair| {
@@ -125,7 +130,7 @@ fn build_enum_type_extension(pair: Pair<Rule>) -> EnumTypeExtension {
 }
 
 fn build_input_object_type_extension(pair: Pair<Rule>) -> InputObjectTypeExtension {
-    let (_, _, name, directives, fields) = parts!(
+    let (keyword, _, name, directives, fields) = parts!(
         pair,
         KEYWORD_extend,
         KEYWORD_input,
@@ -134,6 +139,7 @@ fn build_input_object_type_extension(pair: Pair<Rule>) -> InputObjectTypeExtensi
         InputFieldsDefinition opt
     );
     InputObjectTypeExtension {
+        position: (&keyword).into(),
         name: name.into(),
         directives: directives.map_or(vec![], build_directives),
         fields: fields.map_or(vec![], build_input_fields_definition),

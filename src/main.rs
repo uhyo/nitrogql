@@ -1,4 +1,5 @@
 mod base64_vlq;
+mod extension_resolver;
 mod graphql_parser;
 mod graphql_printer;
 mod json_printer;

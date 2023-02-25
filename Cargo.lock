@@ -173,6 +173,7 @@ dependencies = [
  "lru",
  "pest",
  "pest_derive",
+ "thiserror",
 ]
 
 [[package]]

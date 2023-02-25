@@ -36,7 +36,7 @@ pub fn build_type_definition(pair: Pair<Rule>) -> TypeDefinition {
 }
 
 fn build_scalar_type_definition(pair: Pair<Rule>) -> ScalarTypeDefinition {
-    let (description, _, name, directives) = parts!(
+    let (description, keyword, name, directives) = parts!(
         pair,
         Description opt,
         KEYWORD_scalar,
@@ -45,13 +45,14 @@ fn build_scalar_type_definition(pair: Pair<Rule>) -> ScalarTypeDefinition {
     );
     ScalarTypeDefinition {
         description: description.map(build_description),
+        position: (&keyword).into(),
         name: name.into(),
         directives: directives.map_or(vec![], build_directives),
     }
 }
 
 fn build_object_type_definition(pair: Pair<Rule>) -> ObjectTypeDefinition {
-    let (description, _, name, implements, directives, fields) = parts!(
+    let (description, keyword, name, implements, directives, fields) = parts!(
         pair,
         Description opt,
         KEYWORD_type,
@@ -63,6 +64,7 @@ fn build_object_type_definition(pair: Pair<Rule>) -> ObjectTypeDefinition {
 
     ObjectTypeDefinition {
         description: description.map(build_description),
+        position: (&keyword).into(),
         name: name.into(),
         implements: implements.map_or(vec![], build_implements_interfaces),
         directives: directives.map_or(vec![], build_directives),
@@ -71,7 +73,7 @@ fn build_object_type_definition(pair: Pair<Rule>) -> ObjectTypeDefinition {
 }
 
 fn build_interface_type_definition(pair: Pair<Rule>) -> InterfaceTypeDefinition {
-    let (description, _, name, implements, directives, fields) = parts!(
+    let (description, keyword, name, implements, directives, fields) = parts!(
         pair,
         Description opt,
         KEYWORD_interface,
@@ -82,6 +84,7 @@ fn build_interface_type_definition(pair: Pair<Rule>) -> InterfaceTypeDefinition 
     );
     InterfaceTypeDefinition {
         description: description.map(build_description),
+        position: (&keyword).into(),
         name: name.into(),
         implements: implements.map_or(vec![], build_implements_interfaces),
         directives: directives.map_or(vec![], build_directives),
@@ -90,7 +93,7 @@ fn build_interface_type_definition(pair: Pair<Rule>) -> InterfaceTypeDefinition 
 }
 
 fn build_union_type_definition(pair: Pair<Rule>) -> UnionTypeDefinition {
-    let (description, _, name, directives, members) = parts!(
+    let (description, keyword, name, directives, members) = parts!(
         pair,
         Description opt,
         KEYWORD_union,
@@ -100,6 +103,7 @@ fn build_union_type_definition(pair: Pair<Rule>) -> UnionTypeDefinition {
     );
     UnionTypeDefinition {
         description: description.map(build_description),
+        position: (&keyword).into(),
         name: name.into(),
         directives: directives.map_or(vec![], build_directives),
         members: members.map_or(vec![], |members| {
@@ -110,7 +114,7 @@ fn build_union_type_definition(pair: Pair<Rule>) -> UnionTypeDefinition {
 }
 
 fn build_enum_type_definition(pair: Pair<Rule>) -> EnumTypeDefinition {
-    let (description, _, name, directives, values) = parts!(
+    let (description, keyword, name, directives, values) = parts!(
         pair,
         Description opt,
         KEYWORD_enum,
@@ -120,6 +124,7 @@ fn build_enum_type_definition(pair: Pair<Rule>) -> EnumTypeDefinition {
     );
     EnumTypeDefinition {
         description: description.map(build_description),
+        position: (&keyword).into(),
         name: name.into(),
         directives: directives.map_or(vec![], build_directives),
         values: values.map_or(vec![], |pair| {
@@ -130,7 +135,7 @@ fn build_enum_type_definition(pair: Pair<Rule>) -> EnumTypeDefinition {
 }
 
 fn build_input_object_type_definition(pair: Pair<Rule>) -> InputObjectTypeDefinition {
-    let (description, _, name, directives, fields) = parts!(
+    let (description, keyword, name, directives, fields) = parts!(
         pair,
         Description opt,
         KEYWORD_input,
@@ -140,6 +145,7 @@ fn build_input_object_type_definition(pair: Pair<Rule>) -> InputObjectTypeDefini
     );
     InputObjectTypeDefinition {
         description: description.map(build_description),
+        position: (&keyword).into(),
         name: name.into(),
         directives: directives.map_or(vec![], build_directives),
         fields: fields.map_or(vec![], build_input_fields_definition),

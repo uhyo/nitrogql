@@ -12,6 +12,7 @@ glob = "0.3.1"
 anyhow = "1.0.69"
 pest = "2.5.5"
 pest_derive = "2.5.5"
+thiserror = "1.0.38"
 
 [dev-dependencies]
 insta = "1.28.0"

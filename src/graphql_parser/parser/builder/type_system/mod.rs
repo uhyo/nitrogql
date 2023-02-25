@@ -84,7 +84,7 @@ fn build_schema_definition(pair: Pair<Rule>) -> SchemaDefinition {
 }
 
 fn build_directive_definition(pair: Pair<Rule>) -> DirectiveDefinition {
-    let (description, _, name, arguments, repeatable, _, locations) = parts!(
+    let (description, keyword, name, arguments, repeatable, _, locations) = parts!(
         pair,
         Description opt,
         KEYWORD_directive,
@@ -96,6 +96,7 @@ fn build_directive_definition(pair: Pair<Rule>) -> DirectiveDefinition {
     );
     DirectiveDefinition {
         description: description.map(build_description),
+        position: (&keyword).into(),
         name: name.into(),
         arguments: arguments.map(build_arguments_definition),
         repeatable: repeatable.map(|pair| pair.into()),

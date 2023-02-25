@@ -1,4 +1,7 @@
-use self::{operations::ExecutableDefinition, type_system::TypeSystemDefinitionOrExtension};
+use self::{
+    operations::ExecutableDefinition,
+    type_system::{TypeSystemDefinition, TypeSystemDefinitionOrExtension},
+};
 
 pub mod base;
 pub mod directive;
@@ -16,4 +19,9 @@ pub struct OperationDocument<'a> {
 #[derive(Clone, Debug)]
 pub struct TypeSystemOrExtensionDocument<'a> {
     pub definitions: Vec<TypeSystemDefinitionOrExtension<'a>>,
+}
+
+#[derive(Clone, Debug)]
+pub struct TypeSystemDocument<'a> {
+    pub definitions: Vec<TypeSystemDefinition<'a>>,
 }
