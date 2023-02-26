@@ -10,7 +10,7 @@ mod directives {
     use crate::{
         extension_resolver::resolve_extensions,
         graphql_parser::parser::parse_type_system_document,
-        type_system_sanitizer::{check_type_system_document, tests::parse_to_type_system_document},
+        type_system_validator::{check_type_system_document, tests::parse_to_type_system_document},
     };
 
     // https://spec.graphql.org/draft/#sec-Type-System.Directives.Validation
@@ -211,7 +211,7 @@ mod directives {
 mod schemas {
     use insta::assert_debug_snapshot;
 
-    use crate::type_system_sanitizer::{
+    use crate::type_system_validator::{
         check_type_system_document, tests::parse_to_type_system_document,
     };
 
@@ -282,7 +282,7 @@ mod schemas {
 mod scalars {
     use insta::assert_debug_snapshot;
 
-    use crate::type_system_sanitizer::{
+    use crate::type_system_validator::{
         check_type_system_document, tests::parse_to_type_system_document,
     };
 
@@ -337,7 +337,7 @@ mod objects {
     use crate::{
         graphql_printer::GraphQLPrinter,
         source_map_writer::just_writer::JustWriter,
-        type_system_sanitizer::{check_type_system_document, tests::parse_to_type_system_document},
+        type_system_validator::{check_type_system_document, tests::parse_to_type_system_document},
     };
 
     // https://spec.graphql.org/draft/#sec-Objects.Type-Validation
@@ -615,7 +615,7 @@ mod objects {
 mod interfaces {
     use insta::assert_debug_snapshot;
 
-    use crate::type_system_sanitizer::{
+    use crate::type_system_validator::{
         check_type_system_document, tests::parse_to_type_system_document,
     };
 
@@ -906,7 +906,7 @@ mod interfaces {
 mod unions {
     use insta::assert_debug_snapshot;
 
-    use crate::type_system_sanitizer::{
+    use crate::type_system_validator::{
         check_type_system_document, tests::parse_to_type_system_document,
     };
 
@@ -1039,7 +1039,7 @@ mod unions {
 mod enums {
     use insta::assert_debug_snapshot;
 
-    use crate::type_system_sanitizer::{
+    use crate::type_system_validator::{
         check_type_system_document, tests::parse_to_type_system_document,
     };
 
@@ -1105,7 +1105,7 @@ mod enums {
 mod input_objects {
     use insta::assert_debug_snapshot;
 
-    use crate::type_system_sanitizer::{
+    use crate::type_system_validator::{
         check_type_system_document, tests::parse_to_type_system_document,
     };
 

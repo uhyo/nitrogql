@@ -5,7 +5,7 @@ mod graphql_printer;
 mod json_printer;
 mod query_type_printer;
 mod source_map_writer;
-mod type_system_sanitizer;
+mod type_system_validator;
 mod utils;
 
 use std::fs::{self, File};
