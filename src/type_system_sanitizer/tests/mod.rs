@@ -332,10 +332,12 @@ mod scalars {
 
 #[cfg(test)]
 mod objects {
-    use insta::assert_debug_snapshot;
+    use insta::{assert_debug_snapshot, assert_snapshot};
 
-    use crate::type_system_sanitizer::{
-        check_type_system_document, tests::parse_to_type_system_document,
+    use crate::{
+        graphql_printer::GraphQLPrinter,
+        source_map_writer::just_writer::JustWriter,
+        type_system_sanitizer::{check_type_system_document, tests::parse_to_type_system_document},
     };
 
     // https://spec.graphql.org/draft/#sec-Objects.Type-Validation
@@ -538,20 +540,21 @@ mod objects {
         let errors = check_type_system_document(&doc);
         assert_debug_snapshot!(errors, @r###"
         [
-            ArgumentTypeNonNullAgainstInterface {
-                position: Pos {
-                    line: 19,
-                    column: 35,
-                    builtin: false,
-                },
-                interface_name: "IBar",
-            },
             FieldTypeMisMatchWithInterface {
                 position: Pos {
-                    line: 19,
+                    line: 10,
                     column: 16,
                     builtin: false,
                 },
+                interface_name: "IFoo",
+            },
+            InterfaceFieldNotImplemented {
+                position: Pos {
+                    line: 8,
+                    column: 17,
+                    builtin: false,
+                },
+                field_name: "bar",
                 interface_name: "IBar",
             },
             InterfaceArgumentNotImplemented {
@@ -579,25 +582,31 @@ mod objects {
                 },
                 interface_name: "IBar",
             },
+            ArgumentTypeNonNullAgainstInterface {
+                position: Pos {
+                    line: 19,
+                    column: 35,
+                    builtin: false,
+                },
+                interface_name: "IBar",
+            },
             FieldTypeMisMatchWithInterface {
                 position: Pos {
-                    line: 10,
+                    line: 19,
                     column: 16,
                     builtin: false,
                 },
-                interface_name: "IFoo",
-            },
-            InterfaceFieldNotImplemented {
-                position: Pos {
-                    line: 8,
-                    column: 17,
-                    builtin: false,
-                },
-                field_name: "bar",
                 interface_name: "IBar",
             },
         ]
         "###);
+    }
+
+    fn print_graphql<T: GraphQLPrinter>(value: &T) -> String {
+        let mut result = String::new();
+        let mut writer = JustWriter::new(&mut result);
+        value.print_graphql(&mut writer);
+        result
     }
 }
 
@@ -805,20 +814,21 @@ mod interfaces {
         let errors = check_type_system_document(&doc);
         assert_debug_snapshot!(errors, @r###"
         [
-            ArgumentTypeNonNullAgainstInterface {
-                position: Pos {
-                    line: 19,
-                    column: 35,
-                    builtin: false,
-                },
-                interface_name: "IBar",
-            },
             FieldTypeMisMatchWithInterface {
                 position: Pos {
-                    line: 19,
+                    line: 10,
                     column: 16,
                     builtin: false,
                 },
+                interface_name: "IFoo",
+            },
+            InterfaceFieldNotImplemented {
+                position: Pos {
+                    line: 8,
+                    column: 22,
+                    builtin: false,
+                },
+                field_name: "bar",
                 interface_name: "IBar",
             },
             InterfaceArgumentNotImplemented {
@@ -846,21 +856,20 @@ mod interfaces {
                 },
                 interface_name: "IBar",
             },
+            ArgumentTypeNonNullAgainstInterface {
+                position: Pos {
+                    line: 19,
+                    column: 35,
+                    builtin: false,
+                },
+                interface_name: "IBar",
+            },
             FieldTypeMisMatchWithInterface {
                 position: Pos {
-                    line: 10,
+                    line: 19,
                     column: 16,
                     builtin: false,
                 },
-                interface_name: "IFoo",
-            },
-            InterfaceFieldNotImplemented {
-                position: Pos {
-                    line: 8,
-                    column: 22,
-                    builtin: false,
-                },
-                field_name: "bar",
                 interface_name: "IBar",
             },
         ]

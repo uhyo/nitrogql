@@ -61,14 +61,15 @@ impl<OriginalType: HasPos, ExtensionType: HasPos> ExtensionList<'_, OriginalType
     }
     pub fn add_extension(&mut self, extension: ExtensionType) {
         let name = extension.name().map(|str| str.to_owned());
-        let mut item = self.items.entry(name).or_default();
+        let item = self.items.entry(name).or_default();
         item.extensions.push(extension);
     }
 
     pub fn into_original_and_extensions(
         self,
     ) -> Result<Vec<(OriginalType, Vec<ExtensionType>)>, ExtensionError> {
-        self.items
+        let result: Result<Vec<_>, _> = self
+            .items
             .into_iter()
             .filter_map(|(name, item)| match item.original {
                 None => match item.extensions.into_iter().next() {
@@ -80,6 +81,10 @@ impl<OriginalType: HasPos, ExtensionType: HasPos> ExtensionList<'_, OriginalType
                 },
                 Some(orig) => Some(Ok((orig, item.extensions))),
             })
-            .collect()
+            .collect();
+        let mut result = result?;
+        // Sort by AST position for stable results
+        result.sort_by_key(|(orig, _)| *orig.position());
+        Ok(result)
     }
 }

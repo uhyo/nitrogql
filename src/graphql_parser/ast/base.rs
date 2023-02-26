@@ -34,6 +34,20 @@ impl From<&Pair<'_, Rule>> for Pos {
     }
 }
 
+impl Ord for Pos {
+    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+        self.line
+            .cmp(&other.line)
+            .then(self.column.cmp(&other.column))
+    }
+}
+
+impl PartialOrd for Pos {
+    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
 /// Knows its start position.
 pub trait HasPos {
     fn position(&self) -> &Pos;

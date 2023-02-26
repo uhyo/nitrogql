@@ -36,12 +36,17 @@ pub fn check_valid_implementation(
 
         // field must include an argument of the same name for every argument defined in implementedField.
         for imp_arg in imp_field.arguments.iter().flat_map(|args| args.input_values.iter()) {
-            let Some(field_arg) = field.arguments.iter().flat_map(|args| args.input_values.iter())
-            .find(|arg| arg.name.name == imp_arg.name.name)
-            
-             else {
-                result.push(CheckTypeSystemError::InterfaceArgumentNotImplemented { position: field.name.position,
-                    argument_name: imp_arg.name.name.to_owned(), interface_name: interface.name.name.to_owned() });
+            let Some(field_arg) =
+                field.arguments
+                .iter()
+                .flat_map(|args| args.input_values.iter())
+                .find(|arg| arg.name.name == imp_arg.name.name)
+            else {
+                result.push(CheckTypeSystemError::InterfaceArgumentNotImplemented {
+                    position: field.name.position,
+                    argument_name: imp_arg.name.name.to_owned(),
+                    interface_name: interface.name.name.to_owned(),
+                });
                 continue;
             };
             // That named argument on field must accept the same type (invariant) as that named argument on implementedField.
@@ -51,10 +56,16 @@ pub fn check_valid_implementation(
         }
         // field may include additional arguments not defined in implementedField, but any additional argument must not be required, e.g. must not be of a non-nullable type.
         if let Some(ref arguments) = field.arguments {
-            for field_arg in arguments.input_values.iter().filter(|arg| {
-                imp_field.arguments.iter().flat_map(|imp_args| imp_args.input_values.iter()).find(|imp_arg| imp_arg.name.name == arg.name.name)
-                .is_none()
-            }) {
+            for field_arg in
+                arguments.input_values
+                .iter()
+                .filter(|arg| {
+                    imp_field.arguments
+                        .iter()
+                        .flat_map(|imp_args| imp_args.input_values.iter())
+                        .find(|imp_arg| imp_arg.name.name == arg.name.name)
+                        .is_none()
+                }) {
                 if field_arg.r#type.is_nonnull() {
                     result.push(CheckTypeSystemError::ArgumentTypeNonNullAgainstInterface { position: field_arg.name.position, interface_name: interface.name.name.to_owned() })
                 }
