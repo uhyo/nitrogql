@@ -42,12 +42,12 @@ mod directives {
         // A directive definition must not contain the use of a directive which references itself indirectly by referencing a Type or Directive which transitively includes a reference to this directive.
         let doc = parse_to_type_system_document(
             "
-        directive @heyhey(arg1: MyType!) on OBJECT
+        directive @heyhey(arg1: MyType!) on INPUT_OBJECT
         input MyType @heyhey {
             foo: Int!
         }
 
-        directive @wow(arg1: MyType2!) on FIELD_DEFINITION
+        directive @wow(arg1: MyType2!) on INPUT_FIELD_DEFINITION
         input MyType2 {
             foo: Int! @wow
         }
@@ -433,8 +433,8 @@ mod objects {
             union XYZ = X | Y | Z
             enum ABC { A B C }
             input InputObj {
-                abc: ABC!
-                xyz: XYZ!
+                field: Int!
+                field2: Boolean!
             }
             type X { x: Int! } type Y { y: Int! } type Z { z: Int! }
         ",
@@ -708,8 +708,8 @@ mod interfaces {
             union XYZ = X | Y | Z
             enum ABC { A B C }
             input InputObj {
-                abc: ABC!
-                xyz: XYZ!
+                field: Int!
+                field2: Boolean!
             }
             type X { x: Int! } type Y { y: Int! } type Z { z: Int! }
         ",
@@ -991,7 +991,7 @@ mod unions {
             union Union = Obj
             enum Enum { A B C }
             input Input {
-                obj: Obj!
+                enum: Enum!
             }
         ",
         );
@@ -1095,6 +1095,149 @@ mod enums {
                     builtin: false,
                 },
                 name: "y",
+            },
+        ]
+        "###);
+    }
+}
+
+#[cfg(test)]
+mod input_objects {
+    use insta::assert_debug_snapshot;
+
+    use crate::type_system_sanitizer::{
+        check_type_system_document, tests::parse_to_type_system_document,
+    };
+
+    #[test]
+    fn reserved_name() {
+        let doc = parse_to_type_system_document(
+            "
+            input __Obj { 
+                field: Int!
+            }
+        ",
+        );
+        let errors = check_type_system_document(&doc);
+        assert_debug_snapshot!(errors, @r###"
+        [
+            UnscoUnsco {
+                position: Pos {
+                    line: 1,
+                    column: 18,
+                    builtin: false,
+                },
+            },
+        ]
+        "###);
+    }
+
+    #[test]
+    fn wrong_directive_location() {
+        let doc = parse_to_type_system_document(
+            "
+            directive @x on INPUT_OBJECT
+            directive @y on INPUT_FIELD_DEFINITION
+            directive @z on INPUT_OBJECT | INPUT_FIELD_DEFINITION
+            input Input @x@y@z {
+                field: Int! @x
+                field2: Int! @y
+                field3: Int! @z
+            }
+        ",
+        );
+        let errors = check_type_system_document(&doc);
+        assert_debug_snapshot!(errors, @r###"
+        [
+            DirectiveLocationNotAllowed {
+                position: Pos {
+                    line: 4,
+                    column: 26,
+                    builtin: false,
+                },
+                name: "y",
+            },
+            DirectiveLocationNotAllowed {
+                position: Pos {
+                    line: 5,
+                    column: 28,
+                    builtin: false,
+                },
+                name: "x",
+            },
+        ]
+        "###);
+    }
+
+    #[test]
+    fn field_definition() {
+        let doc = parse_to_type_system_document(
+            "
+            input Input {
+                __field: Int!
+                field2: Int!
+                field2: Int!
+            }
+        ",
+        );
+        let errors = check_type_system_document(&doc);
+        assert_debug_snapshot!(errors, @r###"
+        [
+            UnscoUnsco {
+                position: Pos {
+                    line: 2,
+                    column: 16,
+                    builtin: false,
+                },
+            },
+            DuplicatedName {
+                position: Pos {
+                    line: 4,
+                    column: 16,
+                    builtin: false,
+                },
+                name: "field2",
+            },
+        ]
+        "###);
+    }
+
+    #[test]
+    fn field_output_type() {
+        let doc = parse_to_type_system_document(
+            "
+            input Input {
+                scalar: Int!
+                object: MyType!
+                union: MyUnion!
+                enum: MyEnum!
+                input: Input
+            }
+            type MyType {
+                field: Int!
+            }
+            union MyUnion = MyType
+            enum MyEnum { A B C }
+        ",
+        );
+        let errors = check_type_system_document(&doc);
+        assert_debug_snapshot!(errors, @r###"
+        [
+            NoOutputType {
+                position: Pos {
+                    line: 3,
+                    column: 24,
+                    builtin: false,
+                },
+                name: "MyType",
+            },
+            NoOutputType {
+                position: Pos {
+                    line: 4,
+                    column: 23,
+                    builtin: false,
+                },
+                name: "MyUnion",
             },
         ]
         "###);

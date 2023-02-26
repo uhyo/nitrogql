@@ -24,7 +24,7 @@ impl TypeKind {
     }
 }
 
-/// classifies given type into output, input or both,
+/// classifies given type into output, input or both.
 pub fn kind_of_type(definitions: &DefinitionMap, ty: &Type) -> Option<TypeKind> {
     let ty = ty.unwrapped_type();
     let ty_def = definitions.types.get(ty.name.name);

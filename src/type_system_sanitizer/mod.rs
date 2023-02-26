@@ -6,9 +6,9 @@ use crate::graphql_parser::ast::{
     base::{HasPos, Ident, Pos},
     directive::Directive,
     type_system::{
-        ArgumentsDefinition, DirectiveDefinition, EnumTypeDefinition, InterfaceTypeDefinition,
-        ObjectTypeDefinition, ScalarTypeDefinition, SchemaDefinition, TypeDefinition,
-        TypeSystemDefinition, UnionTypeDefinition,
+        ArgumentsDefinition, DirectiveDefinition, EnumTypeDefinition, InputObjectTypeDefinition,
+        InterfaceTypeDefinition, ObjectTypeDefinition, ScalarTypeDefinition, SchemaDefinition,
+        TypeDefinition, TypeSystemDefinition, UnionTypeDefinition,
     },
     TypeSystemDocument,
 };
@@ -61,7 +61,9 @@ pub fn check_type_system_document(document: &TypeSystemDocument) -> Vec<CheckTyp
                 TypeDefinition::Enum(ref d) => {
                     check_enum(d, &definition_map, &mut result);
                 }
-                _ => {}
+                TypeDefinition::InputObject(ref d) => {
+                    check_input_object(d, &definition_map, &mut result);
+                }
             },
             TypeSystemDefinition::DirectiveDefinition(ref d) => {
                 check_directive(d, &definition_map, &mut result);
@@ -386,6 +388,55 @@ fn check_enum(
             seen_values.push(v.name.name);
         }
         check_directives(definitions, &v.directives, "ENUM_VALUE", result)
+    }
+}
+
+fn check_input_object(
+    input: &InputObjectTypeDefinition,
+    definitions: &DefinitionMap,
+    result: &mut Vec<CheckTypeSystemError>,
+) {
+    if name_starts_with_unscounsco(&input.name) {
+        result.push(CheckTypeSystemError::UnscoUnsco {
+            position: *input.name.position(),
+        })
+    }
+    check_directives(definitions, &input.directives, "INPUT_OBJECT", result);
+
+    let mut seen_fields = vec![];
+    for f in input.fields.iter() {
+        if seen_fields.contains(&f.name.name) {
+            result.push(CheckTypeSystemError::DuplicatedName {
+                position: f.name.position,
+                name: f.name.name.to_owned(),
+            })
+        } else {
+            seen_fields.push(f.name.name);
+        }
+        if name_starts_with_unscounsco(&f.name) {
+            result.push(CheckTypeSystemError::UnscoUnsco {
+                position: f.name.position,
+            });
+        }
+        check_directives(definitions, &f.directives, "INPUT_FIELD_DEFINITION", result);
+
+        let type_is_not_input_type =
+            kind_of_type(definitions, &f.r#type).map(|k| !k.is_input_type());
+        match type_is_not_input_type {
+            None => {
+                result.push(CheckTypeSystemError::UnknownType {
+                    position: *f.r#type.position(),
+                    name: f.r#type.unwrapped_type().name.name.to_owned(),
+                });
+            }
+            Some(true) => {
+                result.push(CheckTypeSystemError::NoOutputType {
+                    position: *f.r#type.position(),
+                    name: f.r#type.unwrapped_type().name.name.to_owned(),
+                });
+            }
+            Some(false) => {}
+        }
     }
 }
 
