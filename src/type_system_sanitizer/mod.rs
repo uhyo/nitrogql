@@ -8,6 +8,7 @@ use crate::graphql_parser::ast::{
     type_system::{
         ArgumentsDefinition, DirectiveDefinition, InterfaceTypeDefinition, ObjectTypeDefinition,
         ScalarTypeDefinition, SchemaDefinition, TypeDefinition, TypeSystemDefinition,
+        UnionTypeDefinition,
     },
     TypeSystemDocument,
 };
@@ -53,6 +54,9 @@ pub fn check_type_system_document(document: &TypeSystemDocument) -> Vec<CheckTyp
                 }
                 TypeDefinition::Interface(ref d) => {
                     check_interface(d, &definition_map, &mut result);
+                }
+                TypeDefinition::Union(ref d) => {
+                    check_union(d, &definition_map, &mut result);
                 }
                 _ => {}
             },
@@ -129,6 +133,8 @@ pub enum CheckTypeSystemError {
         position: Pos,
         interface_name: String,
     },
+    #[error("'{member_name}' is not an object type")]
+    NonObjectTypeUnionMember { position: Pos, member_name: String },
 }
 
 fn generate_definition_map<'a>(document: &'a TypeSystemDocument<'a>) -> DefinitionMap<'a> {
@@ -201,6 +207,8 @@ fn check_object(
             position: *object.name.position(),
         })
     }
+    check_directives(definitions, &object.directives, "OBJECT", result);
+
     let mut seen_fields = vec![];
     for f in object.fields.iter() {
         if seen_fields.contains(&f.name.name) {
@@ -256,6 +264,8 @@ fn check_interface(
             position: *interface.name.position(),
         })
     }
+    check_directives(definitions, &interface.directives, "INTERFACE", result);
+
     let mut seen_fields = vec![];
     for f in interface.fields.iter() {
         if seen_fields.contains(&f.name.name) {
@@ -304,6 +314,49 @@ fn check_interface(
             def,
             result,
         );
+    }
+}
+
+fn check_union(
+    union: &UnionTypeDefinition,
+    definitions: &DefinitionMap,
+    result: &mut Vec<CheckTypeSystemError>,
+) {
+    if name_starts_with_unscounsco(&union.name) {
+        result.push(CheckTypeSystemError::UnscoUnsco {
+            position: *union.name.position(),
+        })
+    }
+    check_directives(definitions, &union.directives, "UNION", result);
+
+    let mut seen_members = vec![];
+    for member in union.members.iter() {
+        if seen_members.contains(&member.name) {
+            result.push(CheckTypeSystemError::DuplicatedName {
+                position: member.position,
+                name: member.name.to_owned(),
+            })
+        } else {
+            seen_members.push(member.name);
+        }
+        // The member types of a Union type must all be Object base types;
+        let member_type_def = definitions.types.get(member.name);
+        match member_type_def {
+            None => {
+                result.push(CheckTypeSystemError::UnknownType {
+                    position: member.position,
+                    name: member.name.to_owned(),
+                });
+            }
+            Some(member_type_def) => {
+                if !matches!(member_type_def, TypeDefinition::Object(_)) {
+                    result.push(CheckTypeSystemError::NonObjectTypeUnionMember {
+                        position: member.position,
+                        member_name: member.name.to_owned(),
+                    });
+                }
+            }
+        }
     }
 }
 

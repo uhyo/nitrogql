@@ -159,7 +159,7 @@ mod directives {
         interface MyInterface {
             foo: String
         }
-        union MyUnion = MyType | MyInterface
+        union MyUnion = MyType
         ",
         );
         let errors = check_type_system_document(&doc);
@@ -436,6 +436,7 @@ mod objects {
                 abc: ABC!
                 xyz: XYZ!
             }
+            type X { x: Int! } type Y { y: Int! } type Z { z: Int! }
         ",
         );
         let errors = check_type_system_document(&doc);
@@ -710,6 +711,7 @@ mod interfaces {
                 abc: ABC!
                 xyz: XYZ!
             }
+            type X { x: Int! } type Y { y: Int! } type Z { z: Int! }
         ",
         );
         let errors = check_type_system_document(&doc);
@@ -894,6 +896,139 @@ mod interfaces {
                     column: 35,
                     builtin: false,
                 },
+            },
+        ]
+        "###);
+    }
+}
+
+#[cfg(test)]
+mod unions {
+    use insta::assert_debug_snapshot;
+
+    use crate::type_system_sanitizer::{
+        check_type_system_document, tests::parse_to_type_system_document,
+    };
+
+    #[test]
+    fn reserved_name() {
+        let doc = parse_to_type_system_document(
+            "
+            union __U = A | B | C
+            type A { a: Int! }
+            type B { a: Int! }
+            type C { a: Int! }
+        ",
+        );
+        let errors = check_type_system_document(&doc);
+        assert_debug_snapshot!(errors, @r###"
+        [
+            UnscoUnsco {
+                position: Pos {
+                    line: 1,
+                    column: 18,
+                    builtin: false,
+                },
+            },
+        ]
+        "###);
+    }
+    #[test]
+    fn wrong_directive_location() {
+        let doc = parse_to_type_system_document(
+            "
+            directive @wow repeatable on INPUT_OBJECT
+            union Wow @wow = A | B
+            type A { a: Int! }
+            type B { a: Int! }
+        ",
+        );
+        let errors = check_type_system_document(&doc);
+        assert_debug_snapshot!(errors, @r###"
+        [
+            DirectiveLocationNotAllowed {
+                position: Pos {
+                    line: 2,
+                    column: 22,
+                    builtin: false,
+                },
+                name: "wow",
+            },
+        ]
+        "###);
+    }
+
+    #[test]
+    fn unknown_member() {
+        let doc = parse_to_type_system_document(
+            "
+            union ABC = A | B | C
+            type A { a: Int! }
+            type B { a: Int! }
+        ",
+        );
+        let errors = check_type_system_document(&doc);
+        assert_debug_snapshot!(errors, @r###"
+        [
+            UnknownType {
+                position: Pos {
+                    line: 1,
+                    column: 32,
+                    builtin: false,
+                },
+                name: "C",
+            },
+        ]
+        "###);
+    }
+
+    #[test]
+    fn non_object_member() {
+        let doc = parse_to_type_system_document(
+            "
+            union Test = Int | Obj | Union | Enum | Input
+            type Obj { a: Int! }
+            union Union = Obj
+            enum Enum { A B C }
+            input Input {
+                obj: Obj!
+            }
+        ",
+        );
+        let errors = check_type_system_document(&doc);
+        assert_debug_snapshot!(errors, @r###"
+        [
+            NonObjectTypeUnionMember {
+                position: Pos {
+                    line: 1,
+                    column: 25,
+                    builtin: false,
+                },
+                member_name: "Int",
+            },
+            NonObjectTypeUnionMember {
+                position: Pos {
+                    line: 1,
+                    column: 37,
+                    builtin: false,
+                },
+                member_name: "Union",
+            },
+            NonObjectTypeUnionMember {
+                position: Pos {
+                    line: 1,
+                    column: 45,
+                    builtin: false,
+                },
+                member_name: "Enum",
+            },
+            NonObjectTypeUnionMember {
+                position: Pos {
+                    line: 1,
+                    column: 52,
+                    builtin: false,
+                },
+                member_name: "Input",
             },
         ]
         "###);
