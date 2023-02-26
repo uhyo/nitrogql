@@ -6,7 +6,8 @@ use crate::graphql_parser::ast::{
     base::{HasPos, Ident, Pos},
     directive::Directive,
     type_system::{
-        DirectiveDefinition, ScalarTypeDefinition, TypeDefinition, TypeSystemDefinition,
+        DirectiveDefinition, ScalarTypeDefinition, SchemaDefinition, TypeDefinition,
+        TypeSystemDefinition,
     },
     TypeSystemDocument,
 };
@@ -28,6 +29,9 @@ pub fn check_type_system_document(document: &TypeSystemDocument) -> Vec<CheckTyp
 
     for def in document.definitions.iter() {
         match def {
+            TypeSystemDefinition::SchemaDefinition(ref d) => {
+                check_schema(d, &definition_map, &mut result);
+            }
             TypeSystemDefinition::DirectiveDefinition(ref d) => {
                 check_directive(d, &definition_map, &mut result);
             }
@@ -53,6 +57,8 @@ pub enum CheckTypeSystemError {
     UnknownDirective { position: Pos, name: String },
     #[error("Directive '{name}' is not allowed for this location")]
     DirectiveLocationNotAllowed { position: Pos, name: String },
+    #[error("Repeated application of directive '{name}' is not allowed")]
+    RepeatedDirective { position: Pos, name: String },
     #[error("Directive '{name}' is recursing")]
     RecursingDirective { position: Pos, name: String },
     #[error("Output type '{name}' is not allowed here")]
@@ -79,6 +85,14 @@ fn generate_definition_map<'a>(document: &'a TypeSystemDocument<'a>) -> Definiti
     }
 
     result
+}
+
+fn check_schema(
+    d: &SchemaDefinition,
+    definitions: &DefinitionMap,
+    result: &mut Vec<CheckTypeSystemError>,
+) {
+    check_directives(definitions, &d.directives, "SCHEMA", result);
 }
 
 fn check_directive<'a>(
@@ -132,11 +146,7 @@ fn validate_scalars(
                 position: *scalar.name.position(),
             })
         }
-        result.append(&mut check_directives(
-            definition_map,
-            &scalar.directives,
-            "SCALAR",
-        ))
+        check_directives(definition_map, &scalar.directives, "SCALAR", &mut result);
     }
 
     result
@@ -150,8 +160,9 @@ fn check_directives(
     definitions: &DefinitionMap,
     directives: &[Directive],
     current_position: &str,
-) -> Vec<CheckTypeSystemError> {
-    let mut result = vec![];
+    result: &mut Vec<CheckTypeSystemError>,
+) {
+    let mut seen_directives = vec![];
     for d in directives {
         match definitions.directives.get(d.name.name) {
             None => result.push(CheckTypeSystemError::UnknownDirective {
@@ -170,8 +181,17 @@ fn check_directives(
                         name: d.name.name.to_owned(),
                     });
                 }
+                if seen_directives.contains(&d.name.name) {
+                    if def.repeatable.is_none() {
+                        result.push(CheckTypeSystemError::RepeatedDirective {
+                            position: *d.position(),
+                            name: d.name.name.to_owned(),
+                        })
+                    }
+                } else {
+                    seen_directives.push(d.name.name);
+                }
             }
         }
     }
-    result
 }
