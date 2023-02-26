@@ -1036,6 +1036,72 @@ mod unions {
 }
 
 #[cfg(test)]
+mod enums {
+    use insta::assert_debug_snapshot;
+
+    use crate::type_system_sanitizer::{
+        check_type_system_document, tests::parse_to_type_system_document,
+    };
+
+    #[test]
+    fn reserved_name() {
+        let doc = parse_to_type_system_document(
+            "
+            enum __E { A }
+        ",
+        );
+        let errors = check_type_system_document(&doc);
+        assert_debug_snapshot!(errors, @r###"
+        [
+            UnscoUnsco {
+                position: Pos {
+                    line: 1,
+                    column: 17,
+                    builtin: false,
+                },
+            },
+        ]
+        "###);
+    }
+    #[test]
+    fn wrong_directive_location() {
+        let doc = parse_to_type_system_document(
+            "
+            directive @x on ENUM_VALUE
+            directive @y on ENUM
+            directive @z on ENUM | ENUM_VALUE
+            enum ABC @x@y@z {
+                A @x
+                B @y
+                C @z
+            }
+        ",
+        );
+        let errors = check_type_system_document(&doc);
+        assert_debug_snapshot!(errors, @r###"
+        [
+            DirectiveLocationNotAllowed {
+                position: Pos {
+                    line: 4,
+                    column: 21,
+                    builtin: false,
+                },
+                name: "x",
+            },
+            DirectiveLocationNotAllowed {
+                position: Pos {
+                    line: 6,
+                    column: 18,
+                    builtin: false,
+                },
+                name: "y",
+            },
+        ]
+        "###);
+    }
+}
+
+#[cfg(test)]
 fn parse_to_type_system_document(source: &str) -> TypeSystemDocument {
     let doc = parse_type_system_document(source).unwrap();
     let doc = resolve_extensions(doc).unwrap();

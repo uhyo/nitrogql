@@ -6,9 +6,9 @@ use crate::graphql_parser::ast::{
     base::{HasPos, Ident, Pos},
     directive::Directive,
     type_system::{
-        ArgumentsDefinition, DirectiveDefinition, InterfaceTypeDefinition, ObjectTypeDefinition,
-        ScalarTypeDefinition, SchemaDefinition, TypeDefinition, TypeSystemDefinition,
-        UnionTypeDefinition,
+        ArgumentsDefinition, DirectiveDefinition, EnumTypeDefinition, InterfaceTypeDefinition,
+        ObjectTypeDefinition, ScalarTypeDefinition, SchemaDefinition, TypeDefinition,
+        TypeSystemDefinition, UnionTypeDefinition,
     },
     TypeSystemDocument,
 };
@@ -57,6 +57,9 @@ pub fn check_type_system_document(document: &TypeSystemDocument) -> Vec<CheckTyp
                 }
                 TypeDefinition::Union(ref d) => {
                     check_union(d, &definition_map, &mut result);
+                }
+                TypeDefinition::Enum(ref d) => {
+                    check_enum(d, &definition_map, &mut result);
                 }
                 _ => {}
             },
@@ -357,6 +360,32 @@ fn check_union(
                 }
             }
         }
+    }
+}
+
+fn check_enum(
+    enum_def: &EnumTypeDefinition,
+    definitions: &DefinitionMap,
+    result: &mut Vec<CheckTypeSystemError>,
+) {
+    if name_starts_with_unscounsco(&enum_def.name) {
+        result.push(CheckTypeSystemError::UnscoUnsco {
+            position: *enum_def.name.position(),
+        })
+    }
+    check_directives(definitions, &enum_def.directives, "ENUM", result);
+
+    let mut seen_values = vec![];
+    for v in enum_def.values.iter() {
+        if seen_values.contains(&v.name.name) {
+            result.push(CheckTypeSystemError::DuplicatedName {
+                position: v.name.position,
+                name: v.name.name.to_owned(),
+            })
+        } else {
+            seen_values.push(v.name.name);
+        }
+        check_directives(definitions, &v.directives, "ENUM_VALUE", result)
     }
 }
 
