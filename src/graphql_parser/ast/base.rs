@@ -7,6 +7,19 @@ pub struct Pos {
     pub line: usize,
     /// 0-base column
     pub column: usize,
+    /// Flag that indicates that this Pos is not from parsed document, but is a built-in structure.
+    pub builtin: bool,
+}
+
+impl Pos {
+    /// Generates a built-in Pos.
+    pub fn builtin() -> Self {
+        Pos {
+            line: 0,
+            column: 0,
+            builtin: true,
+        }
+    }
 }
 
 impl From<&Pair<'_, Rule>> for Pos {
@@ -16,6 +29,7 @@ impl From<&Pair<'_, Rule>> for Pos {
         Pos {
             line: line - 1,
             column: column - 1,
+            builtin: false,
         }
     }
 }

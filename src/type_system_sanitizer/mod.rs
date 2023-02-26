@@ -6,17 +6,18 @@ use crate::graphql_parser::ast::{
     base::{HasPos, Ident, Pos},
     directive::Directive,
     type_system::{
-        DirectiveDefinition, ScalarTypeDefinition, SchemaDefinition, TypeDefinition,
-        TypeSystemDefinition,
+        ArgumentsDefinition, DirectiveDefinition, ObjectTypeDefinition, ScalarTypeDefinition,
+        SchemaDefinition, TypeDefinition, TypeSystemDefinition,
     },
     TypeSystemDocument,
 };
 
 use self::{
-    check_directive_recursion::check_directive_recursion, definition_map::DefinitionMap,
-    types::kind_of_type,
+    builtins::generate_builtins, check_directive_recursion::check_directive_recursion,
+    definition_map::DefinitionMap, types::kind_of_type,
 };
 
+mod builtins;
 mod check_directive_recursion;
 mod definition_map;
 mod tests;
@@ -24,7 +25,17 @@ mod types;
 
 /// Checks for invalid type system definition document.
 pub fn check_type_system_document(document: &TypeSystemDocument) -> Vec<CheckTypeSystemError> {
-    let definition_map = generate_definition_map(document);
+    let mut definition_map = generate_definition_map(document);
+    let (builtin_types, builtin_directives) = generate_builtins();
+    definition_map
+        .types
+        .extend(builtin_types.iter().map(|(key, def)| (*key, def)));
+    definition_map
+        .directives
+        .extend(builtin_directives.iter().map(|(key, def)| (*key, def)));
+
+    let definition_map = definition_map;
+
     let mut result = vec![];
 
     for def in document.definitions.iter() {
@@ -32,10 +43,18 @@ pub fn check_type_system_document(document: &TypeSystemDocument) -> Vec<CheckTyp
             TypeSystemDefinition::SchemaDefinition(ref d) => {
                 check_schema(d, &definition_map, &mut result);
             }
+            TypeSystemDefinition::TypeDefinition(ref d) => match d {
+                TypeDefinition::Scalar(ref d) => {
+                    check_scalar(d, &definition_map, &mut result);
+                }
+                TypeDefinition::Object(ref d) => {
+                    check_object(d, &definition_map, &mut result);
+                }
+                _ => {}
+            },
             TypeSystemDefinition::DirectiveDefinition(ref d) => {
                 check_directive(d, &definition_map, &mut result);
             }
-            _ => {}
         }
     }
 
@@ -63,6 +82,8 @@ pub enum CheckTypeSystemError {
     RecursingDirective { position: Pos, name: String },
     #[error("Output type '{name}' is not allowed here")]
     NoOutputType { position: Pos, name: String },
+    #[error("Input type '{name}' is not allowed here")]
+    NoInputType { position: Pos, name: String },
 }
 
 fn generate_definition_map<'a>(document: &'a TypeSystemDocument<'a>) -> DefinitionMap<'a> {
@@ -108,48 +129,91 @@ fn check_directive<'a>(
         });
     }
     if let Some(ref arg) = d.arguments {
-        let mut argument_names = HashSet::new();
-        for v in arg.input_values.iter() {
-            if name_starts_with_unscounsco(&v.name) {
-                result.push(CheckTypeSystemError::UnscoUnsco {
-                    position: *v.name.position(),
-                });
-            }
-            let name_is_new = argument_names.insert(&v.name.name);
-            if !name_is_new {
-                result.push(CheckTypeSystemError::DuplicatedName {
-                    position: *v.name.position(),
-                    name: v.name.name.to_owned(),
-                })
-            }
-            let type_is_not_input_type =
-                kind_of_type(definitions, &v.r#type).map_or(false, |k| !k.is_input_type());
-            if type_is_not_input_type {
-                result.push(CheckTypeSystemError::NoOutputType {
-                    position: *v.r#type.position(),
-                    name: v.r#type.unwrapped_type().name.name.to_owned(),
-                })
-            }
+        check_arguments_definition(arg, definitions, result);
+    }
+}
+
+fn check_scalar(
+    scalar: &ScalarTypeDefinition,
+    definition_map: &DefinitionMap,
+    result: &mut Vec<CheckTypeSystemError>,
+) {
+    if name_starts_with_unscounsco(&scalar.name) {
+        result.push(CheckTypeSystemError::UnscoUnsco {
+            position: *scalar.name.position(),
+        })
+    }
+    check_directives(definition_map, &scalar.directives, "SCALAR", result);
+}
+
+fn check_object(
+    object: &ObjectTypeDefinition,
+    definitions: &DefinitionMap,
+    result: &mut Vec<CheckTypeSystemError>,
+) {
+    if name_starts_with_unscounsco(&object.name) {
+        result.push(CheckTypeSystemError::UnscoUnsco {
+            position: *object.name.position(),
+        })
+    }
+    let mut seen_fields = vec![];
+    for f in object.fields.iter() {
+        if seen_fields.contains(&f.name.name) {
+            result.push(CheckTypeSystemError::DuplicatedName {
+                position: *f.name.position(),
+                name: f.name.name.to_owned(),
+            });
+        } else {
+            seen_fields.push(f.name.name);
+        }
+        if name_starts_with_unscounsco(&f.name) {
+            result.push(CheckTypeSystemError::UnscoUnsco {
+                position: *f.name.position(),
+            })
+        }
+        if kind_of_type(definitions, &f.r#type).map_or(false, |k| !k.is_output_type()) {
+            result.push(CheckTypeSystemError::NoInputType {
+                position: *f.r#type.position(),
+                name: f.r#type.unwrapped_type().name.name.to_owned(),
+            });
+        }
+        if let Some(ref arg) = f.arguments {
+            check_arguments_definition(arg, definitions, result)
         }
     }
 }
 
-fn validate_scalars(
-    scalars: &[&ScalarTypeDefinition],
-    definition_map: &DefinitionMap,
-) -> Vec<CheckTypeSystemError> {
-    let mut result = vec![];
-
-    for scalar in scalars {
-        if name_starts_with_unscounsco(&scalar.name) {
+fn check_arguments_definition(
+    def: &ArgumentsDefinition,
+    definitions: &DefinitionMap,
+    result: &mut Vec<CheckTypeSystemError>,
+) {
+    let mut argument_names = vec![];
+    for v in def.input_values.iter() {
+        if name_starts_with_unscounsco(&v.name) {
             result.push(CheckTypeSystemError::UnscoUnsco {
-                position: *scalar.name.position(),
+                position: *v.name.position(),
+            });
+        }
+        if argument_names.contains(&v.name.name) {
+            result.push(CheckTypeSystemError::DuplicatedName {
+                position: *v.name.position(),
+                name: v.name.name.to_owned(),
+            })
+        } else {
+            argument_names.push(v.name.name);
+        }
+        let type_is_not_input_type =
+            kind_of_type(definitions, &v.r#type).map_or(false, |k| !k.is_input_type());
+        if type_is_not_input_type {
+            result.push(CheckTypeSystemError::NoOutputType {
+                position: *v.r#type.position(),
+                name: v.r#type.unwrapped_type().name.name.to_owned(),
             })
         }
-        check_directives(definition_map, &scalar.directives, "SCALAR", &mut result);
-    }
 
-    result
+        check_directives(definitions, &v.directives, "ARGUMENT_DEFINITION", result)
+    }
 }
 
 fn name_starts_with_unscounsco(name: &Ident) -> bool {

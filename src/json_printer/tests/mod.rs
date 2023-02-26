@@ -6,7 +6,11 @@ mod tests {
 
     use super::super::to_json::JsonPrintable;
 
-    static POS: Pos = Pos { line: 0, column: 0 };
+    static POS: Pos = Pos {
+        line: 0,
+        column: 0,
+        builtin: false,
+    };
 
     mod value {
         use super::{print_json_to_string, POS};

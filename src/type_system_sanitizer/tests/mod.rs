@@ -19,7 +19,7 @@ mod directives {
         // A directive definition must not contain the use of a directive which references itself directly.
         let doc = parse_to_type_system_document(
             "
-        directive @heyhey(arg1: Int! @heyhey) on SCHEMA
+        directive @heyhey(arg1: Int! @heyhey) on ARGUMENT_DEFINITION | SCHEMA
         ",
         );
         let errors = check_type_system_document(&doc);
@@ -29,6 +29,7 @@ mod directives {
                 position: Pos {
                     line: 1,
                     column: 8,
+                    builtin: false,
                 },
                 name: "heyhey",
             },
@@ -59,6 +60,7 @@ mod directives {
                 position: Pos {
                     line: 1,
                     column: 8,
+                    builtin: false,
                 },
                 name: "heyhey",
             },
@@ -66,6 +68,7 @@ mod directives {
                 position: Pos {
                     line: 6,
                     column: 8,
+                    builtin: false,
                 },
                 name: "wow",
             },
@@ -88,6 +91,7 @@ mod directives {
                 position: Pos {
                     line: 1,
                     column: 19,
+                    builtin: false,
                 },
             },
         ]
@@ -109,6 +113,7 @@ mod directives {
                 position: Pos {
                     line: 1,
                     column: 26,
+                    builtin: false,
                 },
             },
         ]
@@ -130,6 +135,7 @@ mod directives {
                 position: Pos {
                     line: 1,
                     column: 41,
+                    builtin: false,
                 },
                 name: "arg1",
             },
@@ -163,6 +169,7 @@ mod directives {
                 position: Pos {
                     line: 2,
                     column: 18,
+                    builtin: false,
                 },
                 name: "MyType",
             },
@@ -170,6 +177,7 @@ mod directives {
                 position: Pos {
                     line: 3,
                     column: 18,
+                    builtin: false,
                 },
                 name: "MyInterface",
             },
@@ -177,6 +185,7 @@ mod directives {
                 position: Pos {
                     line: 4,
                     column: 18,
+                    builtin: false,
                 },
                 name: "MyUnion",
             },
@@ -223,6 +232,7 @@ mod schemas {
                 position: Pos {
                     line: 2,
                     column: 20,
+                    builtin: false,
                 },
                 name: "wow",
             },
@@ -259,6 +269,7 @@ mod schemas {
                 position: Pos {
                     line: 2,
                     column: 15,
+                    builtin: false,
                 },
                 name: "wow",
             },
@@ -267,6 +278,235 @@ mod schemas {
     }
 }
 
+#[cfg(test)]
+mod scalars {
+    use insta::assert_debug_snapshot;
+
+    use crate::type_system_sanitizer::{
+        check_type_system_document, tests::parse_to_type_system_document,
+    };
+
+    #[test]
+    fn reserved_name() {
+        let doc = parse_to_type_system_document(
+            "
+            scalar __Int
+        ",
+        );
+        let errors = check_type_system_document(&doc);
+        assert_debug_snapshot!(errors, @r###"
+        [
+            UnscoUnsco {
+                position: Pos {
+                    line: 1,
+                    column: 19,
+                    builtin: false,
+                },
+            },
+        ]
+        "###);
+    }
+    #[test]
+    fn wrong_directive_location() {
+        let doc = parse_to_type_system_document(
+            "
+        directive @wow repeatable on INPUT_OBJECT
+        scalar Wow @wow
+        ",
+        );
+        let errors = check_type_system_document(&doc);
+        assert_debug_snapshot!(errors, @r###"
+        [
+            DirectiveLocationNotAllowed {
+                position: Pos {
+                    line: 2,
+                    column: 19,
+                    builtin: false,
+                },
+                name: "wow",
+            },
+        ]
+        "###);
+    }
+}
+
+#[cfg(test)]
+mod objects {
+    use insta::assert_debug_snapshot;
+
+    use crate::type_system_sanitizer::{
+        check_type_system_document, tests::parse_to_type_system_document,
+    };
+
+    // https://spec.graphql.org/draft/#sec-Objects.Type-Validation
+
+    #[test]
+    fn reserved_name() {
+        let doc = parse_to_type_system_document(
+            "
+            type __MyType {
+                foo: String!
+            }
+        ",
+        );
+        let errors = check_type_system_document(&doc);
+        assert_debug_snapshot!(errors, @r###"
+        [
+            UnscoUnsco {
+                position: Pos {
+                    line: 1,
+                    column: 17,
+                    builtin: false,
+                },
+            },
+        ]
+        "###);
+    }
+
+    #[test]
+    fn duplicated_field() {
+        // The field must have a unique name within that Object type; no two fields may share the same name.
+        let doc = parse_to_type_system_document(
+            "
+            type MyType {
+                foo: String!
+                foo: Int!
+            }
+        ",
+        );
+        let errors = check_type_system_document(&doc);
+        assert_debug_snapshot!(errors, @r###"
+        [
+            DuplicatedName {
+                position: Pos {
+                    line: 3,
+                    column: 16,
+                    builtin: false,
+                },
+                name: "foo",
+            },
+        ]
+        "###);
+    }
+
+    /// The field must not have a name which begins with the characters "__" (two underscores).
+    #[test]
+    fn reserved_field_name() {
+        let doc = parse_to_type_system_document(
+            "
+            type MyType {
+                __foo: String!
+            }
+        ",
+        );
+        let errors = check_type_system_document(&doc);
+        assert_debug_snapshot!(errors, @r###"
+        [
+            UnscoUnsco {
+                position: Pos {
+                    line: 2,
+                    column: 16,
+                    builtin: false,
+                },
+            },
+        ]
+        "###);
+    }
+
+    /// The field must return a type where IsOutputType(fieldType) returns true.
+    #[test]
+    fn field_output_type() {
+        let doc = parse_to_type_system_document(
+            "
+            type MyType {
+                scalar_field: String!
+                object_field: [MyObj]!
+                interface_field: I
+                union_field: XYZ
+                enum_field: ABC!
+                input_object_field: InputObj
+            }
+            type MyObj { foo: Int }
+            interface I { foo: Int }
+            union XYZ = X | Y | Z
+            enum ABC { A B C }
+            input InputObj {
+                abc: ABC!
+                xyz: XYZ!
+            }
+        ",
+        );
+        let errors = check_type_system_document(&doc);
+        assert_debug_snapshot!(errors, @r###"
+        [
+            NoInputType {
+                position: Pos {
+                    line: 7,
+                    column: 36,
+                    builtin: false,
+                },
+                name: "InputObj",
+            },
+        ]
+        "###);
+    }
+
+    #[test]
+    fn argument_check() {
+        let doc = parse_to_type_system_document(
+            "
+            type MyType {
+                field1(__arg: Int!): MyType!
+                field1: MyType!
+                field2(arg: Int!, arg: Int!): MyType!
+                field3(arg: MyType!): Int!
+                field4(
+                    arg: Int!
+                    @deprecated
+                ): String!
+            }
+        ",
+        );
+        let errors = check_type_system_document(&doc);
+        assert_debug_snapshot!(errors, @r###"
+        [
+            UnscoUnsco {
+                position: Pos {
+                    line: 2,
+                    column: 23,
+                    builtin: false,
+                },
+            },
+            DuplicatedName {
+                position: Pos {
+                    line: 3,
+                    column: 16,
+                    builtin: false,
+                },
+                name: "field1",
+            },
+            DuplicatedName {
+                position: Pos {
+                    line: 4,
+                    column: 34,
+                    builtin: false,
+                },
+                name: "arg",
+            },
+            NoOutputType {
+                position: Pos {
+                    line: 5,
+                    column: 28,
+                    builtin: false,
+                },
+                name: "MyType",
+            },
+        ]
+        "###);
+    }
+}
+
+#[cfg(test)]
 fn parse_to_type_system_document(source: &str) -> TypeSystemDocument {
     let doc = parse_type_system_document(source).unwrap();
     let doc = resolve_extensions(doc).unwrap();
