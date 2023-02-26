@@ -1,20 +1,22 @@
-use crate::graphql_parser::ast::{type_system::{InterfaceTypeDefinition, ObjectTypeDefinition}, r#type::{Type, NamedType}, base::Ident};
+use crate::graphql_parser::ast::{type_system::{InterfaceTypeDefinition, ObjectTypeDefinition, FieldDefinition}, r#type::{Type, NamedType}, base::Ident};
 
 use super::{CheckTypeSystemError, types::is_subtype, definition_map::DefinitionMap};
 
-/// Checks if given object validly implements given interface.
+/// Checks if given object or interface validly implements given interface.
 /// https://spec.graphql.org/draft/#IsValidImplementation()
 pub fn check_valid_implementation(
     definitions: &DefinitionMap,
-    object: &ObjectTypeDefinition,
+    object_name: &Ident,
+    fields: &[FieldDefinition],
+    implements: &[Ident],
     interface: &InterfaceTypeDefinition,
     result: &mut Vec<CheckTypeSystemError>,
 ) {
     // If implementedType declares it implements any interfaces, type must also declare it implements those interfaces.
     for imp in interface.implements.iter() {
-        if !object.implements.iter().any(|ident| ident.name == imp.name) {
+        if !implements.iter().any(|ident| ident.name == imp.name) {
             result.push(CheckTypeSystemError::InterfaceNotImplemented {
-                position: object.name.position,
+                position: object_name.position,
                 name: imp.name.to_owned(),
             });
         }
@@ -22,9 +24,9 @@ pub fn check_valid_implementation(
     }
     // type must include a field of the same name for every field defined in implementedType.
     for imp_field in interface.fields.iter() {
-        let Some(field) = object.fields.iter().find(|field| imp_field.name.name == field.name.name) else {
+        let Some(field) = fields.iter().find(|field| imp_field.name.name == field.name.name) else {
             result.push(CheckTypeSystemError::InterfaceFieldNotImplemented {
-                position: object.name.position,
+                position: object_name.position,
                 field_name: imp_field.name.name.to_owned(),
                 interface_name: 
                 interface.name.name.to_owned()

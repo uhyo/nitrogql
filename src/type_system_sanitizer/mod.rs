@@ -6,8 +6,8 @@ use crate::graphql_parser::ast::{
     base::{HasPos, Ident, Pos},
     directive::Directive,
     type_system::{
-        ArgumentsDefinition, DirectiveDefinition, ObjectTypeDefinition, ScalarTypeDefinition,
-        SchemaDefinition, TypeDefinition, TypeSystemDefinition,
+        ArgumentsDefinition, DirectiveDefinition, InterfaceTypeDefinition, ObjectTypeDefinition,
+        ScalarTypeDefinition, SchemaDefinition, TypeDefinition, TypeSystemDefinition,
     },
     TypeSystemDocument,
 };
@@ -51,6 +51,9 @@ pub fn check_type_system_document(document: &TypeSystemDocument) -> Vec<CheckTyp
                 TypeDefinition::Object(ref d) => {
                     check_object(d, &definition_map, &mut result);
                 }
+                TypeDefinition::Interface(ref d) => {
+                    check_interface(d, &definition_map, &mut result);
+                }
                 _ => {}
             },
             TypeSystemDefinition::DirectiveDefinition(ref d) => {
@@ -91,6 +94,8 @@ pub enum CheckTypeSystemError {
     NotInterface { position: Pos, name: String },
     #[error("This type must implement interface '{name}'")]
     InterfaceNotImplemented { position: Pos, name: String },
+    #[error("Interface must not implement itself")]
+    NoImplementSelf { position: Pos },
     #[error("This type must have a field '{field_name}' from interface '{interface_name}'")]
     InterfaceFieldNotImplemented {
         position: Pos,
@@ -230,7 +235,75 @@ fn check_object(
             result.push(CheckTypeSystemError::NotInterface  { position: *interface.position(), name: interface.name.to_owned() });
             continue;
         };
-        check_valid_implementation(definitions, object, def, result);
+        check_valid_implementation(
+            definitions,
+            &object.name,
+            &object.fields,
+            &object.implements,
+            def,
+            result,
+        );
+    }
+}
+
+fn check_interface(
+    interface: &InterfaceTypeDefinition,
+    definitions: &DefinitionMap,
+    result: &mut Vec<CheckTypeSystemError>,
+) {
+    if name_starts_with_unscounsco(&interface.name) {
+        result.push(CheckTypeSystemError::UnscoUnsco {
+            position: *interface.name.position(),
+        })
+    }
+    let mut seen_fields = vec![];
+    for f in interface.fields.iter() {
+        if seen_fields.contains(&f.name.name) {
+            result.push(CheckTypeSystemError::DuplicatedName {
+                position: *f.name.position(),
+                name: f.name.name.to_owned(),
+            });
+        } else {
+            seen_fields.push(f.name.name);
+        }
+        if name_starts_with_unscounsco(&f.name) {
+            result.push(CheckTypeSystemError::UnscoUnsco {
+                position: *f.name.position(),
+            })
+        }
+        if kind_of_type(definitions, &f.r#type).map_or(false, |k| !k.is_output_type()) {
+            result.push(CheckTypeSystemError::NoInputType {
+                position: *f.r#type.position(),
+                name: f.r#type.unwrapped_type().name.name.to_owned(),
+            });
+        }
+        if let Some(ref arg) = f.arguments {
+            check_arguments_definition(arg, definitions, result)
+        }
+    }
+    for other_interface in interface.implements.iter() {
+        if interface.name.name == other_interface.name {
+            result.push(CheckTypeSystemError::NoImplementSelf {
+                position: other_interface.position,
+            });
+            continue;
+        }
+        let Some(interface_def) = definitions.types.get(other_interface.name) else {
+            result.push(CheckTypeSystemError::UnknownType { position: *other_interface.position(), name: other_interface.name.to_owned() });
+            continue;
+        };
+        let TypeDefinition::Interface(ref def) = interface_def else {
+            result.push(CheckTypeSystemError::NotInterface  { position: *other_interface.position(), name: other_interface.name.to_owned() });
+            continue;
+        };
+        check_valid_implementation(
+            definitions,
+            &interface.name,
+            &interface.fields,
+            &interface.implements,
+            def,
+            result,
+        );
     }
 }
 

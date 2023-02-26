@@ -538,6 +538,22 @@ mod objects {
         let errors = check_type_system_document(&doc);
         assert_debug_snapshot!(errors, @r###"
         [
+            ArgumentTypeNonNullAgainstInterface {
+                position: Pos {
+                    line: 19,
+                    column: 35,
+                    builtin: false,
+                },
+                interface_name: "IBar",
+            },
+            FieldTypeMisMatchWithInterface {
+                position: Pos {
+                    line: 19,
+                    column: 16,
+                    builtin: false,
+                },
+                interface_name: "IBar",
+            },
             InterfaceArgumentNotImplemented {
                 position: Pos {
                     line: 13,
@@ -580,6 +596,215 @@ mod objects {
                 field_name: "bar",
                 interface_name: "IBar",
             },
+        ]
+        "###);
+    }
+}
+
+#[cfg(test)]
+mod interfaces {
+    use insta::assert_debug_snapshot;
+
+    use crate::type_system_sanitizer::{
+        check_type_system_document, tests::parse_to_type_system_document,
+    };
+
+    #[test]
+    fn reserved_name() {
+        let doc = parse_to_type_system_document(
+            "
+            interface __MyInterface {
+                foo: String!
+            }
+        ",
+        );
+        let errors = check_type_system_document(&doc);
+        assert_debug_snapshot!(errors, @r###"
+        [
+            UnscoUnsco {
+                position: Pos {
+                    line: 1,
+                    column: 22,
+                    builtin: false,
+                },
+            },
+        ]
+        "###);
+    }
+
+    #[test]
+    fn duplicated_field() {
+        let doc = parse_to_type_system_document(
+            "
+            interface MyType {
+                foo: String!
+                foo: Int!
+            }
+        ",
+        );
+        let errors = check_type_system_document(&doc);
+        assert_debug_snapshot!(errors, @r###"
+        [
+            DuplicatedName {
+                position: Pos {
+                    line: 3,
+                    column: 16,
+                    builtin: false,
+                },
+                name: "foo",
+            },
+        ]
+        "###);
+    }
+
+    /// The field must not have a name which begins with the characters "__" (two underscores).
+    #[test]
+    fn reserved_field_name() {
+        let doc = parse_to_type_system_document(
+            "
+            interface MyInterface {
+                __foo: String!
+            }
+        ",
+        );
+        let errors = check_type_system_document(&doc);
+        assert_debug_snapshot!(errors, @r###"
+        [
+            UnscoUnsco {
+                position: Pos {
+                    line: 2,
+                    column: 16,
+                    builtin: false,
+                },
+            },
+        ]
+        "###);
+    }
+
+    #[test]
+    fn field_output_type() {
+        let doc = parse_to_type_system_document(
+            "
+            interface MyType {
+                scalar_field: String!
+                object_field: [MyObj]!
+                interface_field: I
+                union_field: XYZ
+                enum_field: ABC!
+                input_object_field: InputObj
+            }
+            type MyObj { foo: Int }
+            interface I { foo: Int }
+            union XYZ = X | Y | Z
+            enum ABC { A B C }
+            input InputObj {
+                abc: ABC!
+                xyz: XYZ!
+            }
+        ",
+        );
+        let errors = check_type_system_document(&doc);
+        assert_debug_snapshot!(errors, @r###"
+        [
+            NoInputType {
+                position: Pos {
+                    line: 7,
+                    column: 36,
+                    builtin: false,
+                },
+                name: "InputObj",
+            },
+        ]
+        "###);
+    }
+
+    #[test]
+    fn argument_check() {
+        let doc = parse_to_type_system_document(
+            "
+            interface MyType {
+                field1(__arg: Int!): MyType!
+                field1: MyType!
+                field2(arg: Int!, arg: Int!): MyType!
+                field3(arg: MyType!): Int!
+                field4(
+                    arg: Int!
+                    @deprecated
+                ): String!
+            }
+        ",
+        );
+        let errors = check_type_system_document(&doc);
+        assert_debug_snapshot!(errors, @r###"
+        [
+            UnscoUnsco {
+                position: Pos {
+                    line: 2,
+                    column: 23,
+                    builtin: false,
+                },
+            },
+            DuplicatedName {
+                position: Pos {
+                    line: 3,
+                    column: 16,
+                    builtin: false,
+                },
+                name: "field1",
+            },
+            DuplicatedName {
+                position: Pos {
+                    line: 4,
+                    column: 34,
+                    builtin: false,
+                },
+                name: "arg",
+            },
+            NoOutputType {
+                position: Pos {
+                    line: 5,
+                    column: 28,
+                    builtin: false,
+                },
+                name: "MyType",
+            },
+        ]
+        "###);
+    }
+
+    // An object type must be a super-set of all interfaces it implements
+    #[test]
+    fn implements_interfaces() {
+        let doc = parse_to_type_system_document(
+            "
+            interface IFoo {
+                foo: String
+                foo2: Int!
+            }
+            interface IBar {
+                bar(arg: Boolean!): Int!
+            }
+            interface MyType implements IFoo & IBar {
+                foo: String!
+                foo2: Int
+            }
+            interface MyType2 implements IBar {
+                bar(differentArg: Boolean!): Int!
+            }
+            interface MyType3 implements IBar {
+                bar(arg: Boolean): Int!
+            }
+            interface MyType4 implements IBar {
+                bar(arg: Boolean!, arg2: Int!): Int
+            }
+            interface MyType5 implements IBar {
+                bar(arg: Boolean!, arg2: Int): Int!
+            }
+        ",
+        );
+        let errors = check_type_system_document(&doc);
+        assert_debug_snapshot!(errors, @r###"
+        [
             ArgumentTypeNonNullAgainstInterface {
                 position: Pos {
                     line: 19,
@@ -595,6 +820,71 @@ mod objects {
                     builtin: false,
                 },
                 interface_name: "IBar",
+            },
+            InterfaceArgumentNotImplemented {
+                position: Pos {
+                    line: 13,
+                    column: 16,
+                    builtin: false,
+                },
+                argument_name: "arg",
+                interface_name: "IBar",
+            },
+            ArgumentTypeNonNullAgainstInterface {
+                position: Pos {
+                    line: 13,
+                    column: 20,
+                    builtin: false,
+                },
+                interface_name: "IBar",
+            },
+            ArgumentTypeMisMatchWithInterface {
+                position: Pos {
+                    line: 16,
+                    column: 20,
+                    builtin: false,
+                },
+                interface_name: "IBar",
+            },
+            FieldTypeMisMatchWithInterface {
+                position: Pos {
+                    line: 10,
+                    column: 16,
+                    builtin: false,
+                },
+                interface_name: "IFoo",
+            },
+            InterfaceFieldNotImplemented {
+                position: Pos {
+                    line: 8,
+                    column: 22,
+                    builtin: false,
+                },
+                field_name: "bar",
+                interface_name: "IBar",
+            },
+        ]
+        "###);
+    }
+
+    #[test]
+    fn no_implement_self() {
+        let doc = parse_to_type_system_document(
+            "
+            interface I implements I {
+                field: [Int!]!
+            }
+        ",
+        );
+        let errors = check_type_system_document(&doc);
+        assert_debug_snapshot!(errors, @r###"
+        [
+            NoImplementSelf {
+                position: Pos {
+                    line: 1,
+                    column: 35,
+                    builtin: false,
+                },
             },
         ]
         "###);
