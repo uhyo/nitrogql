@@ -14,12 +14,13 @@ use crate::graphql_parser::ast::{
 
 use self::{
     builtins::generate_builtins, check_directive_recursion::check_directive_recursion,
-    definition_map::DefinitionMap, types::kind_of_type,
+    definition_map::DefinitionMap, interfaces::check_valid_implementation, types::kind_of_type,
 };
 
 mod builtins;
 mod check_directive_recursion;
 mod definition_map;
+mod interfaces;
 mod tests;
 mod types;
 
@@ -74,6 +75,8 @@ pub enum CheckTypeSystemError {
     DuplicatedName { position: Pos, name: String },
     #[error("Directive name '{name}' is not found")]
     UnknownDirective { position: Pos, name: String },
+    #[error("Type '{name}' is not found")]
+    UnknownType { position: Pos, name: String },
     #[error("Directive '{name}' is not allowed for this location")]
     DirectiveLocationNotAllowed { position: Pos, name: String },
     #[error("Repeated application of directive '{name}' is not allowed")]
@@ -84,6 +87,43 @@ pub enum CheckTypeSystemError {
     NoOutputType { position: Pos, name: String },
     #[error("Input type '{name}' is not allowed here")]
     NoInputType { position: Pos, name: String },
+    #[error("'{name}' is not an interface")]
+    NotInterface { position: Pos, name: String },
+    #[error("This type must implement interface '{name}'")]
+    InterfaceNotImplemented { position: Pos, name: String },
+    #[error("This type must have a field '{field_name}' from interface '{interface_name}'")]
+    InterfaceFieldNotImplemented {
+        position: Pos,
+        field_name: String,
+        interface_name: String,
+    },
+    #[error(
+        "Type of this argument does not match the same argument from interface '{interface_name}'"
+    )]
+    FieldTypeMisMatchWithInterface {
+        position: Pos,
+        interface_name: String,
+    },
+    #[error("Type of this filed does not match the same field from interface '{interface_name}'")]
+    InterfaceArgumentNotImplemented {
+        position: Pos,
+        argument_name: String,
+        interface_name: String,
+    },
+    #[error(
+        "Type of this argument does not match the same argument from interface '{interface_name}'"
+    )]
+    ArgumentTypeMisMatchWithInterface {
+        position: Pos,
+        interface_name: String,
+    },
+    #[error(
+        "Type of this argument must be nullable because it is not in the same field from interface '{interface_name}'"
+    )]
+    ArgumentTypeNonNullAgainstInterface {
+        position: Pos,
+        interface_name: String,
+    },
 }
 
 fn generate_definition_map<'a>(document: &'a TypeSystemDocument<'a>) -> DefinitionMap<'a> {
@@ -180,6 +220,17 @@ fn check_object(
         if let Some(ref arg) = f.arguments {
             check_arguments_definition(arg, definitions, result)
         }
+    }
+    for interface in object.implements.iter() {
+        let Some(interface_def) = definitions.types.get(interface.name) else {
+            result.push(CheckTypeSystemError::UnknownType { position: *interface.position(), name: interface.name.to_owned() });
+            continue;
+        };
+        let TypeDefinition::Interface(ref def) = interface_def else {
+            result.push(CheckTypeSystemError::NotInterface  { position: *interface.position(), name: interface.name.to_owned() });
+            continue;
+        };
+        check_valid_implementation(definitions, object, def, result);
     }
 }
 

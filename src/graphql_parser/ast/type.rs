@@ -25,12 +25,32 @@ impl HasPos for Type<'_> {
 }
 
 impl Type<'_> {
+    /// Returns a reference to the unwrapped type of self.
     pub fn unwrapped_type(&self) -> &NamedType {
         match self {
             Type::Named(name) => name,
             Type::NonNull(inner) => inner.r#type.unwrapped_type(),
             Type::List(inner) => inner.r#type.unwrapped_type(),
         }
+    }
+    /// Checks whether given type is the same type (invariant) as self.  
+    pub fn is_same(&self, other: &Type) -> bool {
+        match (self, other) {
+            (Type::Named(self_name), Type::Named(other_name)) => {
+                self_name.name.name == other_name.name.name
+            }
+            (Type::NonNull(self_inner), Type::NonNull(other_inner)) => {
+                (self_inner.r#type).is_same(&other_inner.r#type)
+            }
+            (Type::List(self_inner), Type::List(other_inner)) => {
+                self_inner.r#type.is_same(&other_inner.r#type)
+            }
+            _ => false,
+        }
+    }
+    /// Returns if self is a non-nullable type.
+    pub fn is_nonnull(&self) -> bool {
+        matches!(self, Type::NonNull(_))
     }
 }
 

@@ -504,6 +504,101 @@ mod objects {
         ]
         "###);
     }
+
+    // An object type must be a super-set of all interfaces it implements
+    #[test]
+    fn implements_interfaces() {
+        let doc = parse_to_type_system_document(
+            "
+            interface IFoo {
+                foo: String
+                foo2: Int!
+            }
+            interface IBar {
+                bar(arg: Boolean!): Int!
+            }
+            type MyType implements IFoo & IBar {
+                foo: String!
+                foo2: Int
+            }
+            type MyType2 implements IBar {
+                bar(differentArg: Boolean!): Int!
+            }
+            type MyType3 implements IBar {
+                bar(arg: Boolean): Int!
+            }
+            type MyType4 implements IBar {
+                bar(arg: Boolean!, arg2: Int!): Int
+            }
+            type MyType5 implements IBar {
+                bar(arg: Boolean!, arg2: Int): Int!
+            }
+        ",
+        );
+        let errors = check_type_system_document(&doc);
+        assert_debug_snapshot!(errors, @r###"
+        [
+            InterfaceArgumentNotImplemented {
+                position: Pos {
+                    line: 13,
+                    column: 16,
+                    builtin: false,
+                },
+                argument_name: "arg",
+                interface_name: "IBar",
+            },
+            ArgumentTypeNonNullAgainstInterface {
+                position: Pos {
+                    line: 13,
+                    column: 20,
+                    builtin: false,
+                },
+                interface_name: "IBar",
+            },
+            ArgumentTypeMisMatchWithInterface {
+                position: Pos {
+                    line: 16,
+                    column: 20,
+                    builtin: false,
+                },
+                interface_name: "IBar",
+            },
+            FieldTypeMisMatchWithInterface {
+                position: Pos {
+                    line: 10,
+                    column: 16,
+                    builtin: false,
+                },
+                interface_name: "IFoo",
+            },
+            InterfaceFieldNotImplemented {
+                position: Pos {
+                    line: 8,
+                    column: 17,
+                    builtin: false,
+                },
+                field_name: "bar",
+                interface_name: "IBar",
+            },
+            ArgumentTypeNonNullAgainstInterface {
+                position: Pos {
+                    line: 19,
+                    column: 35,
+                    builtin: false,
+                },
+                interface_name: "IBar",
+            },
+            FieldTypeMisMatchWithInterface {
+                position: Pos {
+                    line: 19,
+                    column: 16,
+                    builtin: false,
+                },
+                interface_name: "IBar",
+            },
+        ]
+        "###);
+    }
 }
 
 #[cfg(test)]
