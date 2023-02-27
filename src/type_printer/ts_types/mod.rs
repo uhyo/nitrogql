@@ -1,11 +1,9 @@
 use crate::source_map_writer::writer::SourceMapWriter;
 
-use super::query_type_printer::{printer::QueryTypePrinterOptions, type_printer::TypePrinter};
-
 pub mod ts_types_util;
 pub mod type_to_ts_type;
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub enum TSType {
     /// Type variable
     TypeVariable(String),
@@ -14,9 +12,11 @@ pub enum TSType {
     /// Index type T[K]
     IndexType(Box<TSType>, Box<TSType>),
     /// Object type (key, value, readonly)
-    Object(Vec<(String, TSType, bool)>),
+    Object(Vec<ObjectField>),
     /// Array Type
     Array(Box<TSType>),
+    /// Readonly Array Type
+    ReadonlyArray(Box<TSType>),
     /// Union type
     Union(Vec<TSType>),
     /// Intersection type
@@ -29,6 +29,14 @@ pub enum TSType {
     Never,
     /// Unknown
     Unknown,
+}
+
+#[derive(Clone, Debug)]
+struct ObjectField {
+    key: String,
+    r#type: TSType,
+    readonly: bool,
+    optional: bool,
 }
 
 impl TSType {
@@ -57,14 +65,18 @@ impl TSType {
 
                 writer.write("{\n");
                 writer.indent();
-                for (key, value, readonly) in properties {
-                    if *readonly {
+                for field in properties {
+                    if field.readonly {
                         writer.write("readonly ");
                     }
                     writer.write("\"");
-                    writer.write(key);
-                    writer.write("\": ");
-                    value.print_type(writer);
+                    writer.write(&field.key);
+                    writer.write("\"");
+                    if field.optional {
+                        writer.write("?");
+                    }
+                    writer.write(": ");
+                    field.r#type.print_type(writer);
                     writer.write(";\n");
                 }
                 writer.dedent();
@@ -72,6 +84,11 @@ impl TSType {
             }
             TSType::Array(ref ty) => {
                 writer.write("(");
+                ty.print_type(writer);
+                writer.write(")[]");
+            }
+            TSType::ReadonlyArray(ref ty) => {
+                writer.write("readonly (");
                 ty.print_type(writer);
                 writer.write(")[]");
             }
@@ -109,5 +126,38 @@ impl TSType {
                 writer.write("unknown");
             }
         }
+    }
+
+    /// Converts self into a readonly type.
+    /// All properties are turned into readonly properties and also array types are made readonly array types.
+    pub fn to_readonly(self) -> TSType {
+        match self {
+            TSType::Array(ty) => TSType::ReadonlyArray(ty),
+            TSType::Object(fields) => TSType::Object(
+                fields
+                    .into_iter()
+                    .map(|field| ObjectField {
+                        readonly: true,
+                        ..field
+                    })
+                    .collect(),
+            ),
+            ty => ty,
+        }
+    }
+
+    /// Creates an object type from given set of non-readonly, non-optional properties.
+    pub fn object(properties: impl IntoIterator<Item = (String, TSType)>) -> TSType {
+        TSType::Object(
+            properties
+                .into_iter()
+                .map(|(key, ty)| ObjectField {
+                    key,
+                    r#type: ty,
+                    readonly: false,
+                    optional: false,
+                })
+                .collect(),
+        )
     }
 }

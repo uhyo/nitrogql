@@ -67,7 +67,7 @@ impl TypePrinter for OperationDefinition<'_> {
         let input_variable_type = self
             .variables_definition
             .as_ref()
-            .map_or(TSType::Object(vec![]), get_type_for_variable_definitions);
+            .map_or(TSType::object(vec![]), get_type_for_variable_definitions);
         let input_variable_name = format!("{}{}", query_name, options.variable_type_suffix);
 
         writer.write("type ");
@@ -129,7 +129,7 @@ fn get_type_for_selection_set(selection_set: &SelectionSet, parent_type: TSType)
                     None => field_type,
                     Some(ref set) => get_type_for_selection_set(set, field_type),
                 };
-                TSType::Object(vec![(property_name, field_sel_type, false)])
+                TSType::object(vec![(property_name, field_sel_type)])
             }
             Selection::FragmentSpread(ref fragment) => {
                 TSType::TypeVariable(fragment.fragment_name.name.to_owned())
@@ -157,12 +157,12 @@ fn get_type_for_variable_definitions(definitions: &VariablesDefinition) -> TSTyp
         .map(|def| {
             let property_name = def.name.name.to_owned();
             let field_type = get_ts_type_of_type(&def.r#type);
-            TSType::Object(vec![(property_name, field_type, false)])
+            TSType::object(vec![(property_name, field_type)])
         })
         .collect();
 
     if types_for_each_field.is_empty() {
-        TSType::Object(vec![])
+        TSType::object(vec![])
     } else {
         ts_intersection(types_for_each_field)
     }

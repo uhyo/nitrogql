@@ -51,19 +51,12 @@ fn get_schema_metadata_type(document: &TypeSystemDocument) -> TSType {
         _ => None,
     });
     if let Some(schema_def) = schema_definition {
-        return TSType::Object(
-            schema_def
-                .definitions
-                .iter()
-                .map(|(op, ty)| {
-                    (
-                        op.as_str().to_owned(),
-                        TSType::TypeVariable(ty.name.to_owned()),
-                        false,
-                    )
-                })
-                .collect(),
-        );
+        return TSType::object(schema_def.definitions.iter().map(|(op, ty)| {
+            (
+                op.as_str().to_owned(),
+                TSType::TypeVariable(ty.name.to_owned()),
+            )
+        }));
     }
     // If there is no schema definition, use default root type names.
     let mut operations = vec![];
@@ -89,11 +82,10 @@ fn get_schema_metadata_type(document: &TypeSystemDocument) -> TSType {
         }
     }
 
-    TSType::Object(
+    TSType::object(
         operations
             .into_iter()
-            .map(|(op, ty)| (op, TSType::TypeVariable(ty), false))
-            .collect(),
+            .map(|(op, ty)| (op, TSType::TypeVariable(ty))),
     )
 }
 
@@ -156,18 +148,12 @@ impl TypePrinter for ObjectTypeDefinition<'_> {
         _options: &SchemaTypePrinterOptions,
         writer: &mut impl SourceMapWriter,
     ) -> SchemaTypePrinterResult<()> {
-        let obj_type = TSType::Object(
-            self.fields
-                .iter()
-                .map(|field| {
-                    (
-                        field.name.name.to_owned(),
-                        get_ts_type_of_type(&field.r#type),
-                        false,
-                    )
-                })
-                .collect(),
-        );
+        let obj_type = TSType::object(self.fields.iter().map(|field| {
+            (
+                field.name.name.to_owned(),
+                get_ts_type_of_type(&field.r#type),
+            )
+        }));
 
         writer.write("export type ");
         writer.write_for(self.name.name, &self.name);
@@ -184,18 +170,12 @@ impl TypePrinter for InterfaceTypeDefinition<'_> {
         _options: &SchemaTypePrinterOptions,
         writer: &mut impl SourceMapWriter,
     ) -> SchemaTypePrinterResult<()> {
-        let obj_type = TSType::Object(
-            self.fields
-                .iter()
-                .map(|field| {
-                    (
-                        field.name.name.to_owned(),
-                        get_ts_type_of_type(&field.r#type),
-                        false,
-                    )
-                })
-                .collect(),
-        );
+        let obj_type = TSType::object(self.fields.iter().map(|field| {
+            (
+                field.name.name.to_owned(),
+                get_ts_type_of_type(&field.r#type),
+            )
+        }));
 
         writer.write("export type ");
         writer.write_for(self.name.name, &self.name);
@@ -256,18 +236,13 @@ impl TypePrinter for InputObjectTypeDefinition<'_> {
         _options: &SchemaTypePrinterOptions,
         writer: &mut impl SourceMapWriter,
     ) -> SchemaTypePrinterResult<()> {
-        let obj_type = TSType::Object(
-            self.fields
-                .iter()
-                .map(|field| {
-                    (
-                        field.name.name.to_owned(),
-                        get_ts_type_of_type(&field.r#type),
-                        true,
-                    )
-                })
-                .collect(),
-        );
+        let obj_type = TSType::object(self.fields.iter().map(|field| {
+            (
+                field.name.name.to_owned(),
+                get_ts_type_of_type(&field.r#type),
+            )
+        }))
+        .to_readonly();
 
         writer.write("export type ");
         writer.write_for(self.name.name, &self.name);
