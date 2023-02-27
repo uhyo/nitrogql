@@ -1,6 +1,6 @@
 use crate::graphql_parser::ast::r#type::Type;
 
-use super::ts_types::TSType;
+use super::super::ts_types::TSType;
 
 pub fn get_ts_type_of_type(ty: &Type) -> TSType {
     let (ty, nullable) = get_ts_type_of_type_impl(ty);

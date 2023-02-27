@@ -3,8 +3,8 @@ mod extension_resolver;
 mod graphql_parser;
 mod graphql_printer;
 mod json_printer;
-mod query_type_printer;
 mod source_map_writer;
+mod type_printer;
 mod type_system_validator;
 mod utils;
 
@@ -15,8 +15,8 @@ use crate::graphql_parser::parser::parse_operation_document;
 use glob::glob;
 
 use crate::{
-    query_type_printer::{QueryTypePrinter, QueryTypePrinterOptions},
     source_map_writer::source_writer::{print_source_map_json, SourceWriter},
+    type_printer::query_type_printer::{QueryTypePrinter, QueryTypePrinterOptions},
 };
 
 fn main() -> anyhow::Result<()> {

@@ -8,13 +8,12 @@ use crate::{
         OperationDocument,
     },
     source_map_writer::writer::SourceMapWriter,
+    type_printer::ts_types::type_to_ts_type::get_ts_type_of_type,
     utils::capitalize::capitalize,
 };
 
-use super::{
-    printer::QueryTypePrinterOptions, ts_types::TSType, ts_types_util::ts_intersection,
-    type_to_ts_type::get_ts_type_of_type,
-};
+use super::super::ts_types::{ts_types_util::ts_intersection, TSType};
+use super::printer::QueryTypePrinterOptions;
 
 pub trait TypePrinter {
     fn print_type(&self, options: &QueryTypePrinterOptions, writer: &mut impl SourceMapWriter);
@@ -62,7 +61,7 @@ impl TypePrinter for OperationDefinition<'_> {
             &self.selection_set,
             TSType::TypeVariable(options.schema_root.clone()),
         )
-        .print_type(options, writer);
+        .print_type(writer);
         writer.write(";\n\n");
 
         let input_variable_type = self
@@ -74,7 +73,7 @@ impl TypePrinter for OperationDefinition<'_> {
         writer.write("type ");
         writer.write_for(&input_variable_name, &self.name_pos());
         writer.write_for(" = ", &self.selection_set);
-        input_variable_type.print_type(options, writer);
+        input_variable_type.print_type(writer);
         writer.write(";\n\n");
 
         let query_var_name = format!(
@@ -108,7 +107,7 @@ impl TypePrinter for FragmentDefinition<'_> {
             Box::new(TSType::TypeVariable(options.schema_root.clone())),
             Box::new(TSType::StringLiteral(self.type_condition.name.to_owned())),
         );
-        get_type_for_selection_set(&self.selection_set, parent_type).print_type(options, writer);
+        get_type_for_selection_set(&self.selection_set, parent_type).print_type(writer);
         writer.write(";\n\n");
     }
 }
@@ -130,7 +129,7 @@ fn get_type_for_selection_set(selection_set: &SelectionSet, parent_type: TSType)
                     None => field_type,
                     Some(ref set) => get_type_for_selection_set(set, field_type),
                 };
-                TSType::Object(vec![(property_name, field_sel_type)])
+                TSType::Object(vec![(property_name, field_sel_type, false)])
             }
             Selection::FragmentSpread(ref fragment) => {
                 TSType::TypeVariable(fragment.fragment_name.name.to_owned())
@@ -158,7 +157,7 @@ fn get_type_for_variable_definitions(definitions: &VariablesDefinition) -> TSTyp
         .map(|def| {
             let property_name = def.name.name.to_owned();
             let field_type = get_ts_type_of_type(&def.r#type);
-            TSType::Object(vec![(property_name, field_type)])
+            TSType::Object(vec![(property_name, field_type, false)])
         })
         .collect();
 

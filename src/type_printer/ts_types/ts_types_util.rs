@@ -1,6 +1,6 @@
 use std::ops::Not;
 
-use super::ts_types::TSType;
+use super::TSType;
 
 /// Calculates intersection of given list of types.
 pub fn ts_intersection(types: Vec<TSType>) -> TSType {
