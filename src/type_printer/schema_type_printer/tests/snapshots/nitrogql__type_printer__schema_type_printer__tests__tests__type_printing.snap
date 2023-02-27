@@ -12,32 +12,32 @@ export type User = {
   "type": UserType;
   "age": Int | null;
   "posts": (Post)[];
-}}
+};
 
 export type Bot = {
   "id": ID;
-}}
+};
 
 export type Post = {
   "id": ID;
   "title": String;
   "tags": (String)[] | null;
   "body": String;
-}}
+};
 
 export type Query = {
   "me": User;
-}}
+};
 
 export type HasID = {
   "id": ID;
-}}
+};
 
 export type UserType = "NormalUser" | "PremiumUser";
 
 export type UserSearchQuery = {
   readonly "age": Int | null;
   readonly "name": String | null;
-}}
+};
 
 

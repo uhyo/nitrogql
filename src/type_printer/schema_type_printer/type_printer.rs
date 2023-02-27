@@ -173,7 +173,7 @@ impl TypePrinter for ObjectTypeDefinition<'_> {
         writer.write_for(self.name.name, &self.name);
         writer.write(" = ");
         obj_type.print_type(writer);
-        writer.write("}\n");
+        writer.write(";\n");
         Ok(())
     }
 }
@@ -201,7 +201,7 @@ impl TypePrinter for InterfaceTypeDefinition<'_> {
         writer.write_for(self.name.name, &self.name);
         writer.write(" = ");
         obj_type.print_type(writer);
-        writer.write("}\n");
+        writer.write(";\n");
         Ok(())
     }
 }
@@ -273,7 +273,7 @@ impl TypePrinter for InputObjectTypeDefinition<'_> {
         writer.write_for(self.name.name, &self.name);
         writer.write(" = ");
         obj_type.print_type(writer);
-        writer.write("}\n");
+        writer.write(";\n");
         Ok(())
     }
 }
