@@ -147,7 +147,7 @@ fn generate_definition_map<'a>(document: &'a TypeSystemDocument<'a>) -> Definiti
     for def in document.definitions.iter() {
         match def {
             TypeSystemDefinition::SchemaDefinition(schema) => {
-                result.schema.insert(schema);
+                result.schema = Some(schema);
             }
             TypeSystemDefinition::TypeDefinition(def) => {
                 result.types.insert(

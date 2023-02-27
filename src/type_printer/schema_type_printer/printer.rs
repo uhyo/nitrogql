@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use crate::{graphql_parser::ast::TypeSystemDocument, source_map_writer::writer::SourceMapWriter};
 
-use super::type_printer::TypePrinter;
+use super::{error::SchemaTypePrinterResult, type_printer::TypePrinter};
 
 pub struct SchemaTypePrinterOptions {
     /// Type of each scalar. Provided as raw TypeScript code.
@@ -33,7 +33,8 @@ where
         SchemaTypePrinter { options, writer }
     }
 
-    pub fn print_document(&mut self, document: &TypeSystemDocument) {
-        document.print_type(&self.options, self.writer);
+    pub fn print_document(&mut self, document: &TypeSystemDocument) -> SchemaTypePrinterResult<()> {
+        document.print_type(&self.options, self.writer)?;
+        Ok(())
     }
 }
