@@ -1,5 +1,16 @@
+use std::cell::Cell;
+
 use super::super::parser::Rule;
 use pest::iterators::Pair;
+
+thread_local! {
+    /// Current file to be used when generating Pos.
+    static CURRENT_FILE_OF_POS: Cell<usize> = Cell::new(0);
+}
+
+pub fn set_current_file_of_pos(file: usize) {
+    CURRENT_FILE_OF_POS.with(|cell| cell.set(file));
+}
 
 #[derive(Copy, Clone, Debug, Hash, PartialEq, Eq)]
 pub struct Pos {
@@ -7,6 +18,8 @@ pub struct Pos {
     pub line: usize,
     /// 0-base column
     pub column: usize,
+    /// file (specified by index)
+    pub file: usize,
     /// Flag that indicates that this Pos is not from parsed document, but is a built-in structure.
     pub builtin: bool,
 }
@@ -17,6 +30,7 @@ impl Pos {
         Pos {
             line: 0,
             column: 0,
+            file: 0,
             builtin: true,
         }
     }
@@ -29,6 +43,7 @@ impl From<&Pair<'_, Rule>> for Pos {
         Pos {
             line: line - 1,
             column: column - 1,
+            file: CURRENT_FILE_OF_POS.with(|v| v.get()),
             builtin: false,
         }
     }

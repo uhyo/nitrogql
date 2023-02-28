@@ -11,7 +11,10 @@ use log::debug;
 
 use crate::{
     cli::{context::CliContext, error::CliError},
-    graphql_parser::{ast::TypeSystemOrExtensionDocument, parser::parse_type_system_document},
+    graphql_parser::{
+        ast::{base::set_current_file_of_pos, TypeSystemOrExtensionDocument},
+        parser::parse_type_system_document,
+    },
 };
 
 use self::check::run_check;
@@ -53,19 +56,28 @@ fn run_cli_impl(args: impl IntoIterator<Item = String>) -> Result<()> {
         return Err(CliError::NoSchemaSpecified.into());
     }
     let schema_files = load_schema_files(&args)?;
+    let file_by_index = schema_files
+        .iter()
+        .map(|(path, src)| (path.clone(), src.as_str()))
+        .collect::<Vec<_>>();
     let schema_docs = schema_files
         .iter()
-        .map(|(path, buf)| -> Result<TypeSystemOrExtensionDocument> {
-            debug!("parsing {}", path.to_string_lossy());
-            let doc = parse_type_system_document(&buf)?;
-            Ok(doc)
-        })
+        .enumerate()
+        .map(
+            |(file_idx, (path, buf))| -> Result<TypeSystemOrExtensionDocument> {
+                debug!("parsing {}", path.to_string_lossy());
+                set_current_file_of_pos(file_idx);
+                let doc = parse_type_system_document(&buf)?;
+                Ok(doc)
+            },
+        )
         .collect::<Result<Vec<_>>>();
     let schema_docs = schema_docs?;
     let merged_schema_doc = TypeSystemOrExtensionDocument::merge(schema_docs);
 
     let mut context = CliContext::SchemaUnresolved {
         schema: merged_schema_doc,
+        file_by_index,
     };
 
     for command in args.commands.iter() {

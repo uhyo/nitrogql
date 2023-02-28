@@ -8,10 +8,16 @@ use super::{error::CliError, CliContext};
 pub fn run_check(context: CliContext) -> Result<CliContext> {
     debug!("Checking");
     match context {
-        CliContext::SchemaUnresolved { schema } => {
+        CliContext::SchemaUnresolved {
+            schema,
+            file_by_index,
+        } => {
             let resolved = resolve_extensions(schema)?;
             info!("Check succeded");
-            Ok(CliContext::SchemaResolved { schema: resolved })
+            Ok(CliContext::SchemaResolved {
+                schema: resolved,
+                file_by_index,
+            })
         }
         _ => Err(CliError::InvalidCommand(
             "'check' command cannot be called after another command".into(),
