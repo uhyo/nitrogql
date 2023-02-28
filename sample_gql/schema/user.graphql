@@ -8,3 +8,7 @@ enum UserKind {
   NormalUser
   PremiumUser
 }
+
+type User {
+  foo: String
+}

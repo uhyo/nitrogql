@@ -15,6 +15,8 @@ pest_derive = "2.5.5"
 thiserror = "1.0.38"
 clap = { version ="4.1.7", features = ["derive"] }
 globmatch = "0.2.3"
+log = "0.4.17"
+pretty_env_logger = "0.4.0"
 
 [dev-dependencies]
 insta = "1.28.0"

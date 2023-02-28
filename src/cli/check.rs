@@ -1,13 +1,16 @@
 use anyhow::Result;
+use log::{debug, info};
 
 use crate::extension_resolver::resolve_extensions;
 
 use super::{error::CliError, CliContext};
 
 pub fn run_check(context: CliContext) -> Result<CliContext> {
+    debug!("Checking");
     match context {
         CliContext::SchemaUnresolved { schema } => {
             let resolved = resolve_extensions(schema)?;
+            info!("Check succeded");
             Ok(CliContext::SchemaResolved { schema: resolved })
         }
         _ => Err(CliError::InvalidCommand(

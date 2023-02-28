@@ -7,6 +7,7 @@ use std::{
 use anyhow::Result;
 use clap::Parser;
 use globmatch::wrappers::{build_matchers, match_paths};
+use log::debug;
 
 use crate::{
     cli::{context::CliContext, error::CliError},
@@ -32,6 +33,7 @@ struct Args {
 
 /// Run as CLI. Returns 0 if successful
 pub fn run_cli(args: impl IntoIterator<Item = String>) -> usize {
+    pretty_env_logger::init();
     match run_cli_impl(args) {
         Ok(()) => 0,
         Err(err) => {
@@ -53,7 +55,8 @@ fn run_cli_impl(args: impl IntoIterator<Item = String>) -> Result<()> {
     let schema_files = load_schema_files(&args)?;
     let schema_docs = schema_files
         .iter()
-        .map(|(_, buf)| -> Result<TypeSystemOrExtensionDocument> {
+        .map(|(path, buf)| -> Result<TypeSystemOrExtensionDocument> {
+            debug!("parsing {}", path.to_string_lossy());
             let doc = parse_type_system_document(&buf)?;
             Ok(doc)
         })
@@ -88,7 +91,10 @@ fn load_schema_files(args: &Args) -> Result<Vec<(PathBuf, String)>> {
     let (paths, _) = match_paths(schema_matchers, None, None);
     let results = paths
         .into_iter()
-        .map(|path| fs::read_to_string(&path).map(|res| (path, res)))
+        .map(|path| {
+            debug!("loading {}", path.to_string_lossy());
+            fs::read_to_string(&path).map(|res| (path, res))
+        })
         .collect::<std::io::Result<_>>();
 
     results.map_err(|err| err.into())
