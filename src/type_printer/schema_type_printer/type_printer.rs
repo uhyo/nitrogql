@@ -8,7 +8,7 @@ use crate::{
         TypeSystemDocument,
     },
     source_map_writer::writer::SourceMapWriter,
-    type_printer::ts_types::{type_to_ts_type::get_ts_type_of_type, TSType},
+    type_printer::ts_types::{type_to_ts_type::get_ts_type_of_type, ObjectField, TSType},
 };
 
 use super::{
@@ -233,16 +233,24 @@ impl TypePrinter for EnumTypeDefinition<'_> {
 impl TypePrinter for InputObjectTypeDefinition<'_> {
     fn print_type(
         &self,
-        _options: &SchemaTypePrinterOptions,
+        options: &SchemaTypePrinterOptions,
         writer: &mut impl SourceMapWriter,
     ) -> SchemaTypePrinterResult<()> {
-        let obj_type = TSType::object(self.fields.iter().map(|field| {
-            (
-                field.name.name.to_owned(),
-                get_ts_type_of_type(&field.r#type),
-            )
-        }))
-        .to_readonly();
+        let obj_type = TSType::Object(
+            self.fields
+                .iter()
+                .map(|field| {
+                    let ts_type = get_ts_type_of_type(&field.r#type);
+                    ObjectField {
+                        key: field.name.name.to_owned(),
+                        r#type: ts_type,
+                        readonly: true,
+                        optional: options.input_nullable_field_is_optional
+                            && !field.r#type.is_nonnull(),
+                    }
+                })
+                .collect(),
+        );
 
         writer.write("export type ");
         writer.write_for(self.name.name, &self.name);

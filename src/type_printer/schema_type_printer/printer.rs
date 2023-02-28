@@ -9,6 +9,8 @@ pub struct SchemaTypePrinterOptions {
     pub scalar_types: HashMap<String, String>,
     /// Special type name for types that includes schema metadata
     pub schema_metadata_type: String,
+    /// Whether to make input nullable fields optional.
+    pub input_nullable_field_is_optional: bool,
 }
 
 impl Default for SchemaTypePrinterOptions {
@@ -16,6 +18,7 @@ impl Default for SchemaTypePrinterOptions {
         SchemaTypePrinterOptions {
             scalar_types: HashMap::new(),
             schema_metadata_type: "__nitrogql_schema".into(),
+            input_nullable_field_is_optional: true,
         }
     }
 }

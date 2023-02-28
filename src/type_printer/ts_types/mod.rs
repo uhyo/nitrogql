@@ -32,11 +32,11 @@ pub enum TSType {
 }
 
 #[derive(Clone, Debug)]
-struct ObjectField {
-    key: String,
-    r#type: TSType,
-    readonly: bool,
-    optional: bool,
+pub struct ObjectField {
+    pub key: String,
+    pub r#type: TSType,
+    pub readonly: bool,
+    pub optional: bool,
 }
 
 impl TSType {
