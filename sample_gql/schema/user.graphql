@@ -1,0 +1,10 @@
+type User {
+  id: ID!
+  name: String!
+  kind: UserKind!
+}
+
+enum UserKind {
+  NormalUser
+  PremiumUser
+}

@@ -13,6 +13,8 @@ anyhow = "1.0.69"
 pest = "2.5.5"
 pest_derive = "2.5.5"
 thiserror = "1.0.38"
+clap = { version ="4.1.7", features = ["derive"] }
+globmatch = "0.2.3"
 
 [dev-dependencies]
 insta = "1.28.0"
