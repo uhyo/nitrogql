@@ -71,7 +71,7 @@ mod tests {
         .unwrap();
 
         let resolved = resolve_extensions(doc).unwrap_err();
-        assert_snapshot!(resolved.to_string());
+        assert_snapshot!(resolved.message.to_string());
     }
 
     #[test]
@@ -85,7 +85,7 @@ mod tests {
         .unwrap();
 
         let resolved = resolve_extensions(doc).unwrap_err();
-        assert_snapshot!(resolved.to_string());
+        assert_snapshot!(resolved.message.to_string());
     }
 
     fn print_graphql<T: GraphQLPrinter>(value: T) -> String {

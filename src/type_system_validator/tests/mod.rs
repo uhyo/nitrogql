@@ -480,22 +480,8 @@ mod objects {
         let doc = parse_to_type_system_document(
             "
             type MyType {
-                scalar_field: String!
-                object_field: [MyObj]!
-                interface_field: I
-                union_field: XYZ
-                enum_field: ABC!
-                input_object_field: InputObj
+                unknown_field: AAAAA
             }
-            type MyObj { foo: Int }
-            interface I { foo: Int }
-            union XYZ = X | Y | Z
-            enum ABC { A B C }
-            input InputObj {
-                field: Int!
-                field2: Boolean!
-            }
-            type X { x: Int! } type Y { y: Int! } type Z { z: Int! }
         ",
         );
         let errors = check_type_system_document(&doc);
@@ -503,19 +489,22 @@ mod objects {
         [
             CheckTypeSystemError {
                 position: Pos {
-                    line: 7,
-                    column: 36,
+                    line: 2,
+                    column: 31,
                     file: 0,
                     builtin: false,
                 },
-                message: NoInputType {
-                    name: "InputObj",
+                message: UnknownType {
+                    name: "AAAAA",
                 },
                 additional_info: [],
             },
         ]
         "###);
     }
+
+    #[test]
+    fn unknown_field_type() {}
 
     #[test]
     fn argument_check() {

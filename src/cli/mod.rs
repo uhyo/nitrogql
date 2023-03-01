@@ -1,10 +1,6 @@
-use std::{
-    fs,
-    io::{stderr, Write},
-    path::PathBuf,
-};
+use std::{fs, path::PathBuf};
 
-use anyhow::{Error, Result};
+use anyhow::Result;
 use clap::Parser;
 use globmatch::wrappers::{build_matchers, match_paths};
 use log::{debug, error};

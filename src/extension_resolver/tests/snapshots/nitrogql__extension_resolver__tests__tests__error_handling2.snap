@@ -1,5 +1,5 @@
 ---
 source: src/extension_resolver/tests/mod.rs
-expression: resolved.to_string()
+expression: resolved.message.to_string()
 ---
-Duplicate declaration of type
+Duplicated declaration of type 'A'

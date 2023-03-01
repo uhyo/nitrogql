@@ -12,4 +12,6 @@ pub enum CliError {
     NoSchemaSpecified,
     #[error("{0}")]
     GlobError(String),
+    #[error("Command not successful: {0}")]
+    CommandNotSuccessful(String),
 }

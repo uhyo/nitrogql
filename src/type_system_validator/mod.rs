@@ -165,13 +165,24 @@ fn check_object(
         if name_starts_with_unscounsco(&f.name) {
             result.push(CheckTypeSystemErrorMessage::UnscoUnsco.with_pos(*f.name.position()));
         }
-        if kind_of_type(definitions, &f.r#type).map_or(false, |k| !k.is_output_type()) {
-            result.push(
-                CheckTypeSystemErrorMessage::NoInputType {
-                    name: f.r#type.unwrapped_type().name.name.to_owned(),
-                }
-                .with_pos(*f.r#type.position()),
-            );
+        match kind_of_type(definitions, &f.r#type).map(|k| k.is_output_type()) {
+            Some(true) => {}
+            Some(false) => {
+                result.push(
+                    CheckTypeSystemErrorMessage::NoInputType {
+                        name: f.r#type.unwrapped_type().name.name.to_owned(),
+                    }
+                    .with_pos(*f.r#type.position()),
+                );
+            }
+            None => {
+                result.push(
+                    CheckTypeSystemErrorMessage::UnknownType {
+                        name: f.r#type.unwrapped_type().name.name.to_owned(),
+                    }
+                    .with_pos(*f.r#type.position()),
+                );
+            }
         }
         if let Some(ref arg) = f.arguments {
             check_arguments_definition(arg, definitions, result)
