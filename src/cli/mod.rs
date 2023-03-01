@@ -46,7 +46,6 @@ pub fn run_cli(args: impl IntoIterator<Item = String>) -> usize {
 
 fn run_cli_impl(args: impl IntoIterator<Item = String>) -> Result<()> {
     let args = Args::parse_from(args);
-    println!("Hello, {args:?}");
     if args.commands.is_empty() {
         return Err(CliError::NoCommandSpecified.into());
     }

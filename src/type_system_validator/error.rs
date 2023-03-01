@@ -15,9 +15,9 @@ pub enum CheckTypeSystemErrorMessage {
     UnscoUnsco,
     #[error("Name '{name}' is duplicated")]
     DuplicatedName { name: String },
-    #[error("Directive name '{name}' is not found")]
+    #[error("Directive '{name}' is not defined")]
     UnknownDirective { name: String },
-    #[error("Type '{name}' is not found")]
+    #[error("Type '{name}' is not defined")]
     UnknownType { name: String },
     #[error("Directive '{name}' is not allowed for this location")]
     DirectiveLocationNotAllowed { name: String },
