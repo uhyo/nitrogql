@@ -7,7 +7,7 @@ use std::{
 use anyhow::{Error, Result};
 use clap::Parser;
 use globmatch::wrappers::{build_matchers, match_paths};
-use log::debug;
+use log::{debug, error};
 use thiserror::Error;
 
 use crate::{
@@ -42,7 +42,7 @@ pub fn run_cli(args: impl IntoIterator<Item = String>) -> usize {
     match run_cli_impl(args) {
         Ok(()) => 0,
         Err(err) => {
-            writeln!(stderr(), "{err}").unwrap();
+            error!("{err}");
             1
         }
     }
@@ -93,7 +93,7 @@ fn run_cli_impl(args: impl IntoIterator<Item = String>) -> Result<()> {
 }
 
 #[derive(Error, Debug)]
-#[error("{message}")]
+#[error("Error running command:\n{message}")]
 struct CommandError {
     message: String,
 }
