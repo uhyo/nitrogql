@@ -1,5 +1,6 @@
 mod base64_vlq;
 mod cli;
+mod error;
 mod extension_resolver;
 mod graphql_parser;
 mod graphql_printer;

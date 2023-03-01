@@ -1,6 +1,6 @@
 use crate::graphql_parser::ast::{type_system::{InterfaceTypeDefinition, ObjectTypeDefinition, FieldDefinition}, r#type::{Type, NamedType}, base::Ident};
 
-use super::{CheckTypeSystemError, types::is_subtype, definition_map::DefinitionMap};
+use super::{CheckTypeSystemErrorMessage, types::is_subtype, definition_map::DefinitionMap, error::CheckTypeSystemError};
 
 /// Checks if given object or interface validly implements given interface.
 /// https://spec.graphql.org/draft/#IsValidImplementation()
@@ -15,22 +15,20 @@ pub fn check_valid_implementation(
     // If implementedType declares it implements any interfaces, type must also declare it implements those interfaces.
     for imp in interface.implements.iter() {
         if !implements.iter().any(|ident| ident.name == imp.name) {
-            result.push(CheckTypeSystemError::InterfaceNotImplemented {
-                position: object_name.position,
+            result.push(CheckTypeSystemErrorMessage::InterfaceNotImplemented {
                 name: imp.name.to_owned(),
-            });
+            }.with_pos(object_name.position));
         }
 
     }
     // type must include a field of the same name for every field defined in implementedType.
     for imp_field in interface.fields.iter() {
         let Some(field) = fields.iter().find(|field| imp_field.name.name == field.name.name) else {
-            result.push(CheckTypeSystemError::InterfaceFieldNotImplemented {
-                position: object_name.position,
+            result.push(CheckTypeSystemErrorMessage::InterfaceFieldNotImplemented {
                 field_name: imp_field.name.name.to_owned(),
                 interface_name: 
                 interface.name.name.to_owned()
-             });
+             }.with_pos(object_name.position));
              continue;
         };
 
@@ -42,16 +40,15 @@ pub fn check_valid_implementation(
                 .flat_map(|args| args.input_values.iter())
                 .find(|arg| arg.name.name == imp_arg.name.name)
             else {
-                result.push(CheckTypeSystemError::InterfaceArgumentNotImplemented {
-                    position: field.name.position,
+                result.push(CheckTypeSystemErrorMessage::InterfaceArgumentNotImplemented {
                     argument_name: imp_arg.name.name.to_owned(),
                     interface_name: interface.name.name.to_owned(),
-                });
+                }.with_pos(field.name.position));
                 continue;
             };
             // That named argument on field must accept the same type (invariant) as that named argument on implementedField.
             if !field_arg.r#type.is_same(&imp_arg.r#type) {
-                result.push(CheckTypeSystemError::ArgumentTypeMisMatchWithInterface { position: field_arg.name.position, interface_name: interface.name.name.to_owned() });
+                result.push(CheckTypeSystemErrorMessage::ArgumentTypeMisMatchWithInterface { interface_name: interface.name.name.to_owned() }.with_pos(field_arg.name.position));
             }
         }
         // field may include additional arguments not defined in implementedField, but any additional argument must not be required, e.g. must not be of a non-nullable type.
@@ -67,16 +64,15 @@ pub fn check_valid_implementation(
                         .is_none()
                 }) {
                 if field_arg.r#type.is_nonnull() {
-                    result.push(CheckTypeSystemError::ArgumentTypeNonNullAgainstInterface { position: field_arg.name.position, interface_name: interface.name.name.to_owned() })
+                    result.push(CheckTypeSystemErrorMessage::ArgumentTypeNonNullAgainstInterface { interface_name: interface.name.name.to_owned() }.with_pos(field_arg.name.position));
                 }
             }
         }
         // field must return a type which is equal to or a sub-type of (covariant) the return type of implementedField field’s return type:
         if is_subtype(definitions, &field.r#type, &imp_field.r#type) == Some(false) {
-            result.push(CheckTypeSystemError::FieldTypeMisMatchWithInterface {
-                position: field.name.position,
+            result.push(CheckTypeSystemErrorMessage::FieldTypeMisMatchWithInterface {
                 interface_name: interface.name.name.to_owned(),
-            });
+            }.with_pos(field.name.position));
         }
     }
 }

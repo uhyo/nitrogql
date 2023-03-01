@@ -14,13 +14,18 @@ use crate::graphql_parser::ast::{
 };
 
 use self::{
-    builtins::generate_builtins, check_directive_recursion::check_directive_recursion,
-    definition_map::DefinitionMap, interfaces::check_valid_implementation, types::kind_of_type,
+    builtins::generate_builtins,
+    check_directive_recursion::check_directive_recursion,
+    definition_map::DefinitionMap,
+    error::{CheckTypeSystemError, CheckTypeSystemErrorMessage},
+    interfaces::check_valid_implementation,
+    types::kind_of_type,
 };
 
 mod builtins;
 mod check_directive_recursion;
 mod definition_map;
+mod error;
 mod interfaces;
 mod tests;
 mod types;
@@ -79,69 +84,6 @@ pub fn check_type_system_document(document: &TypeSystemDocument) -> Vec<CheckTyp
     result
 }
 
-#[derive(Error, Debug)]
-pub enum CheckTypeSystemError {
-    #[error("Name that starts with '__' is reserved")]
-    UnscoUnsco { position: Pos },
-    #[error("Name '{name}' is duplicated")]
-    DuplicatedName { position: Pos, name: String },
-    #[error("Directive name '{name}' is not found")]
-    UnknownDirective { position: Pos, name: String },
-    #[error("Type '{name}' is not found")]
-    UnknownType { position: Pos, name: String },
-    #[error("Directive '{name}' is not allowed for this location")]
-    DirectiveLocationNotAllowed { position: Pos, name: String },
-    #[error("Repeated application of directive '{name}' is not allowed")]
-    RepeatedDirective { position: Pos, name: String },
-    #[error("Directive '{name}' is recursing")]
-    RecursingDirective { position: Pos, name: String },
-    #[error("Output type '{name}' is not allowed here")]
-    NoOutputType { position: Pos, name: String },
-    #[error("Input type '{name}' is not allowed here")]
-    NoInputType { position: Pos, name: String },
-    #[error("'{name}' is not an interface")]
-    NotInterface { position: Pos, name: String },
-    #[error("This type must implement interface '{name}'")]
-    InterfaceNotImplemented { position: Pos, name: String },
-    #[error("Interface must not implement itself")]
-    NoImplementSelf { position: Pos },
-    #[error("This type must have a field '{field_name}' from interface '{interface_name}'")]
-    InterfaceFieldNotImplemented {
-        position: Pos,
-        field_name: String,
-        interface_name: String,
-    },
-    #[error(
-        "Type of this argument does not match the same argument from interface '{interface_name}'"
-    )]
-    FieldTypeMisMatchWithInterface {
-        position: Pos,
-        interface_name: String,
-    },
-    #[error("Type of this filed does not match the same field from interface '{interface_name}'")]
-    InterfaceArgumentNotImplemented {
-        position: Pos,
-        argument_name: String,
-        interface_name: String,
-    },
-    #[error(
-        "Type of this argument does not match the same argument from interface '{interface_name}'"
-    )]
-    ArgumentTypeMisMatchWithInterface {
-        position: Pos,
-        interface_name: String,
-    },
-    #[error(
-        "Type of this argument must be nullable because it is not in the same field from interface '{interface_name}'"
-    )]
-    ArgumentTypeNonNullAgainstInterface {
-        position: Pos,
-        interface_name: String,
-    },
-    #[error("'{member_name}' is not an object type")]
-    NonObjectTypeUnionMember { position: Pos, member_name: String },
-}
-
 fn generate_definition_map<'a>(document: &'a TypeSystemDocument<'a>) -> DefinitionMap<'a> {
     let mut result = DefinitionMap::new();
     for def in document.definitions.iter() {
@@ -180,9 +122,7 @@ fn check_directive<'a>(
     check_directive_recursion(definitions, d, result);
 
     if name_starts_with_unscounsco(&d.name) {
-        result.push(CheckTypeSystemError::UnscoUnsco {
-            position: *d.name.position(),
-        });
+        result.push(CheckTypeSystemErrorMessage::UnscoUnsco.with_pos(*d.name.position()));
     }
     if let Some(ref arg) = d.arguments {
         check_arguments_definition(arg, definitions, result);
@@ -195,9 +135,7 @@ fn check_scalar(
     result: &mut Vec<CheckTypeSystemError>,
 ) {
     if name_starts_with_unscounsco(&scalar.name) {
-        result.push(CheckTypeSystemError::UnscoUnsco {
-            position: *scalar.name.position(),
-        })
+        result.push(CheckTypeSystemErrorMessage::UnscoUnsco.with_pos(scalar.name.position))
     }
     check_directives(definition_map, &scalar.directives, "SCALAR", result);
 }
@@ -208,32 +146,32 @@ fn check_object(
     result: &mut Vec<CheckTypeSystemError>,
 ) {
     if name_starts_with_unscounsco(&object.name) {
-        result.push(CheckTypeSystemError::UnscoUnsco {
-            position: *object.name.position(),
-        })
+        result.push(CheckTypeSystemErrorMessage::UnscoUnsco.with_pos(*object.name.position()));
     }
     check_directives(definitions, &object.directives, "OBJECT", result);
 
     let mut seen_fields = vec![];
     for f in object.fields.iter() {
         if seen_fields.contains(&f.name.name) {
-            result.push(CheckTypeSystemError::DuplicatedName {
-                position: *f.name.position(),
-                name: f.name.name.to_owned(),
-            });
+            result.push(
+                CheckTypeSystemErrorMessage::DuplicatedName {
+                    name: f.name.name.to_owned(),
+                }
+                .with_pos(*f.name.position()),
+            );
         } else {
             seen_fields.push(f.name.name);
         }
         if name_starts_with_unscounsco(&f.name) {
-            result.push(CheckTypeSystemError::UnscoUnsco {
-                position: *f.name.position(),
-            })
+            result.push(CheckTypeSystemErrorMessage::UnscoUnsco.with_pos(*f.name.position()));
         }
         if kind_of_type(definitions, &f.r#type).map_or(false, |k| !k.is_output_type()) {
-            result.push(CheckTypeSystemError::NoInputType {
-                position: *f.r#type.position(),
-                name: f.r#type.unwrapped_type().name.name.to_owned(),
-            });
+            result.push(
+                CheckTypeSystemErrorMessage::NoInputType {
+                    name: f.r#type.unwrapped_type().name.name.to_owned(),
+                }
+                .with_pos(*f.r#type.position()),
+            );
         }
         if let Some(ref arg) = f.arguments {
             check_arguments_definition(arg, definitions, result)
@@ -241,11 +179,11 @@ fn check_object(
     }
     for interface in object.implements.iter() {
         let Some(interface_def) = definitions.types.get(interface.name) else {
-            result.push(CheckTypeSystemError::UnknownType { position: *interface.position(), name: interface.name.to_owned() });
+            result.push(CheckTypeSystemErrorMessage::UnknownType { name: interface.name.to_owned() }.with_pos(*interface.position()));
             continue;
         };
         let TypeDefinition::Interface(ref def) = interface_def else {
-            result.push(CheckTypeSystemError::NotInterface  { position: *interface.position(), name: interface.name.to_owned() });
+            result.push(CheckTypeSystemErrorMessage::NotInterface  { name: interface.name.to_owned() }.with_pos(*interface.position()));
             continue;
         };
         check_valid_implementation(
@@ -265,32 +203,32 @@ fn check_interface(
     result: &mut Vec<CheckTypeSystemError>,
 ) {
     if name_starts_with_unscounsco(&interface.name) {
-        result.push(CheckTypeSystemError::UnscoUnsco {
-            position: *interface.name.position(),
-        })
+        result.push(CheckTypeSystemErrorMessage::UnscoUnsco.with_pos(*interface.name.position()));
     }
     check_directives(definitions, &interface.directives, "INTERFACE", result);
 
     let mut seen_fields = vec![];
     for f in interface.fields.iter() {
         if seen_fields.contains(&f.name.name) {
-            result.push(CheckTypeSystemError::DuplicatedName {
-                position: *f.name.position(),
-                name: f.name.name.to_owned(),
-            });
+            result.push(
+                CheckTypeSystemErrorMessage::DuplicatedName {
+                    name: f.name.name.to_owned(),
+                }
+                .with_pos(*f.name.position()),
+            );
         } else {
             seen_fields.push(f.name.name);
         }
         if name_starts_with_unscounsco(&f.name) {
-            result.push(CheckTypeSystemError::UnscoUnsco {
-                position: *f.name.position(),
-            })
+            result.push(CheckTypeSystemErrorMessage::UnscoUnsco.with_pos(*f.name.position()));
         }
         if kind_of_type(definitions, &f.r#type).map_or(false, |k| !k.is_output_type()) {
-            result.push(CheckTypeSystemError::NoInputType {
-                position: *f.r#type.position(),
-                name: f.r#type.unwrapped_type().name.name.to_owned(),
-            });
+            result.push(
+                CheckTypeSystemErrorMessage::NoInputType {
+                    name: f.r#type.unwrapped_type().name.name.to_owned(),
+                }
+                .with_pos(*f.r#type.position()),
+            );
         }
         if let Some(ref arg) = f.arguments {
             check_arguments_definition(arg, definitions, result)
@@ -298,17 +236,18 @@ fn check_interface(
     }
     for other_interface in interface.implements.iter() {
         if interface.name.name == other_interface.name {
-            result.push(CheckTypeSystemError::NoImplementSelf {
-                position: other_interface.position,
-            });
+            result.push(
+                CheckTypeSystemErrorMessage::NoImplementSelf.with_pos(other_interface.position),
+            );
             continue;
         }
         let Some(interface_def) = definitions.types.get(other_interface.name) else {
-            result.push(CheckTypeSystemError::UnknownType { position: *other_interface.position(), name: other_interface.name.to_owned() });
+            result.push(CheckTypeSystemErrorMessage::UnknownType { name: other_interface.name.to_owned() }.with_pos(*other_interface.position()));
             continue;
         };
         let TypeDefinition::Interface(ref def) = interface_def else {
-            result.push(CheckTypeSystemError::NotInterface  { position: *other_interface.position(), name: other_interface.name.to_owned() });
+            result.push(CheckTypeSystemErrorMessage::NotInterface  { name: other_interface.name.to_owned() }
+            .with_pos(*other_interface.position()));
             continue;
         };
         check_valid_implementation(
@@ -328,19 +267,19 @@ fn check_union(
     result: &mut Vec<CheckTypeSystemError>,
 ) {
     if name_starts_with_unscounsco(&union.name) {
-        result.push(CheckTypeSystemError::UnscoUnsco {
-            position: *union.name.position(),
-        })
+        result.push(CheckTypeSystemErrorMessage::UnscoUnsco.with_pos(*union.name.position()));
     }
     check_directives(definitions, &union.directives, "UNION", result);
 
     let mut seen_members = vec![];
     for member in union.members.iter() {
         if seen_members.contains(&member.name) {
-            result.push(CheckTypeSystemError::DuplicatedName {
-                position: member.position,
-                name: member.name.to_owned(),
-            })
+            result.push(
+                CheckTypeSystemErrorMessage::DuplicatedName {
+                    name: member.name.to_owned(),
+                }
+                .with_pos(member.position),
+            );
         } else {
             seen_members.push(member.name);
         }
@@ -348,17 +287,21 @@ fn check_union(
         let member_type_def = definitions.types.get(member.name);
         match member_type_def {
             None => {
-                result.push(CheckTypeSystemError::UnknownType {
-                    position: member.position,
-                    name: member.name.to_owned(),
-                });
+                result.push(
+                    CheckTypeSystemErrorMessage::UnknownType {
+                        name: member.name.to_owned(),
+                    }
+                    .with_pos(member.position),
+                );
             }
             Some(member_type_def) => {
                 if !matches!(member_type_def, TypeDefinition::Object(_)) {
-                    result.push(CheckTypeSystemError::NonObjectTypeUnionMember {
-                        position: member.position,
-                        member_name: member.name.to_owned(),
-                    });
+                    result.push(
+                        CheckTypeSystemErrorMessage::NonObjectTypeUnionMember {
+                            member_name: member.name.to_owned(),
+                        }
+                        .with_pos(member.position),
+                    );
                 }
             }
         }
@@ -371,19 +314,19 @@ fn check_enum(
     result: &mut Vec<CheckTypeSystemError>,
 ) {
     if name_starts_with_unscounsco(&enum_def.name) {
-        result.push(CheckTypeSystemError::UnscoUnsco {
-            position: *enum_def.name.position(),
-        })
+        result.push(CheckTypeSystemErrorMessage::UnscoUnsco.with_pos(*enum_def.name.position()));
     }
     check_directives(definitions, &enum_def.directives, "ENUM", result);
 
     let mut seen_values = vec![];
     for v in enum_def.values.iter() {
         if seen_values.contains(&v.name.name) {
-            result.push(CheckTypeSystemError::DuplicatedName {
-                position: v.name.position,
-                name: v.name.name.to_owned(),
-            })
+            result.push(
+                CheckTypeSystemErrorMessage::DuplicatedName {
+                    name: v.name.name.to_owned(),
+                }
+                .with_pos(v.name.position),
+            );
         } else {
             seen_values.push(v.name.name);
         }
@@ -397,26 +340,24 @@ fn check_input_object(
     result: &mut Vec<CheckTypeSystemError>,
 ) {
     if name_starts_with_unscounsco(&input.name) {
-        result.push(CheckTypeSystemError::UnscoUnsco {
-            position: *input.name.position(),
-        })
+        result.push(CheckTypeSystemErrorMessage::UnscoUnsco.with_pos(*input.name.position()));
     }
     check_directives(definitions, &input.directives, "INPUT_OBJECT", result);
 
     let mut seen_fields = vec![];
     for f in input.fields.iter() {
         if seen_fields.contains(&f.name.name) {
-            result.push(CheckTypeSystemError::DuplicatedName {
-                position: f.name.position,
-                name: f.name.name.to_owned(),
-            })
+            result.push(
+                CheckTypeSystemErrorMessage::DuplicatedName {
+                    name: f.name.name.to_owned(),
+                }
+                .with_pos(f.name.position),
+            )
         } else {
             seen_fields.push(f.name.name);
         }
         if name_starts_with_unscounsco(&f.name) {
-            result.push(CheckTypeSystemError::UnscoUnsco {
-                position: f.name.position,
-            });
+            result.push(CheckTypeSystemErrorMessage::UnscoUnsco.with_pos(f.name.position));
         }
         check_directives(definitions, &f.directives, "INPUT_FIELD_DEFINITION", result);
 
@@ -424,16 +365,20 @@ fn check_input_object(
             kind_of_type(definitions, &f.r#type).map(|k| !k.is_input_type());
         match type_is_not_input_type {
             None => {
-                result.push(CheckTypeSystemError::UnknownType {
-                    position: *f.r#type.position(),
-                    name: f.r#type.unwrapped_type().name.name.to_owned(),
-                });
+                result.push(
+                    CheckTypeSystemErrorMessage::UnknownType {
+                        name: f.r#type.unwrapped_type().name.name.to_owned(),
+                    }
+                    .with_pos(*f.r#type.position()),
+                );
             }
             Some(true) => {
-                result.push(CheckTypeSystemError::NoOutputType {
-                    position: *f.r#type.position(),
-                    name: f.r#type.unwrapped_type().name.name.to_owned(),
-                });
+                result.push(
+                    CheckTypeSystemErrorMessage::NoOutputType {
+                        name: f.r#type.unwrapped_type().name.name.to_owned(),
+                    }
+                    .with_pos(*f.r#type.position()),
+                );
             }
             Some(false) => {}
         }
@@ -448,25 +393,27 @@ fn check_arguments_definition(
     let mut argument_names = vec![];
     for v in def.input_values.iter() {
         if name_starts_with_unscounsco(&v.name) {
-            result.push(CheckTypeSystemError::UnscoUnsco {
-                position: *v.name.position(),
-            });
+            result.push(CheckTypeSystemErrorMessage::UnscoUnsco.with_pos(*v.name.position()));
         }
         if argument_names.contains(&v.name.name) {
-            result.push(CheckTypeSystemError::DuplicatedName {
-                position: *v.name.position(),
-                name: v.name.name.to_owned(),
-            })
+            result.push(
+                CheckTypeSystemErrorMessage::DuplicatedName {
+                    name: v.name.name.to_owned(),
+                }
+                .with_pos(v.name.position),
+            );
         } else {
             argument_names.push(v.name.name);
         }
         let type_is_not_input_type =
             kind_of_type(definitions, &v.r#type).map_or(false, |k| !k.is_input_type());
         if type_is_not_input_type {
-            result.push(CheckTypeSystemError::NoOutputType {
-                position: *v.r#type.position(),
-                name: v.r#type.unwrapped_type().name.name.to_owned(),
-            })
+            result.push(
+                CheckTypeSystemErrorMessage::NoOutputType {
+                    name: v.r#type.unwrapped_type().name.name.to_owned(),
+                }
+                .with_pos(*v.r#type.position()),
+            );
         }
 
         check_directives(definitions, &v.directives, "ARGUMENT_DEFINITION", result)
@@ -486,10 +433,12 @@ fn check_directives(
     let mut seen_directives = vec![];
     for d in directives {
         match definitions.directives.get(d.name.name) {
-            None => result.push(CheckTypeSystemError::UnknownDirective {
-                position: *d.name.position(),
-                name: d.name.name.to_owned(),
-            }),
+            None => result.push(
+                CheckTypeSystemErrorMessage::UnknownDirective {
+                    name: d.name.name.to_owned(),
+                }
+                .with_pos(d.name.position),
+            ),
             Some(def) => {
                 if def
                     .locations
@@ -497,17 +446,21 @@ fn check_directives(
                     .find(|loc| loc.name == current_position)
                     .is_none()
                 {
-                    result.push(CheckTypeSystemError::DirectiveLocationNotAllowed {
-                        position: *d.position(),
-                        name: d.name.name.to_owned(),
-                    });
+                    result.push(
+                        CheckTypeSystemErrorMessage::DirectiveLocationNotAllowed {
+                            name: d.name.name.to_owned(),
+                        }
+                        .with_pos(d.position),
+                    );
                 }
                 if seen_directives.contains(&d.name.name) {
                     if def.repeatable.is_none() {
-                        result.push(CheckTypeSystemError::RepeatedDirective {
-                            position: *d.position(),
-                            name: d.name.name.to_owned(),
-                        })
+                        result.push(
+                            CheckTypeSystemErrorMessage::RepeatedDirective {
+                                name: d.name.name.to_owned(),
+                            }
+                            .with_pos(d.position),
+                        )
                     }
                 } else {
                     seen_directives.push(d.name.name);

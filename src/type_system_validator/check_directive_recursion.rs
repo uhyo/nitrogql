@@ -6,7 +6,9 @@ use crate::graphql_parser::ast::{
     type_system::{DirectiveDefinition, TypeDefinition},
 };
 
-use super::{definition_map::DefinitionMap, CheckTypeSystemError};
+use super::{
+    definition_map::DefinitionMap, error::CheckTypeSystemError, CheckTypeSystemErrorMessage,
+};
 
 /// Checks and generates diagnostics for recursed directives.
 pub fn check_directive_recursion(
@@ -21,10 +23,12 @@ pub fn check_directive_recursion(
         for d in current_directives.into_iter() {
             if seen_directives.contains(d.name.name) {
                 // Recursion!
-                result.push(CheckTypeSystemError::RecursingDirective {
-                    position: d.position,
-                    name: d.name.name.to_owned(),
-                });
+                result.push(
+                    CheckTypeSystemErrorMessage::RecursingDirective {
+                        name: d.name.name.to_owned(),
+                    }
+                    .with_pos(d.position),
+                );
                 continue;
             }
             seen_directives.insert(d.name.name);

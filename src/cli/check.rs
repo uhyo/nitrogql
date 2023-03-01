@@ -13,7 +13,7 @@ pub fn run_check(context: CliContext) -> Result<CliContext> {
             file_by_index,
         } => {
             let resolved = resolve_extensions(schema)?;
-            info!("Check succeded");
+            info!("Check succeeded");
             Ok(CliContext::SchemaResolved {
                 schema: resolved,
                 file_by_index,

@@ -9,6 +9,7 @@ mod tests {
     static POS: Pos = Pos {
         line: 0,
         column: 0,
+        file: 0,
         builtin: false,
     };
 

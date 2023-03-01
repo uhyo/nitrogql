@@ -25,13 +25,17 @@ mod directives {
         let errors = check_type_system_document(&doc);
         assert_debug_snapshot!(errors, @r###"
         [
-            RecursingDirective {
+            CheckTypeSystemError {
                 position: Pos {
                     line: 1,
                     column: 8,
+                    file: 0,
                     builtin: false,
                 },
-                name: "heyhey",
+                message: RecursingDirective {
+                    name: "heyhey",
+                },
+                additional_info: [],
             },
         ]
         "###);
@@ -56,21 +60,29 @@ mod directives {
         let errors = check_type_system_document(&doc);
         assert_debug_snapshot!(errors, @r###"
         [
-            RecursingDirective {
+            CheckTypeSystemError {
                 position: Pos {
                     line: 1,
                     column: 8,
+                    file: 0,
                     builtin: false,
                 },
-                name: "heyhey",
+                message: RecursingDirective {
+                    name: "heyhey",
+                },
+                additional_info: [],
             },
-            RecursingDirective {
+            CheckTypeSystemError {
                 position: Pos {
                     line: 6,
                     column: 8,
+                    file: 0,
                     builtin: false,
                 },
-                name: "wow",
+                message: RecursingDirective {
+                    name: "wow",
+                },
+                additional_info: [],
             },
         ]
         "###);
@@ -87,12 +99,15 @@ mod directives {
         let errors = check_type_system_document(&doc);
         assert_debug_snapshot!(errors, @r###"
         [
-            UnscoUnsco {
+            CheckTypeSystemError {
                 position: Pos {
                     line: 1,
                     column: 19,
+                    file: 0,
                     builtin: false,
                 },
+                message: UnscoUnsco,
+                additional_info: [],
             },
         ]
         "###);
@@ -109,12 +124,15 @@ mod directives {
         let errors = check_type_system_document(&doc);
         assert_debug_snapshot!(errors, @r###"
         [
-            UnscoUnsco {
+            CheckTypeSystemError {
                 position: Pos {
                     line: 1,
                     column: 26,
+                    file: 0,
                     builtin: false,
                 },
+                message: UnscoUnsco,
+                additional_info: [],
             },
         ]
         "###);
@@ -131,13 +149,17 @@ mod directives {
         let errors = check_type_system_document(&doc);
         assert_debug_snapshot!(errors, @r###"
         [
-            DuplicatedName {
+            CheckTypeSystemError {
                 position: Pos {
                     line: 1,
                     column: 41,
+                    file: 0,
                     builtin: false,
                 },
-                name: "arg1",
+                message: DuplicatedName {
+                    name: "arg1",
+                },
+                additional_info: [],
             },
         ]
         "###);
@@ -165,29 +187,41 @@ mod directives {
         let errors = check_type_system_document(&doc);
         assert_debug_snapshot!(errors, @r###"
         [
-            NoOutputType {
+            CheckTypeSystemError {
                 position: Pos {
                     line: 2,
                     column: 18,
+                    file: 0,
                     builtin: false,
                 },
-                name: "MyType",
+                message: NoOutputType {
+                    name: "MyType",
+                },
+                additional_info: [],
             },
-            NoOutputType {
+            CheckTypeSystemError {
                 position: Pos {
                     line: 3,
                     column: 18,
+                    file: 0,
                     builtin: false,
                 },
-                name: "MyInterface",
+                message: NoOutputType {
+                    name: "MyInterface",
+                },
+                additional_info: [],
             },
-            NoOutputType {
+            CheckTypeSystemError {
                 position: Pos {
                     line: 4,
                     column: 18,
+                    file: 0,
                     builtin: false,
                 },
-                name: "MyUnion",
+                message: NoOutputType {
+                    name: "MyUnion",
+                },
+                additional_info: [],
             },
         ]
         "###);
@@ -228,13 +262,17 @@ mod schemas {
         let errors = check_type_system_document(&doc);
         assert_debug_snapshot!(errors, @r###"
         [
-            RepeatedDirective {
+            CheckTypeSystemError {
                 position: Pos {
                     line: 2,
                     column: 20,
+                    file: 0,
                     builtin: false,
                 },
-                name: "wow",
+                message: RepeatedDirective {
+                    name: "wow",
+                },
+                additional_info: [],
             },
         ]
         "###);
@@ -265,13 +303,17 @@ mod schemas {
         let errors = check_type_system_document(&doc);
         assert_debug_snapshot!(errors, @r###"
         [
-            DirectiveLocationNotAllowed {
+            CheckTypeSystemError {
                 position: Pos {
                     line: 2,
                     column: 15,
+                    file: 0,
                     builtin: false,
                 },
-                name: "wow",
+                message: DirectiveLocationNotAllowed {
+                    name: "wow",
+                },
+                additional_info: [],
             },
         ]
         "###);
@@ -296,12 +338,15 @@ mod scalars {
         let errors = check_type_system_document(&doc);
         assert_debug_snapshot!(errors, @r###"
         [
-            UnscoUnsco {
+            CheckTypeSystemError {
                 position: Pos {
                     line: 1,
                     column: 19,
+                    file: 0,
                     builtin: false,
                 },
+                message: UnscoUnsco,
+                additional_info: [],
             },
         ]
         "###);
@@ -317,13 +362,17 @@ mod scalars {
         let errors = check_type_system_document(&doc);
         assert_debug_snapshot!(errors, @r###"
         [
-            DirectiveLocationNotAllowed {
+            CheckTypeSystemError {
                 position: Pos {
                     line: 2,
                     column: 19,
+                    file: 0,
                     builtin: false,
                 },
-                name: "wow",
+                message: DirectiveLocationNotAllowed {
+                    name: "wow",
+                },
+                additional_info: [],
             },
         ]
         "###);
@@ -354,12 +403,15 @@ mod objects {
         let errors = check_type_system_document(&doc);
         assert_debug_snapshot!(errors, @r###"
         [
-            UnscoUnsco {
+            CheckTypeSystemError {
                 position: Pos {
                     line: 1,
                     column: 17,
+                    file: 0,
                     builtin: false,
                 },
+                message: UnscoUnsco,
+                additional_info: [],
             },
         ]
         "###);
@@ -379,13 +431,17 @@ mod objects {
         let errors = check_type_system_document(&doc);
         assert_debug_snapshot!(errors, @r###"
         [
-            DuplicatedName {
+            CheckTypeSystemError {
                 position: Pos {
                     line: 3,
                     column: 16,
+                    file: 0,
                     builtin: false,
                 },
-                name: "foo",
+                message: DuplicatedName {
+                    name: "foo",
+                },
+                additional_info: [],
             },
         ]
         "###);
@@ -404,12 +460,15 @@ mod objects {
         let errors = check_type_system_document(&doc);
         assert_debug_snapshot!(errors, @r###"
         [
-            UnscoUnsco {
+            CheckTypeSystemError {
                 position: Pos {
                     line: 2,
                     column: 16,
+                    file: 0,
                     builtin: false,
                 },
+                message: UnscoUnsco,
+                additional_info: [],
             },
         ]
         "###);
@@ -442,13 +501,17 @@ mod objects {
         let errors = check_type_system_document(&doc);
         assert_debug_snapshot!(errors, @r###"
         [
-            NoInputType {
+            CheckTypeSystemError {
                 position: Pos {
                     line: 7,
                     column: 36,
+                    file: 0,
                     builtin: false,
                 },
-                name: "InputObj",
+                message: NoInputType {
+                    name: "InputObj",
+                },
+                additional_info: [],
             },
         ]
         "###);
@@ -473,36 +536,51 @@ mod objects {
         let errors = check_type_system_document(&doc);
         assert_debug_snapshot!(errors, @r###"
         [
-            UnscoUnsco {
+            CheckTypeSystemError {
                 position: Pos {
                     line: 2,
                     column: 23,
+                    file: 0,
                     builtin: false,
                 },
+                message: UnscoUnsco,
+                additional_info: [],
             },
-            DuplicatedName {
+            CheckTypeSystemError {
                 position: Pos {
                     line: 3,
                     column: 16,
+                    file: 0,
                     builtin: false,
                 },
-                name: "field1",
+                message: DuplicatedName {
+                    name: "field1",
+                },
+                additional_info: [],
             },
-            DuplicatedName {
+            CheckTypeSystemError {
                 position: Pos {
                     line: 4,
                     column: 34,
+                    file: 0,
                     builtin: false,
                 },
-                name: "arg",
+                message: DuplicatedName {
+                    name: "arg",
+                },
+                additional_info: [],
             },
-            NoOutputType {
+            CheckTypeSystemError {
                 position: Pos {
                     line: 5,
                     column: 28,
+                    file: 0,
                     builtin: false,
                 },
-                name: "MyType",
+                message: NoOutputType {
+                    name: "MyType",
+                },
+                additional_info: [],
             },
         ]
         "###);
@@ -541,63 +619,91 @@ mod objects {
         let errors = check_type_system_document(&doc);
         assert_debug_snapshot!(errors, @r###"
         [
-            FieldTypeMisMatchWithInterface {
+            CheckTypeSystemError {
                 position: Pos {
                     line: 10,
                     column: 16,
+                    file: 0,
                     builtin: false,
                 },
-                interface_name: "IFoo",
+                message: FieldTypeMisMatchWithInterface {
+                    interface_name: "IFoo",
+                },
+                additional_info: [],
             },
-            InterfaceFieldNotImplemented {
+            CheckTypeSystemError {
                 position: Pos {
                     line: 8,
                     column: 17,
+                    file: 0,
                     builtin: false,
                 },
-                field_name: "bar",
-                interface_name: "IBar",
+                message: InterfaceFieldNotImplemented {
+                    field_name: "bar",
+                    interface_name: "IBar",
+                },
+                additional_info: [],
             },
-            InterfaceArgumentNotImplemented {
+            CheckTypeSystemError {
                 position: Pos {
                     line: 13,
                     column: 16,
+                    file: 0,
                     builtin: false,
                 },
-                argument_name: "arg",
-                interface_name: "IBar",
+                message: InterfaceArgumentNotImplemented {
+                    argument_name: "arg",
+                    interface_name: "IBar",
+                },
+                additional_info: [],
             },
-            ArgumentTypeNonNullAgainstInterface {
+            CheckTypeSystemError {
                 position: Pos {
                     line: 13,
                     column: 20,
+                    file: 0,
                     builtin: false,
                 },
-                interface_name: "IBar",
+                message: ArgumentTypeNonNullAgainstInterface {
+                    interface_name: "IBar",
+                },
+                additional_info: [],
             },
-            ArgumentTypeMisMatchWithInterface {
+            CheckTypeSystemError {
                 position: Pos {
                     line: 16,
                     column: 20,
+                    file: 0,
                     builtin: false,
                 },
-                interface_name: "IBar",
+                message: ArgumentTypeMisMatchWithInterface {
+                    interface_name: "IBar",
+                },
+                additional_info: [],
             },
-            ArgumentTypeNonNullAgainstInterface {
+            CheckTypeSystemError {
                 position: Pos {
                     line: 19,
                     column: 35,
+                    file: 0,
                     builtin: false,
                 },
-                interface_name: "IBar",
+                message: ArgumentTypeNonNullAgainstInterface {
+                    interface_name: "IBar",
+                },
+                additional_info: [],
             },
-            FieldTypeMisMatchWithInterface {
+            CheckTypeSystemError {
                 position: Pos {
                     line: 19,
                     column: 16,
+                    file: 0,
                     builtin: false,
                 },
-                interface_name: "IBar",
+                message: FieldTypeMisMatchWithInterface {
+                    interface_name: "IBar",
+                },
+                additional_info: [],
             },
         ]
         "###);
@@ -631,12 +737,15 @@ mod interfaces {
         let errors = check_type_system_document(&doc);
         assert_debug_snapshot!(errors, @r###"
         [
-            UnscoUnsco {
+            CheckTypeSystemError {
                 position: Pos {
                     line: 1,
                     column: 22,
+                    file: 0,
                     builtin: false,
                 },
+                message: UnscoUnsco,
+                additional_info: [],
             },
         ]
         "###);
@@ -655,13 +764,17 @@ mod interfaces {
         let errors = check_type_system_document(&doc);
         assert_debug_snapshot!(errors, @r###"
         [
-            DuplicatedName {
+            CheckTypeSystemError {
                 position: Pos {
                     line: 3,
                     column: 16,
+                    file: 0,
                     builtin: false,
                 },
-                name: "foo",
+                message: DuplicatedName {
+                    name: "foo",
+                },
+                additional_info: [],
             },
         ]
         "###);
@@ -680,12 +793,15 @@ mod interfaces {
         let errors = check_type_system_document(&doc);
         assert_debug_snapshot!(errors, @r###"
         [
-            UnscoUnsco {
+            CheckTypeSystemError {
                 position: Pos {
                     line: 2,
                     column: 16,
+                    file: 0,
                     builtin: false,
                 },
+                message: UnscoUnsco,
+                additional_info: [],
             },
         ]
         "###);
@@ -717,13 +833,17 @@ mod interfaces {
         let errors = check_type_system_document(&doc);
         assert_debug_snapshot!(errors, @r###"
         [
-            NoInputType {
+            CheckTypeSystemError {
                 position: Pos {
                     line: 7,
                     column: 36,
+                    file: 0,
                     builtin: false,
                 },
-                name: "InputObj",
+                message: NoInputType {
+                    name: "InputObj",
+                },
+                additional_info: [],
             },
         ]
         "###);
@@ -748,36 +868,51 @@ mod interfaces {
         let errors = check_type_system_document(&doc);
         assert_debug_snapshot!(errors, @r###"
         [
-            UnscoUnsco {
+            CheckTypeSystemError {
                 position: Pos {
                     line: 2,
                     column: 23,
+                    file: 0,
                     builtin: false,
                 },
+                message: UnscoUnsco,
+                additional_info: [],
             },
-            DuplicatedName {
+            CheckTypeSystemError {
                 position: Pos {
                     line: 3,
                     column: 16,
+                    file: 0,
                     builtin: false,
                 },
-                name: "field1",
+                message: DuplicatedName {
+                    name: "field1",
+                },
+                additional_info: [],
             },
-            DuplicatedName {
+            CheckTypeSystemError {
                 position: Pos {
                     line: 4,
                     column: 34,
+                    file: 0,
                     builtin: false,
                 },
-                name: "arg",
+                message: DuplicatedName {
+                    name: "arg",
+                },
+                additional_info: [],
             },
-            NoOutputType {
+            CheckTypeSystemError {
                 position: Pos {
                     line: 5,
                     column: 28,
+                    file: 0,
                     builtin: false,
                 },
-                name: "MyType",
+                message: NoOutputType {
+                    name: "MyType",
+                },
+                additional_info: [],
             },
         ]
         "###);
@@ -816,63 +951,91 @@ mod interfaces {
         let errors = check_type_system_document(&doc);
         assert_debug_snapshot!(errors, @r###"
         [
-            FieldTypeMisMatchWithInterface {
+            CheckTypeSystemError {
                 position: Pos {
                     line: 10,
                     column: 16,
+                    file: 0,
                     builtin: false,
                 },
-                interface_name: "IFoo",
+                message: FieldTypeMisMatchWithInterface {
+                    interface_name: "IFoo",
+                },
+                additional_info: [],
             },
-            InterfaceFieldNotImplemented {
+            CheckTypeSystemError {
                 position: Pos {
                     line: 8,
                     column: 22,
+                    file: 0,
                     builtin: false,
                 },
-                field_name: "bar",
-                interface_name: "IBar",
+                message: InterfaceFieldNotImplemented {
+                    field_name: "bar",
+                    interface_name: "IBar",
+                },
+                additional_info: [],
             },
-            InterfaceArgumentNotImplemented {
+            CheckTypeSystemError {
                 position: Pos {
                     line: 13,
                     column: 16,
+                    file: 0,
                     builtin: false,
                 },
-                argument_name: "arg",
-                interface_name: "IBar",
+                message: InterfaceArgumentNotImplemented {
+                    argument_name: "arg",
+                    interface_name: "IBar",
+                },
+                additional_info: [],
             },
-            ArgumentTypeNonNullAgainstInterface {
+            CheckTypeSystemError {
                 position: Pos {
                     line: 13,
                     column: 20,
+                    file: 0,
                     builtin: false,
                 },
-                interface_name: "IBar",
+                message: ArgumentTypeNonNullAgainstInterface {
+                    interface_name: "IBar",
+                },
+                additional_info: [],
             },
-            ArgumentTypeMisMatchWithInterface {
+            CheckTypeSystemError {
                 position: Pos {
                     line: 16,
                     column: 20,
+                    file: 0,
                     builtin: false,
                 },
-                interface_name: "IBar",
+                message: ArgumentTypeMisMatchWithInterface {
+                    interface_name: "IBar",
+                },
+                additional_info: [],
             },
-            ArgumentTypeNonNullAgainstInterface {
+            CheckTypeSystemError {
                 position: Pos {
                     line: 19,
                     column: 35,
+                    file: 0,
                     builtin: false,
                 },
-                interface_name: "IBar",
+                message: ArgumentTypeNonNullAgainstInterface {
+                    interface_name: "IBar",
+                },
+                additional_info: [],
             },
-            FieldTypeMisMatchWithInterface {
+            CheckTypeSystemError {
                 position: Pos {
                     line: 19,
                     column: 16,
+                    file: 0,
                     builtin: false,
                 },
-                interface_name: "IBar",
+                message: FieldTypeMisMatchWithInterface {
+                    interface_name: "IBar",
+                },
+                additional_info: [],
             },
         ]
         "###);
@@ -890,12 +1053,15 @@ mod interfaces {
         let errors = check_type_system_document(&doc);
         assert_debug_snapshot!(errors, @r###"
         [
-            NoImplementSelf {
+            CheckTypeSystemError {
                 position: Pos {
                     line: 1,
                     column: 35,
+                    file: 0,
                     builtin: false,
                 },
+                message: NoImplementSelf,
+                additional_info: [],
             },
         ]
         "###);
@@ -923,12 +1089,15 @@ mod unions {
         let errors = check_type_system_document(&doc);
         assert_debug_snapshot!(errors, @r###"
         [
-            UnscoUnsco {
+            CheckTypeSystemError {
                 position: Pos {
                     line: 1,
                     column: 18,
+                    file: 0,
                     builtin: false,
                 },
+                message: UnscoUnsco,
+                additional_info: [],
             },
         ]
         "###);
@@ -946,13 +1115,17 @@ mod unions {
         let errors = check_type_system_document(&doc);
         assert_debug_snapshot!(errors, @r###"
         [
-            DirectiveLocationNotAllowed {
+            CheckTypeSystemError {
                 position: Pos {
                     line: 2,
                     column: 22,
+                    file: 0,
                     builtin: false,
                 },
-                name: "wow",
+                message: DirectiveLocationNotAllowed {
+                    name: "wow",
+                },
+                additional_info: [],
             },
         ]
         "###);
@@ -970,13 +1143,17 @@ mod unions {
         let errors = check_type_system_document(&doc);
         assert_debug_snapshot!(errors, @r###"
         [
-            UnknownType {
+            CheckTypeSystemError {
                 position: Pos {
                     line: 1,
                     column: 32,
+                    file: 0,
                     builtin: false,
                 },
-                name: "C",
+                message: UnknownType {
+                    name: "C",
+                },
+                additional_info: [],
             },
         ]
         "###);
@@ -998,37 +1175,53 @@ mod unions {
         let errors = check_type_system_document(&doc);
         assert_debug_snapshot!(errors, @r###"
         [
-            NonObjectTypeUnionMember {
+            CheckTypeSystemError {
                 position: Pos {
                     line: 1,
                     column: 25,
+                    file: 0,
                     builtin: false,
                 },
-                member_name: "Int",
+                message: NonObjectTypeUnionMember {
+                    member_name: "Int",
+                },
+                additional_info: [],
             },
-            NonObjectTypeUnionMember {
+            CheckTypeSystemError {
                 position: Pos {
                     line: 1,
                     column: 37,
+                    file: 0,
                     builtin: false,
                 },
-                member_name: "Union",
+                message: NonObjectTypeUnionMember {
+                    member_name: "Union",
+                },
+                additional_info: [],
             },
-            NonObjectTypeUnionMember {
+            CheckTypeSystemError {
                 position: Pos {
                     line: 1,
                     column: 45,
+                    file: 0,
                     builtin: false,
                 },
-                member_name: "Enum",
+                message: NonObjectTypeUnionMember {
+                    member_name: "Enum",
+                },
+                additional_info: [],
             },
-            NonObjectTypeUnionMember {
+            CheckTypeSystemError {
                 position: Pos {
                     line: 1,
                     column: 52,
+                    file: 0,
                     builtin: false,
                 },
-                member_name: "Input",
+                message: NonObjectTypeUnionMember {
+                    member_name: "Input",
+                },
+                additional_info: [],
             },
         ]
         "###);
@@ -1053,12 +1246,15 @@ mod enums {
         let errors = check_type_system_document(&doc);
         assert_debug_snapshot!(errors, @r###"
         [
-            UnscoUnsco {
+            CheckTypeSystemError {
                 position: Pos {
                     line: 1,
                     column: 17,
+                    file: 0,
                     builtin: false,
                 },
+                message: UnscoUnsco,
+                additional_info: [],
             },
         ]
         "###);
@@ -1080,21 +1276,29 @@ mod enums {
         let errors = check_type_system_document(&doc);
         assert_debug_snapshot!(errors, @r###"
         [
-            DirectiveLocationNotAllowed {
+            CheckTypeSystemError {
                 position: Pos {
                     line: 4,
                     column: 21,
+                    file: 0,
                     builtin: false,
                 },
-                name: "x",
+                message: DirectiveLocationNotAllowed {
+                    name: "x",
+                },
+                additional_info: [],
             },
-            DirectiveLocationNotAllowed {
+            CheckTypeSystemError {
                 position: Pos {
                     line: 6,
                     column: 18,
+                    file: 0,
                     builtin: false,
                 },
-                name: "y",
+                message: DirectiveLocationNotAllowed {
+                    name: "y",
+                },
+                additional_info: [],
             },
         ]
         "###);
@@ -1121,12 +1325,15 @@ mod input_objects {
         let errors = check_type_system_document(&doc);
         assert_debug_snapshot!(errors, @r###"
         [
-            UnscoUnsco {
+            CheckTypeSystemError {
                 position: Pos {
                     line: 1,
                     column: 18,
+                    file: 0,
                     builtin: false,
                 },
+                message: UnscoUnsco,
+                additional_info: [],
             },
         ]
         "###);
@@ -1149,21 +1356,29 @@ mod input_objects {
         let errors = check_type_system_document(&doc);
         assert_debug_snapshot!(errors, @r###"
         [
-            DirectiveLocationNotAllowed {
+            CheckTypeSystemError {
                 position: Pos {
                     line: 4,
                     column: 26,
+                    file: 0,
                     builtin: false,
                 },
-                name: "y",
+                message: DirectiveLocationNotAllowed {
+                    name: "y",
+                },
+                additional_info: [],
             },
-            DirectiveLocationNotAllowed {
+            CheckTypeSystemError {
                 position: Pos {
                     line: 5,
                     column: 28,
+                    file: 0,
                     builtin: false,
                 },
-                name: "x",
+                message: DirectiveLocationNotAllowed {
+                    name: "x",
+                },
+                additional_info: [],
             },
         ]
         "###);
@@ -1183,20 +1398,27 @@ mod input_objects {
         let errors = check_type_system_document(&doc);
         assert_debug_snapshot!(errors, @r###"
         [
-            UnscoUnsco {
+            CheckTypeSystemError {
                 position: Pos {
                     line: 2,
                     column: 16,
+                    file: 0,
                     builtin: false,
                 },
+                message: UnscoUnsco,
+                additional_info: [],
             },
-            DuplicatedName {
+            CheckTypeSystemError {
                 position: Pos {
                     line: 4,
                     column: 16,
+                    file: 0,
                     builtin: false,
                 },
-                name: "field2",
+                message: DuplicatedName {
+                    name: "field2",
+                },
+                additional_info: [],
             },
         ]
         "###);
@@ -1223,21 +1445,29 @@ mod input_objects {
         let errors = check_type_system_document(&doc);
         assert_debug_snapshot!(errors, @r###"
         [
-            NoOutputType {
+            CheckTypeSystemError {
                 position: Pos {
                     line: 3,
                     column: 24,
+                    file: 0,
                     builtin: false,
                 },
-                name: "MyType",
+                message: NoOutputType {
+                    name: "MyType",
+                },
+                additional_info: [],
             },
-            NoOutputType {
+            CheckTypeSystemError {
                 position: Pos {
                     line: 4,
                     column: 23,
+                    file: 0,
                     builtin: false,
                 },
-                name: "MyUnion",
+                message: NoOutputType {
+                    name: "MyUnion",
+                },
+                additional_info: [],
             },
         ]
         "###);
