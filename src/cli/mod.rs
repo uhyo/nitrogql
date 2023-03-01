@@ -10,8 +10,8 @@ use crate::{
     cli::{context::CliContext, error::CliError},
     error::print_positioned_error,
     graphql_parser::{
-        ast::{base::set_current_file_of_pos, TypeSystemOrExtensionDocument},
-        parser::parse_type_system_document,
+        ast::{base::set_current_file_of_pos, OperationDocument, TypeSystemOrExtensionDocument},
+        parser::{parse_operation_document, parse_type_system_document},
     },
 };
 
@@ -52,8 +52,8 @@ fn run_cli_impl(args: impl IntoIterator<Item = String>) -> Result<()> {
     if args.schema.is_empty() {
         return Err(CliError::NoSchemaSpecified.into());
     }
-    let schema_files = load_schema_files(&args)?;
-    let file_by_index = schema_files
+    let schema_files = load_glob_files(&args.schema)?;
+    let mut file_by_index = schema_files
         .iter()
         .map(|(path, src)| (path.clone(), src.as_str()))
         .collect::<Vec<_>>();
@@ -62,7 +62,7 @@ fn run_cli_impl(args: impl IntoIterator<Item = String>) -> Result<()> {
         .enumerate()
         .map(
             |(file_idx, (path, buf))| -> Result<TypeSystemOrExtensionDocument> {
-                debug!("parsing {}", path.to_string_lossy());
+                debug!("parsing(schema) {}", path.to_string_lossy());
                 set_current_file_of_pos(file_idx);
                 let doc = parse_type_system_document(&buf)?;
                 Ok(doc)
@@ -72,8 +72,33 @@ fn run_cli_impl(args: impl IntoIterator<Item = String>) -> Result<()> {
     let schema_docs = schema_docs?;
     let merged_schema_doc = TypeSystemOrExtensionDocument::merge(schema_docs);
 
+    let operation_files = load_glob_files(&args.operation)?;
+    let next_file_index = file_by_index.len();
+    file_by_index.extend(
+        operation_files
+            .iter()
+            .map(|(path, src)| (path.clone(), src.as_str())),
+    );
+
+    let operation_docs = operation_files
+        .iter()
+        .enumerate()
+        .map(
+            |(file_idx, (path, buf))| -> Result<(PathBuf, OperationDocument)> {
+                let file_idx = next_file_index + file_idx;
+                debug!("parsing(operation) {}", path.to_string_lossy());
+                set_current_file_of_pos(file_idx);
+
+                let doc = parse_operation_document(&buf)?;
+                Ok((path.clone(), doc))
+            },
+        )
+        .collect::<Result<Vec<_>>>();
+    let operation_docs = operation_docs?;
+
     let mut context = CliContext::SchemaUnresolved {
         schema: merged_schema_doc,
+        operations: operation_docs,
         file_by_index,
     };
 
@@ -100,8 +125,14 @@ fn run_command<'a>(command: &str, context: CliContext<'a>) -> crate::error::Resu
     }
 }
 
-fn load_schema_files(args: &Args) -> Result<Vec<(PathBuf, String)>> {
-    let path_strs: Vec<&str> = args.schema.iter().map(|s| s.as_str()).collect();
+fn load_glob_files<'a, S: AsRef<str> + 'a>(
+    globs: impl IntoIterator<Item = &'a S>,
+) -> Result<Vec<(PathBuf, String)>> {
+    let path_strs: Vec<&str> = globs.into_iter().map(|s| s.as_ref()).collect();
+    if path_strs.is_empty() {
+        return Ok(vec![]);
+    }
+
     let root = std::env::current_dir()?;
     let schema_matchers =
         build_matchers(&path_strs, &root).map_err(|err| CliError::GlobError(err))?;

@@ -8,5 +8,5 @@
 ### Example command
 
 ```sh
-cargo run -- --schema 'sample_gql/schema/*.graphql' check
+cargo run -- --schema 'sample_gql/schema/*.graphql' --operation 'sample_gql/operations/*.graphql' check
 ```

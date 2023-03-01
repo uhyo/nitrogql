@@ -1,14 +1,18 @@
 use std::path::PathBuf;
 
-use crate::graphql_parser::ast::{TypeSystemDocument, TypeSystemOrExtensionDocument};
+use crate::graphql_parser::ast::{
+    OperationDocument, TypeSystemDocument, TypeSystemOrExtensionDocument,
+};
 
 pub enum CliContext<'src> {
     SchemaUnresolved {
         schema: TypeSystemOrExtensionDocument<'src>,
+        operations: Vec<(PathBuf, OperationDocument<'src>)>,
         file_by_index: Vec<(PathBuf, &'src str)>,
     },
     SchemaResolved {
         schema: TypeSystemDocument<'src>,
+        operations: Vec<(PathBuf, OperationDocument<'src>)>,
         file_by_index: Vec<(PathBuf, &'src str)>,
     },
 }

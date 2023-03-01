@@ -13,6 +13,7 @@ pub fn run_check(context: CliContext) -> Result<CliContext> {
     match context {
         CliContext::SchemaUnresolved {
             schema,
+            operations,
             file_by_index,
         } => {
             let resolved = resolve_extensions(schema)?;
@@ -34,6 +35,7 @@ pub fn run_check(context: CliContext) -> Result<CliContext> {
             }
             Ok(CliContext::SchemaResolved {
                 schema: resolved,
+                operations,
                 file_by_index,
             })
         }
