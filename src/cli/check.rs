@@ -1,7 +1,6 @@
-use anyhow::Result;
 use log::{debug, info};
 
-use crate::extension_resolver::resolve_extensions;
+use crate::{error::Result, extension_resolver::resolve_extensions};
 
 use super::{error::CliError, CliContext};
 

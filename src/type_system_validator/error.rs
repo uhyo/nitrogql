@@ -71,14 +71,16 @@ impl CheckTypeSystemErrorMessage {
     }
 }
 
-impl PositionedError for CheckTypeSystemError {
-    fn position(&self) -> Pos {
-        self.position
-    }
-    fn additional_info(&self) -> Vec<(Pos, String)> {
-        self.additional_info
-            .iter()
-            .map(|(pos, mes)| (*pos, format!("{mes}")))
-            .collect()
+impl From<CheckTypeSystemError> for PositionedError {
+    fn from(value: CheckTypeSystemError) -> Self {
+        PositionedError::new(
+            value.message.into(),
+            Some(value.position),
+            value
+                .additional_info
+                .into_iter()
+                .map(|(pos, err)| (pos, err.to_string()))
+                .collect(),
+        )
     }
 }

@@ -4,13 +4,15 @@ use std::{
     path::PathBuf,
 };
 
-use anyhow::Result;
+use anyhow::{Error, Result};
 use clap::Parser;
 use globmatch::wrappers::{build_matchers, match_paths};
 use log::debug;
+use thiserror::Error;
 
 use crate::{
     cli::{context::CliContext, error::CliError},
+    error::print_positioned_error,
     graphql_parser::{
         ast::{base::set_current_file_of_pos, TypeSystemOrExtensionDocument},
         parser::parse_type_system_document,
@@ -81,13 +83,22 @@ fn run_cli_impl(args: impl IntoIterator<Item = String>) -> Result<()> {
     };
 
     for command in args.commands.iter() {
-        context = run_command(command, context)?;
+        let file_source_by_index = context.file_by_index();
+        context = run_command(command, context).map_err(|err| CommandError {
+            message: print_positioned_error(&err, &file_source_by_index),
+        })?;
     }
 
     Ok(())
 }
 
-fn run_command<'a>(command: &str, context: CliContext<'a>) -> Result<CliContext<'a>> {
+#[derive(Error, Debug)]
+#[error("{message}")]
+struct CommandError {
+    message: String,
+}
+
+fn run_command<'a>(command: &str, context: CliContext<'a>) -> crate::error::Result<CliContext<'a>> {
     match command {
         "check" => run_check(context),
         command => Err(CliError::UnknownCommand(command.to_owned()).into()),

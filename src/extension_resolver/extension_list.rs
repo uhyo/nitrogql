@@ -2,7 +2,10 @@ use std::collections::HashMap;
 
 use thiserror::Error;
 
-use crate::graphql_parser::ast::base::{HasPos, Pos};
+use crate::{
+    error::PositionedError,
+    graphql_parser::ast::base::{HasPos, Pos},
+};
 
 pub struct ExtensionList<'a, OriginalType: HasPos, ExtensionType: HasPos> {
     name_of_elem: &'a str,
@@ -24,10 +27,11 @@ impl<OriginalType, ExtensionType> Default for ExtensionItem<OriginalType, Extens
 }
 
 #[derive(Error, Debug)]
-pub enum ExtensionError {
-    #[error("Duplicate declaration of {name_of_elem}")]
+pub enum ExtensionErrorMessage {
+    #[error("Duplicated declaration of {name_of_elem} '{name}'")]
     DuplicateOriginal {
         name_of_elem: String,
+        name: String,
         first: Pos,
         second: Pos,
     },
@@ -36,6 +40,30 @@ pub enum ExtensionError {
         name_of_elem: String,
         first_extension: Pos,
     },
+}
+
+#[derive(Debug)]
+pub struct ExtensionError {
+    pub message: ExtensionErrorMessage,
+}
+
+impl From<ExtensionError> for PositionedError {
+    fn from(value: ExtensionError) -> Self {
+        let position = match &value.message {
+            ExtensionErrorMessage::DuplicateOriginal { first, .. } => *first,
+            ExtensionErrorMessage::NoOriginal {
+                first_extension, ..
+            } => *first_extension,
+        };
+        let additional_info = match &value.message {
+            ExtensionErrorMessage::DuplicateOriginal { name, second, .. } => {
+                vec![(*second, format!("Another declaration of '{name}'"))]
+            }
+            ExtensionErrorMessage::NoOriginal { .. } => vec![],
+        };
+
+        PositionedError::new(value.message.into(), Some(position), additional_info)
+    }
 }
 
 impl<OriginalType: HasPos, ExtensionType: HasPos> ExtensionList<'_, OriginalType, ExtensionType> {
@@ -48,12 +76,15 @@ impl<OriginalType: HasPos, ExtensionType: HasPos> ExtensionList<'_, OriginalType
 
     pub fn set_original(&mut self, original: OriginalType) -> Result<(), ExtensionError> {
         let name = original.name().map(|str| str.to_owned());
-        let mut item = self.items.entry(name).or_default();
+        let mut item = self.items.entry(name.clone()).or_default();
         if let Some(ref first) = item.original {
-            return Err(ExtensionError::DuplicateOriginal {
-                name_of_elem: self.name_of_elem.to_owned(),
-                first: *first.position(),
-                second: *original.position(),
+            return Err(ExtensionError {
+                message: ExtensionErrorMessage::DuplicateOriginal {
+                    name_of_elem: self.name_of_elem.to_owned(),
+                    name: name.unwrap_or_else(|| String::new()),
+                    first: *first.position(),
+                    second: *original.position(),
+                },
             });
         }
         item.original = Some(original);
@@ -74,9 +105,11 @@ impl<OriginalType: HasPos, ExtensionType: HasPos> ExtensionList<'_, OriginalType
             .filter_map(|(name, item)| match item.original {
                 None => match item.extensions.into_iter().next() {
                     None => None,
-                    Some(first) => Some(Err(ExtensionError::NoOriginal {
-                        name_of_elem: self.name_of_elem.to_owned(),
-                        first_extension: *first.position(),
+                    Some(first) => Some(Err(ExtensionError {
+                        message: ExtensionErrorMessage::NoOriginal {
+                            name_of_elem: self.name_of_elem.to_owned(),
+                            first_extension: *first.position(),
+                        },
                     })),
                 },
                 Some(orig) => Some(Ok((orig, item.extensions))),
