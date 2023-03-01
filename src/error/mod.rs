@@ -86,7 +86,7 @@ fn message_for_line(
         .lines()
         .enumerate()
         .skip(pos.line.saturating_sub(2))
-        // .take(5)
+        .take(5)
         .collect::<Vec<_>>();
     if relevant_lines
         .iter()
