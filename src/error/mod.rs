@@ -58,7 +58,7 @@ pub fn print_positioned_error(error: &PositionedError, files: &[(PathBuf, &str)]
     let mut message = message_for_line(file_path, source, position, inner, false);
 
     for (pos, mes) in error.additional_info.iter() {
-        let source = files.get(position.file);
+        let source = files.get(pos.file);
         let Some((file_path, source)) = source else {
             continue;
         };
@@ -127,12 +127,13 @@ fn message_for_line(
                 result.push_str(&format!("{printed_line}\n"));
             }
         } else {
-            let error_str = format!("{error}").bright_yellow().underline();
             if is_additional {
+                let error_str = format!("{error}").bright_green().underline();
                 result.push_str(&format!(
                     "{INDENT}{trimmed_line}\n{INDENT}{spaces}^\n{INDENT}{spaces}{error_str}\n"
                 ));
             } else {
+                let error_str = format!("{error}").bright_yellow().underline();
                 result.push_str(&format!("{trimmed_line}\n{spaces}^\n{spaces}{error_str}\n"));
             }
         }

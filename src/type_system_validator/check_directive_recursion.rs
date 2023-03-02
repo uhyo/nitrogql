@@ -1,7 +1,6 @@
 use std::collections::HashSet;
 
 use crate::graphql_parser::ast::{
-    base::HasPos,
     directive::Directive,
     type_system::{DirectiveDefinition, TypeDefinition},
 };

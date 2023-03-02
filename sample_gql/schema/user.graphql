@@ -8,3 +8,7 @@ enum UserKind {
   NormalUser
   PremiumUser
 }
+
+type Query {
+  user: User!
+}

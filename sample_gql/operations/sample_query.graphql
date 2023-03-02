@@ -1,9 +1,9 @@
 query sample {
   foo
   bar
-  ...F
+  # ...F
 }
 
-fragment F on A {
-  faz
-}
+# fragment F on A {
+#   faz
+# }

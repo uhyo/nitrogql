@@ -59,9 +59,11 @@ pub fn check_operation_document(
                             result.push(
                                 CheckOperationErrorMessage::DuplicateOperationName {
                                     operation_type: op.operation_type,
-                                    other_position: *other.position(),
                                 }
-                                .with_pos(name.position),
+                                .with_pos(name.position).with_additional_info(vec![(
+                                    *other.position(),
+                                    CheckOperationErrorMessage::AnotherDefinitionPos { name: name.name.to_owned()  }
+                                )]),
                             );
                         }
                     }
@@ -94,7 +96,7 @@ pub fn check_operation_document(
             }
         }
     }
-    vec![]
+    result
 }
 
 fn check_operation(
@@ -134,9 +136,11 @@ fn check_operation(
                 result.push(
                     CheckOperationErrorMessage::NoRootType {
                         operation_type: op.operation_type,
-                        schema_definition: schema_def.position,
                     }
-                    .with_pos(*op.position()),
+                    .with_pos(*op.position())
+                    .with_additional_info(vec![
+                        (schema_def.position, CheckOperationErrorMessage::RootTypesAreDefinedHere)
+                    ])
                 );
                 return;
             }
@@ -194,9 +198,11 @@ fn check_selection_set(
             CheckOperationErrorMessage::SelectionOnInvalidType { kind: 
                 kind_of_type_definition(root_type),
                 name: root_type_name.to_owned(),
-                type_def: *root_type.position(),
             }
                 .with_pos(selection_set.position)
+                .with_additional_info(vec![
+                    (*root_type.position(), CheckOperationErrorMessage::DefinitionPos { name: root_type_name.to_owned()})
+                ])
         );
         return;
     };
@@ -211,8 +217,13 @@ fn check_selection_set(
                     result.push(
                         CheckOperationErrorMessage::FieldNotFound { field_name: 
                             field_selection.name.name.to_owned(),
-                             type_name: root_type_name.to_owned(), type_def: *root_type.position(),
+                             type_name: root_type_name.to_owned(),
                          }.with_pos(field_selection.name.position)
+                         .with_additional_info(vec![
+                            (*root_type.position(), CheckOperationErrorMessage::DefinitionPos {
+                                name: root_type_name.to_owned()
+                             })
+                         ])
                     );
                     continue;
                 };
