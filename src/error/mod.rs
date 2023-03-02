@@ -110,11 +110,16 @@ fn message_for_line(
         file_path.display(),
         pos.line + 1,
         pos.column + 1
-    );
+    )
+    .bold();
 
     let trimmed_column = pos.column.saturating_sub(minimum_indent);
 
-    let mut result = src_string;
+    let mut result = if is_additional {
+        format!("{INDENT}{src_string}")
+    } else {
+        src_string.to_string()
+    };
 
     for (line_no, source_line) in relevant_lines {
         let trimmed_line = skip_chars(source_line, minimum_indent);
