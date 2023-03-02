@@ -44,6 +44,21 @@ pub enum ExecutableDefinition<'a> {
     FragmentDefinition(FragmentDefinition<'a>),
 }
 
+impl HasPos for ExecutableDefinition<'_> {
+    fn name(&self) -> Option<&str> {
+        match self {
+            ExecutableDefinition::OperationDefinition(def) => def.name(),
+            ExecutableDefinition::FragmentDefinition(def) => def.name(),
+        }
+    }
+    fn position(&self) -> &Pos {
+        match self {
+            ExecutableDefinition::OperationDefinition(def) => def.position(),
+            ExecutableDefinition::FragmentDefinition(def) => def.position(),
+        }
+    }
+}
+
 #[derive(Clone, Debug)]
 pub struct OperationDefinition<'a> {
     pub position: Pos,

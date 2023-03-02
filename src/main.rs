@@ -5,6 +5,7 @@ mod extension_resolver;
 mod graphql_parser;
 mod graphql_printer;
 mod json_printer;
+mod operation_validator;
 mod source_map_writer;
 mod type_printer;
 mod type_system_validator;

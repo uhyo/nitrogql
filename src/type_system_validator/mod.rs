@@ -1,9 +1,5 @@
-use std::collections::{HashMap, HashSet};
-
-use thiserror::Error;
-
 use crate::graphql_parser::ast::{
-    base::{HasPos, Ident, Pos},
+    base::{HasPos, Ident},
     directive::Directive,
     type_system::{
         ArgumentsDefinition, DirectiveDefinition, EnumTypeDefinition, InputObjectTypeDefinition,
@@ -13,10 +9,10 @@ use crate::graphql_parser::ast::{
     TypeSystemDocument,
 };
 
+pub use self::definition_map::{generate_definition_map, DefinitionMap};
 use self::{
     builtins::generate_builtins,
     check_directive_recursion::check_directive_recursion,
-    definition_map::DefinitionMap,
     error::{CheckTypeSystemError, CheckTypeSystemErrorMessage},
     interfaces::check_valid_implementation,
     types::kind_of_type,
@@ -80,28 +76,6 @@ pub fn check_type_system_document(document: &TypeSystemDocument) -> Vec<CheckTyp
     //     &scalar_definitions[..],
     //     &directive_by_name,
     // ));
-
-    result
-}
-
-fn generate_definition_map<'a>(document: &'a TypeSystemDocument<'a>) -> DefinitionMap<'a> {
-    let mut result = DefinitionMap::new();
-    for def in document.definitions.iter() {
-        match def {
-            TypeSystemDefinition::SchemaDefinition(schema) => {
-                result.schema = Some(schema);
-            }
-            TypeSystemDefinition::TypeDefinition(def) => {
-                result.types.insert(
-                    def.name().expect("Type definition should always have name"),
-                    def,
-                );
-            }
-            TypeSystemDefinition::DirectiveDefinition(def) => {
-                result.directives.insert(def.name.name, def);
-            }
-        }
-    }
 
     result
 }
