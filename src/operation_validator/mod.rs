@@ -227,6 +227,18 @@ fn check_selection_set(
                     );
                     continue;
                 };
+                check_directives(definitions, &field_selection.directives, result);
+                // todo: duplicate name check, arguments check
+                if let Some(ref selection_set) = field_selection.selection_set {
+                    let Some(target_field_type) = definitions.types.get(
+                        target_field.r#type.unwrapped_type().name.name
+                    ) else {
+                        result.push(CheckOperationErrorMessage::TypeSystemError.with_pos(selection_set.position));
+                        continue;
+                    };
+
+                    check_selection_set(definitions, variables, target_field_type, selection_set, result);
+                }
             }
             Selection::FragmentSpread(_) => todo!(),
             Selection::InlineFragment(_) => todo!(),

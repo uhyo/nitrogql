@@ -57,6 +57,9 @@ pub enum CheckOperationErrorMessage {
         field_name: String,
         type_name: String,
     },
+    // Error that should be checked in type system check phase
+    #[error("Type system error. This is a bug of checker")]
+    TypeSystemError,
     // For additional info
     #[error("Another definition of '{name}'")]
     AnotherDefinitionPos { name: String },
