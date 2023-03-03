@@ -10,17 +10,14 @@ use crate::{
         type_system::{FieldDefinition, TypeDefinition},
         OperationDocument, TypeSystemDocument,
     },
-    checker::type_system_checker::{generate_definition_map, DefinitionMap},
 };
 
-use self::error::{CheckOperationError, CheckOperationErrorMessage, TypeKind};
-
-mod error;
+use super::{definition_map::{DefinitionMap, generate_definition_map}, error::{CheckError, CheckErrorMessage, TypeKind}};
 
 pub fn check_operation_document(
     schema: &TypeSystemDocument,
     document: &OperationDocument,
-) -> Vec<CheckOperationError> {
+) -> Vec<CheckError> {
     let mut result = vec![];
     let definitions = generate_definition_map(schema);
 
@@ -38,7 +35,7 @@ pub fn check_operation_document(
                         // Unnamed operation must be the only operation in the document
                         if operation_num != 1 {
                             result.push(
-                                CheckOperationErrorMessage::UnNamedOperationMustBeSingle
+                                CheckErrorMessage::UnNamedOperationMustBeSingle
                                     .with_pos(op.position),
                             );
                         }
@@ -57,12 +54,12 @@ pub fn check_operation_document(
                             });
                         if let Some(other) = dup {
                             result.push(
-                                CheckOperationErrorMessage::DuplicateOperationName {
+                                CheckErrorMessage::DuplicateOperationName {
                                     operation_type: op.operation_type,
                                 }
                                 .with_pos(name.position).with_additional_info(vec![(
                                     *other.position(),
-                                    CheckOperationErrorMessage::AnotherDefinitionPos { name: name.name.to_owned()  }
+                                    CheckErrorMessage::AnotherDefinitionPos { name: name.name.to_owned()  }
                                 )]),
                             );
                         }
@@ -85,7 +82,7 @@ pub fn check_operation_document(
                     });
                 if let Some(other) = dup {
                     result.push(
-                        CheckOperationErrorMessage::DuplicateFragmentName {
+                        CheckErrorMessage::DuplicateFragmentName {
                             other_position: *other.position(),
                         }
                         .with_pos(def.name.position),
@@ -102,7 +99,7 @@ pub fn check_operation_document(
 fn check_operation(
     definitions: &DefinitionMap,
     op: &OperationDefinition,
-    result: &mut Vec<CheckOperationError>,
+    result: &mut Vec<CheckError>,
 ) {
     let root_type = {
         let root_type_name = definitions
@@ -126,7 +123,7 @@ fn check_operation(
             Ok(root_type_name) => {
                 let Some(root_type) = definitions.types.get(root_type_name) else {
                     result.push(
-                        CheckOperationErrorMessage::TypeNotFound { name: root_type_name.to_owned() }.with_pos(op.position)
+                        CheckErrorMessage::TypeNotFound { name: root_type_name.to_owned() }.with_pos(op.position)
                     );
                     return;
                 };
@@ -134,12 +131,12 @@ fn check_operation(
             }
             Err(schema_def) => {
                 result.push(
-                    CheckOperationErrorMessage::NoRootType {
+                    CheckErrorMessage::NoRootType {
                         operation_type: op.operation_type,
                     }
                     .with_pos(*op.position())
                     .with_additional_info(vec![
-                        (schema_def.position, CheckOperationErrorMessage::RootTypesAreDefinedHere)
+                        (schema_def.position, CheckErrorMessage::RootTypesAreDefinedHere)
                     ])
                 );
                 return;
@@ -169,7 +166,7 @@ fn check_operation(
 fn check_fragment(
     definitions: &DefinitionMap,
     op: &FragmentDefinition,
-    result: &mut Vec<CheckOperationError>,
+    result: &mut Vec<CheckError>,
 ) {
     todo!()
 }
@@ -178,14 +175,14 @@ fn check_directives(
     definitions: &DefinitionMap,
     directives: &[Directive],
     location: &str,
-    result: &mut Vec<CheckOperationError>,
+    result: &mut Vec<CheckError>,
 ) {
     let mut seen_directives = vec![];
     for d in directives {
         let directive_definition = definitions.directives.get(d.name.name);
         let Some(directive_definition) = directive_definition else {
             result.push(
-                CheckOperationErrorMessage::DirectiveNotFound { name: d.name.name.to_owned() }
+                CheckErrorMessage::DirectiveNotFound { name: d.name.name.to_owned() }
                 .with_pos(d.position)
             );
             continue;
@@ -193,18 +190,18 @@ fn check_directives(
 
         if directive_definition.locations.iter().find(|loc| loc.name == location).is_none() {
             result.push(
-                CheckOperationErrorMessage::DirectiveLocationNotAllowed { name: d.name.name.to_owned() }
+                CheckErrorMessage::DirectiveLocationNotAllowed { name: d.name.name.to_owned() }
                 .with_pos(d.position)
                 .with_additional_info(vec![
                     (directive_definition.position,
-                    CheckOperationErrorMessage::DefinitionPos { name: d.name.name.to_owned() })
+                    CheckErrorMessage::DefinitionPos { name: d.name.name.to_owned() })
                 ])
             );
         }
 
         if directive_definition.repeatable.is_none() && seen_directives.contains(&d.name.name) {
             result.push(
-                CheckOperationErrorMessage::RepeatedDirective { name: d.name.name.to_owned() }
+                CheckErrorMessage::RepeatedDirective { name: d.name.name.to_owned() }
                 .with_pos(d.position)
             );
         } else {
@@ -222,7 +219,7 @@ fn check_directives(
 fn check_variables_definition(
     definitions: &DefinitionMap,
     variables: &VariablesDefinition,
-    result: &mut Vec<CheckOperationError>,
+    result: &mut Vec<CheckError>,
 ) {
 }
 
@@ -231,19 +228,19 @@ fn check_selection_set(
     variables: Option<&VariablesDefinition>,
     root_type: &TypeDefinition,
     selection_set: &SelectionSet,
-    result: &mut Vec<CheckOperationError>,
+    result: &mut Vec<CheckError>,
 ) {
     let root_type_name = root_type.name().expect("Type definition must have name");
     let root_fields = direct_fields_of_output_type(definitions, root_type);
     let Some(root_fields) = root_fields else {
         result.push(
-            CheckOperationErrorMessage::SelectionOnInvalidType { kind: 
+            CheckErrorMessage::SelectionOnInvalidType { kind: 
                 kind_of_type_definition(root_type),
                 name: root_type_name.to_owned(),
             }
                 .with_pos(selection_set.position)
                 .with_additional_info(vec![
-                    (*root_type.position(), CheckOperationErrorMessage::DefinitionPos { name: root_type_name.to_owned()})
+                    (*root_type.position(), CheckErrorMessage::DefinitionPos { name: root_type_name.to_owned()})
                 ])
         );
         return;
@@ -257,12 +254,12 @@ fn check_selection_set(
                 });
                 let Some(target_field) = target_field else {
                     result.push(
-                        CheckOperationErrorMessage::FieldNotFound { field_name: 
+                        CheckErrorMessage::FieldNotFound { field_name: 
                             field_selection.name.name.to_owned(),
                              type_name: root_type_name.to_owned(),
                          }.with_pos(field_selection.name.position)
                          .with_additional_info(vec![
-                            (*root_type.position(), CheckOperationErrorMessage::DefinitionPos {
+                            (*root_type.position(), CheckErrorMessage::DefinitionPos {
                                 name: root_type_name.to_owned()
                              })
                          ])
@@ -275,7 +272,7 @@ fn check_selection_set(
                     let Some(target_field_type) = definitions.types.get(
                         target_field.r#type.unwrapped_type().name.name
                     ) else {
-                        result.push(CheckOperationErrorMessage::TypeSystemError.with_pos(selection_set.position));
+                        result.push(CheckErrorMessage::TypeSystemError.with_pos(selection_set.position));
                         continue;
                     };
 

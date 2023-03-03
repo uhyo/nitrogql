@@ -1,6 +1,6 @@
 use crate::graphql_parser::ast::{r#type::Type, type_system::TypeDefinition};
 
-use super::definition_map::DefinitionMap;
+use crate::checker::definition_map::DefinitionMap;
 
 #[derive(Copy, Clone, PartialEq, Eq)]
 pub enum TypeKind {

@@ -1,19 +1,21 @@
 use std::collections::HashSet;
 
-use crate::graphql_parser::ast::{
-    directive::Directive,
-    type_system::{DirectiveDefinition, TypeDefinition},
-};
-
-use super::{
-    definition_map::DefinitionMap, error::CheckTypeSystemError, CheckTypeSystemErrorMessage,
+use crate::{
+    checker::{
+        definition_map::DefinitionMap,
+        error::{CheckError, CheckErrorMessage},
+    },
+    graphql_parser::ast::{
+        directive::Directive,
+        type_system::{DirectiveDefinition, TypeDefinition},
+    },
 };
 
 /// Checks and generates diagnostics for recursed directives.
 pub fn check_directive_recursion(
     definition_map: &DefinitionMap,
     directive: &DirectiveDefinition,
-    result: &mut Vec<CheckTypeSystemError>,
+    result: &mut Vec<CheckError>,
 ) {
     let mut seen_directives = HashSet::new();
     let mut current_directives = vec![directive];
@@ -23,7 +25,7 @@ pub fn check_directive_recursion(
             if seen_directives.contains(d.name.name) {
                 // Recursion!
                 result.push(
-                    CheckTypeSystemErrorMessage::RecursingDirective {
+                    CheckErrorMessage::RecursingDirective {
                         name: d.name.name.to_owned(),
                     }
                     .with_pos(d.position),

@@ -27,7 +27,7 @@ mod directives {
         let errors = check_type_system_document(&doc);
         assert_debug_snapshot!(errors, @r###"
         [
-            CheckTypeSystemError {
+            CheckError {
                 position: Pos {
                     line: 1,
                     column: 8,
@@ -62,7 +62,7 @@ mod directives {
         let errors = check_type_system_document(&doc);
         assert_debug_snapshot!(errors, @r###"
         [
-            CheckTypeSystemError {
+            CheckError {
                 position: Pos {
                     line: 1,
                     column: 8,
@@ -74,7 +74,7 @@ mod directives {
                 },
                 additional_info: [],
             },
-            CheckTypeSystemError {
+            CheckError {
                 position: Pos {
                     line: 6,
                     column: 8,
@@ -101,7 +101,7 @@ mod directives {
         let errors = check_type_system_document(&doc);
         assert_debug_snapshot!(errors, @r###"
         [
-            CheckTypeSystemError {
+            CheckError {
                 position: Pos {
                     line: 1,
                     column: 19,
@@ -126,7 +126,7 @@ mod directives {
         let errors = check_type_system_document(&doc);
         assert_debug_snapshot!(errors, @r###"
         [
-            CheckTypeSystemError {
+            CheckError {
                 position: Pos {
                     line: 1,
                     column: 26,
@@ -151,7 +151,7 @@ mod directives {
         let errors = check_type_system_document(&doc);
         assert_debug_snapshot!(errors, @r###"
         [
-            CheckTypeSystemError {
+            CheckError {
                 position: Pos {
                     line: 1,
                     column: 41,
@@ -189,7 +189,7 @@ mod directives {
         let errors = check_type_system_document(&doc);
         assert_debug_snapshot!(errors, @r###"
         [
-            CheckTypeSystemError {
+            CheckError {
                 position: Pos {
                     line: 2,
                     column: 18,
@@ -201,7 +201,7 @@ mod directives {
                 },
                 additional_info: [],
             },
-            CheckTypeSystemError {
+            CheckError {
                 position: Pos {
                     line: 3,
                     column: 18,
@@ -213,7 +213,7 @@ mod directives {
                 },
                 additional_info: [],
             },
-            CheckTypeSystemError {
+            CheckError {
                 position: Pos {
                     line: 4,
                     column: 18,
@@ -264,7 +264,7 @@ mod schemas {
         let errors = check_type_system_document(&doc);
         assert_debug_snapshot!(errors, @r###"
         [
-            CheckTypeSystemError {
+            CheckError {
                 position: Pos {
                     line: 2,
                     column: 20,
@@ -305,7 +305,7 @@ mod schemas {
         let errors = check_type_system_document(&doc);
         assert_debug_snapshot!(errors, @r###"
         [
-            CheckTypeSystemError {
+            CheckError {
                 position: Pos {
                     line: 2,
                     column: 15,
@@ -340,7 +340,7 @@ mod scalars {
         let errors = check_type_system_document(&doc);
         assert_debug_snapshot!(errors, @r###"
         [
-            CheckTypeSystemError {
+            CheckError {
                 position: Pos {
                     line: 1,
                     column: 19,
@@ -364,7 +364,7 @@ mod scalars {
         let errors = check_type_system_document(&doc);
         assert_debug_snapshot!(errors, @r###"
         [
-            CheckTypeSystemError {
+            CheckError {
                 position: Pos {
                     line: 2,
                     column: 19,
@@ -407,7 +407,7 @@ mod objects {
         let errors = check_type_system_document(&doc);
         assert_debug_snapshot!(errors, @r###"
         [
-            CheckTypeSystemError {
+            CheckError {
                 position: Pos {
                     line: 1,
                     column: 17,
@@ -435,7 +435,7 @@ mod objects {
         let errors = check_type_system_document(&doc);
         assert_debug_snapshot!(errors, @r###"
         [
-            CheckTypeSystemError {
+            CheckError {
                 position: Pos {
                     line: 3,
                     column: 16,
@@ -464,7 +464,7 @@ mod objects {
         let errors = check_type_system_document(&doc);
         assert_debug_snapshot!(errors, @r###"
         [
-            CheckTypeSystemError {
+            CheckError {
                 position: Pos {
                     line: 2,
                     column: 16,
@@ -491,7 +491,7 @@ mod objects {
         let errors = check_type_system_document(&doc);
         assert_debug_snapshot!(errors, @r###"
         [
-            CheckTypeSystemError {
+            CheckError {
                 position: Pos {
                     line: 2,
                     column: 31,
@@ -529,7 +529,7 @@ mod objects {
         let errors = check_type_system_document(&doc);
         assert_debug_snapshot!(errors, @r###"
         [
-            CheckTypeSystemError {
+            CheckError {
                 position: Pos {
                     line: 2,
                     column: 23,
@@ -539,7 +539,7 @@ mod objects {
                 message: UnscoUnsco,
                 additional_info: [],
             },
-            CheckTypeSystemError {
+            CheckError {
                 position: Pos {
                     line: 3,
                     column: 16,
@@ -551,7 +551,7 @@ mod objects {
                 },
                 additional_info: [],
             },
-            CheckTypeSystemError {
+            CheckError {
                 position: Pos {
                     line: 4,
                     column: 34,
@@ -563,7 +563,7 @@ mod objects {
                 },
                 additional_info: [],
             },
-            CheckTypeSystemError {
+            CheckError {
                 position: Pos {
                     line: 5,
                     column: 28,
@@ -612,7 +612,7 @@ mod objects {
         let errors = check_type_system_document(&doc);
         assert_debug_snapshot!(errors, @r###"
         [
-            CheckTypeSystemError {
+            CheckError {
                 position: Pos {
                     line: 10,
                     column: 16,
@@ -624,7 +624,7 @@ mod objects {
                 },
                 additional_info: [],
             },
-            CheckTypeSystemError {
+            CheckError {
                 position: Pos {
                     line: 8,
                     column: 17,
@@ -637,7 +637,7 @@ mod objects {
                 },
                 additional_info: [],
             },
-            CheckTypeSystemError {
+            CheckError {
                 position: Pos {
                     line: 13,
                     column: 16,
@@ -650,7 +650,7 @@ mod objects {
                 },
                 additional_info: [],
             },
-            CheckTypeSystemError {
+            CheckError {
                 position: Pos {
                     line: 13,
                     column: 20,
@@ -662,7 +662,7 @@ mod objects {
                 },
                 additional_info: [],
             },
-            CheckTypeSystemError {
+            CheckError {
                 position: Pos {
                     line: 16,
                     column: 20,
@@ -674,7 +674,7 @@ mod objects {
                 },
                 additional_info: [],
             },
-            CheckTypeSystemError {
+            CheckError {
                 position: Pos {
                     line: 19,
                     column: 35,
@@ -686,7 +686,7 @@ mod objects {
                 },
                 additional_info: [],
             },
-            CheckTypeSystemError {
+            CheckError {
                 position: Pos {
                     line: 19,
                     column: 16,
@@ -730,7 +730,7 @@ mod interfaces {
         let errors = check_type_system_document(&doc);
         assert_debug_snapshot!(errors, @r###"
         [
-            CheckTypeSystemError {
+            CheckError {
                 position: Pos {
                     line: 1,
                     column: 22,
@@ -757,7 +757,7 @@ mod interfaces {
         let errors = check_type_system_document(&doc);
         assert_debug_snapshot!(errors, @r###"
         [
-            CheckTypeSystemError {
+            CheckError {
                 position: Pos {
                     line: 3,
                     column: 16,
@@ -786,7 +786,7 @@ mod interfaces {
         let errors = check_type_system_document(&doc);
         assert_debug_snapshot!(errors, @r###"
         [
-            CheckTypeSystemError {
+            CheckError {
                 position: Pos {
                     line: 2,
                     column: 16,
@@ -826,7 +826,7 @@ mod interfaces {
         let errors = check_type_system_document(&doc);
         assert_debug_snapshot!(errors, @r###"
         [
-            CheckTypeSystemError {
+            CheckError {
                 position: Pos {
                     line: 7,
                     column: 36,
@@ -861,7 +861,7 @@ mod interfaces {
         let errors = check_type_system_document(&doc);
         assert_debug_snapshot!(errors, @r###"
         [
-            CheckTypeSystemError {
+            CheckError {
                 position: Pos {
                     line: 2,
                     column: 23,
@@ -871,7 +871,7 @@ mod interfaces {
                 message: UnscoUnsco,
                 additional_info: [],
             },
-            CheckTypeSystemError {
+            CheckError {
                 position: Pos {
                     line: 3,
                     column: 16,
@@ -883,7 +883,7 @@ mod interfaces {
                 },
                 additional_info: [],
             },
-            CheckTypeSystemError {
+            CheckError {
                 position: Pos {
                     line: 4,
                     column: 34,
@@ -895,7 +895,7 @@ mod interfaces {
                 },
                 additional_info: [],
             },
-            CheckTypeSystemError {
+            CheckError {
                 position: Pos {
                     line: 5,
                     column: 28,
@@ -944,7 +944,7 @@ mod interfaces {
         let errors = check_type_system_document(&doc);
         assert_debug_snapshot!(errors, @r###"
         [
-            CheckTypeSystemError {
+            CheckError {
                 position: Pos {
                     line: 10,
                     column: 16,
@@ -956,7 +956,7 @@ mod interfaces {
                 },
                 additional_info: [],
             },
-            CheckTypeSystemError {
+            CheckError {
                 position: Pos {
                     line: 8,
                     column: 22,
@@ -969,7 +969,7 @@ mod interfaces {
                 },
                 additional_info: [],
             },
-            CheckTypeSystemError {
+            CheckError {
                 position: Pos {
                     line: 13,
                     column: 16,
@@ -982,7 +982,7 @@ mod interfaces {
                 },
                 additional_info: [],
             },
-            CheckTypeSystemError {
+            CheckError {
                 position: Pos {
                     line: 13,
                     column: 20,
@@ -994,7 +994,7 @@ mod interfaces {
                 },
                 additional_info: [],
             },
-            CheckTypeSystemError {
+            CheckError {
                 position: Pos {
                     line: 16,
                     column: 20,
@@ -1006,7 +1006,7 @@ mod interfaces {
                 },
                 additional_info: [],
             },
-            CheckTypeSystemError {
+            CheckError {
                 position: Pos {
                     line: 19,
                     column: 35,
@@ -1018,7 +1018,7 @@ mod interfaces {
                 },
                 additional_info: [],
             },
-            CheckTypeSystemError {
+            CheckError {
                 position: Pos {
                     line: 19,
                     column: 16,
@@ -1046,7 +1046,7 @@ mod interfaces {
         let errors = check_type_system_document(&doc);
         assert_debug_snapshot!(errors, @r###"
         [
-            CheckTypeSystemError {
+            CheckError {
                 position: Pos {
                     line: 1,
                     column: 35,
@@ -1082,7 +1082,7 @@ mod unions {
         let errors = check_type_system_document(&doc);
         assert_debug_snapshot!(errors, @r###"
         [
-            CheckTypeSystemError {
+            CheckError {
                 position: Pos {
                     line: 1,
                     column: 18,
@@ -1108,7 +1108,7 @@ mod unions {
         let errors = check_type_system_document(&doc);
         assert_debug_snapshot!(errors, @r###"
         [
-            CheckTypeSystemError {
+            CheckError {
                 position: Pos {
                     line: 2,
                     column: 22,
@@ -1136,7 +1136,7 @@ mod unions {
         let errors = check_type_system_document(&doc);
         assert_debug_snapshot!(errors, @r###"
         [
-            CheckTypeSystemError {
+            CheckError {
                 position: Pos {
                     line: 1,
                     column: 32,
@@ -1168,7 +1168,7 @@ mod unions {
         let errors = check_type_system_document(&doc);
         assert_debug_snapshot!(errors, @r###"
         [
-            CheckTypeSystemError {
+            CheckError {
                 position: Pos {
                     line: 1,
                     column: 25,
@@ -1180,7 +1180,7 @@ mod unions {
                 },
                 additional_info: [],
             },
-            CheckTypeSystemError {
+            CheckError {
                 position: Pos {
                     line: 1,
                     column: 37,
@@ -1192,7 +1192,7 @@ mod unions {
                 },
                 additional_info: [],
             },
-            CheckTypeSystemError {
+            CheckError {
                 position: Pos {
                     line: 1,
                     column: 45,
@@ -1204,7 +1204,7 @@ mod unions {
                 },
                 additional_info: [],
             },
-            CheckTypeSystemError {
+            CheckError {
                 position: Pos {
                     line: 1,
                     column: 52,
@@ -1239,7 +1239,7 @@ mod enums {
         let errors = check_type_system_document(&doc);
         assert_debug_snapshot!(errors, @r###"
         [
-            CheckTypeSystemError {
+            CheckError {
                 position: Pos {
                     line: 1,
                     column: 17,
@@ -1269,7 +1269,7 @@ mod enums {
         let errors = check_type_system_document(&doc);
         assert_debug_snapshot!(errors, @r###"
         [
-            CheckTypeSystemError {
+            CheckError {
                 position: Pos {
                     line: 4,
                     column: 21,
@@ -1281,7 +1281,7 @@ mod enums {
                 },
                 additional_info: [],
             },
-            CheckTypeSystemError {
+            CheckError {
                 position: Pos {
                     line: 6,
                     column: 18,
@@ -1318,7 +1318,7 @@ mod input_objects {
         let errors = check_type_system_document(&doc);
         assert_debug_snapshot!(errors, @r###"
         [
-            CheckTypeSystemError {
+            CheckError {
                 position: Pos {
                     line: 1,
                     column: 18,
@@ -1349,7 +1349,7 @@ mod input_objects {
         let errors = check_type_system_document(&doc);
         assert_debug_snapshot!(errors, @r###"
         [
-            CheckTypeSystemError {
+            CheckError {
                 position: Pos {
                     line: 4,
                     column: 26,
@@ -1361,7 +1361,7 @@ mod input_objects {
                 },
                 additional_info: [],
             },
-            CheckTypeSystemError {
+            CheckError {
                 position: Pos {
                     line: 5,
                     column: 28,
@@ -1391,7 +1391,7 @@ mod input_objects {
         let errors = check_type_system_document(&doc);
         assert_debug_snapshot!(errors, @r###"
         [
-            CheckTypeSystemError {
+            CheckError {
                 position: Pos {
                     line: 2,
                     column: 16,
@@ -1401,7 +1401,7 @@ mod input_objects {
                 message: UnscoUnsco,
                 additional_info: [],
             },
-            CheckTypeSystemError {
+            CheckError {
                 position: Pos {
                     line: 4,
                     column: 16,
@@ -1438,7 +1438,7 @@ mod input_objects {
         let errors = check_type_system_document(&doc);
         assert_debug_snapshot!(errors, @r###"
         [
-            CheckTypeSystemError {
+            CheckError {
                 position: Pos {
                     line: 3,
                     column: 24,
@@ -1450,7 +1450,7 @@ mod input_objects {
                 },
                 additional_info: [],
             },
-            CheckTypeSystemError {
+            CheckError {
                 position: Pos {
                     line: 4,
                     column: 23,
