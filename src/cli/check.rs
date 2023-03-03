@@ -1,10 +1,12 @@
 use log::{debug, info};
 
 use crate::{
+    checker::{
+        operation_checker::check_operation_document,
+        type_system_checker::check_type_system_document,
+    },
     error::{print_positioned_error, Result},
     extension_resolver::resolve_extensions,
-    operation_validator::check_operation_document,
-    type_system_validator::check_type_system_document,
 };
 
 use super::{error::CliError, CliContext};

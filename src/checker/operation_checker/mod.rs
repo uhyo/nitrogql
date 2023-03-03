@@ -10,7 +10,7 @@ use crate::{
         type_system::{FieldDefinition, TypeDefinition},
         OperationDocument, TypeSystemDocument,
     },
-    type_system_validator::{generate_definition_map, DefinitionMap},
+    checker::type_system_checker::{generate_definition_map, DefinitionMap},
 };
 
 use self::error::{CheckOperationError, CheckOperationErrorMessage, TypeKind};
