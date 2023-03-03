@@ -1,6 +1,5 @@
 use crate::graphql_parser::ast::{
     base::{HasPos, Ident},
-    directive::Directive,
     type_system::{
         ArgumentsDefinition, DirectiveDefinition, EnumTypeDefinition, InputObjectTypeDefinition,
         InterfaceTypeDefinition, ObjectTypeDefinition, ScalarTypeDefinition, SchemaDefinition,
@@ -11,19 +10,20 @@ use crate::graphql_parser::ast::{
 
 use self::{
     builtins::generate_builtins, check_directive_recursion::check_directive_recursion,
-    interfaces::check_valid_implementation, types::kind_of_type,
+    interfaces::check_valid_implementation,
 };
 
 use super::{
+    common::check_directives,
     definition_map::{generate_definition_map, DefinitionMap},
     error::{CheckError, CheckErrorMessage},
+    types::inout_kind_of_type,
 };
 
 mod builtins;
 mod check_directive_recursion;
 mod interfaces;
 mod tests;
-mod types;
 
 /// Checks for invalid type system definition document.
 pub fn check_type_system_document(document: &TypeSystemDocument) -> Vec<CheckError> {
@@ -134,7 +134,7 @@ fn check_object(
         if name_starts_with_unscounsco(&f.name) {
             result.push(CheckErrorMessage::UnscoUnsco.with_pos(*f.name.position()));
         }
-        match kind_of_type(definitions, &f.r#type).map(|k| k.is_output_type()) {
+        match inout_kind_of_type(definitions, &f.r#type).map(|k| k.is_output_type()) {
             Some(true) => {}
             Some(false) => {
                 result.push(
@@ -202,7 +202,7 @@ fn check_interface(
         if name_starts_with_unscounsco(&f.name) {
             result.push(CheckErrorMessage::UnscoUnsco.with_pos(*f.name.position()));
         }
-        if kind_of_type(definitions, &f.r#type).map_or(false, |k| !k.is_output_type()) {
+        if inout_kind_of_type(definitions, &f.r#type).map_or(false, |k| !k.is_output_type()) {
             result.push(
                 CheckErrorMessage::NoInputType {
                     name: f.r#type.unwrapped_type().name.name.to_owned(),
@@ -340,7 +340,7 @@ fn check_input_object(
         check_directives(definitions, &f.directives, "INPUT_FIELD_DEFINITION", result);
 
         let type_is_not_input_type =
-            kind_of_type(definitions, &f.r#type).map(|k| !k.is_input_type());
+            inout_kind_of_type(definitions, &f.r#type).map(|k| !k.is_input_type());
         match type_is_not_input_type {
             None => {
                 result.push(
@@ -384,7 +384,7 @@ fn check_arguments_definition(
             argument_names.push(v.name.name);
         }
         let type_is_not_input_type =
-            kind_of_type(definitions, &v.r#type).map_or(false, |k| !k.is_input_type());
+            inout_kind_of_type(definitions, &v.r#type).map_or(false, |k| !k.is_input_type());
         if type_is_not_input_type {
             result.push(
                 CheckErrorMessage::NoOutputType {
@@ -400,50 +400,4 @@ fn check_arguments_definition(
 
 fn name_starts_with_unscounsco(name: &Ident) -> bool {
     name.name.starts_with("__")
-}
-
-fn check_directives(
-    definitions: &DefinitionMap,
-    directives: &[Directive],
-    current_position: &str,
-    result: &mut Vec<CheckError>,
-) {
-    let mut seen_directives = vec![];
-    for d in directives {
-        match definitions.directives.get(d.name.name) {
-            None => result.push(
-                CheckErrorMessage::UnknownDirective {
-                    name: d.name.name.to_owned(),
-                }
-                .with_pos(d.name.position),
-            ),
-            Some(def) => {
-                if def
-                    .locations
-                    .iter()
-                    .find(|loc| loc.name == current_position)
-                    .is_none()
-                {
-                    result.push(
-                        CheckErrorMessage::DirectiveLocationNotAllowed {
-                            name: d.name.name.to_owned(),
-                        }
-                        .with_pos(d.position),
-                    );
-                }
-                if seen_directives.contains(&d.name.name) {
-                    if def.repeatable.is_none() {
-                        result.push(
-                            CheckErrorMessage::RepeatedDirective {
-                                name: d.name.name.to_owned(),
-                            }
-                            .with_pos(d.position),
-                        )
-                    }
-                } else {
-                    seen_directives.push(d.name.name);
-                }
-            }
-        }
-    }
 }

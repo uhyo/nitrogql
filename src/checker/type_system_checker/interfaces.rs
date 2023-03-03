@@ -1,6 +1,6 @@
-use crate::{graphql_parser::ast::{type_system::{InterfaceTypeDefinition, FieldDefinition}, base::Ident}, checker::{definition_map::DefinitionMap, error::CheckError}};
+use crate::{graphql_parser::ast::{type_system::{InterfaceTypeDefinition, FieldDefinition}, base::Ident}, checker::{definition_map::DefinitionMap, error::CheckError, types::is_subtype}};
 
-use super::{CheckErrorMessage, types::is_subtype};
+use super::{CheckErrorMessage};
 
 /// Checks if given object or interface validly implements given interface.
 /// https://spec.graphql.org/draft/#IsValidImplementation()

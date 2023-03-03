@@ -1,7 +1,6 @@
 use crate::{
     graphql_parser::ast::{
         base::HasPos,
-        directive::Directive,
         operations::{
             ExecutableDefinition, FragmentDefinition, OperationDefinition, OperationType,
             VariablesDefinition,
@@ -12,7 +11,7 @@ use crate::{
     },
 };
 
-use super::{definition_map::{DefinitionMap, generate_definition_map}, error::{CheckError, CheckErrorMessage, TypeKind}};
+use super::{definition_map::{DefinitionMap, generate_definition_map}, error::{CheckError, CheckErrorMessage, TypeKind}, common::check_directives, types::{inout_kind_of_type, TypeInOutKind}};
 
 pub fn check_operation_document(
     schema: &TypeSystemDocument,
@@ -123,7 +122,7 @@ fn check_operation(
             Ok(root_type_name) => {
                 let Some(root_type) = definitions.types.get(root_type_name) else {
                     result.push(
-                        CheckErrorMessage::TypeNotFound { name: root_type_name.to_owned() }.with_pos(op.position)
+                        CheckErrorMessage::UnknownType { name: root_type_name.to_owned() }.with_pos(op.position)
                     );
                     return;
                 };
@@ -171,56 +170,39 @@ fn check_fragment(
     todo!()
 }
 
-fn check_directives(
-    definitions: &DefinitionMap,
-    directives: &[Directive],
-    location: &str,
-    result: &mut Vec<CheckError>,
-) {
-    let mut seen_directives = vec![];
-    for d in directives {
-        let directive_definition = definitions.directives.get(d.name.name);
-        let Some(directive_definition) = directive_definition else {
-            result.push(
-                CheckErrorMessage::DirectiveNotFound { name: d.name.name.to_owned() }
-                .with_pos(d.position)
-            );
-            continue;
-        };
-
-        if directive_definition.locations.iter().find(|loc| loc.name == location).is_none() {
-            result.push(
-                CheckErrorMessage::DirectiveLocationNotAllowed { name: d.name.name.to_owned() }
-                .with_pos(d.position)
-                .with_additional_info(vec![
-                    (directive_definition.position,
-                    CheckErrorMessage::DefinitionPos { name: d.name.name.to_owned() })
-                ])
-            );
-        }
-
-        if directive_definition.repeatable.is_none() && seen_directives.contains(&d.name.name) {
-            result.push(
-                CheckErrorMessage::RepeatedDirective { name: d.name.name.to_owned() }
-                .with_pos(d.position)
-            );
-        } else {
-            seen_directives.push(d.name.name);
-        } 
-
-        if let Some(ref arguments) = d.arguments {
-            let Some(ref arguments_definition) = directive_definition.arguments else {
-                todo!()
-            };
-        }
-    }
-}
-
 fn check_variables_definition(
     definitions: &DefinitionMap,
     variables: &VariablesDefinition,
     result: &mut Vec<CheckError>,
 ) {
+    let mut seen_variables = vec![];
+    for v in variables.definitions.iter() {
+        if seen_variables.contains(&v.name.name) {
+            result.push(
+                CheckErrorMessage::DuplicatedVariableName { name: v.name.name.to_owned() }
+                .with_pos(v.pos)
+            );
+        } else {
+            seen_variables.push(v.name.name);
+        }
+        let type_kind = inout_kind_of_type(definitions, &v.r#type);
+        match type_kind {
+            None => {
+                result.push(
+                    CheckErrorMessage::UnknownType { name: v.r#type.unwrapped_type().name.name.to_owned() }
+                    .with_pos(*v.r#type.position())
+                );
+            }
+            Some(t) if t.is_input_type() => {
+            }
+            _ => {
+                result.push(
+                    CheckErrorMessage::NoOutputType { name: v.r#type.unwrapped_type().name.name.to_owned() }
+                    .with_pos(*v.r#type.position())
+                );
+            }
+        }
+    }
 }
 
 fn check_selection_set(
@@ -231,7 +213,7 @@ fn check_selection_set(
     result: &mut Vec<CheckError>,
 ) {
     let root_type_name = root_type.name().expect("Type definition must have name");
-    let root_fields = direct_fields_of_output_type(definitions, root_type);
+    let root_fields = direct_fields_of_output_type(root_type);
     let Some(root_fields) = root_fields else {
         result.push(
             CheckErrorMessage::SelectionOnInvalidType { kind: 
@@ -286,7 +268,6 @@ fn check_selection_set(
 }
 
 fn direct_fields_of_output_type<'a, 'src>(
-    definitions: &'a DefinitionMap,
     ty: &'a TypeDefinition<'src>,
 ) -> Option<&'a [FieldDefinition<'src>]> {
     match ty {

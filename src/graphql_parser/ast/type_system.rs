@@ -198,10 +198,20 @@ pub struct ArgumentsDefinition<'a> {
 #[derive(Clone, Debug)]
 pub struct InputValueDefinition<'a> {
     pub description: Option<StringValue>,
+    pub position: Pos,
     pub name: Ident<'a>,
     pub r#type: Type<'a>,
     pub default_value: Option<Value<'a>>,
     pub directives: Vec<Directive<'a>>,
+}
+
+impl HasPos for InputValueDefinition<'_> {
+    fn name(&self) -> Option<&str> {
+        Some(self.name.name)
+    }
+    fn position(&self) -> &Pos {
+        &self.position
+    }
 }
 
 #[derive(Clone, Debug)]

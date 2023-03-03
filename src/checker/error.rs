@@ -33,6 +33,18 @@ pub enum CheckErrorMessage {
     DirectiveLocationNotAllowed { name: String },
     #[error("Repeated application of directive '{name}' is not allowed")]
     RepeatedDirective { name: String },
+    #[error("This {kind} does not accept arguments")]
+    ArgumentsNotNeeded { kind: &'static str },
+    #[error("Required argument '{name}' is not specified")]
+    RequiredArgumentNotSpecified { name: String },
+    #[error("This value does not match expected type '{r#type}' ")]
+    TypeMismatch { r#type: String },
+    #[error("Variable '${name}' is not defined")]
+    UnknownVariable { name: String },
+    #[error("'{member}' is a member of enum {r#enum}")]
+    UnknownEnumMember { member: String, r#enum: String },
+    #[error("Argument '{name}' is not defined")]
+    UnknownArgument { name: String },
     // errors for type system
     #[error("Name that starts with '__' is reserved")]
     UnscoUnsco,
@@ -85,10 +97,6 @@ pub enum CheckErrorMessage {
     DuplicateFragmentName { other_position: Pos },
     #[error("Root type for {} operation is not defined", operation_type.as_str())]
     NoRootType { operation_type: OperationType },
-    #[error("Type '{name}' not found")]
-    TypeNotFound { name: String },
-    #[error("Directive '{name}' not found")]
-    DirectiveNotFound { name: String },
     #[error("Cannot select fields of {kind} '{name}'")]
     SelectionOnInvalidType { kind: TypeKind, name: String },
     #[error("Field '{field_name}' is not found on type '{type_name}'")]
@@ -106,6 +114,8 @@ pub enum CheckErrorMessage {
     DefinitionPos { name: String },
     #[error("Root types are defined here")]
     RootTypesAreDefinedHere,
+    #[error("Duplicated variable name '{name}'")]
+    DuplicatedVariableName { name: String },
 }
 
 impl CheckErrorMessage {

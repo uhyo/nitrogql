@@ -117,6 +117,7 @@ fn directive<'a>(
                         .into_iter()
                         .map(|(name, ty, default_value)| InputValueDefinition {
                             description: None,
+                            position: Pos::builtin(),
                             name: ident(name),
                             r#type: ty,
                             default_value,

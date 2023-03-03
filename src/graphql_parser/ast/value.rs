@@ -1,3 +1,5 @@
+use std::fmt::Display;
+
 use super::base::{HasPos, Ident, Pos, Variable};
 
 #[derive(Clone, Debug)]
@@ -32,6 +34,47 @@ impl HasPos for Value<'_> {
             Value::EnumValue(v) => &v.position,
             Value::ListValue(v) => &v.position,
             Value::ObjectValue(v) => &v.position,
+        }
+    }
+}
+
+impl Display for Value<'_> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Value::BooleanValue(b) => {
+                if b.value {
+                    write!(f, "true")
+                } else {
+                    write!(f, "false")
+                }
+            }
+            Value::IntValue(i) => write!(f, "{}", i.value),
+            Value::FloatValue(i) => write!(f, "{}", i.value),
+            // TODO: escaping not implemented for ease
+            Value::StringValue(i) => write!(f, "\"{}\"", i.value),
+            Value::EnumValue(i) => write!(f, "{}", i.value),
+            Value::NullValue(_) => write!(f, "null"),
+            Value::Variable(v) => write!(f, "${}", v.name),
+            Value::ListValue(l) => {
+                write!(f, "[")?;
+                for (idx, v) in l.values.iter().enumerate() {
+                    if idx > 0 {
+                        write!(f, ",")?;
+                    }
+                    write!(f, "{v}")?;
+                }
+                write!(f, "]")
+            }
+            Value::ObjectValue(l) => {
+                write!(f, "{{")?;
+                for (idx, (key, value)) in l.fields.iter().enumerate() {
+                    if idx > 0 {
+                        write!(f, ",")?;
+                    }
+                    write!(f, "{}: {}", key.name, value)?;
+                }
+                write!(f, "}}")
+            }
         }
     }
 }

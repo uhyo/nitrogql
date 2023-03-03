@@ -1,3 +1,5 @@
+use std::fmt::Display;
+
 use super::base::{HasPos, Ident, Pos};
 
 #[derive(Clone, Debug)]
@@ -51,6 +53,16 @@ impl Type<'_> {
     /// Returns if self is a non-nullable type.
     pub fn is_nonnull(&self) -> bool {
         matches!(self, Type::NonNull(_))
+    }
+}
+
+impl Display for Type<'_> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Type::NonNull(inner) => write!(f, "{}!", &inner.r#type),
+            Type::List(inner) => write!(f, "[{}]", &inner.r#type),
+            Type::Named(name) => write!(f, "{}", name.name.name),
+        }
     }
 }
 

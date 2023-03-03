@@ -215,6 +215,7 @@ pub fn build_arguments_definition(pair: Pair<Rule>) -> ArgumentsDefinition {
             );
             InputValueDefinition {
                 description: description.map(build_description),
+                position: (&name).into(),
                 name: name.into(),
                 r#type: build_type(ty),
                 default_value: default_value.map(|pair| {
@@ -257,6 +258,7 @@ pub fn build_input_fields_definition(pair: Pair<Rule>) -> Vec<InputValueDefiniti
             );
             InputValueDefinition {
                 description: description.map(build_description),
+                position: (&name).into(),
                 name: name.into(),
                 r#type: build_type(ty),
                 default_value: default_value.map(|pair| build_value(pair.only_child())),

@@ -1,5 +1,4 @@
 use colored::Colorize;
-use std::cmp::min;
 use std::fmt::{Display, Write};
 use std::path::PathBuf;
 use std::result::Result as StdResult;

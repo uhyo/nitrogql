@@ -3,38 +3,38 @@ use crate::graphql_parser::ast::{r#type::Type, type_system::TypeDefinition};
 use crate::checker::definition_map::DefinitionMap;
 
 #[derive(Copy, Clone, PartialEq, Eq)]
-pub enum TypeKind {
+pub enum TypeInOutKind {
     Input,
     Output,
     Both,
 }
 
-impl TypeKind {
+impl TypeInOutKind {
     pub fn is_input_type(self) -> bool {
         match self {
-            TypeKind::Input | TypeKind::Both => true,
-            TypeKind::Output => false,
+            TypeInOutKind::Input | TypeInOutKind::Both => true,
+            TypeInOutKind::Output => false,
         }
     }
     pub fn is_output_type(self) -> bool {
         match self {
-            TypeKind::Output | TypeKind::Both => true,
-            TypeKind::Input => false,
+            TypeInOutKind::Output | TypeInOutKind::Both => true,
+            TypeInOutKind::Input => false,
         }
     }
 }
 
 /// classifies given type into output, input or both.
-pub fn kind_of_type(definitions: &DefinitionMap, ty: &Type) -> Option<TypeKind> {
+pub fn inout_kind_of_type(definitions: &DefinitionMap, ty: &Type) -> Option<TypeInOutKind> {
     let ty = ty.unwrapped_type();
     let ty_def = definitions.types.get(ty.name.name);
     ty_def.map(|def| match def {
-        TypeDefinition::Scalar(_) => TypeKind::Both,
-        TypeDefinition::Object(_) => TypeKind::Output,
-        TypeDefinition::Interface(_) => TypeKind::Output,
-        TypeDefinition::Union(_) => TypeKind::Output,
-        TypeDefinition::Enum(_) => TypeKind::Both,
-        TypeDefinition::InputObject(_) => TypeKind::Input,
+        TypeDefinition::Scalar(_) => TypeInOutKind::Both,
+        TypeDefinition::Object(_) => TypeInOutKind::Output,
+        TypeDefinition::Interface(_) => TypeInOutKind::Output,
+        TypeDefinition::Union(_) => TypeInOutKind::Output,
+        TypeDefinition::Enum(_) => TypeInOutKind::Both,
+        TypeDefinition::InputObject(_) => TypeInOutKind::Input,
     })
 }
 
