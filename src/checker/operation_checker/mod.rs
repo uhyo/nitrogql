@@ -13,6 +13,9 @@ use crate::{
 
 use super::{definition_map::{DefinitionMap, generate_definition_map}, error::{CheckError, CheckErrorMessage, TypeKind}, common::check_directives, types::{inout_kind_of_type, TypeInOutKind}};
 
+#[cfg(test)]
+mod tests;
+
 pub fn check_operation_document(
     schema: &TypeSystemDocument,
     document: &OperationDocument,
