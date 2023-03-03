@@ -146,7 +146,11 @@ fn check_operation(
             }
         }
     };
-    check_directives(definitions, &op.directives, result);
+    check_directives(definitions, &op.directives, match op.operation_type {
+        OperationType::Query => "QUERY",
+        OperationType::Mutation => "MUTATION",
+        OperationType::Subscription => "SUBSCRIPTION",
+    }, result);
     if let Some(ref variables_definition) = op.variables_definition {
         check_variables_definition(definitions, variables_definition, result);
     }
@@ -173,8 +177,46 @@ fn check_fragment(
 fn check_directives(
     definitions: &DefinitionMap,
     directives: &[Directive],
+    location: &str,
     result: &mut Vec<CheckOperationError>,
 ) {
+    let mut seen_directives = vec![];
+    for d in directives {
+        let directive_definition = definitions.directives.get(d.name.name);
+        let Some(directive_definition) = directive_definition else {
+            result.push(
+                CheckOperationErrorMessage::DirectiveNotFound { name: d.name.name.to_owned() }
+                .with_pos(d.position)
+            );
+            continue;
+        };
+
+        if directive_definition.locations.iter().find(|loc| loc.name == location).is_none() {
+            result.push(
+                CheckOperationErrorMessage::DirectiveLocationNotAllowed { name: d.name.name.to_owned() }
+                .with_pos(d.position)
+                .with_additional_info(vec![
+                    (directive_definition.position,
+                    CheckOperationErrorMessage::DefinitionPos { name: d.name.name.to_owned() })
+                ])
+            );
+        }
+
+        if directive_definition.repeatable.is_none() && seen_directives.contains(&d.name.name) {
+            result.push(
+                CheckOperationErrorMessage::RepeatedDirective { name: d.name.name.to_owned() }
+                .with_pos(d.position)
+            );
+        } else {
+            seen_directives.push(d.name.name);
+        } 
+
+        if let Some(ref arguments) = d.arguments {
+            let Some(ref arguments_definition) = directive_definition.arguments else {
+                todo!()
+            };
+        }
+    }
 }
 
 fn check_variables_definition(
@@ -227,7 +269,7 @@ fn check_selection_set(
                     );
                     continue;
                 };
-                check_directives(definitions, &field_selection.directives, result);
+                check_directives(definitions, &field_selection.directives, "FIELD", result);
                 // todo: duplicate name check, arguments check
                 if let Some(ref selection_set) = field_selection.selection_set {
                     let Some(target_field_type) = definitions.types.get(

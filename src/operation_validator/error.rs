@@ -50,6 +50,12 @@ pub enum CheckOperationErrorMessage {
     NoRootType { operation_type: OperationType },
     #[error("Type '{name}' not found")]
     TypeNotFound { name: String },
+    #[error("Directive '{name}' not found")]
+    DirectiveNotFound { name: String },
+    #[error("Directive '{name}' is not allowed for this location")]
+    DirectiveLocationNotAllowed { name: String },
+    #[error("Repeated application of directive '{name}' is not allowed")]
+    RepeatedDirective { name: String },
     #[error("Cannot select fields of {kind} '{name}'")]
     SelectionOnInvalidType { kind: TypeKind, name: String },
     #[error("Field '{field_name}' is not found on type '{type_name}'")]
