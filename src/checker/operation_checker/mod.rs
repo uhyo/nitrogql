@@ -98,7 +98,7 @@ pub fn check_operation_document(
                     );
                 }
 
-                check_fragment(&definitions, def, &mut result);
+                check_fragment_definition(&definitions, def, &mut result);
             }
         }
     }
@@ -174,12 +174,33 @@ fn check_operation(
     );
 }
 
-fn check_fragment(
+fn check_fragment_definition(
     definitions: &DefinitionMap,
     op: &FragmentDefinition,
     result: &mut Vec<CheckError>,
 ) {
-    todo!()
+    let target = definitions.types.get(op.type_condition.name);
+    let Some(target) = target else {
+        result.push(
+            CheckErrorMessage::UnknownType { name: op.type_condition.name.to_owned() }
+            .with_pos(op.type_condition.position)
+        );
+        return;
+    };
+
+    if !matches!(
+        target,
+        TypeDefinition::Object(_) | TypeDefinition::Interface(_) | TypeDefinition::Union(_)
+    ) {
+        result.push(
+            CheckErrorMessage::InvalidFragmentTarget { name: op.type_condition.name.to_owned() }
+            .with_pos(op.type_condition.position)
+            .with_additional_info(vec![
+                (*target.position(), CheckErrorMessage::DefinitionPos { name: target.name().expect("Type must have a name").to_owned() })
+            ])
+        );
+    }
+    // todo: fragment must be used somewhere in document
 }
 
 fn check_variables_definition(

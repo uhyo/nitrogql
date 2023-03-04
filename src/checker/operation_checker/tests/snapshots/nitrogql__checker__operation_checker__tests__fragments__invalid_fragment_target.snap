@@ -1,0 +1,78 @@
+---
+source: src/checker/operation_checker/tests/mod.rs
+expression: "check_operation_document(&schema, &doc)"
+---
+[
+    CheckError {
+        position: Pos {
+            line: 2,
+            column: 33,
+            file: 0,
+            builtin: false,
+        },
+        message: InvalidFragmentTarget {
+            name: "CustomScalar",
+        },
+        additional_info: [
+            (
+                Pos {
+                    line: 1,
+                    column: 12,
+                    file: 0,
+                    builtin: false,
+                },
+                DefinitionPos {
+                    name: "CustomScalar",
+                },
+            ),
+        ],
+    },
+    CheckError {
+        position: Pos {
+            line: 5,
+            column: 31,
+            file: 0,
+            builtin: false,
+        },
+        message: InvalidFragmentTarget {
+            name: "UserKind",
+        },
+        additional_info: [
+            (
+                Pos {
+                    line: 14,
+                    column: 12,
+                    file: 0,
+                    builtin: false,
+                },
+                DefinitionPos {
+                    name: "UserKind",
+                },
+            ),
+        ],
+    },
+    CheckError {
+        position: Pos {
+            line: 8,
+            column: 32,
+            file: 0,
+            builtin: false,
+        },
+        message: InvalidFragmentTarget {
+            name: "MyInput",
+        },
+        additional_info: [
+            (
+                Pos {
+                    line: 15,
+                    column: 12,
+                    file: 0,
+                    builtin: false,
+                },
+                DefinitionPos {
+                    name: "MyInput",
+                },
+            ),
+        ],
+    },
+]

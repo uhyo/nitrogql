@@ -120,9 +120,10 @@ mod operation_directives {
         let schema = type_system();
         let doc = parse_operation_document(
             "
-            query q($b: Boolean, $b2: Boolean!)
+            query q($b: Boolean, $b2: Boolean!, $i: Int!)
                 @dir_bool_nonnull(bool: $b)
                 @dir_bool_nonnull(bool: $b2)
+                @dir_bool_nonnull(bool: $i)
                  {
                 foo
                 @dir_bool(bool: $b)
@@ -327,6 +328,79 @@ mod selection_set {
             query {
                 users(name: \"uhyo\") { id name age }
                 user(arg: 123)
+            }
+        ",
+        )
+        .unwrap();
+
+        assert_debug_snapshot!(check_operation_document(&schema, &doc))
+    }
+}
+
+mod fragments {
+    use insta::assert_debug_snapshot;
+
+    use crate::{
+        checker::operation_checker::check_operation_document,
+        graphql_parser::{ast::TypeSystemDocument, parser::parse_operation_document},
+    };
+
+    use super::parse_to_type_system_document;
+
+    fn type_system() -> TypeSystemDocument<'static> {
+        parse_to_type_system_document(
+            "
+            scalar CustomScalar
+            
+            type Query {
+                foo: Int!
+                user: User
+                users(name: String): [User!]!
+            }
+            type User {
+                id: ID!
+                name: String!
+                age: Int
+                userKind: UserKind
+            }
+            enum UserKind { NormalUser PremiumUser }
+            input MyInput {
+                arg: String! = \"\"
+            }
+        ",
+        )
+    }
+
+    #[test]
+    fn unknown_fragment_target() {
+        let schema = type_system();
+        let doc = parse_operation_document(
+            "
+            query { user }
+            fragment A on Nothing {
+                id
+            }
+        ",
+        )
+        .unwrap();
+
+        assert_debug_snapshot!(check_operation_document(&schema, &doc))
+    }
+
+    #[test]
+    fn invalid_fragment_target() {
+        let schema = type_system();
+        let doc = parse_operation_document(
+            "
+            query { user }
+            fragment OnScalar on CustomScalar {
+                id
+            }
+            fragment OnEnum on UserKind {
+                id
+            }
+            fragment OnInput on MyInput {
+                arg
             }
         ",
         )

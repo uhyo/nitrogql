@@ -15,4 +15,16 @@ expression: "check_operation_document(&schema, &doc)"
         },
         additional_info: [],
     },
+    CheckError {
+        position: Pos {
+            line: 4,
+            column: 40,
+            file: 0,
+            builtin: false,
+        },
+        message: TypeMismatch {
+            type: "Boolean!",
+        },
+        additional_info: [],
+    },
 ]

@@ -110,6 +110,10 @@ pub enum CheckErrorMessage {
     },
     #[error("Selection '{name}' is duplicated")]
     DuplicateSelectionName { name: String },
+    #[error("Duplicated variable name '{name}'")]
+    DuplicatedVariableName { name: String },
+    #[error("Type '{name}' is not a valid fragment target")]
+    InvalidFragmentTarget { name: String },
     // Error that should be checked in type system check phase
     #[error("Type system error. This is a bug of checker")]
     TypeSystemError,
@@ -120,8 +124,6 @@ pub enum CheckErrorMessage {
     DefinitionPos { name: String },
     #[error("Root types are defined here")]
     RootTypesAreDefinedHere,
-    #[error("Duplicated variable name '{name}'")]
-    DuplicatedVariableName { name: String },
 }
 
 impl CheckErrorMessage {
