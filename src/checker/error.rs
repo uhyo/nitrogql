@@ -45,6 +45,10 @@ pub enum CheckErrorMessage {
     UnknownEnumMember { member: String, r#enum: String },
     #[error("Argument '{name}' is not defined")]
     UnknownArgument { name: String },
+    #[error("Field '{name}' is required")]
+    RequiredFieldNotSpecified { name: String },
+    #[error("Field '{name}' is not defined")]
+    UnknownField { name: String },
     // errors for type system
     #[error("Name that starts with '__' is reserved")]
     UnscoUnsco,

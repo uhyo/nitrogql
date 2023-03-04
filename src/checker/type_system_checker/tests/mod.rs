@@ -21,7 +21,7 @@ mod directives {
         // A directive definition must not contain the use of a directive which references itself directly.
         let doc = parse_to_type_system_document(
             "
-        directive @heyhey(arg1: Int! @heyhey) on ARGUMENT_DEFINITION | SCHEMA
+        directive @heyhey(arg1: Int! @heyhey(arg1: 1)) on ARGUMENT_DEFINITION | SCHEMA
         ",
         );
         let errors = check_type_system_document(&doc);
@@ -49,13 +49,13 @@ mod directives {
         let doc = parse_to_type_system_document(
             "
         directive @heyhey(arg1: MyType!) on INPUT_OBJECT
-        input MyType @heyhey {
+        input MyType @heyhey(arg1: { foo: 3 }) {
             foo: Int!
         }
 
         directive @wow(arg1: MyType2!) on INPUT_FIELD_DEFINITION
         input MyType2 {
-            foo: Int! @wow
+            foo: Int! @wow(arg1: { foo: 3 })
         }
         ",
         );

@@ -166,6 +166,7 @@ pub fn check_value(
     expected_type: &Type,
     result: &mut Vec<CheckError>,
 ) {
+    let mut additional_info = vec![];
     let is_mismatch = 'b: {
         if let Value::Variable(variable) = value {
             let Some(v_def) = get_variable_definition(variables, variable) else {
@@ -205,7 +206,10 @@ pub fn check_value(
                     );
                     return;
                 };
-                !is_value_compatible_type_def(definitions, variables, value, type_def, result)
+                let (is_compatible, a) =
+                    is_value_compatible_type_def(definitions, variables, value, type_def, result);
+                additional_info.extend(a);
+                !is_compatible
             }
         }
     };
@@ -214,7 +218,8 @@ pub fn check_value(
             CheckErrorMessage::TypeMismatch {
                 r#type: expected_type.to_string(),
             }
-            .with_pos(*value.position()),
+            .with_pos(*value.position())
+            .with_additional_info(additional_info),
         );
     }
 }
@@ -226,28 +231,31 @@ fn is_value_compatible_type_def(
     value: &Value,
     expected_type: &TypeDefinition,
     result: &mut Vec<CheckError>,
-) -> bool {
+) -> (bool, Vec<(Pos, CheckErrorMessage)>) {
     match expected_type {
         TypeDefinition::Scalar(scalar_def) => {
             // TODO: better handling of scalar, including custom scalars
-            match scalar_def.name.name {
-                "Boolean" => matches!(value, Value::BooleanValue(_)),
-                "Int" => matches!(value, Value::IntValue(_)),
-                "Float" => matches!(value, Value::FloatValue(_)),
-                "String" => matches!(value, Value::StringValue(_)),
-                "ID" => matches!(value, Value::StringValue(_)),
-                custom_scalar => {
-                    warn!(
-                        "Not checking value compatibility for custom scalar '{}'",
-                        custom_scalar
-                    );
-                    true
-                }
-            }
+            (
+                match scalar_def.name.name {
+                    "Boolean" => matches!(value, Value::BooleanValue(_)),
+                    "Int" => matches!(value, Value::IntValue(_)),
+                    "Float" => matches!(value, Value::FloatValue(_)),
+                    "String" => matches!(value, Value::StringValue(_)),
+                    "ID" => matches!(value, Value::StringValue(_)),
+                    custom_scalar => {
+                        warn!(
+                            "Not checking value compatibility for custom scalar '{}'",
+                            custom_scalar
+                        );
+                        true
+                    }
+                },
+                vec![],
+            )
         }
         TypeDefinition::Object(_) | TypeDefinition::Interface(_) | TypeDefinition::Union(_) => {
             // These are never inputs
-            false
+            (false, vec![])
         }
         TypeDefinition::Enum(enum_def) => match value {
             Value::EnumValue(value) => {
@@ -271,15 +279,16 @@ fn is_value_compatible_type_def(
                         )]),
                     );
                 }
-                true
+                (true, vec![])
             }
-            _ => false,
+            _ => (false, vec![]),
         },
         TypeDefinition::InputObject(object_def) => {
             let Value::ObjectValue(value) = value else {
-                return false;
+                return (false, vec![]);
             };
-            let mut res = false;
+            let mut res = true;
+            let mut additional_info = vec![];
             let mut seen_fields = 0;
             for expected_field in object_def.fields.iter() {
                 let value_field = value
@@ -292,7 +301,13 @@ fn is_value_compatible_type_def(
                             && expected_field.default_value.is_none()
                         {
                             // When field does not exist and the expected field is both non-nullable and has no default value, then it is an error.
-                            res = true;
+                            res = false;
+                            additional_info.push((
+                                expected_field.position,
+                                CheckErrorMessage::RequiredFieldNotSpecified {
+                                    name: expected_field.name.name.to_owned(),
+                                },
+                            ));
                         } else {
                             seen_fields += 1;
                         }
@@ -311,9 +326,20 @@ fn is_value_compatible_type_def(
             }
             if seen_fields < value.fields.len() {
                 // Value has extraneous field
-                res = true;
+                res = false;
+                for (key, _) in value.fields.iter() {
+                    let field_def = object_def.fields.iter().find(|f| f.name.name == key.name);
+                    if field_def.is_none() {
+                        additional_info.push((
+                            key.position,
+                            CheckErrorMessage::UnknownField {
+                                name: key.name.to_owned(),
+                            },
+                        ))
+                    }
+                }
             }
-            res
+            (res, additional_info)
         }
     }
 }

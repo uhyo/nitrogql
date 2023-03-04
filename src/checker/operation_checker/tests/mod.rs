@@ -17,9 +17,13 @@ mod operation_directives {
         parse_to_type_system_document(
             "
             directive @dir_bool_nonnull(bool: Boolean!) on QUERY
+            directive @dir_bool(bool: Boolean) on MUTATION
 
             type Query {
                 foo: Int!
+            }
+            type Mutation {
+                bar: Int!
             }
         ",
         )
@@ -31,6 +35,20 @@ mod operation_directives {
         let doc = parse_operation_document(
             "
             query @unknown_dir {
+                foo
+            }
+        ",
+        )
+        .unwrap();
+
+        assert_debug_snapshot!(check_operation_document(&schema, &doc));
+    }
+    #[test]
+    fn wrong_location() {
+        let schema = type_system();
+        let doc = parse_operation_document(
+            "
+            query @dir_bool {
                 foo
             }
         ",
