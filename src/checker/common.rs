@@ -180,7 +180,7 @@ pub fn check_value(
         }
         match expected_type {
             Type::NonNull(inner) => match value {
-                Value::NullValue(v) => true,
+                Value::NullValue(_) => true,
                 Value::Variable(_) => unreachable!(),
                 value => {
                     check_value(definitions, variables, value, &inner.r#type, result);
@@ -241,11 +241,11 @@ fn is_value_compatible_type_def(
             // TODO: better handling of scalar, including custom scalars
             (
                 match scalar_def.name.name {
-                    "Boolean" => matches!(value, Value::BooleanValue(_)),
-                    "Int" => matches!(value, Value::IntValue(_)),
-                    "Float" => matches!(value, Value::FloatValue(_)),
-                    "String" => matches!(value, Value::StringValue(_)),
-                    "ID" => matches!(value, Value::StringValue(_)),
+                    "Boolean" => matches!(value, Value::BooleanValue(_) | Value::NullValue(_)),
+                    "Int" => matches!(value, Value::IntValue(_) | Value::NullValue(_)),
+                    "Float" => matches!(value, Value::FloatValue(_) | Value::NullValue(_)),
+                    "String" => matches!(value, Value::StringValue(_) | Value::NullValue(_)),
+                    "ID" => matches!(value, Value::StringValue(_) | Value::NullValue(_)),
                     custom_scalar => {
                         warn!(
                             "Not checking value compatibility for custom scalar '{}'",
@@ -262,6 +262,7 @@ fn is_value_compatible_type_def(
             (false, vec![])
         }
         TypeDefinition::Enum(enum_def) => match value {
+            Value::NullValue(_) => (true, vec![]),
             Value::EnumValue(value) => {
                 if enum_def
                     .values
@@ -289,6 +290,9 @@ fn is_value_compatible_type_def(
         },
         TypeDefinition::InputObject(object_def) => {
             let Value::ObjectValue(value) = value else {
+                if matches!(value, Value::NullValue(_)) {
+                    return (true, vec![]);
+                }
                 return (false, vec![]);
             };
             let mut res = true;

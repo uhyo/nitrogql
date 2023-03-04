@@ -17,7 +17,7 @@ mod operation_directives {
         parse_to_type_system_document(
             "
             directive @dir_bool_nonnull(bool: Boolean!) on QUERY | FIELD
-            directive @dir_bool(bool: Boolean) on MUTATION
+            directive @dir_bool(bool: Boolean) repeatable on MUTATION
 
             type Query {
                 foo: Int!
@@ -65,6 +65,42 @@ mod operation_directives {
             "
             query @dir_bool_nonnull(bool: 3) {
                 foo
+            }
+        ",
+        )
+        .unwrap();
+
+        assert_debug_snapshot!(check_operation_document(&schema, &doc));
+    }
+
+    #[test]
+    fn unknown_argument() {
+        let schema = type_system();
+        let doc = parse_operation_document(
+            "
+            query @dir_bool_nonnull(bool: false, another: true) {
+                foo
+            }
+        ",
+        )
+        .unwrap();
+
+        assert_debug_snapshot!(check_operation_document(&schema, &doc));
+    }
+
+    #[test]
+    fn no_argument() {
+        let schema = type_system();
+        let doc = parse_operation_document(
+            "
+            query q @dir_bool_nonnull {
+                foo
+            }
+            mutation m
+              @dir_bool
+              @dir_bool(bool: null)
+              @dir_bool(bool: true) {
+                bar
             }
         ",
         )
