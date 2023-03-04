@@ -203,6 +203,10 @@ pub fn check_value(
                     result.push(
                         CheckErrorMessage::TypeSystemError
                         .with_pos(*expected_name.name.position())
+                        .with_additional_info(vec![(
+                            expected_name.name.position,
+                            CheckErrorMessage::UnknownType { name: expected_name.name.name.to_owned() }
+                        )])
                     );
                     return;
                 };

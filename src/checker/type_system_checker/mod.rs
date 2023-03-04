@@ -9,18 +9,17 @@ use crate::graphql_parser::ast::{
 };
 
 use self::{
-    builtins::generate_builtins, check_directive_recursion::check_directive_recursion,
-    interfaces::check_valid_implementation,
+    check_directive_recursion::check_directive_recursion, interfaces::check_valid_implementation,
 };
 
 use super::{
+    builtins::generate_builtins,
     common::check_directives,
     definition_map::{generate_definition_map, DefinitionMap},
     error::{CheckError, CheckErrorMessage},
     types::inout_kind_of_type,
 };
 
-mod builtins;
 mod check_directive_recursion;
 mod interfaces;
 mod tests;

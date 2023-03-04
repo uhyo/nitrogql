@@ -16,7 +16,7 @@ mod operation_directives {
     fn type_system() -> TypeSystemDocument<'static> {
         parse_to_type_system_document(
             "
-            directive @dir_bool_nonnull(bool: Boolean!) on QUERY
+            directive @dir_bool_nonnull(bool: Boolean!) on QUERY | FIELD
             directive @dir_bool(bool: Boolean) on MUTATION
 
             type Query {
@@ -49,6 +49,21 @@ mod operation_directives {
         let doc = parse_operation_document(
             "
             query @dir_bool {
+                foo
+            }
+        ",
+        )
+        .unwrap();
+
+        assert_debug_snapshot!(check_operation_document(&schema, &doc));
+    }
+
+    #[test]
+    fn wrong_argument_type() {
+        let schema = type_system();
+        let doc = parse_operation_document(
+            "
+            query @dir_bool_nonnull(bool: 3) {
                 foo
             }
         ",

@@ -11,7 +11,7 @@ use crate::{
     },
 };
 
-use super::{definition_map::{DefinitionMap, generate_definition_map}, error::{CheckError, CheckErrorMessage, TypeKind}, common::check_directives, types::{inout_kind_of_type, TypeInOutKind}};
+use super::{definition_map::{DefinitionMap, generate_definition_map}, error::{CheckError, CheckErrorMessage, TypeKind}, common::check_directives, types::{inout_kind_of_type, TypeInOutKind}, builtins::generate_builtins};
 
 #[cfg(test)]
 mod tests;
@@ -21,7 +21,14 @@ pub fn check_operation_document(
     document: &OperationDocument,
 ) -> Vec<CheckError> {
     let mut result = vec![];
-    let definitions = generate_definition_map(schema);
+    let mut definitions = generate_definition_map(schema);
+    let (builtin_types, builtin_directives) = generate_builtins();
+    definitions
+        .types
+        .extend(builtin_types.iter().map(|(key, def)| (*key, def)));
+    definitions
+        .directives
+        .extend(builtin_directives.iter().map(|(key, def)| (*key, def)));
 
     let operation_num = document
         .definitions
