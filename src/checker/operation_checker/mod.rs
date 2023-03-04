@@ -11,7 +11,7 @@ use crate::{
     },
 };
 
-use super::{definition_map::{DefinitionMap, generate_definition_map}, error::{CheckError, CheckErrorMessage, TypeKind}, common::check_directives, types::{inout_kind_of_type, TypeInOutKind}, builtins::generate_builtins};
+use super::{definition_map::{DefinitionMap, generate_definition_map}, error::{CheckError, CheckErrorMessage, TypeKind}, common::{check_directives, check_arguments}, types::{inout_kind_of_type, TypeInOutKind}, builtins::generate_builtins};
 
 #[cfg(test)]
 mod tests;
@@ -152,7 +152,9 @@ fn check_operation(
             }
         }
     };
-    check_directives(definitions, &op.directives, match op.operation_type {
+    check_directives(definitions,
+        op.variables_definition.as_ref(),
+         &op.directives, match op.operation_type {
         OperationType::Query => "QUERY",
         OperationType::Mutation => "MUTATION",
         OperationType::Subscription => "SUBSCRIPTION",
@@ -238,6 +240,8 @@ fn check_selection_set(
         return;
     };
 
+    let mut seen_selected_names = vec![];
+
     for selection in selection_set.selections.iter() {
         match selection {
             Selection::Field(field_selection) => {
@@ -258,8 +262,27 @@ fn check_selection_set(
                     );
                     continue;
                 };
-                check_directives(definitions, &field_selection.directives, "FIELD", result);
-                // todo: duplicate name check, arguments check
+                let selected_name = field_selection.alias.map_or(field_selection.name.name, |a| a.name);
+                if seen_selected_names.contains(&selected_name) {
+                    result.push(
+                        CheckErrorMessage::DuplicateSelectionName { name: selected_name.to_owned() }
+                        .with_pos(field_selection.alias.map_or(field_selection.name.position, |a| a.position))
+                    );
+                } else {
+                    seen_selected_names.push(selected_name);
+                }
+
+                check_directives(definitions, variables, &field_selection.directives, "FIELD", result);
+                check_arguments(
+                    definitions,
+                    variables,
+                    field_selection.name.position,
+                    field_selection.name.name,
+                    "field",
+                    field_selection.arguments.as_ref(),
+                    target_field.arguments.as_ref(),
+                    result,
+                );
                 if let Some(ref selection_set) = field_selection.selection_set {
                     let Some(target_field_type) = definitions.types.get(
                         target_field.r#type.unwrapped_type().name.name

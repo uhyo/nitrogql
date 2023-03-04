@@ -108,6 +108,8 @@ pub enum CheckErrorMessage {
         field_name: String,
         type_name: String,
     },
+    #[error("Selection '{name}' is duplicated")]
+    DuplicateSelectionName { name: String },
     // Error that should be checked in type system check phase
     #[error("Type system error. This is a bug of checker")]
     TypeSystemError,

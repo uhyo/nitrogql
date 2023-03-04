@@ -79,7 +79,7 @@ pub fn check_type_system_document(document: &TypeSystemDocument) -> Vec<CheckErr
 }
 
 fn check_schema(d: &SchemaDefinition, definitions: &DefinitionMap, result: &mut Vec<CheckError>) {
-    check_directives(definitions, &d.directives, "SCHEMA", result);
+    check_directives(definitions, None, &d.directives, "SCHEMA", result);
 }
 
 fn check_directive<'a>(
@@ -105,7 +105,7 @@ fn check_scalar(
     if name_starts_with_unscounsco(&scalar.name) {
         result.push(CheckErrorMessage::UnscoUnsco.with_pos(scalar.name.position))
     }
-    check_directives(definition_map, &scalar.directives, "SCALAR", result);
+    check_directives(definition_map, None, &scalar.directives, "SCALAR", result);
 }
 
 fn check_object(
@@ -116,7 +116,7 @@ fn check_object(
     if name_starts_with_unscounsco(&object.name) {
         result.push(CheckErrorMessage::UnscoUnsco.with_pos(*object.name.position()));
     }
-    check_directives(definitions, &object.directives, "OBJECT", result);
+    check_directives(definitions, None, &object.directives, "OBJECT", result);
 
     let mut seen_fields = vec![];
     for f in object.fields.iter() {
@@ -184,7 +184,13 @@ fn check_interface(
     if name_starts_with_unscounsco(&interface.name) {
         result.push(CheckErrorMessage::UnscoUnsco.with_pos(*interface.name.position()));
     }
-    check_directives(definitions, &interface.directives, "INTERFACE", result);
+    check_directives(
+        definitions,
+        None,
+        &interface.directives,
+        "INTERFACE",
+        result,
+    );
 
     let mut seen_fields = vec![];
     for f in interface.fields.iter() {
@@ -246,7 +252,7 @@ fn check_union(
     if name_starts_with_unscounsco(&union.name) {
         result.push(CheckErrorMessage::UnscoUnsco.with_pos(*union.name.position()));
     }
-    check_directives(definitions, &union.directives, "UNION", result);
+    check_directives(definitions, None, &union.directives, "UNION", result);
 
     let mut seen_members = vec![];
     for member in union.members.iter() {
@@ -293,7 +299,7 @@ fn check_enum(
     if name_starts_with_unscounsco(&enum_def.name) {
         result.push(CheckErrorMessage::UnscoUnsco.with_pos(*enum_def.name.position()));
     }
-    check_directives(definitions, &enum_def.directives, "ENUM", result);
+    check_directives(definitions, None, &enum_def.directives, "ENUM", result);
 
     let mut seen_values = vec![];
     for v in enum_def.values.iter() {
@@ -307,7 +313,7 @@ fn check_enum(
         } else {
             seen_values.push(v.name.name);
         }
-        check_directives(definitions, &v.directives, "ENUM_VALUE", result)
+        check_directives(definitions, None, &v.directives, "ENUM_VALUE", result)
     }
 }
 
@@ -319,7 +325,7 @@ fn check_input_object(
     if name_starts_with_unscounsco(&input.name) {
         result.push(CheckErrorMessage::UnscoUnsco.with_pos(*input.name.position()));
     }
-    check_directives(definitions, &input.directives, "INPUT_OBJECT", result);
+    check_directives(definitions, None, &input.directives, "INPUT_OBJECT", result);
 
     let mut seen_fields = vec![];
     for f in input.fields.iter() {
@@ -336,7 +342,13 @@ fn check_input_object(
         if name_starts_with_unscounsco(&f.name) {
             result.push(CheckErrorMessage::UnscoUnsco.with_pos(f.name.position));
         }
-        check_directives(definitions, &f.directives, "INPUT_FIELD_DEFINITION", result);
+        check_directives(
+            definitions,
+            None,
+            &f.directives,
+            "INPUT_FIELD_DEFINITION",
+            result,
+        );
 
         let type_is_not_input_type =
             inout_kind_of_type(definitions, &f.r#type).map(|k| !k.is_input_type());
@@ -393,7 +405,13 @@ fn check_arguments_definition(
             );
         }
 
-        check_directives(definitions, &v.directives, "ARGUMENT_DEFINITION", result)
+        check_directives(
+            definitions,
+            None,
+            &v.directives,
+            "ARGUMENT_DEFINITION",
+            result,
+        )
     }
 }
 

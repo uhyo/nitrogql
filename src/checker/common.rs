@@ -16,6 +16,7 @@ use super::{
 
 pub fn check_directives(
     definitions: &DefinitionMap,
+    variables: Option<&VariablesDefinition>,
     directives: &[Directive],
     current_position: &str,
     result: &mut Vec<CheckError>,
@@ -56,31 +57,16 @@ pub fn check_directives(
                     seen_directives.push(d.name.name);
                 }
 
-                match (&d.arguments, &def.arguments) {
-                    (None, None) => {}
-                    (Some(ref args), None) => {
-                        result.push(
-                            CheckErrorMessage::ArgumentsNotNeeded { kind: "directive" }
-                                .with_pos(args.position)
-                                .with_additional_info(vec![(
-                                    def.position,
-                                    CheckErrorMessage::DefinitionPos {
-                                        name: def.name.name.to_owned(),
-                                    },
-                                )]),
-                        );
-                    }
-                    (args, Some(ref args_def)) => {
-                        check_arguments(
-                            definitions,
-                            None,
-                            d.position,
-                            args.as_ref(),
-                            args_def,
-                            result,
-                        );
-                    }
-                }
+                check_arguments(
+                    definitions,
+                    variables,
+                    d.position,
+                    d.name.name,
+                    "directive",
+                    d.arguments.as_ref(),
+                    def.arguments.as_ref(),
+                    result,
+                );
             }
         }
     }
@@ -90,70 +76,89 @@ pub fn check_arguments(
     definitions: &DefinitionMap,
     variables: Option<&VariablesDefinition>,
     parent_pos: Pos,
+    parent_name: &str,
+    parent_kind: &'static str,
     arguments: Option<&Arguments>,
-    arguments_definition: &ArgumentsDefinition,
+    arguments_definition: Option<&ArgumentsDefinition>,
     result: &mut Vec<CheckError>,
 ) {
-    let argument_pos = arguments.map_or(parent_pos, |args| args.position);
-    let arguments: Vec<_> = arguments
-        .into_iter()
-        .flat_map(|arg| arg.arguments.iter())
-        .collect();
-    let mut seen_args = 0;
-    for arg_def in arguments_definition.input_values.iter() {
-        let arg = arguments
-            .iter()
-            .find(|(arg_name, _)| arg_name.name == arg_def.name.name);
-        match arg {
-            None => {
-                let null_is_allowed = 'b: {
-                    if !arg_def.r#type.is_nonnull() {
-                        break 'b true;
-                    }
-                    match arg_def.default_value {
-                        None => false,
-                        Some(ref v) if matches!(v, Value::NullValue(_)) => false,
-                        Some(_) => true,
-                    }
-                };
-                if null_is_allowed {
-                    seen_args += 1;
-                } else {
-                    result.push(
-                        CheckErrorMessage::RequiredArgumentNotSpecified {
-                            name: arg_def.name.name.to_owned(),
+    match (arguments, arguments_definition) {
+        (None, None) => {}
+        (Some(args), None) => {
+            result.push(
+                CheckErrorMessage::ArgumentsNotNeeded { kind: parent_kind }
+                    .with_pos(args.position)
+                    .with_additional_info(vec![(
+                        parent_pos,
+                        CheckErrorMessage::DefinitionPos {
+                            name: parent_name.to_owned(),
+                        },
+                    )]),
+            );
+        }
+        (arguments, Some(arguments_definition)) => {
+            let argument_pos = arguments.map_or(parent_pos, |args| args.position);
+            let arguments: Vec<_> = arguments
+                .into_iter()
+                .flat_map(|arg| arg.arguments.iter())
+                .collect();
+            let mut seen_args = 0;
+            for arg_def in arguments_definition.input_values.iter() {
+                let arg = arguments
+                    .iter()
+                    .find(|(arg_name, _)| arg_name.name == arg_def.name.name);
+                match arg {
+                    None => {
+                        let null_is_allowed = 'b: {
+                            if !arg_def.r#type.is_nonnull() {
+                                break 'b true;
+                            }
+                            match arg_def.default_value {
+                                None => false,
+                                Some(ref v) if matches!(v, Value::NullValue(_)) => false,
+                                Some(_) => true,
+                            }
+                        };
+                        if null_is_allowed {
+                            seen_args += 1;
+                        } else {
+                            result.push(
+                                CheckErrorMessage::RequiredArgumentNotSpecified {
+                                    name: arg_def.name.name.to_owned(),
+                                }
+                                .with_pos(argument_pos)
+                                .with_additional_info(vec![(
+                                    arg_def.position,
+                                    CheckErrorMessage::DefinitionPos {
+                                        name: arg_def.name.name.to_owned(),
+                                    },
+                                )]),
+                            )
                         }
-                        .with_pos(argument_pos)
-                        .with_additional_info(vec![(
-                            arg_def.position,
-                            CheckErrorMessage::DefinitionPos {
-                                name: arg_def.name.name.to_owned(),
-                            },
-                        )]),
-                    )
+                    }
+                    Some((_, arg_value)) => {
+                        check_value(definitions, variables, arg_value, &arg_def.r#type, result);
+                        seen_args += 1;
+                    }
                 }
             }
-            Some((_, arg_value)) => {
-                check_value(definitions, variables, arg_value, &arg_def.r#type, result);
-                seen_args += 1;
-            }
-        }
-    }
-    if seen_args < arguments.len() {
-        // There are extra arguments
-        for (arg_name, _) in arguments {
-            if arguments_definition
-                .input_values
-                .iter()
-                .find(|arg_def| arg_def.name.name == arg_name.name)
-                .is_none()
-            {
-                result.push(
-                    CheckErrorMessage::UnknownArgument {
-                        name: arg_name.name.to_owned(),
+            if seen_args < arguments.len() {
+                // There are extra arguments
+                for (arg_name, _) in arguments {
+                    if arguments_definition
+                        .input_values
+                        .iter()
+                        .find(|arg_def| arg_def.name.name == arg_name.name)
+                        .is_none()
+                    {
+                        result.push(
+                            CheckErrorMessage::UnknownArgument {
+                                name: arg_name.name.to_owned(),
+                            }
+                            .with_pos(arg_name.position),
+                        );
                     }
-                    .with_pos(arg_name.position),
-                );
+                }
             }
         }
     }
