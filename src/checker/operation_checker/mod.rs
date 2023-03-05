@@ -5,7 +5,7 @@ use crate::{
             ExecutableDefinition, FragmentDefinition, OperationDefinition, OperationType,
             VariablesDefinition,
         },
-        selection_set::{SelectionSet, Selection, Field, FragmentSpread},
+        selection_set::{SelectionSet, Selection, Field, FragmentSpread, InlineFragment},
         type_system::{FieldDefinition, TypeDefinition},
         OperationDocument, TypeSystemDocument,
     },
@@ -288,7 +288,9 @@ fn check_selection_set(
             Selection::FragmentSpread(fragment_spread) => {
                 check_fragment_spread(definitions, fragment_map, variables, root_type, fragment_spread, result);
             },
-            Selection::InlineFragment(_) => todo!(),
+            Selection::InlineFragment(inline_fragment) => {
+                
+            }
         }
     }
 }
@@ -365,7 +367,6 @@ fn check_fragment_spread(
         // This should be checked elsewhere
         return;
     };
-    let fragmet_selection_set = &target.selection_set;
     check_fragment_spread_core(
         definitions,
         fragment_map,
@@ -373,9 +374,43 @@ fn check_fragment_spread(
         root_type,
         fragment_spread.position,
         fragment_condition,
-        fragmet_selection_set,
+        &target.selection_set,
         result,
     );
+}
+
+fn check_inline_fragment(
+    definitions: &DefinitionMap,
+    fragment_map: &FragmentMap,
+    variables: Option<&VariablesDefinition>,
+    root_type: &TypeDefinition,
+    inline_fragment: &InlineFragment,
+    result: &mut Vec<CheckError>
+) {
+    match inline_fragment.type_condition {
+        None => {
+            check_selection_set(definitions, fragment_map, variables, root_type, &inline_fragment.selection_set, result);
+        }
+        Some(ref type_cond) => {
+            let Some(type_cond_definition) = definitions.types.get(type_cond.name) else {
+                result.push(
+                    CheckErrorMessage::UnknownType { name: type_cond.name.to_owned() }
+                    .with_pos(type_cond.position)
+                );
+                return;
+            };
+        check_fragment_spread_core(
+            definitions,
+            fragment_map,
+            variables,
+            root_type,
+            inline_fragment.position,
+            type_cond_definition,
+            &inline_fragment.selection_set,
+            result,
+        );
+        }
+    }
 }
 
 fn check_fragment_spread_core(
@@ -556,6 +591,7 @@ fn check_fragment_spread_core(
         }
         _ => {}
     }
+    check_selection_set(definitions, fragment_map, variables, fragment_condition, fragment_selection_set, result);
 }
 
 fn direct_fields_of_output_type<'a, 'src>(

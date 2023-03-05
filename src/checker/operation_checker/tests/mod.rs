@@ -350,6 +350,7 @@ mod fragments {
     fn type_system() -> TypeSystemDocument<'static> {
         parse_to_type_system_document(
             "
+            directive @dir_bool(bool: Boolean!) on FIELD
             scalar CustomScalar
             
             type Query {
@@ -450,6 +451,8 @@ mod fragments {
         ",
         )
         .unwrap();
+
+        assert_debug_snapshot!(check_operation_document(&schema, &doc))
     }
 
     #[test]
@@ -479,7 +482,12 @@ mod fragments {
                 ...F
             }}
             fragment F on PostOrTag {
-                id
+                ... on Post {
+                    id
+                }
+                ... on Tag {
+                    id
+                }
             }
         ",
         )
@@ -575,7 +583,26 @@ mod fragments {
         )
         .unwrap();
 
-        assert_debug_snapshot!(check_operation_document(&schema, &doc))
+        assert_debug_snapshot!(check_operation_document(&schema, &doc));
+    }
+
+    #[test]
+    fn fragment_variables() {
+        let schema = type_system();
+        let doc = parse_operation_document(
+            "
+            query($b1: Boolean!) { user {
+                ...F
+            }}
+            fragment F on User {
+                id @dir_bool(bool: $b1)
+                name @dir_bool(bool: $b2)
+            }
+        ",
+        )
+        .unwrap();
+
+        assert_debug_snapshot!(check_operation_document(&schema, &doc));
     }
 }
 
