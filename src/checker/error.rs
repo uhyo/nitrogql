@@ -114,6 +114,10 @@ pub enum CheckErrorMessage {
     DuplicatedVariableName { name: String },
     #[error("Type '{name}' is not a valid fragment target")]
     InvalidFragmentTarget { name: String },
+    #[error("Fragment '{name}' is not defined")]
+    UnknownFragment { name: String },
+    #[error("Fragment condition '{condition}' never matches scope type '{scope}'")]
+    FragmentConditionNeverMatches { condition: String, scope: String },
     // Error that should be checked in type system check phase
     #[error("Type system error. This is a bug of checker")]
     TypeSystemError,

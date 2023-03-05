@@ -367,6 +367,21 @@ mod fragments {
             input MyInput {
                 arg: String! = \"\"
             }
+
+            type Post implements HasTitle {
+                id: ID!
+                title: String!
+                body: String!
+            }
+            interface HasTitle {
+                title: String!
+            }
+
+            type Tag {
+                id: ID!
+                label: String!
+            }
+            union PostOrTag = Post | Tag
         ",
         )
     }
@@ -401,6 +416,59 @@ mod fragments {
             }
             fragment OnInput on MyInput {
                 arg
+            }
+        ",
+        )
+        .unwrap();
+
+        assert_debug_snapshot!(check_operation_document(&schema, &doc))
+    }
+
+    #[test]
+    fn wrong_fragment_target_obj() {
+        let schema = type_system();
+        let doc = parse_operation_document(
+            "
+            query { user {
+                ...F
+            }}
+            fragment F on Post {
+                id
+                title
+            }
+        ",
+        )
+        .unwrap();
+    }
+
+    #[test]
+    fn wrong_fragment_target_intf() {
+        let schema = type_system();
+        let doc = parse_operation_document(
+            "
+            query { user {
+                ...F
+            }}
+            fragment F on HasTitle {
+                title
+            }
+        ",
+        )
+        .unwrap();
+
+        assert_debug_snapshot!(check_operation_document(&schema, &doc))
+    }
+
+    #[test]
+    fn wrong_fragment_target_union() {
+        let schema = type_system();
+        let doc = parse_operation_document(
+            "
+            query { user {
+                ...F
+            }}
+            fragment F on PostOrTag {
+                id
             }
         ",
         )

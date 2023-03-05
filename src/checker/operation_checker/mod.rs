@@ -1,20 +1,23 @@
 use crate::{
     graphql_parser::ast::{
-        base::HasPos,
+        base::{HasPos, Pos},
         operations::{
             ExecutableDefinition, FragmentDefinition, OperationDefinition, OperationType,
             VariablesDefinition,
         },
-        selection_set::{SelectionSet, Selection},
+        selection_set::{SelectionSet, Selection, Field, FragmentSpread},
         type_system::{FieldDefinition, TypeDefinition},
         OperationDocument, TypeSystemDocument,
     },
 };
 
+use self::fragment_map::{generate_fragment_map, FragmentMap};
+
 use super::{definition_map::{DefinitionMap, generate_definition_map}, error::{CheckError, CheckErrorMessage, TypeKind}, common::{check_directives, check_arguments}, types::{inout_kind_of_type, TypeInOutKind}, builtins::generate_builtins};
 
 #[cfg(test)]
 mod tests;
+mod fragment_map;
 
 pub fn check_operation_document(
     schema: &TypeSystemDocument,
@@ -29,6 +32,8 @@ pub fn check_operation_document(
     definitions
         .directives
         .extend(builtin_directives.iter().map(|(key, def)| (*key, def)));
+
+    let fragment_map = generate_fragment_map(document);
 
     let operation_num = document
         .definitions
@@ -75,7 +80,7 @@ pub fn check_operation_document(
                     }
                 }
 
-                check_operation(&definitions, op, &mut result);
+                check_operation(&definitions, &fragment_map, op, &mut result);
             }
             ExecutableDefinition::FragmentDefinition(def) => {
                 // Find other one with same name
@@ -107,6 +112,7 @@ pub fn check_operation_document(
 
 fn check_operation(
     definitions: &DefinitionMap,
+    fragment_map: &FragmentMap,
     op: &OperationDefinition,
     result: &mut Vec<CheckError>,
 ) {
@@ -167,6 +173,7 @@ fn check_operation(
     }
     check_selection_set(
         definitions,
+        fragment_map,
         op.variables_definition.as_ref(),
         root_type,
         &op.selection_set,
@@ -199,8 +206,9 @@ fn check_fragment_definition(
                 (*target.position(), CheckErrorMessage::DefinitionPos { name: target.name().expect("Type must have a name").to_owned() })
             ])
         );
+        return;
     }
-    // todo: fragment must be used somewhere in document
+
 }
 
 fn check_variables_definition(
@@ -240,6 +248,7 @@ fn check_variables_definition(
 
 fn check_selection_set(
     definitions: &DefinitionMap,
+    fragment_map: &FragmentMap,
     variables: Option<&VariablesDefinition>,
     root_type: &TypeDefinition,
     selection_set: &SelectionSet,
@@ -261,63 +270,197 @@ fn check_selection_set(
         return;
     };
 
-    let mut seen_selected_names = vec![];
-
     for selection in selection_set.selections.iter() {
         match selection {
             Selection::Field(field_selection) => {
-                let target_field = root_fields.iter().find(|field| {
-                    field.name.name == field_selection.name.name
-                });
-                let Some(target_field) = target_field else {
-                    result.push(
-                        CheckErrorMessage::FieldNotFound { field_name: 
-                            field_selection.name.name.to_owned(),
-                             type_name: root_type_name.to_owned(),
-                         }.with_pos(field_selection.name.position)
-                         .with_additional_info(vec![
-                            (*root_type.position(), CheckErrorMessage::DefinitionPos {
-                                name: root_type_name.to_owned()
-                             })
-                         ])
-                    );
-                    continue;
-                };
-                let selected_name = field_selection.alias.map_or(field_selection.name.name, |a| a.name);
-                if seen_selected_names.contains(&selected_name) {
-                    result.push(
-                        CheckErrorMessage::DuplicateSelectionName { name: selected_name.to_owned() }
-                        .with_pos(field_selection.alias.map_or(field_selection.name.position, |a| a.position))
-                    );
-                } else {
-                    seen_selected_names.push(selected_name);
-                }
-
-                check_directives(definitions, variables, &field_selection.directives, "FIELD", result);
-                check_arguments(
+                check_selection_field(
                     definitions,
+                    fragment_map,
                     variables,
-                    field_selection.name.position,
-                    field_selection.name.name,
-                    "field",
-                    field_selection.arguments.as_ref(),
-                    target_field.arguments.as_ref(),
+                    *root_type.position(),
+                    root_type_name,
+                    root_fields,
+                    field_selection,
                     result,
                 );
-                if let Some(ref selection_set) = field_selection.selection_set {
-                    let Some(target_field_type) = definitions.types.get(
-                        target_field.r#type.unwrapped_type().name.name
-                    ) else {
-                        result.push(CheckErrorMessage::TypeSystemError.with_pos(selection_set.position));
-                        continue;
-                    };
-
-                    check_selection_set(definitions, variables, target_field_type, selection_set, result);
-                }
+                
             }
-            Selection::FragmentSpread(_) => todo!(),
+            Selection::FragmentSpread(fragment_spread) => {
+                check_fragment_spread(definitions, fragment_map, variables, root_type, fragment_spread, result);
+            },
             Selection::InlineFragment(_) => todo!(),
         }
+    }
+}
+
+fn check_selection_field(
+    definitions: &DefinitionMap,
+    fragment_map: &FragmentMap,
+    variables: Option<&VariablesDefinition>,
+    root_type_pos: Pos,
+    root_type_name: &str,
+    root_fields: &[FieldDefinition],
+    field_selection: &Field,
+    result: &mut Vec<CheckError>
+) {
+    let target_field = root_fields.iter().find(|field| {
+        field.name.name == field_selection.name.name
+    });
+    let Some(target_field) = target_field else {
+        result.push(
+            CheckErrorMessage::FieldNotFound { field_name: 
+                field_selection.name.name.to_owned(),
+                    type_name: root_type_name.to_owned(),
+                }.with_pos(field_selection.name.position)
+                .with_additional_info(vec![
+                (root_type_pos, CheckErrorMessage::DefinitionPos {
+                    name: root_type_name.to_owned()
+                    })
+                ])
+        );
+        return;
+    };
+
+    check_directives(definitions, variables, &field_selection.directives, "FIELD", result);
+    check_arguments(
+        definitions,
+        variables,
+        field_selection.name.position,
+        field_selection.name.name,
+        "field",
+        field_selection.arguments.as_ref(),
+        target_field.arguments.as_ref(),
+        result,
+    );
+    if let Some(ref selection_set) = field_selection.selection_set {
+        let Some(target_field_type) = definitions.types.get(
+            target_field.r#type.unwrapped_type().name.name
+        ) else {
+            result.push(CheckErrorMessage::TypeSystemError.with_pos(selection_set.position));
+            return;
+        };
+
+        check_selection_set(definitions, fragment_map, variables, target_field_type, selection_set, result);
+    }
+
+}
+
+fn check_fragment_spread(
+    definitions: &DefinitionMap,
+    fragment_map: &FragmentMap,
+    variables: Option<&VariablesDefinition>,
+    root_type: &TypeDefinition,
+    fragment_spread: &FragmentSpread,
+    result: &mut Vec<CheckError>
+) {
+    // todo: Fragment Spreads Must Not Form Cycles
+    let Some(target) = fragment_map.get(fragment_spread.fragment_name.name) else {
+        result.push(
+            CheckErrorMessage::UnknownFragment { name: fragment_spread.fragment_name.name.to_owned() }
+            .with_pos(fragment_spread.fragment_name.position)
+        );
+        return;
+    };
+    let Some(fragment_condition) = definitions.types.get(target.type_condition.name) else {
+        // This should be checked elsewhere
+        return;
+    };
+    let fragmet_selection_set = &target.selection_set;
+    check_fragment_spread_core(
+        definitions,
+        fragment_map,
+        variables,
+        root_type,
+        fragment_spread.position,
+        fragment_condition,
+        fragmet_selection_set,
+        result,
+    );
+}
+
+fn check_fragment_spread_core(
+    definitions: &DefinitionMap,
+    fragment_map: &FragmentMap,
+    variables: Option<&VariablesDefinition>,
+    root_type: &TypeDefinition,
+    spread_pos: Pos,
+    fragment_condition: &TypeDefinition,
+    fragment_selection_set: &SelectionSet,
+    result: &mut Vec<CheckError>
+) {
+    match root_type {
+        TypeDefinition::Scalar(_) | TypeDefinition::Enum(_) | TypeDefinition::InputObject(_) => {
+            // This should be flagged elsewhere
+            return
+        }
+        TypeDefinition::Object(obj_definition) => {
+            match fragment_condition {
+                TypeDefinition::Object(cond_obj_definition) => {
+                    if obj_definition.name.name != cond_obj_definition.name.name {
+                        result.push(
+                            CheckErrorMessage::FragmentConditionNeverMatches { condition: cond_obj_definition.name.name.to_owned(), scope: 
+                                obj_definition.name.name.to_owned()
+                             }
+                             .with_pos(spread_pos)
+                             .with_additional_info(vec![
+                                (
+                                    cond_obj_definition.position,
+                                    CheckErrorMessage::DefinitionPos { name: cond_obj_definition.name.name.to_owned() }
+                                ),
+                                (
+                                    obj_definition.position,
+                                    CheckErrorMessage::DefinitionPos { name: obj_definition.name.name.to_owned() }
+                                ),
+                             ])
+                        );
+                    }
+                }
+                TypeDefinition::Interface(cond_intf_definition) => {
+                    let obj_implements_intf = obj_definition.implements.iter().find(|im| im.name == cond_intf_definition.name.name);
+                    if obj_implements_intf.is_none() {
+                        result.push(
+                            CheckErrorMessage::FragmentConditionNeverMatches { condition: cond_intf_definition.name.name.to_owned(), scope: 
+                                obj_definition.name.name.to_owned()
+                             }
+                             .with_pos(spread_pos)
+                             .with_additional_info(vec![
+                                (
+                                    cond_intf_definition.position,
+                                    CheckErrorMessage::DefinitionPos { name: cond_intf_definition.name.name.to_owned() }
+                                ),
+                                (
+                                    obj_definition.position,
+                                    CheckErrorMessage::DefinitionPos { name: obj_definition.name.name.to_owned() }
+                                ),
+                             ])
+                        );
+                    }
+                }
+                TypeDefinition::Union(cond_union_definition) => {
+                    let obj_in_union = cond_union_definition.members.iter().find(|mem| mem.name == obj_definition.name.name);
+                    if obj_in_union.is_none() {
+                        result.push(
+                            CheckErrorMessage::FragmentConditionNeverMatches { condition: cond_union_definition.name.name.to_owned(), scope: 
+                                obj_definition.name.name.to_owned()
+                             }
+                             .with_pos(spread_pos)
+                             .with_additional_info(vec![
+                                (
+                                    cond_union_definition.position,
+                                    CheckErrorMessage::DefinitionPos { name: cond_union_definition.name.name.to_owned() }
+                                ),
+                                (
+                                    obj_definition.position,
+                                    CheckErrorMessage::DefinitionPos { name: obj_definition.name.name.to_owned() }
+                                ),
+                             ])
+                        );
+                    }
+                }
+                _ => {}
+            }
+        }
+        _ => todo!()
     }
 }
 
