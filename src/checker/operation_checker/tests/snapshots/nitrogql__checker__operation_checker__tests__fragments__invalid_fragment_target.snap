@@ -40,7 +40,7 @@ expression: "check_operation_document(&schema, &doc)"
         additional_info: [
             (
                 Pos {
-                    line: 18,
+                    line: 19,
                     column: 12,
                     file: 0,
                     builtin: false,
@@ -64,7 +64,7 @@ expression: "check_operation_document(&schema, &doc)"
         additional_info: [
             (
                 Pos {
-                    line: 19,
+                    line: 20,
                     column: 12,
                     file: 0,
                     builtin: false,

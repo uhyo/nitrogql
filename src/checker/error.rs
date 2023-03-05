@@ -116,6 +116,8 @@ pub enum CheckErrorMessage {
     UnknownFragment { name: String },
     #[error("Fragment condition '{condition}' never matches scope type '{scope}'")]
     FragmentConditionNeverMatches { condition: String, scope: String },
+    #[error("Recursing application of fragment '{name}'")]
+    RecursingFragmentSpread { name: String },
     // Error that should be checked in type system check phase
     #[error("Type system error. This is a bug of checker")]
     TypeSystemError,

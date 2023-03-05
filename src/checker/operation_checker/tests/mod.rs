@@ -366,6 +366,7 @@ mod fragments {
                 name: String!
                 age: Int
                 userKind: UserKind
+                followers: [User!]!
             }
             enum UserKind { NormalUser PremiumUser }
             input MyInput {
@@ -684,6 +685,75 @@ mod fragments {
                             id
                         }
                     }
+                }
+            }
+        ",
+        )
+        .unwrap();
+
+        assert_debug_snapshot!(check_operation_document(&schema, &doc))
+    }
+
+    #[test]
+    fn fragment_spread_recursion() {
+        let schema = type_system();
+        let doc = parse_operation_document(
+            "
+            query {
+                user {
+                    ...F
+                }
+            }
+            fragment F on User {
+                id
+                ...F
+            }
+        ",
+        )
+        .unwrap();
+
+        assert_debug_snapshot!(check_operation_document(&schema, &doc))
+    }
+
+    #[test]
+    fn fragment_spread_indirect_recursion() {
+        let schema = type_system();
+        let doc = parse_operation_document(
+            "
+            query {
+                user {
+                    ...F
+                }
+            }
+            fragment F on User {
+                id
+                ...G
+            }
+            fragment G on User {
+                age
+                ...F
+            }
+        ",
+        )
+        .unwrap();
+
+        assert_debug_snapshot!(check_operation_document(&schema, &doc))
+    }
+
+    #[test]
+    fn fragment_spread_nested_recursion() {
+        let schema = type_system();
+        let doc = parse_operation_document(
+            "
+            query {
+                user {
+                    ...F
+                }
+            }
+            fragment F on User {
+                followers {
+                    id
+                    ...F
                 }
             }
         ",

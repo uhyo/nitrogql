@@ -171,9 +171,11 @@ fn check_operation(
     if op.operation_type == OperationType::Subscription {
         todo!("Single root field check");
     }
+    let seen_fragments = vec![];
     check_selection_set(
         definitions,
         fragment_map,
+        &seen_fragments,
         op.variables_definition.as_ref(),
         root_type,
         &op.selection_set,
@@ -249,6 +251,7 @@ fn check_variables_definition(
 fn check_selection_set(
     definitions: &DefinitionMap,
     fragment_map: &FragmentMap,
+    seen_fragments: &[&str],
     variables: Option<&VariablesDefinition>,
     root_type: &TypeDefinition,
     selection_set: &SelectionSet,
@@ -276,6 +279,7 @@ fn check_selection_set(
                 check_selection_field(
                     definitions,
                     fragment_map,
+                    seen_fragments,
                     variables,
                     *root_type.position(),
                     root_type_name,
@@ -286,10 +290,10 @@ fn check_selection_set(
                 
             }
             Selection::FragmentSpread(fragment_spread) => {
-                check_fragment_spread(definitions, fragment_map, variables, root_type, fragment_spread, result);
+                check_fragment_spread(definitions, fragment_map, seen_fragments, variables, root_type, fragment_spread, result);
             },
             Selection::InlineFragment(inline_fragment) => {
-                check_inline_fragment(definitions, fragment_map, variables, root_type, inline_fragment, result);
+                check_inline_fragment(definitions, fragment_map, seen_fragments, variables, root_type, inline_fragment, result);
             }
         }
     }
@@ -298,6 +302,7 @@ fn check_selection_set(
 fn check_selection_field(
     definitions: &DefinitionMap,
     fragment_map: &FragmentMap,
+    seen_fragments: &[&str],
     variables: Option<&VariablesDefinition>,
     root_type_pos: Pos,
     root_type_name: &str,
@@ -342,7 +347,7 @@ fn check_selection_field(
             return;
         };
 
-        check_selection_set(definitions, fragment_map, variables, target_field_type, selection_set, result);
+        check_selection_set(definitions, fragment_map, seen_fragments, variables, target_field_type, selection_set, result);
     }
 
 }
@@ -350,12 +355,22 @@ fn check_selection_field(
 fn check_fragment_spread(
     definitions: &DefinitionMap,
     fragment_map: &FragmentMap,
+    seen_fragments: &[&str],
     variables: Option<&VariablesDefinition>,
     root_type: &TypeDefinition,
     fragment_spread: &FragmentSpread,
     result: &mut Vec<CheckError>
 ) {
-    // todo: Fragment Spreads Must Not Form Cycles
+    
+    if seen_fragments.contains(&fragment_spread.fragment_name.name) {
+        result.push(
+            CheckErrorMessage::RecursingFragmentSpread { name: fragment_spread.fragment_name.name.to_owned() }
+            .with_pos(fragment_spread.position)
+        );
+        return;
+    }
+    let seen_fragments: Vec<&str> = seen_fragments.iter().map(|s| *s).chain(vec![fragment_spread.fragment_name.name]).collect();
+    let seen_fragments = &seen_fragments;
     let Some(target) = fragment_map.get(fragment_spread.fragment_name.name) else {
         result.push(
             CheckErrorMessage::UnknownFragment { name: fragment_spread.fragment_name.name.to_owned() }
@@ -370,6 +385,7 @@ fn check_fragment_spread(
     check_fragment_spread_core(
         definitions,
         fragment_map,
+        seen_fragments,
         variables,
         root_type,
         fragment_spread.position,
@@ -382,6 +398,7 @@ fn check_fragment_spread(
 fn check_inline_fragment(
     definitions: &DefinitionMap,
     fragment_map: &FragmentMap,
+    seen_fragments: &[&str],
     variables: Option<&VariablesDefinition>,
     root_type: &TypeDefinition,
     inline_fragment: &InlineFragment,
@@ -389,7 +406,7 @@ fn check_inline_fragment(
 ) {
     match inline_fragment.type_condition {
         None => {
-            check_selection_set(definitions, fragment_map, variables, root_type, &inline_fragment.selection_set, result);
+            check_selection_set(definitions, fragment_map, seen_fragments, variables, root_type, &inline_fragment.selection_set, result);
         }
         Some(ref type_cond) => {
             let Some(type_cond_definition) = definitions.types.get(type_cond.name) else {
@@ -402,6 +419,7 @@ fn check_inline_fragment(
         check_fragment_spread_core(
             definitions,
             fragment_map,
+            seen_fragments,
             variables,
             root_type,
             inline_fragment.position,
@@ -416,6 +434,7 @@ fn check_inline_fragment(
 fn check_fragment_spread_core(
     definitions: &DefinitionMap,
     fragment_map: &FragmentMap,
+    seen_fragments: &[&str],
     variables: Option<&VariablesDefinition>,
     root_type: &TypeDefinition,
     spread_pos: Pos,
@@ -591,7 +610,7 @@ fn check_fragment_spread_core(
         }
         _ => {}
     }
-    check_selection_set(definitions, fragment_map, variables, fragment_condition, fragment_selection_set, result);
+    check_selection_set(definitions, fragment_map, seen_fragments, variables, fragment_condition, fragment_selection_set, result);
 }
 
 fn direct_fields_of_output_type<'a, 'src>(
