@@ -108,8 +108,6 @@ pub enum CheckErrorMessage {
         field_name: String,
         type_name: String,
     },
-    #[error("Selection '{name}' is duplicated")]
-    DuplicateSelectionName { name: String },
     #[error("Duplicated variable name '{name}'")]
     DuplicatedVariableName { name: String },
     #[error("Type '{name}' is not a valid fragment target")]

@@ -356,6 +356,9 @@ mod fragments {
                 foo: Int!
                 user: User
                 users(name: String): [User!]!
+                hasTitle: HasTitle!
+                postOrTag: PostOrTag
+                userOrSchedule: UserOrSchedule
             }
             type User {
                 id: ID!
@@ -376,12 +379,20 @@ mod fragments {
             interface HasTitle {
                 title: String!
             }
+            interface HasLabel {
+                label: String!
+            }
 
-            type Tag {
+            type Tag implements HasLabel {
                 id: ID!
                 label: String!
             }
+            type Schedule {
+                id: ID!
+            }
+            union UserOrTag = User | Tag
             union PostOrTag = Post | Tag
+            union UserOrSchedule = User | Schedule
         ",
         )
     }
@@ -469,6 +480,96 @@ mod fragments {
             }}
             fragment F on PostOrTag {
                 id
+            }
+        ",
+        )
+        .unwrap();
+
+        assert_debug_snapshot!(check_operation_document(&schema, &doc))
+    }
+
+    #[test]
+    fn wrong_fragment_target_intf_intf() {
+        let schema = type_system();
+        let doc = parse_operation_document(
+            "
+            query { hasTitle {
+                ...F
+                ...G
+                ...H
+            }}
+            fragment F on HasLabel {
+                label
+            }
+            fragment G on HasTitle {
+                title
+            }
+            fragment H on Post {
+                title
+            }
+        ",
+        )
+        .unwrap();
+
+        assert_debug_snapshot!(check_operation_document(&schema, &doc))
+    }
+
+    #[test]
+    fn wrong_fragment_target_intf_union() {
+        let schema = type_system();
+        let doc = parse_operation_document(
+            "
+            query { hasTitle {
+                ...F
+                ...G
+            }}
+            fragment F on PostOrTag {
+                ... on Post {
+                    title
+                }
+                ... on Tag {
+                    label
+                }
+            }
+            fragment G on UserOrPost {
+                ... on Post {
+                    title
+                }
+                ... on User {
+                    name
+                }
+            }
+        ",
+        )
+        .unwrap();
+
+        assert_debug_snapshot!(check_operation_document(&schema, &doc))
+    }
+
+    #[test]
+    fn wrong_fragment_target_union_union() {
+        let schema = type_system();
+        let doc = parse_operation_document(
+            "
+            query { userOrSchedule {
+                ...F
+                ...G
+            }}
+            fragment F on PostOrTag {
+                ... on Post {
+                    title
+                }
+                ... on Tag {
+                    label
+                }
+            }
+            fragment G on UserOrTag {
+                ... on Tag {
+                    label
+                }
+                ... on User {
+                    name
+                }
             }
         ",
         )

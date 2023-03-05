@@ -11,30 +11,30 @@ expression: "check_operation_document(&schema, &doc)"
             builtin: false,
         },
         message: FragmentConditionNeverMatches {
-            condition: "PostOrTag",
-            scope: "User",
+            condition: "HasLabel",
+            scope: "HasLabel",
         },
         additional_info: [
             (
                 Pos {
-                    line: 42,
+                    line: 30,
                     column: 12,
                     file: 0,
                     builtin: false,
                 },
                 DefinitionPos {
-                    name: "PostOrTag",
+                    name: "HasLabel",
                 },
             ),
             (
                 Pos {
-                    line: 11,
+                    line: 27,
                     column: 12,
                     file: 0,
                     builtin: false,
                 },
                 DefinitionPos {
-                    name: "User",
+                    name: "HasTitle",
                 },
             ),
         ],

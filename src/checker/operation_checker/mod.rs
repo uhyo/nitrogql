@@ -388,79 +388,173 @@ fn check_fragment_spread_core(
     fragment_selection_set: &SelectionSet,
     result: &mut Vec<CheckError>
 ) {
-    match root_type {
-        TypeDefinition::Scalar(_) | TypeDefinition::Enum(_) | TypeDefinition::InputObject(_) => {
+    match (root_type, fragment_condition) {
+        (TypeDefinition::Scalar(_) | TypeDefinition::Enum(_) | TypeDefinition::InputObject(_), _) => {
             // This should be flagged elsewhere
             return
         }
-        TypeDefinition::Object(obj_definition) => {
-            match fragment_condition {
-                TypeDefinition::Object(cond_obj_definition) => {
-                    if obj_definition.name.name != cond_obj_definition.name.name {
-                        result.push(
-                            CheckErrorMessage::FragmentConditionNeverMatches { condition: cond_obj_definition.name.name.to_owned(), scope: 
-                                obj_definition.name.name.to_owned()
-                             }
-                             .with_pos(spread_pos)
-                             .with_additional_info(vec![
-                                (
-                                    cond_obj_definition.position,
-                                    CheckErrorMessage::DefinitionPos { name: cond_obj_definition.name.name.to_owned() }
-                                ),
-                                (
-                                    obj_definition.position,
-                                    CheckErrorMessage::DefinitionPos { name: obj_definition.name.name.to_owned() }
-                                ),
-                             ])
-                        );
-                    }
-                }
-                TypeDefinition::Interface(cond_intf_definition) => {
-                    let obj_implements_intf = obj_definition.implements.iter().find(|im| im.name == cond_intf_definition.name.name);
-                    if obj_implements_intf.is_none() {
-                        result.push(
-                            CheckErrorMessage::FragmentConditionNeverMatches { condition: cond_intf_definition.name.name.to_owned(), scope: 
-                                obj_definition.name.name.to_owned()
-                             }
-                             .with_pos(spread_pos)
-                             .with_additional_info(vec![
-                                (
-                                    cond_intf_definition.position,
-                                    CheckErrorMessage::DefinitionPos { name: cond_intf_definition.name.name.to_owned() }
-                                ),
-                                (
-                                    obj_definition.position,
-                                    CheckErrorMessage::DefinitionPos { name: obj_definition.name.name.to_owned() }
-                                ),
-                             ])
-                        );
-                    }
-                }
-                TypeDefinition::Union(cond_union_definition) => {
-                    let obj_in_union = cond_union_definition.members.iter().find(|mem| mem.name == obj_definition.name.name);
-                    if obj_in_union.is_none() {
-                        result.push(
-                            CheckErrorMessage::FragmentConditionNeverMatches { condition: cond_union_definition.name.name.to_owned(), scope: 
-                                obj_definition.name.name.to_owned()
-                             }
-                             .with_pos(spread_pos)
-                             .with_additional_info(vec![
-                                (
-                                    cond_union_definition.position,
-                                    CheckErrorMessage::DefinitionPos { name: cond_union_definition.name.name.to_owned() }
-                                ),
-                                (
-                                    obj_definition.position,
-                                    CheckErrorMessage::DefinitionPos { name: obj_definition.name.name.to_owned() }
-                                ),
-                             ])
-                        );
-                    }
-                }
-                _ => {}
+        (TypeDefinition::Object(obj_definition), TypeDefinition::Object(cond_obj_definition)) => {
+            if obj_definition.name.name != cond_obj_definition.name.name {
+                result.push(
+                    CheckErrorMessage::FragmentConditionNeverMatches { condition: cond_obj_definition.name.name.to_owned(), scope: 
+                        obj_definition.name.name.to_owned()
+                        }
+                        .with_pos(spread_pos)
+                        .with_additional_info(vec![
+                        (
+                            cond_obj_definition.position,
+                            CheckErrorMessage::DefinitionPos { name: cond_obj_definition.name.name.to_owned() }
+                        ),
+                        (
+                            obj_definition.position,
+                            CheckErrorMessage::DefinitionPos { name: obj_definition.name.name.to_owned() }
+                        ),
+                        ])
+                );
             }
         }
-        _ => todo!()
+        (TypeDefinition::Object(obj_definition), TypeDefinition::Interface(intf_definition)) |
+        (TypeDefinition::Interface(intf_definition), TypeDefinition::Object(obj_definition)) => {
+            let obj_implements_intf = obj_definition.implements.iter().find(|im| im.name == intf_definition.name.name);
+            if obj_implements_intf.is_none() {
+                result.push(
+                    CheckErrorMessage::FragmentConditionNeverMatches { condition: intf_definition.name.name.to_owned(), scope: 
+                        obj_definition.name.name.to_owned()
+                        }
+                        .with_pos(spread_pos)
+                        .with_additional_info(vec![
+                        (
+                            intf_definition.position,
+                            CheckErrorMessage::DefinitionPos { name: intf_definition.name.name.to_owned() }
+                        ),
+                        (
+                            obj_definition.position,
+                            CheckErrorMessage::DefinitionPos { name: obj_definition.name.name.to_owned() }
+                        ),
+                        ])
+                );
+            }
+        }
+        (TypeDefinition::Object(obj_definition), TypeDefinition::Union(cond_union_definition)) |
+        (TypeDefinition::Union(cond_union_definition), TypeDefinition::Object(obj_definition)) => {
+            let obj_in_union = cond_union_definition.members.iter().find(|mem| mem.name == obj_definition.name.name);
+            if obj_in_union.is_none() {
+                result.push(
+                    CheckErrorMessage::FragmentConditionNeverMatches { condition: cond_union_definition.name.name.to_owned(), scope: 
+                        obj_definition.name.name.to_owned()
+                        }
+                        .with_pos(spread_pos)
+                        .with_additional_info(vec![
+                        (
+                            cond_union_definition.position,
+                            CheckErrorMessage::DefinitionPos { name: cond_union_definition.name.name.to_owned() }
+                        ),
+                        (
+                            obj_definition.position,
+                            CheckErrorMessage::DefinitionPos { name: obj_definition.name.name.to_owned() }
+                        ),
+                        ])
+                );
+            }
+        }
+        (TypeDefinition::Interface(interface_definition1), TypeDefinition::Interface(interface_definition2)) => {
+            if interface_definition1.name.name == interface_definition2.name.name {
+                // fast path
+                return
+            }
+            // When matching interfaces, we have to look for concrete types that implement both interfaces 
+            let any_obj_implements_both_type = definitions.types.iter().any(|(_, type_def)| {
+                match type_def {
+                    TypeDefinition::Object(obj_def) => {
+                        obj_def.implements.iter().any(|imp| imp.name == interface_definition1.name.name) &&
+                        obj_def.implements.iter().any(|imp| imp.name == interface_definition2.name.name)
+                    }
+                    _ => false
+                }
+            });
+            if !any_obj_implements_both_type {
+                result.push(
+                    CheckErrorMessage::FragmentConditionNeverMatches {
+                        condition: interface_definition2.name.name.to_owned(),
+                        scope: interface_definition2.name.name.to_owned(),
+                    }
+                        .with_pos(spread_pos)
+                        .with_additional_info(vec![
+                        (
+                            interface_definition2.position,
+                            CheckErrorMessage::DefinitionPos { name: interface_definition2.name.name.to_owned() }
+                        ),
+                        (
+                            interface_definition1.position,
+                            CheckErrorMessage::DefinitionPos { name: interface_definition1.name.name.to_owned() }
+                        ),
+                    ])
+                );
+            }
+        }
+        (TypeDefinition::Interface(interface_definition), TypeDefinition::Union(union_definition)) |
+        (TypeDefinition::Union(union_definition), TypeDefinition::Interface(interface_definition)) => {
+            let some_member_implements_interface = union_definition.members.iter().any(|mem| {
+                let mem_def = definitions.types.get(mem.name);
+                match mem_def {
+                    Some(TypeDefinition::Object(mem_def)) => {
+                        mem_def.implements.iter().any(|imp| {
+                            imp.name == interface_definition.name.name
+                        })
+                    }
+                    _ => {
+                        result.push(
+                            CheckErrorMessage::TypeSystemError.with_pos(mem.position)
+                        );
+                        true
+                    }
+                }
+            });
+            if !some_member_implements_interface {
+                result.push(
+                    CheckErrorMessage::FragmentConditionNeverMatches {
+                        condition: union_definition.name.name.to_owned(),
+                        scope: interface_definition.name.name.to_owned(),
+                    }
+                        .with_pos(spread_pos)
+                        .with_additional_info(vec![
+                        (
+                            interface_definition.position,
+                            CheckErrorMessage::DefinitionPos { name: interface_definition.name.name.to_owned() }
+                        ),
+                        (
+                            union_definition.position,
+                            CheckErrorMessage::DefinitionPos { name: union_definition.name.name.to_owned() }
+                        ),
+                    ])
+                );
+            }
+        }
+        (TypeDefinition::Union(union_definition1), TypeDefinition::Union(union_definition2)) => {
+            let there_is_overlapping_member = union_definition2.members.iter().any(|mem2| {
+                union_definition1.members.iter().any(|mem1| mem1.name == mem2.name)
+            });
+            if !there_is_overlapping_member {
+                result.push(
+                    CheckErrorMessage::FragmentConditionNeverMatches {
+                        condition: union_definition2.name.name.to_owned(),
+                        scope: union_definition1.name.name.to_owned(),
+                    }
+                        .with_pos(spread_pos)
+                        .with_additional_info(vec![
+                        (
+                            union_definition2.position,
+                            CheckErrorMessage::DefinitionPos { name: union_definition1.name.name.to_owned() }
+                        ),
+                        (
+                            union_definition1.position,
+                            CheckErrorMessage::DefinitionPos { name: union_definition2.name.name.to_owned() }
+                        ),
+                    ])
+                );
+            }
+        }
+        _ => {}
     }
 }
 
@@ -470,7 +564,7 @@ fn direct_fields_of_output_type<'a, 'src>(
     match ty {
         TypeDefinition::Object(obj) => Some(&obj.fields),
         TypeDefinition::Interface(obj) => Some(&obj.fields),
-        TypeDefinition::Union(_)
+        TypeDefinition::Union(_) => Some(&[]),
         | TypeDefinition::Scalar(_)
         | TypeDefinition::Enum(_)
         | TypeDefinition::InputObject(_) => None,

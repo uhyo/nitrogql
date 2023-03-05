@@ -12,7 +12,7 @@ expression: "check_operation_document(&schema, &doc)"
         },
         message: FragmentConditionNeverMatches {
             condition: "PostOrTag",
-            scope: "User",
+            scope: "UserOrSchedule",
         },
         additional_info: [
             (
@@ -23,18 +23,18 @@ expression: "check_operation_document(&schema, &doc)"
                     builtin: false,
                 },
                 DefinitionPos {
-                    name: "PostOrTag",
+                    name: "UserOrSchedule",
                 },
             ),
             (
                 Pos {
-                    line: 11,
+                    line: 43,
                     column: 12,
                     file: 0,
                     builtin: false,
                 },
                 DefinitionPos {
-                    name: "User",
+                    name: "PostOrTag",
                 },
             ),
         ],
