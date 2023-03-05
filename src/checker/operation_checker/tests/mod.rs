@@ -604,6 +604,94 @@ mod fragments {
 
         assert_debug_snapshot!(check_operation_document(&schema, &doc));
     }
+
+    #[test]
+    fn inline_fragment_without_condition() {
+        let schema = type_system();
+        let doc = parse_operation_document(
+            "
+            query($b1: Boolean!) { user {
+                id
+                ... {
+                    name
+                    age
+                }
+                ... {
+                    something
+                }
+            }}
+        ",
+        )
+        .unwrap();
+
+        assert_debug_snapshot!(check_operation_document(&schema, &doc));
+    }
+
+    #[test]
+    fn wrong_inline_fragment_target_obj() {
+        let schema = type_system();
+        let doc = parse_operation_document(
+            "
+            query { user {
+                ... on Post {
+                    id
+                    title
+                }
+            }}
+        ",
+        )
+        .unwrap();
+
+        assert_debug_snapshot!(check_operation_document(&schema, &doc))
+    }
+
+    #[test]
+    fn wrong_inline_fragment_target_intf() {
+        let schema = type_system();
+        let doc = parse_operation_document(
+            "
+            query {
+                user {
+                    ... on HasTitle {
+                        title
+                    }
+                }
+                hasTitle {
+                    ... on HasTitle {
+                        title
+                    }
+                }
+            }
+        ",
+        )
+        .unwrap();
+
+        assert_debug_snapshot!(check_operation_document(&schema, &doc))
+    }
+
+    #[test]
+    fn wrong_inline_fragment_target_union() {
+        let schema = type_system();
+        let doc = parse_operation_document(
+            "
+            query {
+                user {
+                    ... on PostOrTag {
+                        ... on Post {
+                            id
+                        }
+                        ... on Tag {
+                            id
+                        }
+                    }
+                }
+            }
+        ",
+        )
+        .unwrap();
+
+        assert_debug_snapshot!(check_operation_document(&schema, &doc))
+    }
 }
 
 fn parse_to_type_system_document(source: &str) -> TypeSystemDocument {

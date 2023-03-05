@@ -289,7 +289,7 @@ fn check_selection_set(
                 check_fragment_spread(definitions, fragment_map, variables, root_type, fragment_spread, result);
             },
             Selection::InlineFragment(inline_fragment) => {
-                
+                check_inline_fragment(definitions, fragment_map, variables, root_type, inline_fragment, result);
             }
         }
     }
