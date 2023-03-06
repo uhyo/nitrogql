@@ -3,7 +3,6 @@ use crate::{
     graphql_parser::{ast::TypeSystemDocument, parser::parse_type_system_document},
 };
 
-#[cfg(test)]
 mod directives {
     use insta::assert_debug_snapshot;
 

@@ -15,11 +15,12 @@ use crate::{
     },
 };
 
-use self::check::run_check;
+use self::{check::run_check, generate::run_generate};
 
 mod check;
 mod context;
 mod error;
+mod generate;
 
 #[derive(Parser, Debug)]
 struct Args {
@@ -121,6 +122,7 @@ struct CommandError {
 fn run_command<'a>(command: &str, context: CliContext<'a>) -> crate::error::Result<CliContext<'a>> {
     match command {
         "check" => run_check(context),
+        "generate" => run_generate(context),
         command => Err(CliError::UnknownCommand(command.to_owned()).into()),
     }
 }

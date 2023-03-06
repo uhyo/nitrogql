@@ -113,7 +113,6 @@ impl GraphQLPrinter for StringValue {
             }
             if dq_count > 0 {
                 result.push_str(&"\"".repeat(dq_count));
-                dq_count = 0;
             }
             result.push_str("\"\"\"");
             writer.write(&result);

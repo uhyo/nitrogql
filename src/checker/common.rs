@@ -1,10 +1,10 @@
 use log::warn;
 
 use crate::graphql_parser::ast::{
-    base::{HasPos, Ident, Pos, Variable},
+    base::{HasPos, Pos, Variable},
     directive::Directive,
     operations::{VariableDefinition, VariablesDefinition},
-    r#type::{NamedType, Type},
+    r#type::Type,
     type_system::{ArgumentsDefinition, TypeDefinition},
     value::{Arguments, Value},
 };
@@ -381,15 +381,6 @@ fn check_type_compatibility(
             expected_name.name.name == value_inner.name.name
         }
     }
-}
-
-fn builtin_type(name: &str) -> Type {
-    Type::Named(NamedType {
-        name: Ident {
-            name,
-            position: Pos::builtin(),
-        },
-    })
 }
 
 fn get_variable_definition<'a, 'src>(

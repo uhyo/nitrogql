@@ -1,13 +1,5 @@
 query sample {
-  foo
-  bar
   user {
     id
-    title
   }
-  # ...F
 }
-
-# fragment F on A {
-#   faz
-# }

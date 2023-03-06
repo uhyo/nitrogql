@@ -377,21 +377,3 @@ fn unzip3<T, A, B, C>(
     }
     (result_a, result_b, result_c)
 }
-
-fn unzip4<T, A, B, C, D>(
-    iter: impl IntoIterator<Item = T>,
-    f: impl Fn(T) -> (A, B, C, D),
-) -> (Vec<A>, Vec<B>, Vec<C>, Vec<D>) {
-    let mut result_a = vec![];
-    let mut result_b = vec![];
-    let mut result_c = vec![];
-    let mut result_d = vec![];
-    for t in iter {
-        let (a, b, c, d) = f(t);
-        result_a.push(a);
-        result_b.push(b);
-        result_c.push(c);
-        result_d.push(d);
-    }
-    (result_a, result_b, result_c, result_d)
-}

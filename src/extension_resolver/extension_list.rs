@@ -102,7 +102,7 @@ impl<OriginalType: HasPos, ExtensionType: HasPos> ExtensionList<'_, OriginalType
         let result: Result<Vec<_>, _> = self
             .items
             .into_iter()
-            .filter_map(|(name, item)| match item.original {
+            .filter_map(|(_, item)| match item.original {
                 None => match item.extensions.into_iter().next() {
                     None => None,
                     Some(first) => Some(Err(ExtensionError {

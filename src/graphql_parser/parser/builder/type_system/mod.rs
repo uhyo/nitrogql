@@ -14,8 +14,7 @@ use crate::{
         base::Ident,
         operations::OperationType,
         type_system::{
-            DirectiveDefinition, SchemaDefinition, SchemaExtension, TypeDefinition,
-            TypeSystemDefinitionOrExtension,
+            DirectiveDefinition, SchemaDefinition, SchemaExtension, TypeSystemDefinitionOrExtension,
         },
         value::StringValue,
     },

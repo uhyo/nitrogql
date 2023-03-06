@@ -22,6 +22,7 @@ use super::{
 
 mod check_directive_recursion;
 mod interfaces;
+#[cfg(test)]
 mod tests;
 
 /// Checks for invalid type system definition document.

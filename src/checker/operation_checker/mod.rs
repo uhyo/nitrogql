@@ -90,7 +90,7 @@ pub fn check_operation_document(
                     .iter()
                     .take(idx)
                     .find(|other| match other {
-                        ExecutableDefinition::OperationDefinition(def) => false,
+                        ExecutableDefinition::OperationDefinition(_) => false,
                         ExecutableDefinition::FragmentDefinition(other) => {
                             other.name.name == def.name.name
                         }
