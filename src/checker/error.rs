@@ -118,6 +118,8 @@ pub enum CheckErrorMessage {
     FragmentConditionNeverMatches { condition: String, scope: String },
     #[error("Recursing application of fragment '{name}'")]
     RecursingFragmentSpread { name: String },
+    #[error("Subscription operation must have exactly one root field")]
+    SubscriptionMustHaveExactlyOneRootField,
     // Error that should be checked in type system check phase
     #[error("Type system error. This is a bug of checker")]
     TypeSystemError,

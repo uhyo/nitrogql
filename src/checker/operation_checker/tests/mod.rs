@@ -3,6 +3,66 @@ use crate::{
     graphql_parser::{ast::TypeSystemDocument, parser::parse_type_system_document},
 };
 
+mod operations {
+    use insta::assert_debug_snapshot;
+
+    use crate::{
+        checker::operation_checker::check_operation_document,
+        graphql_parser::{ast::TypeSystemDocument, parser::parse_operation_document},
+    };
+
+    use super::parse_to_type_system_document;
+
+    fn type_system() -> TypeSystemDocument<'static> {
+        parse_to_type_system_document(
+            "
+            schema {
+                subscription: S
+            }
+
+            type S {
+                foo: [Foo!]!
+                bar: [String!]!
+            }
+            type Foo {
+                hoge: Int!
+                piyo: Int!
+            }
+        ",
+        )
+    }
+
+    #[test]
+    fn subscription_root_field() {
+        let schema = type_system();
+        let doc = parse_operation_document(
+            "
+            subscription a { foo { hoge piyo } }
+            subscription b { foo bar }
+        ",
+        )
+        .unwrap();
+
+        assert_debug_snapshot!(check_operation_document(&schema, &doc));
+    }
+
+    #[test]
+    fn subscription_root_field_recursing() {
+        let schema = type_system();
+        let doc = parse_operation_document(
+            "
+            subscription { ...F }
+            fragment F on S {
+                ...F
+            }
+        ",
+        )
+        .unwrap();
+
+        assert_debug_snapshot!(check_operation_document(&schema, &doc));
+    }
+}
+
 mod operation_directives {
     use insta::assert_debug_snapshot;
 

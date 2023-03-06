@@ -11,13 +11,14 @@ use crate::{
     },
 };
 
-use self::fragment_map::{generate_fragment_map, FragmentMap};
+use self::{fragment_map::{generate_fragment_map, FragmentMap}, count_selection_set_fields::selection_set_has_more_than_one_fields};
 
-use super::{definition_map::{DefinitionMap, generate_definition_map}, error::{CheckError, CheckErrorMessage, TypeKind}, common::{check_directives, check_arguments}, types::{inout_kind_of_type, TypeInOutKind}, builtins::generate_builtins};
+use super::{definition_map::{DefinitionMap, generate_definition_map}, error::{CheckError, CheckErrorMessage, TypeKind}, common::{check_directives, check_arguments}, types::{inout_kind_of_type}, builtins::generate_builtins};
 
 #[cfg(test)]
 mod tests;
 mod fragment_map;
+mod count_selection_set_fields;
 
 pub fn check_operation_document(
     schema: &TypeSystemDocument,
@@ -169,7 +170,13 @@ fn check_operation(
         check_variables_definition(definitions, variables_definition, result);
     }
     if op.operation_type == OperationType::Subscription {
-        todo!("Single root field check");
+        // Single root field check
+        if selection_set_has_more_than_one_fields(fragment_map, &op.selection_set) {
+            result.push(
+                CheckErrorMessage::SubscriptionMustHaveExactlyOneRootField
+                .with_pos(op.position)
+            );
+        }
     }
     let seen_fragments = vec![];
     check_selection_set(
