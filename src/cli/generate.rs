@@ -36,11 +36,7 @@ pub fn run_generate(mut context: CliContext) -> Result<CliContext> {
             };
             let source_files = file_by_index
                 .iter()
-                .map(|(path, _)| path.to_string_lossy())
-                .collect::<Vec<_>>();
-            let source_files = source_files
-                .iter()
-                .map(|path| path.as_ref())
+                .map(|(path, _)| path.as_path())
                 .collect::<Vec<_>>();
             {
                 debug!("Processing schema");
@@ -78,7 +74,7 @@ pub fn run_generate(mut context: CliContext) -> Result<CliContext> {
 }
 
 fn write_file_and_sourcemap(
-    source_files: &[&str],
+    source_files: &[&Path],
     output_file_path: &Path,
     buffers: SourceWriterBuffers,
 ) -> Result<()> {
@@ -110,12 +106,12 @@ fn write_file_and_sourcemap(
 
     let mut source_map = String::new();
     print_source_map_json(
-        &output_file_path.to_string_lossy(),
+        output_file_path,
         source_files,
         &buffers.names,
         &buffers.source_map,
         &mut source_map,
-    );
+    )?;
 
     debug!("Writing {}", source_map_file_path.to_string_lossy());
     fs::write(source_map_file_path, &source_map)?;

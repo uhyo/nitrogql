@@ -1,4 +1,6 @@
-use crate::graphql_parser::ast::base::HasPos;
+use std::{borrow::Cow, io, path::Path};
+
+use crate::{graphql_parser::ast::base::HasPos, utils::relative_path::relative_path};
 
 use self::{mapping_writer::MappingWriter, name_mapper::NameMapper};
 
@@ -99,18 +101,34 @@ impl SourceMapWriter for SourceWriter {
 
 pub fn print_source_map_json(
     // Name of generated file
-    file: &str,
+    file: &Path,
     // Name of source file
-    source_files: &[&str],
+    source_files: &[&Path],
     names: &[String],
     source_map: &str,
     buffer: &mut String,
-) {
+) -> io::Result<()> {
+    let sources = source_files
+        .into_iter()
+        .map(|path| relative_path(file, path))
+        .collect::<io::Result<Vec<_>>>();
+    let sources = sources?;
+    let sources = sources
+        .iter()
+        .map(|path| path.to_string_lossy())
+        .collect::<Vec<_>>();
+
     let mut json_writer = JSONObjectWriter::new(buffer);
     json_writer.value("version", 3);
-    json_writer.value("file", file);
+    json_writer.value(
+        "file",
+        &file
+            .file_name()
+            .map_or(Cow::Owned(String::new()), |s| s.to_string_lossy()),
+    );
     json_writer.value("sourceRoot", "");
-    json_writer.value("sources", source_files);
+    json_writer.value("sources", &sources);
     json_writer.value("names", names);
     json_writer.value("mappings", source_map);
+    Ok(())
 }
