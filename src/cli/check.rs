@@ -7,6 +7,7 @@ use crate::{
     },
     error::{print_positioned_error, Result},
     extension_resolver::resolve_extensions,
+    graphql_builtins::generate_builtins,
 };
 
 use super::{error::CliError, CliContext};
@@ -15,11 +16,12 @@ pub fn run_check(context: CliContext) -> Result<CliContext> {
     debug!("Checking");
     match context {
         CliContext::SchemaUnresolved {
-            schema,
+            mut schema,
             operations,
             file_by_index,
             config,
         } => {
+            schema.extend(generate_builtins());
             let resolved = resolve_extensions(schema)?;
             let errors = check_type_system_document(&resolved);
             if !errors.is_empty() {
