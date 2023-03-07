@@ -1,13 +1,15 @@
+use once_cell::sync::Lazy;
+
 use crate::{
     graphql_parser::ast::{
-        base::{HasPos, Pos},
+        base::{HasPos, Pos, Ident},
         operations::{
             ExecutableDefinition, FragmentDefinition, OperationDefinition, OperationType,
             VariablesDefinition,
         },
         selection_set::{SelectionSet, Selection, Field, FragmentSpread, InlineFragment},
         type_system::{FieldDefinition, TypeDefinition},
-        OperationDocument, TypeSystemDocument,
+        OperationDocument, TypeSystemDocument, r#type::{Type, NonNullType, NamedType},
     },
 };
 
@@ -290,7 +292,7 @@ fn check_selection_set(
                     variables,
                     *root_type.position(),
                     root_type_name,
-                    root_fields,
+                    &root_fields,
                     field_selection,
                     result,
                 );
@@ -313,7 +315,7 @@ fn check_selection_field(
     variables: Option<&VariablesDefinition>,
     root_type_pos: Pos,
     root_type_name: &str,
-    root_fields: &[FieldDefinition],
+    root_fields: &[&FieldDefinition],
     field_selection: &Field,
     result: &mut Vec<CheckError>
 ) {
@@ -622,16 +624,29 @@ fn check_fragment_spread_core(
 
 fn direct_fields_of_output_type<'a, 'src>(
     ty: &'a TypeDefinition<'src>,
-) -> Option<&'a [FieldDefinition<'src>]> {
+) -> Option<Vec<&'a FieldDefinition<'src>>> {
+    let meta_field : &FieldDefinition = &TYPENAME_META_FIELD;
     match ty {
-        TypeDefinition::Object(obj) => Some(&obj.fields),
-        TypeDefinition::Interface(obj) => Some(&obj.fields),
-        TypeDefinition::Union(_) => Some(&[]),
+        TypeDefinition::Object(obj) => Some(obj.fields.iter().chain(vec![meta_field]).collect()),
+        TypeDefinition::Interface(obj) => Some(obj.fields.iter().chain(vec![meta_field]).collect()),
+        TypeDefinition::Union(_) => Some(vec![meta_field]),
         | TypeDefinition::Scalar(_)
         | TypeDefinition::Enum(_)
         | TypeDefinition::InputObject(_) => None,
     }
 }
+
+static TYPENAME_META_FIELD: Lazy<FieldDefinition<'static>> = Lazy::new(|| FieldDefinition {
+    description: None,
+    name: Ident { name: "__typename", position: Pos::builtin() },
+    arguments: None,
+    r#type: Type::NonNull(Box::new(NonNullType {
+        r#type: Type::Named(NamedType {
+            name: Ident { name: "String", position: Pos::builtin() },
+        })
+    })),
+    directives: vec![],
+});
 
 fn kind_of_type_definition(definition: &TypeDefinition) -> TypeKind {
     match definition {

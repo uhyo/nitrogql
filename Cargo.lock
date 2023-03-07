@@ -339,6 +339,7 @@ dependencies = [
  "json-writer",
  "log",
  "lru",
+ "once_cell",
  "pest",
  "pest_derive",
  "pretty_env_logger",

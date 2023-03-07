@@ -306,7 +306,18 @@ mod selection_set {
                 id: ID!
                 name: String!
                 age: Int
+                pet: Animal
+                relations: [UserOrPost!]!
             }
+            interface Animal {
+                id: ID!
+                name: String!
+            }
+            type Post {
+                id: ID!
+                title: String!
+            }
+            union UserOrPost = User | Post
         ",
         )
     }
@@ -388,6 +399,29 @@ mod selection_set {
             query {
                 users(name: \"uhyo\") { id name age }
                 user(arg: 123)
+            }
+        ",
+        )
+        .unwrap();
+
+        assert_debug_snapshot!(check_operation_document(&schema, &doc))
+    }
+
+    #[test]
+    fn supports_typename_metafield() {
+        let schema = type_system();
+        let doc = parse_operation_document(
+            "
+            query {
+                user {
+                    __typename
+                    pet {
+                        __typename
+                    }
+                    relations {
+                        __typename
+                    }
+                }
             }
         ",
         )
