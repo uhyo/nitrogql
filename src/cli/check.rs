@@ -18,6 +18,7 @@ pub fn run_check(context: CliContext) -> Result<CliContext> {
             schema,
             operations,
             file_by_index,
+            config,
         } => {
             let resolved = resolve_extensions(schema)?;
             let errors = check_type_system_document(&resolved);
@@ -57,6 +58,7 @@ pub fn run_check(context: CliContext) -> Result<CliContext> {
                 schema: resolved,
                 operations,
                 file_by_index,
+                config,
             })
         }
         _ => Err(CliError::InvalidCommand(

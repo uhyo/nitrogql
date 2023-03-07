@@ -101,7 +101,7 @@ pub fn print_source_map_json(
     // Name of generated file
     file: &str,
     // Name of source file
-    source_file: &str,
+    source_files: &[&str],
     names: &[String],
     source_map: &str,
     buffer: &mut String,
@@ -110,7 +110,7 @@ pub fn print_source_map_json(
     json_writer.value("version", 3);
     json_writer.value("file", file);
     json_writer.value("sourceRoot", "");
-    json_writer.value("sources", &vec![source_file]);
+    json_writer.value("sources", source_files);
     json_writer.value("names", names);
     json_writer.value("mappings", source_map);
 }

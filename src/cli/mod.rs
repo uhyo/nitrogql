@@ -15,7 +15,7 @@ use crate::{
     },
 };
 
-use self::{check::run_check, generate::run_generate};
+use self::{check::run_check, context::CliConfig, generate::run_generate};
 
 mod check;
 mod context;
@@ -30,6 +30,9 @@ struct Args {
     #[arg(long)]
     /// Path to operation document(s).
     operation: Vec<String>,
+    #[arg(long)]
+    /// Path to save schema type definition file.
+    schema_output: Option<PathBuf>,
     commands: Vec<String>,
 }
 
@@ -98,6 +101,9 @@ fn run_cli_impl(args: impl IntoIterator<Item = String>) -> Result<()> {
     let operation_docs = operation_docs?;
 
     let mut context = CliContext::SchemaUnresolved {
+        config: CliConfig {
+            schema_output: args.schema_output,
+        },
         schema: merged_schema_doc,
         operations: operation_docs,
         file_by_index,

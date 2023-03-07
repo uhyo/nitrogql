@@ -1,4 +1,4 @@
 mod error;
-mod printer;
+pub mod printer;
 mod tests;
 mod type_printer;
