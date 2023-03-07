@@ -1,5 +1,6 @@
 use crate::{
     extension_resolver::resolve_extensions,
+    graphql_builtins::generate_builtins,
     graphql_parser::{ast::TypeSystemDocument, parser::parse_type_system_document},
 };
 
@@ -859,7 +860,8 @@ mod fragments {
 }
 
 fn parse_to_type_system_document(source: &str) -> TypeSystemDocument {
-    let doc = parse_type_system_document(source).unwrap();
+    let mut doc = parse_type_system_document(source).unwrap();
+    doc.extend(generate_builtins());
     let doc = resolve_extensions(doc).unwrap();
     doc
 }

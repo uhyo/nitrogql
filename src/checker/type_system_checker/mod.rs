@@ -13,7 +13,6 @@ use self::{
 };
 
 use super::{
-    builtins::generate_builtins,
     common::check_directives,
     definition_map::{generate_definition_map, DefinitionMap},
     error::{CheckError, CheckErrorMessage},
@@ -27,16 +26,7 @@ mod tests;
 
 /// Checks for invalid type system definition document.
 pub fn check_type_system_document(document: &TypeSystemDocument) -> Vec<CheckError> {
-    let mut definition_map = generate_definition_map(document);
-    let (builtin_types, builtin_directives) = generate_builtins();
-    definition_map
-        .types
-        .extend(builtin_types.iter().map(|(key, def)| (*key, def)));
-    definition_map
-        .directives
-        .extend(builtin_directives.iter().map(|(key, def)| (*key, def)));
-
-    let definition_map = definition_map;
+    let definition_map = generate_definition_map(document);
 
     let mut result = vec![];
 

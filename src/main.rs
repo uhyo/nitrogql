@@ -3,6 +3,7 @@ mod checker;
 mod cli;
 mod error;
 mod extension_resolver;
+mod graphql_builtins;
 mod graphql_parser;
 mod graphql_printer;
 mod json_printer;

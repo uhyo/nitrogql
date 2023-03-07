@@ -11,6 +11,7 @@ mod directives {
             check_type_system_document, tests::parse_to_type_system_document,
         },
         extension_resolver::resolve_extensions,
+        graphql_builtins::generate_builtins,
         graphql_parser::parser::parse_type_system_document,
     };
 
@@ -227,7 +228,7 @@ mod directives {
         ]
         "###);
 
-        let doc = parse_type_system_document(
+        let mut doc = parse_type_system_document(
             "
         directive @heyhey(arg1: MyScalar!, arg2: [InputType], arg3: MyEnum) on OBJECT
         scalar MyScalar
@@ -236,6 +237,7 @@ mod directives {
         ",
         )
         .unwrap();
+        doc.extend(generate_builtins());
         let doc = resolve_extensions(doc).unwrap();
         let errors = check_type_system_document(&doc);
         assert_debug_snapshot!(errors, @"[]");
@@ -1466,9 +1468,11 @@ mod input_objects {
     }
 }
 
-#[cfg(test)]
 fn parse_to_type_system_document(source: &str) -> TypeSystemDocument {
-    let doc = parse_type_system_document(source).unwrap();
+    use crate::graphql_builtins::generate_builtins;
+
+    let mut doc = parse_type_system_document(source).unwrap();
+    doc.extend(generate_builtins());
     let doc = resolve_extensions(doc).unwrap();
     doc
 }

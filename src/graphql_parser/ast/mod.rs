@@ -21,6 +21,12 @@ pub struct TypeSystemOrExtensionDocument<'a> {
     pub definitions: Vec<TypeSystemDefinitionOrExtension<'a>>,
 }
 
+impl<'a> Extend<TypeSystemDefinitionOrExtension<'a>> for TypeSystemOrExtensionDocument<'a> {
+    fn extend<T: IntoIterator<Item = TypeSystemDefinitionOrExtension<'a>>>(&mut self, iter: T) {
+        self.definitions.extend(iter)
+    }
+}
+
 impl TypeSystemOrExtensionDocument<'_> {
     /// Merges multiple documents into one.
     pub fn merge(docs: impl IntoIterator<Item = Self>) -> Self {

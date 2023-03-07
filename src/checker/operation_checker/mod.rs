@@ -15,7 +15,7 @@ use crate::{
 
 use self::{fragment_map::{generate_fragment_map, FragmentMap}, count_selection_set_fields::selection_set_has_more_than_one_fields};
 
-use super::{definition_map::{DefinitionMap, generate_definition_map}, error::{CheckError, CheckErrorMessage, TypeKind}, common::{check_directives, check_arguments}, types::{inout_kind_of_type}, builtins::generate_builtins};
+use super::{definition_map::{DefinitionMap, generate_definition_map}, error::{CheckError, CheckErrorMessage, TypeKind}, common::{check_directives, check_arguments}, types::{inout_kind_of_type}};
 
 #[cfg(test)]
 mod tests;
@@ -27,14 +27,7 @@ pub fn check_operation_document(
     document: &OperationDocument,
 ) -> Vec<CheckError> {
     let mut result = vec![];
-    let mut definitions = generate_definition_map(schema);
-    let (builtin_types, builtin_directives) = generate_builtins();
-    definitions
-        .types
-        .extend(builtin_types.iter().map(|(key, def)| (*key, def)));
-    definitions
-        .directives
-        .extend(builtin_directives.iter().map(|(key, def)| (*key, def)));
+    let definitions = generate_definition_map(schema);
 
     let fragment_map = generate_fragment_map(document);
 
