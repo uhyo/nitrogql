@@ -75,9 +75,13 @@ impl TSType {
                     if field.readonly {
                         writer.write("readonly ");
                     }
-                    writer.write("\"");
-                    writer.write(&field.key);
-                    writer.write("\"");
+                    if is_raw_ident(&field.key) {
+                        writer.write(&field.key);
+                    } else {
+                        writer.write("\"");
+                        writer.write(&field.key);
+                        writer.write("\"");
+                    }
                     if field.optional {
                         writer.write("?");
                     }
@@ -183,5 +187,15 @@ impl TSType {
                 })
                 .collect(),
         )
+    }
+}
+
+/// Returns true if given key can be printed as object property without quotations.
+fn is_raw_ident(key: &str) -> bool {
+    let mut chars = key.chars();
+    match chars.next() {
+        None => false,
+        Some(c) if !c.is_ascii_alphabetic() => false,
+        Some(_) => chars.all(|c| c.is_ascii_alphanumeric()),
     }
 }

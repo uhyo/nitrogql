@@ -3,42 +3,42 @@ source: src/type_printer/schema_type_printer/tests/mod.rs
 expression: printed
 ---
 export type __nitrogql_schema = {
-  "query": Query;
+  query: Query;
 };
 
 export type User = {
-  "id": ID;
-  "name": String;
-  "type": UserType;
-  "age": Int | null;
-  "posts": (Post)[];
+  id: ID;
+  name: String;
+  type: UserType;
+  age: Int | null;
+  posts: (Post)[];
 };
 
 export type Bot = {
-  "id": ID;
+  id: ID;
 };
 
 export type Post = {
-  "id": ID;
-  "title": String;
-  "tags": (String)[] | null;
-  "body": String;
+  id: ID;
+  title: String;
+  tags: (String)[] | null;
+  body: String;
 };
 
 export type Query = {
-  "me": User;
+  me: User;
 };
 
 export type HasID = {
-  "id": ID;
+  id: ID;
 };
 
 export type UserType = "NormalUser" | "PremiumUser";
 
 export type UserSearchQuery = {
-  readonly "age"?: Int | null;
-  readonly "name"?: String | null;
-  readonly "keywords"?: readonly (String)[] | null;
+  readonly age?: Int | null;
+  readonly name?: String | null;
+  readonly keywords?: readonly (String)[] | null;
 };
 
 
