@@ -138,7 +138,9 @@ impl TSType {
     /// All properties are turned into readonly properties and also array types are made readonly array types.
     pub fn to_readonly(self) -> TSType {
         match self {
-            TSType::Array(ty) => TSType::ReadonlyArray(ty),
+            TSType::Array(ty) | TSType::ReadonlyArray(ty) => {
+                TSType::ReadonlyArray(Box::new((*ty).to_readonly()))
+            }
             TSType::Object(fields) => TSType::Object(
                 fields
                     .into_iter()
@@ -148,7 +150,20 @@ impl TSType {
                     })
                     .collect(),
             ),
-            ty => ty,
+            TSType::Intersection(types) => {
+                TSType::Intersection(types.into_iter().map(|t| t.to_readonly()).collect())
+            }
+            TSType::Union(types) => {
+                TSType::Union(types.into_iter().map(|t| t.to_readonly()).collect())
+            }
+            TSType::IndexType(t1, t2) => {
+                TSType::IndexType(Box::new((*t1).to_readonly()), Box::new((*t2).to_readonly()))
+            }
+            t @ TSType::TypeVariable(_)
+            | t @ TSType::StringLiteral(_)
+            | t @ TSType::Never
+            | t @ TSType::Null
+            | t @ TSType::Unknown => t,
         }
     }
 

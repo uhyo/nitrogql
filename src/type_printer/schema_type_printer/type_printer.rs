@@ -251,7 +251,7 @@ impl TypePrinter for InputObjectTypeDefinition<'_> {
             self.fields
                 .iter()
                 .map(|field| {
-                    let ts_type = get_ts_type_of_type(&field.r#type);
+                    let ts_type = get_ts_type_of_type(&field.r#type).to_readonly();
                     ObjectField {
                         key: field.name.name.to_owned(),
                         r#type: ts_type,

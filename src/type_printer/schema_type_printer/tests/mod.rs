@@ -42,6 +42,7 @@ fn type_printing() {
             input UserSearchQuery {
                 age: Int
                 name: String
+                keywords: [String!]
             }
 
             type Query {

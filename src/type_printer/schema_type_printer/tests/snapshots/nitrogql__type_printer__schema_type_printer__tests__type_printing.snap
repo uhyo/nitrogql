@@ -38,6 +38,7 @@ export type UserType = "NormalUser" | "PremiumUser";
 export type UserSearchQuery = {
   readonly "age"?: Int | null;
   readonly "name"?: String | null;
+  readonly "keywords"?: readonly (String)[] | null;
 };
 
 
