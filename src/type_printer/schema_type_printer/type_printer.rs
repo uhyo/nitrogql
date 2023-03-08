@@ -5,11 +5,14 @@ use crate::{
             ObjectTypeDefinition, ScalarTypeDefinition, TypeDefinition, TypeSystemDefinition,
             UnionTypeDefinition,
         },
+        value::StringValue,
         TypeSystemDocument,
     },
     source_map_writer::writer::SourceMapWriter,
     type_printer::ts_types::{type_to_ts_type::get_ts_type_of_type, ObjectField, TSType},
 };
+
+use crate::type_printer::jsdoc::print_description as jsdoc_print_description;
 
 use super::{
     error::{SchemaTypePrinterError, SchemaTypePrinterResult},
@@ -55,6 +58,7 @@ fn get_schema_metadata_type(document: &TypeSystemDocument) -> TSType {
             (
                 op.as_str().to_owned(),
                 TSType::TypeVariable(ty.name.to_owned()),
+                schema_def.description.clone(),
             )
         }));
     }
@@ -85,7 +89,7 @@ fn get_schema_metadata_type(document: &TypeSystemDocument) -> TSType {
     TSType::object(
         operations
             .into_iter()
-            .map(|(op, ty)| (op, TSType::TypeVariable(ty))),
+            .map(|(op, ty)| (op, TSType::TypeVariable(ty), None)),
     )
 }
 
@@ -133,6 +137,7 @@ impl TypePrinter for ScalarTypeDefinition<'_> {
             });
         };
 
+        print_description(&self.description, writer);
         writer.write("export type ");
         writer.write_for(self.name.name, &self.name);
         writer.write(" = ");
@@ -152,9 +157,11 @@ impl TypePrinter for ObjectTypeDefinition<'_> {
             (
                 field.name.name.to_owned(),
                 get_ts_type_of_type(&field.r#type),
+                field.description.clone(),
             )
         }));
 
+        print_description(&self.description, writer);
         writer.write("export type ");
         writer.write_for(self.name.name, &self.name);
         writer.write(" = ");
@@ -174,9 +181,11 @@ impl TypePrinter for InterfaceTypeDefinition<'_> {
             (
                 field.name.name.to_owned(),
                 get_ts_type_of_type(&field.r#type),
+                field.description.clone(),
             )
         }));
 
+        print_description(&self.description, writer);
         writer.write("export type ");
         writer.write_for(self.name.name, &self.name);
         writer.write(" = ");
@@ -199,6 +208,7 @@ impl TypePrinter for UnionTypeDefinition<'_> {
                 .collect(),
         );
 
+        print_description(&self.description, writer);
         writer.write("export type ");
         writer.write_for(self.name.name, &self.name);
         writer.write(" = ");
@@ -221,6 +231,7 @@ impl TypePrinter for EnumTypeDefinition<'_> {
                 .collect(),
         );
 
+        print_description(&self.description, writer);
         writer.write("export type ");
         writer.write_for(self.name.name, &self.name);
         writer.write(" = ");
@@ -247,16 +258,24 @@ impl TypePrinter for InputObjectTypeDefinition<'_> {
                         readonly: true,
                         optional: options.input_nullable_field_is_optional
                             && !field.r#type.is_nonnull(),
+                        description: field.description.clone(),
                     }
                 })
                 .collect(),
         );
 
+        print_description(&self.description, writer);
         writer.write("export type ");
         writer.write_for(self.name.name, &self.name);
         writer.write(" = ");
         obj_type.print_type(writer);
         writer.write(";\n");
         Ok(())
+    }
+}
+
+fn print_description(description: &Option<StringValue>, writer: &mut impl SourceMapWriter) {
+    if let Some(description) = description {
+        jsdoc_print_description(description, writer);
     }
 }

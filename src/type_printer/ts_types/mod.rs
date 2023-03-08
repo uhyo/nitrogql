@@ -1,4 +1,6 @@
-use crate::source_map_writer::writer::SourceMapWriter;
+use crate::{graphql_parser::ast::value::StringValue, source_map_writer::writer::SourceMapWriter};
+
+use super::jsdoc::print_description;
 
 pub mod ts_types_util;
 pub mod type_to_ts_type;
@@ -37,6 +39,7 @@ pub struct ObjectField {
     pub r#type: TSType,
     pub readonly: bool,
     pub optional: bool,
+    pub description: Option<StringValue>,
 }
 
 impl TSType {
@@ -66,6 +69,9 @@ impl TSType {
                 writer.write("{\n");
                 writer.indent();
                 for field in properties {
+                    if let Some(ref description) = field.description {
+                        print_description(description, writer);
+                    }
                     if field.readonly {
                         writer.write("readonly ");
                     }
@@ -147,15 +153,18 @@ impl TSType {
     }
 
     /// Creates an object type from given set of non-readonly, non-optional properties.
-    pub fn object(properties: impl IntoIterator<Item = (String, TSType)>) -> TSType {
+    pub fn object(
+        properties: impl IntoIterator<Item = (String, TSType, Option<StringValue>)>,
+    ) -> TSType {
         TSType::Object(
             properties
                 .into_iter()
-                .map(|(key, ty)| ObjectField {
+                .map(|(key, ty, description)| ObjectField {
                     key,
                     r#type: ty,
                     readonly: false,
                     optional: false,
+                    description,
                 })
                 .collect(),
         )

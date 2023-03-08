@@ -129,7 +129,7 @@ fn get_type_for_selection_set(selection_set: &SelectionSet, parent_type: TSType)
                     None => field_type,
                     Some(ref set) => get_type_for_selection_set(set, field_type),
                 };
-                TSType::object(vec![(property_name, field_sel_type)])
+                TSType::object(vec![(property_name, field_sel_type, None)])
             }
             Selection::FragmentSpread(ref fragment) => {
                 TSType::TypeVariable(fragment.fragment_name.name.to_owned())
@@ -157,7 +157,7 @@ fn get_type_for_variable_definitions(definitions: &VariablesDefinition) -> TSTyp
         .map(|def| {
             let property_name = def.name.name.to_owned();
             let field_type = get_ts_type_of_type(&def.r#type);
-            TSType::object(vec![(property_name, field_type)])
+            TSType::object(vec![(property_name, field_type, None)])
         })
         .collect();
 

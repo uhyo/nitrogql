@@ -1,0 +1,62 @@
+---
+source: src/type_printer/schema_type_printer/tests/mod.rs
+expression: printed
+---
+export type __nitrogql_schema = {
+  "query": Query;
+};
+
+/**
+ * This is User.
+ */
+export type User = {
+  "id": ID;
+  /**
+   * Name of user.
+   */
+  "name": String;
+  "type": UserType;
+  /**
+   * Age of user. User may choose to not register their age.
+   */
+  "age": Int | null;
+  "posts": (Post)[];
+};
+
+export type Bot = {
+  "id": ID;
+};
+
+export type Post = {
+  "id": ID;
+  "title": String;
+  "tags": (String)[] | null;
+  "body": String;
+};
+
+export type Query = {
+  /**
+   * Returns my account.
+   * Note that query without authorization header results in a error.
+   */
+  "me": User;
+};
+
+/**
+ * Node that has an id field.
+ */
+export type HasID = {
+  /**
+   * ID of node that is globally unique.
+   */
+  "id": ID;
+};
+
+export type UserType = "NormalUser" | "PremiumUser";
+
+export type UserSearchQuery = {
+  readonly "age"?: Int | null;
+  readonly "name"?: String | null;
+};
+
+
