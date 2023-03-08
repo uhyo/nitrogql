@@ -1,3 +1,6 @@
+"""
+Our precious user.
+"""
 type User {
   id: ID!
   name: String!
@@ -10,5 +13,6 @@ enum UserKind {
 }
 
 type Query {
+  """Returns current user."""
   user: User!
 }
