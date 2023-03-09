@@ -11,6 +11,8 @@ pub enum TSType {
     TypeVariable(String),
     /// String literal type
     StringLiteral(String),
+    /// Namespace member access N.K
+    NamespaceMember(String, String),
     /// Index type T[K]
     IndexType(Box<TSType>, Box<TSType>),
     /// Object type (key, value, readonly)
@@ -53,6 +55,11 @@ impl TSType {
                 writer.write("\"");
                 writer.write(v);
                 writer.write("\"");
+            }
+            TSType::NamespaceMember(ref ns, ref key) => {
+                writer.write(ns);
+                writer.write(".");
+                writer.write(key);
             }
             TSType::IndexType(ref parent, ref key) => {
                 parent.print_type(writer);
@@ -165,6 +172,7 @@ impl TSType {
             }
             t @ TSType::TypeVariable(_)
             | t @ TSType::StringLiteral(_)
+            | t @ TSType::NamespaceMember(_, _)
             | t @ TSType::Never
             | t @ TSType::Null
             | t @ TSType::Unknown => t,

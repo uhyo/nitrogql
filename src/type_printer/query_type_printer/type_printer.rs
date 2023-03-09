@@ -59,7 +59,14 @@ impl TypePrinter for OperationDefinition<'_> {
         writer.write_for(" = ", &self.selection_set);
         get_type_for_selection_set(
             &self.selection_set,
-            TSType::TypeVariable(options.schema_root.clone()),
+            TSType::NamespaceMember(
+                options.schema_root_namespace.clone(),
+                match self.operation_type {
+                    OperationType::Query => options.schema_root_types.query.clone(),
+                    OperationType::Mutation => options.schema_root_types.mutation.clone(),
+                    OperationType::Subscription => options.schema_root_types.subscription.clone(),
+                },
+            ),
         )
         .print_type(writer);
         writer.write(";\n\n");
@@ -104,7 +111,7 @@ impl TypePrinter for FragmentDefinition<'_> {
         writer.write(" = ");
 
         let parent_type = TSType::IndexType(
-            Box::new(TSType::TypeVariable(options.schema_root.clone())),
+            Box::new(TSType::TypeVariable(options.schema_root_namespace.clone())),
             Box::new(TSType::StringLiteral(self.type_condition.name.to_owned())),
         );
         get_type_for_selection_set(&self.selection_set, parent_type).print_type(writer);

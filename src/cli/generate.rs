@@ -1,6 +1,6 @@
 use std::fs::{self, File};
 use std::io::Write;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 use log::debug;
 
@@ -9,6 +9,7 @@ use crate::source_map_writer::source_writer::SourceWriterBuffers;
 use crate::type_printer::schema_type_printer::printer::{
     SchemaTypePrinter, SchemaTypePrinterOptions,
 };
+use crate::utils::relative_path::relative_path;
 use crate::{
     error::Result,
     source_map_writer::source_writer::{print_source_map_json, SourceWriter},
@@ -59,8 +60,13 @@ pub fn run_generate(mut context: CliContext) -> Result<CliContext> {
                 };
 
                 let mut writer = SourceWriter::new();
-                let mut printer =
-                    QueryTypePrinter::new(QueryTypePrinterOptions::default(), &mut writer);
+                let mut printer_options = QueryTypePrinterOptions::default();
+                // Todo custom schema_root_types
+                printer_options.schema_source =
+                    path_to_ts(relative_path(&decl_file_path, &schema_output)?)
+                        .to_string_lossy()
+                        .to_string();
+                let mut printer = QueryTypePrinter::new(printer_options, &mut writer);
                 printer.print_document(&doc);
 
                 let buffers = writer.into_buffers();
@@ -116,4 +122,27 @@ fn write_file_and_sourcemap(
     debug!("Writing {}", source_map_file_path.to_string_lossy());
     fs::write(source_map_file_path, &source_map)?;
     Ok(())
+}
+
+/// Removes '.d.ts' suffix
+fn path_to_ts(mut path: PathBuf) -> PathBuf {
+    match path.file_name() {
+        None => path,
+        Some(file_name) => match file_name.to_os_string().into_string() {
+            Err(_) => path,
+            Ok(mut file_name) => {
+                if file_name.ends_with(".d.ts") {
+                    file_name.truncate(file_name.len() - 5);
+                    path.set_file_name(file_name);
+                    return path;
+                }
+                if file_name.ends_with(".ts") {
+                    file_name.truncate(file_name.len() - 3);
+                    path.set_file_name(file_name);
+                    return path;
+                }
+                path
+            }
+        },
+    }
 }
