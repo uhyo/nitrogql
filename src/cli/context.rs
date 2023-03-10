@@ -1,8 +1,6 @@
 use std::path::PathBuf;
 
-use crate::graphql_parser::ast::{
-    OperationDocument, TypeSystemDocument, TypeSystemOrExtensionDocument,
-};
+use crate::ast::{OperationDocument, TypeSystemDocument, TypeSystemOrExtensionDocument};
 
 /// List of (path, source)
 pub type FileByIndex<'src> = Vec<(PathBuf, &'src str)>;

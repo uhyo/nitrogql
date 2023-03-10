@@ -2,7 +2,7 @@
 
 use json_writer::{JSONObjectWriter, JSONWriterValue};
 
-use crate::graphql_parser::ast::value::Value;
+use crate::ast::value::Value;
 
 use super::to_json::JsonPrintable;
 

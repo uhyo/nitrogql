@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use crate::graphql_parser::ast::{
+use crate::ast::{
     operations::{ExecutableDefinition, FragmentDefinition},
     OperationDocument,
 };

@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use crate::graphql_parser::ast::{
+use crate::ast::{
     base::HasPos,
     type_system::{DirectiveDefinition, SchemaDefinition, TypeDefinition, TypeSystemDefinition},
     TypeSystemDocument,

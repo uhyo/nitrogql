@@ -1,7 +1,7 @@
 use super::{utils::PairExt, Rule};
 use pest::iterators::Pair;
 
-use crate::graphql_parser::ast::base::Variable;
+use crate::ast::base::Variable;
 
 pub fn build_variable(pair: Pair<Rule>) -> Variable {
     let position = (&pair).into();

@@ -1,3 +1,4 @@
+mod ast;
 mod base64_vlq;
 mod checker;
 mod cli;

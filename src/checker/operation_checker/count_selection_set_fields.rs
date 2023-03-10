@@ -1,4 +1,4 @@
-use crate::graphql_parser::ast::selection_set::{Selection, SelectionSet};
+use crate::ast::selection_set::{Selection, SelectionSet};
 
 use super::fragment_map::FragmentMap;
 

@@ -1,4 +1,4 @@
-use crate::graphql_parser::ast::{r#type::Type, type_system::TypeDefinition};
+use crate::ast::{r#type::Type, type_system::TypeDefinition};
 
 use crate::checker::definition_map::DefinitionMap;
 

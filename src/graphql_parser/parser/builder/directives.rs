@@ -2,7 +2,7 @@ use super::{utils::PairExt, value::build_arguments, Rule};
 use pest::iterators::Pair;
 
 use crate::{
-    graphql_parser::ast::{base::Pos, directive::Directive},
+    ast::{base::Pos, directive::Directive},
     parts,
 };
 

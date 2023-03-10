@@ -1,5 +1,5 @@
 use crate::{
-    graphql_parser::ast::{
+    ast::{
         base::Pos,
         operations::{
             ExecutableDefinition, FragmentDefinition, OperationDefinition, OperationType,

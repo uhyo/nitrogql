@@ -1,7 +1,7 @@
 //! This module builds ast from raw parser result.
 //!
 
-use crate::graphql_parser::ast::{OperationDocument, TypeSystemOrExtensionDocument};
+use crate::ast::{OperationDocument, TypeSystemOrExtensionDocument};
 
 use self::{
     operation::build_executable_definition, type_system::build_type_system_definition_or_extension,

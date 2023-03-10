@@ -1,5 +1,5 @@
 use crate::{
-    graphql_parser::ast::{
+    ast::{
         type_system::{
             EnumTypeDefinition, InputObjectTypeDefinition, InterfaceTypeDefinition,
             ObjectTypeDefinition, ScalarTypeDefinition, TypeDefinition, TypeSystemDefinition,

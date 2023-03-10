@@ -1,6 +1,6 @@
 use crate::{
-    extension_resolver::resolve_extensions,
-    graphql_parser::{ast::TypeSystemDocument, parser::parse_type_system_document},
+    ast::TypeSystemDocument, extension_resolver::resolve_extensions,
+    graphql_parser::parser::parse_type_system_document,
 };
 
 mod directives {

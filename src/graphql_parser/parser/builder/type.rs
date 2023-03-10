@@ -1,7 +1,7 @@
 use super::{utils::PairExt, Rule};
 use pest::iterators::Pair;
 
-use crate::graphql_parser::ast::{
+use crate::ast::{
     base::Pos,
     r#type::{ListType, NamedType, NonNullType, Type},
 };

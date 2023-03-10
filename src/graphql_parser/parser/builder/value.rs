@@ -2,7 +2,7 @@ use super::{base::build_variable, utils::PairExt, Rule};
 use pest::iterators::Pair;
 
 use crate::{
-    graphql_parser::ast::{
+    ast::{
         base::Pos,
         value::{
             Arguments, BooleanValue, EnumValue, FloatValue, IntValue, ListValue, NullValue,

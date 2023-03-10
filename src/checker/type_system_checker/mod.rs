@@ -1,4 +1,4 @@
-use crate::graphql_parser::ast::{
+use crate::ast::{
     base::{HasPos, Ident},
     type_system::{
         ArgumentsDefinition, DirectiveDefinition, EnumTypeDefinition, InputObjectTypeDefinition,

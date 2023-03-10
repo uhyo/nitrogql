@@ -1,15 +1,14 @@
 use crate::{
-    extension_resolver::resolve_extensions,
-    graphql_builtins::generate_builtins,
-    graphql_parser::{ast::TypeSystemDocument, parser::parse_type_system_document},
+    ast::TypeSystemDocument, extension_resolver::resolve_extensions,
+    graphql_builtins::generate_builtins, graphql_parser::parser::parse_type_system_document,
 };
 
 mod operations {
     use insta::assert_debug_snapshot;
 
     use crate::{
-        checker::operation_checker::check_operation_document,
-        graphql_parser::{ast::TypeSystemDocument, parser::parse_operation_document},
+        ast::TypeSystemDocument, checker::operation_checker::check_operation_document,
+        graphql_parser::parser::parse_operation_document,
     };
 
     use super::parse_to_type_system_document;
@@ -68,8 +67,8 @@ mod operation_directives {
     use insta::assert_debug_snapshot;
 
     use crate::{
-        checker::operation_checker::check_operation_document,
-        graphql_parser::{ast::TypeSystemDocument, parser::parse_operation_document},
+        ast::TypeSystemDocument, checker::operation_checker::check_operation_document,
+        graphql_parser::parser::parse_operation_document,
     };
 
     use super::parse_to_type_system_document;
@@ -289,8 +288,8 @@ mod selection_set {
     use insta::assert_debug_snapshot;
 
     use crate::{
-        checker::operation_checker::check_operation_document,
-        graphql_parser::{ast::TypeSystemDocument, parser::parse_operation_document},
+        ast::TypeSystemDocument, checker::operation_checker::check_operation_document,
+        graphql_parser::parser::parse_operation_document,
     };
 
     use super::parse_to_type_system_document;
@@ -436,8 +435,8 @@ mod fragments {
     use insta::assert_debug_snapshot;
 
     use crate::{
-        checker::operation_checker::check_operation_document,
-        graphql_parser::{ast::TypeSystemDocument, parser::parse_operation_document},
+        ast::TypeSystemDocument, checker::operation_checker::check_operation_document,
+        graphql_parser::parser::parse_operation_document,
     };
 
     use super::parse_to_type_system_document;

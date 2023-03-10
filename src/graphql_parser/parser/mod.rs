@@ -4,7 +4,7 @@ use pest_derive::Parser;
 
 use self::builder::{build_operation_document, build_type_system_or_extension_document};
 
-use super::ast::{OperationDocument, TypeSystemOrExtensionDocument};
+use crate::ast::{OperationDocument, TypeSystemOrExtensionDocument};
 
 mod builder;
 

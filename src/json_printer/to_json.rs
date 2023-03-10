@@ -1,6 +1,6 @@
 use json_writer::JSONObjectWriter;
 
-use crate::graphql_parser::ast::{
+use crate::ast::{
     directive::Directive,
     operations::{ExecutableDefinition, VariableDefinition},
     r#type::{NamedType, Type},

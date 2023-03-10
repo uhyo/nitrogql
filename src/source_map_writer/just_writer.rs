@@ -1,4 +1,4 @@
-use crate::graphql_parser::ast::base::HasPos;
+use crate::ast::base::HasPos;
 
 use super::writer::SourceMapWriter;
 

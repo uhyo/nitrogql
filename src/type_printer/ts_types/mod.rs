@@ -1,4 +1,4 @@
-use crate::{graphql_parser::ast::value::StringValue, source_map_writer::writer::SourceMapWriter};
+use crate::{ast::value::StringValue, source_map_writer::writer::SourceMapWriter};
 
 use super::jsdoc::print_description;
 

@@ -10,7 +10,7 @@ use super::{
     value::build_string_value, Rule,
 };
 use crate::{
-    graphql_parser::ast::{
+    ast::{
         base::Ident,
         operations::OperationType,
         type_system::{

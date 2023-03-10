@@ -1,4 +1,4 @@
-use crate::graphql_parser::ast::{
+use crate::ast::{
     type_system::{
         EnumTypeDefinition, EnumTypeExtension, InputObjectTypeDefinition, InputObjectTypeExtension,
         InterfaceTypeDefinition, InterfaceTypeExtension, ObjectTypeDefinition, ObjectTypeExtension,

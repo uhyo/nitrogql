@@ -1,4 +1,4 @@
-use crate::{graphql_parser::ast::{type_system::{InterfaceTypeDefinition, FieldDefinition}, base::Ident}, checker::{definition_map::DefinitionMap, error::CheckError, types::is_subtype}};
+use crate::{ast::{type_system::{InterfaceTypeDefinition, FieldDefinition}, base::Ident}, checker::{definition_map::DefinitionMap, error::CheckError, types::is_subtype}};
 
 use super::{CheckErrorMessage};
 

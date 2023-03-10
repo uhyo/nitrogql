@@ -1,4 +1,4 @@
-use crate::{graphql_parser::ast::OperationDocument, source_map_writer::writer::SourceMapWriter};
+use crate::{ast::OperationDocument, source_map_writer::writer::SourceMapWriter};
 
 use super::type_printer::TypePrinter;
 

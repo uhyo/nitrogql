@@ -8,13 +8,11 @@ use super::{
     },
 };
 use crate::{
-    graphql_parser::{
-        ast::type_system::{
-            EnumTypeExtension, InputObjectTypeExtension, InterfaceTypeExtension,
-            ObjectTypeExtension, ScalarTypeExtension, TypeExtension, UnionTypeExtension,
-        },
-        parser::builder::{directives::build_directives, utils::PairExt},
+    ast::type_system::{
+        EnumTypeExtension, InputObjectTypeExtension, InterfaceTypeExtension, ObjectTypeExtension,
+        ScalarTypeExtension, TypeExtension, UnionTypeExtension,
     },
+    graphql_parser::parser::builder::{directives::build_directives, utils::PairExt},
     parts,
 };
 

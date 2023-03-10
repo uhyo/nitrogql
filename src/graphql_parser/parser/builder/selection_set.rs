@@ -2,9 +2,7 @@ use super::{directives::build_directives, utils::PairExt, value::build_arguments
 use pest::iterators::Pair;
 
 use crate::{
-    graphql_parser::ast::selection_set::{
-        Field, FragmentSpread, InlineFragment, Selection, SelectionSet,
-    },
+    ast::selection_set::{Field, FragmentSpread, InlineFragment, Selection, SelectionSet},
     parts,
 };
 

@@ -1,7 +1,7 @@
 use json_writer::JSONObjectWriter;
 use to_json::JsonPrintable;
 
-use crate::graphql_parser::ast::operations::ExecutableDefinition;
+use crate::ast::operations::ExecutableDefinition;
 
 mod helpers;
 mod tests;

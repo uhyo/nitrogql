@@ -3,7 +3,7 @@ use std::fmt::{Display, Write};
 use std::path::PathBuf;
 use std::result::Result as StdResult;
 
-use crate::graphql_parser::ast::base::Pos;
+use crate::ast::base::Pos;
 use crate::utils::chars::{first_non_space_byte_index, skip_chars};
 
 /// Error that may be positioned.

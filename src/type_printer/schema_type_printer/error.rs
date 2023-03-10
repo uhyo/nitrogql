@@ -1,6 +1,6 @@
 use thiserror::Error;
 
-use crate::graphql_parser::ast::base::Pos;
+use crate::ast::base::Pos;
 
 #[derive(Error, Debug)]
 pub enum SchemaTypePrinterError {

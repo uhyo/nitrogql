@@ -1,5 +1,5 @@
 use crate::{
-    graphql_parser::ast::value::StringValue,
+    ast::value::StringValue,
     source_map_writer::writer::SourceMapWriter,
     utils::chars::{first_non_space_byte_index, skip_chars},
 };

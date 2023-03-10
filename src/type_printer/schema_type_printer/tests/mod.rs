@@ -1,8 +1,9 @@
 use insta::assert_snapshot;
 
 use crate::{
+    ast::TypeSystemDocument,
     extension_resolver::resolve_extensions,
-    graphql_parser::{ast::TypeSystemDocument, parser::parse_type_system_document},
+    graphql_parser::parser::parse_type_system_document,
     source_map_writer::just_writer::JustWriter,
     type_printer::schema_type_printer::{
         error::SchemaTypePrinterResult,

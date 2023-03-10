@@ -2,7 +2,7 @@
 mod tests {
     use json_writer::JSONObjectWriter;
 
-    use crate::graphql_parser::ast::base::Pos;
+    use crate::ast::base::Pos;
 
     use super::super::to_json::JsonPrintable;
 
@@ -15,7 +15,7 @@ mod tests {
 
     mod value {
         use super::{print_json_to_string, POS};
-        use crate::graphql_parser::ast::{
+        use crate::ast::{
             base::Ident,
             value::{
                 BooleanValue, EnumValue, FloatValue, IntValue, ListValue, NullValue, ObjectValue,
@@ -126,7 +126,7 @@ mod tests {
         use insta::assert_snapshot;
 
         use crate::{
-            graphql_parser::ast::{
+            ast::{
                 base::Ident,
                 r#type::{ListType, NamedType, NonNullType, Type},
             },
@@ -172,7 +172,7 @@ mod tests {
     mod selection_set {
         use insta::assert_snapshot;
 
-        use crate::graphql_parser::ast::{
+        use crate::ast::{
             base::Ident,
             directive::Directive,
             selection_set::{Field, FragmentSpread, InlineFragment, Selection, SelectionSet},

@@ -7,12 +7,10 @@ use log::{debug, error};
 use thiserror::Error;
 
 use crate::{
+    ast::{base::set_current_file_of_pos, OperationDocument, TypeSystemOrExtensionDocument},
     cli::{context::CliContext, error::CliError},
     error::print_positioned_error,
-    graphql_parser::{
-        ast::{base::set_current_file_of_pos, OperationDocument, TypeSystemOrExtensionDocument},
-        parser::{parse_operation_document, parse_type_system_document},
-    },
+    graphql_parser::parser::{parse_operation_document, parse_type_system_document},
 };
 
 use self::{check::run_check, context::CliConfig, generate::run_generate};

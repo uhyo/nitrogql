@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use crate::{graphql_parser::ast::TypeSystemDocument, source_map_writer::writer::SourceMapWriter};
+use crate::{ast::TypeSystemDocument, source_map_writer::writer::SourceMapWriter};
 
 use super::{error::SchemaTypePrinterResult, type_printer::TypePrinter};
 

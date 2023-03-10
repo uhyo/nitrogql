@@ -3,8 +3,8 @@ use std::fmt::Display;
 use thiserror::Error;
 
 use crate::{
+    ast::{base::Pos, operations::OperationType},
     error::PositionedError,
-    graphql_parser::ast::{base::Pos, operations::OperationType},
 };
 
 #[derive(Debug)]

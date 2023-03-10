@@ -1,4 +1,4 @@
-use crate::graphql_parser::ast::r#type::Type;
+use crate::ast::r#type::Type;
 
 use super::super::ts_types::TSType;
 

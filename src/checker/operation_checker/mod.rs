@@ -1,7 +1,7 @@
 use once_cell::sync::Lazy;
 
 use crate::{
-    graphql_parser::ast::{
+    ast::{
         base::{HasPos, Pos, Ident},
         operations::{
             ExecutableDefinition, FragmentDefinition, OperationDefinition, OperationType,

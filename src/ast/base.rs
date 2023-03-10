@@ -1,6 +1,6 @@
 use std::cell::Cell;
 
-use super::super::parser::Rule;
+use crate::graphql_parser::parser::Rule;
 use pest::iterators::Pair;
 
 thread_local! {

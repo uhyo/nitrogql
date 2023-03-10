@@ -1,4 +1,4 @@
-use crate::graphql_parser::ast::{
+use crate::ast::{
     base::{Ident, Pos},
     r#type::{NamedType, NonNullType, Type},
     type_system::{

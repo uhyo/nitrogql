@@ -3,8 +3,8 @@ use std::collections::HashMap;
 use thiserror::Error;
 
 use crate::{
+    ast::base::{HasPos, Pos},
     error::PositionedError,
-    graphql_parser::ast::base::{HasPos, Pos},
 };
 
 pub struct ExtensionList<'a, OriginalType: HasPos, ExtensionType: HasPos> {

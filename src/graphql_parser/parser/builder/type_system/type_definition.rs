@@ -2,18 +2,16 @@ use pest::iterators::Pair;
 
 use super::{super::Rule, build_description};
 use crate::{
-    graphql_parser::{
-        ast::{
-            base::Ident,
-            type_system::{
-                ArgumentsDefinition, EnumTypeDefinition, EnumValueDefinition, FieldDefinition,
-                InputObjectTypeDefinition, InputValueDefinition, InterfaceTypeDefinition,
-                ObjectTypeDefinition, ScalarTypeDefinition, TypeDefinition, UnionTypeDefinition,
-            },
+    ast::{
+        base::Ident,
+        type_system::{
+            ArgumentsDefinition, EnumTypeDefinition, EnumValueDefinition, FieldDefinition,
+            InputObjectTypeDefinition, InputValueDefinition, InterfaceTypeDefinition,
+            ObjectTypeDefinition, ScalarTypeDefinition, TypeDefinition, UnionTypeDefinition,
         },
-        parser::builder::{
-            directives::build_directives, r#type::build_type, utils::PairExt, value::build_value,
-        },
+    },
+    graphql_parser::parser::builder::{
+        directives::build_directives, r#type::build_type, utils::PairExt, value::build_value,
     },
     parts,
 };

@@ -1,6 +1,6 @@
 use log::warn;
 
-use crate::graphql_parser::ast::{
+use crate::ast::{
     base::{HasPos, Pos, Variable},
     directive::Directive,
     operations::{VariableDefinition, VariablesDefinition},

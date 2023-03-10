@@ -1,13 +1,13 @@
 use std::collections::HashSet;
 
 use crate::{
+    ast::{
+        directive::Directive,
+        type_system::{DirectiveDefinition, TypeDefinition},
+    },
     checker::{
         definition_map::DefinitionMap,
         error::{CheckError, CheckErrorMessage},
-    },
-    graphql_parser::ast::{
-        directive::Directive,
-        type_system::{DirectiveDefinition, TypeDefinition},
     },
 };
 

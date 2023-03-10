@@ -1,6 +1,6 @@
 use std::{borrow::Cow, io, path::Path};
 
-use crate::{graphql_parser::ast::base::HasPos, utils::relative_path::relative_path};
+use crate::{ast::base::HasPos, utils::relative_path::relative_path};
 
 use self::{mapping_writer::MappingWriter, name_mapper::NameMapper};
 
