@@ -7,6 +7,7 @@ pub struct MappingWriter {
     last_original_line: usize,
     last_original_column: usize,
     last_name_index: usize,
+    last_file_index: usize,
 }
 
 impl MappingWriter {
@@ -18,6 +19,7 @@ impl MappingWriter {
             last_original_line: 0,
             last_original_column: 0,
             last_name_index: 0,
+            last_file_index: 0,
         }
     }
 
@@ -46,9 +48,8 @@ impl MappingWriter {
             self.buffer.push_str(&base64_vlq(column_diff));
         }
 
-        // source file
-        self.buffer
-            .push_str(&base64_vlq(source_file_index as isize));
+        let source_file_diff = (source_file_index as isize) - (self.last_file_index as isize);
+        self.buffer.push_str(&base64_vlq(source_file_diff));
 
         let original_line_diff = (original_line as isize) - (self.last_original_line as isize);
         self.buffer.push_str(&base64_vlq(original_line_diff));
@@ -68,5 +69,6 @@ impl MappingWriter {
         self.last_generated_column = generated_column;
         self.last_original_line = original_line;
         self.last_original_column = original_column;
+        self.last_file_index = source_file_index;
     }
 }

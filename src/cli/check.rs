@@ -38,7 +38,11 @@ pub fn run_check(context: CliContext) -> Result<CliContext> {
             }
             let errors = operations
                 .iter()
-                .flat_map(|(_, doc)| check_operation_document(&resolved, doc))
+                .flat_map(|(_, doc, file_by_index)| {
+                    check_operation_document(&resolved, doc)
+                        .into_iter()
+                        .map(move |err| (err, file_by_index))
+                })
                 .collect::<Vec<_>>();
             if errors.is_empty() {
                 info!("Check succeeded");
@@ -49,8 +53,8 @@ pub fn run_check(context: CliContext) -> Result<CliContext> {
                     errors.len(),
                     if errors.len() > 1 { "s" } else { "" }
                 );
-                for err in errors {
-                    eprintln!("{}", print_positioned_error(&err.into(), &file_by_index));
+                for (err, file_by_index) in errors {
+                    eprintln!("{}", print_positioned_error(&err.into(), file_by_index));
                 }
                 eprintln!("");
                 return Err(CliError::CommandNotSuccessful("check".into()).into());

@@ -16,6 +16,7 @@ use crate::{
     type_printer::query_type_printer::{QueryTypePrinter, QueryTypePrinterOptions},
 };
 
+use super::context::FileByIndex;
 use super::{check::run_check, context::CliContext};
 
 pub fn run_generate(mut context: CliContext) -> Result<CliContext> {
@@ -35,10 +36,6 @@ pub fn run_generate(mut context: CliContext) -> Result<CliContext> {
             let Some(ref schema_output) = config.schema_output else {
                 return Err(CliError::OptionRequired { option: String::from("schema-output"), command: String::from("generate") }.into())
             };
-            let source_files = file_by_index
-                .iter()
-                .map(|(path, _)| path.as_path())
-                .collect::<Vec<_>>();
             {
                 debug!("Processing schema");
                 let mut writer = SourceWriter::new();
@@ -48,10 +45,10 @@ pub fn run_generate(mut context: CliContext) -> Result<CliContext> {
                 printer.print_document(schema)?;
 
                 let buffers = writer.into_buffers();
-                write_file_and_sourcemap(&source_files, &schema_output, buffers)?;
+                write_file_and_sourcemap(file_by_index, &schema_output, buffers)?;
             }
 
-            for (path, doc) in operations.iter() {
+            for (path, doc, file_by_index) in operations.iter() {
                 debug!("Processing {}", path.to_string_lossy());
                 let decl_file_path = {
                     let mut path = path.clone();
@@ -71,7 +68,7 @@ pub fn run_generate(mut context: CliContext) -> Result<CliContext> {
 
                 let buffers = writer.into_buffers();
 
-                write_file_and_sourcemap(&source_files, &decl_file_path, buffers)?;
+                write_file_and_sourcemap(file_by_index, &decl_file_path, buffers)?;
             }
             eprintln!("'generate' succeeded without errors");
             Ok(context)
@@ -80,10 +77,14 @@ pub fn run_generate(mut context: CliContext) -> Result<CliContext> {
 }
 
 fn write_file_and_sourcemap(
-    source_files: &[&Path],
+    file_by_index: &FileByIndex,
     output_file_path: &Path,
     buffers: SourceWriterBuffers,
 ) -> Result<()> {
+    let source_files = file_by_index
+        .iter()
+        .map(|(path, _)| path.as_path())
+        .collect::<Vec<_>>();
     let source_map_file_path = {
         let mut path = output_file_path.to_owned();
         match path.file_name() {
@@ -113,7 +114,7 @@ fn write_file_and_sourcemap(
     let mut source_map = String::new();
     print_source_map_json(
         output_file_path,
-        source_files,
+        &source_files,
         &buffers.names,
         &buffers.source_map,
         &mut source_map,

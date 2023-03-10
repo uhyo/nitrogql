@@ -57,7 +57,7 @@ fn run_cli_impl(args: impl IntoIterator<Item = String>) -> Result<()> {
         return Err(CliError::NoSchemaSpecified.into());
     }
     let schema_files = load_glob_files(&args.schema)?;
-    let mut file_by_index = schema_files
+    let file_by_index = schema_files
         .iter()
         .map(|(path, src)| (path.clone(), src.as_str()))
         .collect::<Vec<_>>();
@@ -66,7 +66,7 @@ fn run_cli_impl(args: impl IntoIterator<Item = String>) -> Result<()> {
         .enumerate()
         .map(
             |(file_idx, (path, buf))| -> Result<TypeSystemOrExtensionDocument> {
-                debug!("parsing(schema) {}", path.to_string_lossy());
+                debug!("parsing(schema) {} {}", path.to_string_lossy(), file_idx);
                 set_current_file_of_pos(file_idx);
                 let doc = parse_type_system_document(&buf)?;
                 Ok(doc)
@@ -77,24 +77,22 @@ fn run_cli_impl(args: impl IntoIterator<Item = String>) -> Result<()> {
     let merged_schema_doc = TypeSystemOrExtensionDocument::merge(schema_docs);
 
     let operation_files = load_glob_files(&args.operation)?;
-    let next_file_index = file_by_index.len();
-    file_by_index.extend(
-        operation_files
-            .iter()
-            .map(|(path, src)| (path.clone(), src.as_str())),
-    );
+    let op_file_index = file_by_index.len();
 
     let operation_docs = operation_files
         .iter()
-        .enumerate()
         .map(
-            |(file_idx, (path, buf))| -> Result<(PathBuf, OperationDocument)> {
-                let file_idx = next_file_index + file_idx;
+            |(path, buf)| -> Result<(PathBuf, OperationDocument, Vec<(PathBuf, &str)>)> {
                 debug!("parsing(operation) {}", path.to_string_lossy());
-                set_current_file_of_pos(file_idx);
+                set_current_file_of_pos(op_file_index);
 
                 let doc = parse_operation_document(&buf)?;
-                Ok((path.clone(), doc))
+                let file_by_idx_op = file_by_index
+                    .iter()
+                    .map(|(path, buf)| (path.clone(), *buf))
+                    .chain(vec![(path.clone(), buf.as_str())])
+                    .collect::<Vec<_>>();
+                Ok((path.clone(), doc, file_by_idx_op))
             },
         )
         .collect::<Result<Vec<_>>>();
