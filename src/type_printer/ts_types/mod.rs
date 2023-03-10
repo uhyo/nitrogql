@@ -9,6 +9,8 @@ pub mod type_to_ts_type;
 pub enum TSType {
     /// Type variable
     TypeVariable(String),
+    /// Type Function Application
+    TypeFunc(Box<TSType>, Vec<TSType>),
     /// String literal type
     StringLiteral(String),
     /// Namespace member access N.K
@@ -50,6 +52,17 @@ impl TSType {
         match self {
             TSType::TypeVariable(ref v) => {
                 writer.write(v);
+            }
+            TSType::TypeFunc(ref f, ref args) => {
+                f.print_type(writer);
+                writer.write("<");
+                for (idx, arg) in args.iter().enumerate() {
+                    if idx > 0 {
+                        writer.write(", ");
+                    }
+                    arg.print_type(writer);
+                }
+                writer.write(">");
             }
             TSType::StringLiteral(ref v) => {
                 writer.write("\"");
@@ -149,6 +162,10 @@ impl TSType {
     /// All properties are turned into readonly properties and also array types are made readonly array types.
     pub fn to_readonly(self) -> TSType {
         match self {
+            TSType::TypeFunc(func, args) => TSType::TypeFunc(
+                func.to_owned(),
+                args.into_iter().map(|ty| ty.to_readonly()).collect(),
+            ),
             TSType::Array(ty) | TSType::ReadonlyArray(ty) => {
                 TSType::ReadonlyArray(Box::new((*ty).to_readonly()))
             }

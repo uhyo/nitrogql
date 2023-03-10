@@ -79,14 +79,17 @@ impl SourceMapWriter for SourceWriter {
     }
     fn write_for(&mut self, chunk: &str, node: &impl HasPos) {
         let original_pos = node.position();
-        let original_name = node.name().map(|name| self.name_mapper.map_name(name));
-        self.mapping.add_entry(
-            self.current_line,
-            self.current_column,
-            original_pos.line,
-            original_pos.column,
-            original_name,
-        );
+        if !original_pos.builtin {
+            let original_name = node.name().map(|name| self.name_mapper.map_name(name));
+            self.mapping.add_entry(
+                self.current_line,
+                self.current_column,
+                original_pos.line,
+                original_pos.column,
+                original_pos.file,
+                original_name,
+            );
+        }
         self.write(chunk);
     }
     fn indent(&mut self) {

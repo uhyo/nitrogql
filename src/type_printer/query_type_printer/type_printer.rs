@@ -154,7 +154,7 @@ fn get_type_for_selection_set(selection_set: &SelectionSet, parent_type: TSType)
             },
         })
         .collect();
-    ts_intersection(types_for_each_field)
+    wrap_with_keepdoc(parent_type, ts_intersection(types_for_each_field))
 }
 
 fn get_type_for_variable_definitions(definitions: &VariablesDefinition) -> TSType {
@@ -173,4 +173,12 @@ fn get_type_for_variable_definitions(definitions: &VariablesDefinition) -> TSTyp
     } else {
         ts_intersection(types_for_each_field)
     }
+}
+
+/// Wraps object type with the KeepDoc utility.
+fn wrap_with_keepdoc(original_type: TSType, wrapped_type: TSType) -> TSType {
+    TSType::TypeFunc(
+        Box::new(TSType::TypeVariable("KeepDoc".into())),
+        vec![original_type, wrapped_type],
+    )
 }

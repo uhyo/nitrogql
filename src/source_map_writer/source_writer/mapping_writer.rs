@@ -31,6 +31,7 @@ impl MappingWriter {
         generated_column: usize,
         original_line: usize,
         original_column: usize,
+        source_file_index: usize,
         name_index: Option<usize>,
     ) {
         let is_newline = self.last_generated_line != generated_line;
@@ -45,8 +46,9 @@ impl MappingWriter {
             self.buffer.push_str(&base64_vlq(column_diff));
         }
 
-        // currently, 'sources' is always 0
-        self.buffer.push('A');
+        // source file
+        self.buffer
+            .push_str(&base64_vlq(source_file_index as isize));
 
         let original_line_diff = (original_line as isize) - (self.last_original_line as isize);
         self.buffer.push_str(&base64_vlq(original_line_diff));
