@@ -6,15 +6,19 @@ import type { TypedDocumentNode } from "@graphql-typed-document-node/core";
 import type * as Schema from "";
 
 type Query = Schema.__SelectionSet<Schema.Query, {
-  me: Schema.__SelectionSet<Schema.__SelectionField<Schema.Query, "me">, {
-    id: Schema.__SelectionField<Schema.__SelectionField<Schema.Query, "me">, "id">;
-    name: Schema.__SelectionField<Schema.__SelectionField<Schema.Query, "me">, "name">;
-    type: Schema.__SelectionField<Schema.__SelectionField<Schema.Query, "me">, "type">;
-    age: Schema.__SelectionField<Schema.__SelectionField<Schema.Query, "me">, "age">;
-    posts: Schema.__SelectionSet<Schema.__SelectionField<Schema.__SelectionField<Schema.Query, "me">, "posts">, {
-      id: Schema.__SelectionField<Schema.__SelectionField<Schema.__SelectionField<Schema.Query, "me">, "posts">, "id">;
-    }>;
-  }>;
+  me: Schema.__SelectionField<Schema.Query, "me"> extends infer __1
+    ? Schema.__SelectionSet<__1, {
+      id: Schema.__SelectionField<__1, "id">;
+      name: Schema.__SelectionField<__1, "name">;
+      type: Schema.__SelectionField<__1, "type">;
+      age: Schema.__SelectionField<__1, "age">;
+      posts: Schema.__SelectionField<__1, "posts"> extends infer __1
+        ? Schema.__SelectionSet<__1, {
+          id: Schema.__SelectionField<__1, "id">;
+        }>
+        : unknown;
+    }>
+    : unknown;
 }>;
 
 type Variables = {};
