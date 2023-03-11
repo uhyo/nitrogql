@@ -239,11 +239,10 @@ impl TypePrinter for UnionTypeDefinition<'_> {
         _context: &SchemaTypePrinterContext,
         writer: &mut impl SourceMapWriter,
     ) -> SchemaTypePrinterResult<()> {
-        let union_type = TSType::Union(
+        let union_type = ts_union(
             self.members
                 .iter()
-                .map(|mem| TSType::TypeVariable(mem.into()))
-                .collect(),
+                .map(|mem| TSType::TypeVariable(mem.into())),
         );
 
         print_description(&self.description, writer);
