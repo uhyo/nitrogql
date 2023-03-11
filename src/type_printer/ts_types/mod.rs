@@ -297,7 +297,15 @@ fn is_raw_ident(key: &str) -> bool {
     let mut chars = key.chars();
     match chars.next() {
         None => false,
-        Some(c) if !c.is_ascii_alphabetic() => false,
-        Some(_) => chars.all(|c| c.is_ascii_alphanumeric()),
+        Some(c) if !is_ascii_ident_start(c) => false,
+        Some(_) => chars.all(is_ascii_ident_char),
     }
+}
+
+fn is_ascii_ident_start(c: char) -> bool {
+    matches!(c, 'a'..='z' | 'A'..='Z' | '_')
+}
+
+fn is_ascii_ident_char(c: char) -> bool {
+    matches!(c, 'a'..='z' | 'A'..='Z' | '_' | '0'..='9')
 }

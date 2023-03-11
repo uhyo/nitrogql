@@ -13,7 +13,7 @@ use crate::utils::relative_path::relative_path;
 use crate::{
     error::Result,
     source_map_writer::source_writer::{print_source_map_json, SourceWriter},
-    type_printer::query_type_printer::{QueryTypePrinter, QueryTypePrinterOptions},
+    type_printer::operation_type_printer::{QueryTypePrinter, QueryTypePrinterOptions},
 };
 
 use super::context::FileByIndex;

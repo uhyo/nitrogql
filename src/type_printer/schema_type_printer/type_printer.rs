@@ -1,5 +1,6 @@
 use crate::{
     ast::{
+        base::{Ident, Pos},
         type_system::{
             EnumTypeDefinition, InputObjectTypeDefinition, InterfaceTypeDefinition,
             ObjectTypeDefinition, ScalarTypeDefinition, TypeDefinition, TypeSystemDefinition,
@@ -153,13 +154,25 @@ impl TypePrinter for ObjectTypeDefinition<'_> {
         _options: &SchemaTypePrinterOptions,
         writer: &mut impl SourceMapWriter,
     ) -> SchemaTypePrinterResult<()> {
-        let obj_type = TSType::object(self.fields.iter().map(|field| {
-            (
-                &field.name,
-                get_ts_type_of_type(&field.r#type),
-                field.description.clone(),
-            )
-        }));
+        let type_name_ident = Ident {
+            name: "__typename",
+            position: Pos::builtin(),
+        };
+        let obj_type = TSType::object(
+            vec![(
+                &type_name_ident,
+                TSType::StringLiteral(self.name.name.to_owned()),
+                None,
+            )]
+            .into_iter()
+            .chain(self.fields.iter().map(|field| {
+                (
+                    &field.name,
+                    get_ts_type_of_type(&field.r#type),
+                    field.description.clone(),
+                )
+            })),
+        );
 
         print_description(&self.description, writer);
         writer.write_for("export type ", &self.type_keyword);
