@@ -69,18 +69,18 @@ pub trait HasPos {
     fn name(&self) -> Option<&str>;
 }
 
-/// Knows its start and end position.
+/// Knows its start and content.
 pub trait HasSpan {
-    fn span(&self) -> (&Pos, &Pos);
-    fn name(&self) -> Option<&str>;
+    fn position(&self) -> &Pos;
+    fn name(&self) -> &str;
 }
 
 impl<T: HasSpan> HasPos for T {
     fn position(&self) -> &Pos {
-        self.span().0
+        self.position()
     }
     fn name(&self) -> Option<&str> {
-        self.name()
+        Some(self.name())
     }
 }
 
@@ -112,6 +112,38 @@ impl HasPos for Punc<'_> {
     }
     fn position(&self) -> &Pos {
         &self.position
+    }
+}
+impl<'a> From<Pair<'a, Rule>> for Punc<'a> {
+    fn from(value: Pair<'a, Rule>) -> Self {
+        Punc {
+            position: (&value).into(),
+            token: value.as_str(),
+        }
+    }
+}
+
+#[derive(Copy, Clone, Debug, Hash, PartialEq, Eq)]
+pub struct Keyword<'a> {
+    pub name: &'a str,
+    pub position: Pos,
+}
+
+impl HasPos for Keyword<'_> {
+    fn position(&self) -> &Pos {
+        &self.position
+    }
+    fn name(&self) -> Option<&str> {
+        Some(self.name)
+    }
+}
+
+impl<'a> From<Pair<'a, Rule>> for Keyword<'a> {
+    fn from(value: Pair<'a, Rule>) -> Self {
+        Keyword {
+            position: (&value).into(),
+            name: value.as_str(),
+        }
     }
 }
 

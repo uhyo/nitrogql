@@ -138,7 +138,7 @@ impl TypePrinter for ScalarTypeDefinition<'_> {
         };
 
         print_description(&self.description, writer);
-        writer.write("export type ");
+        writer.write_for("export type ", &self.scalar_keyword);
         writer.write_for(self.name.name, &self.name);
         writer.write(" = ");
         writer.write(&scalar_type_str);
@@ -162,7 +162,7 @@ impl TypePrinter for ObjectTypeDefinition<'_> {
         }));
 
         print_description(&self.description, writer);
-        writer.write("export type ");
+        writer.write_for("export type ", &self.type_keyword);
         writer.write_for(self.name.name, &self.name);
         writer.write(" = ");
         obj_type.print_type(writer);
@@ -186,7 +186,7 @@ impl TypePrinter for InterfaceTypeDefinition<'_> {
         }));
 
         print_description(&self.description, writer);
-        writer.write("export type ");
+        writer.write_for("export type ", &self.interface_keyword);
         writer.write_for(self.name.name, &self.name);
         writer.write(" = ");
         obj_type.print_type(writer);
@@ -209,7 +209,7 @@ impl TypePrinter for UnionTypeDefinition<'_> {
         );
 
         print_description(&self.description, writer);
-        writer.write("export type ");
+        writer.write_for("export type ", &self.union_keyword);
         writer.write_for(self.name.name, &self.name);
         writer.write(" = ");
         union_type.print_type(writer);
@@ -232,7 +232,7 @@ impl TypePrinter for EnumTypeDefinition<'_> {
         );
 
         print_description(&self.description, writer);
-        writer.write("export type ");
+        writer.write_for("export type ", &self.enum_keyword);
         writer.write_for(self.name.name, &self.name);
         writer.write(" = ");
         enum_type.print_type(writer);
@@ -265,7 +265,7 @@ impl TypePrinter for InputObjectTypeDefinition<'_> {
         );
 
         print_description(&self.description, writer);
-        writer.write("export type ");
+        writer.write_for("export type ", &self.input_keyword);
         writer.write_for(self.name.name, &self.name);
         writer.write(" = ");
         obj_type.print_type(writer);

@@ -103,6 +103,7 @@ fn build_directive_definition(pair: Pair<Rule>) -> DirectiveDefinition {
             let locations = locations.all_children(Rule::DirectiveLocation);
             locations.into_iter().map(|pair| pair.into()).collect()
         },
+        directive_keyword: keyword.into(),
     }
 }
 

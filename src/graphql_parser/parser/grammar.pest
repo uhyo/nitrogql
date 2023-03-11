@@ -64,6 +64,11 @@ KEYWORD_input = @{ "input" ~ !NameContinue }
 KEYWORD_directive = @{ "directive" ~ !NameContinue }
 KEYWORD_repeatable = @{ "repeatable" ~ !NameContinue }
 
+// punctuations
+PUNC_equal = { "=" }
+PUNC_open_brace = { "{" }
+PUNC_close_brace = { "}" }
+
 // B.4 Document Syntax
 
 // Document = { Definition+ }

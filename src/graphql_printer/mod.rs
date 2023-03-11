@@ -308,7 +308,7 @@ impl GraphQLPrinter for TypeDefinition<'_> {
                     description.print_graphql(writer);
                     writer.write("\n");
                 }
-                writer.write("type ");
+                writer.write_for("type ", &def.type_keyword);
                 def.name.print_graphql(writer);
                 if !def.implements.is_empty() {
                     writer.write(" implements");

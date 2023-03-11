@@ -1,5 +1,5 @@
 use super::{
-    base::{HasPos, Ident, Pos},
+    base::{HasPos, Ident, Keyword, Pos},
     directive::Directive,
     operations::OperationType,
     r#type::Type,
@@ -95,6 +95,8 @@ pub struct ScalarTypeDefinition<'a> {
     pub position: Pos,
     pub name: Ident<'a>,
     pub directives: Vec<Directive<'a>>,
+    // keywords & punctuations
+    pub scalar_keyword: Keyword<'a>,
 }
 
 impl HasPos for ScalarTypeDefinition<'_> {
@@ -114,6 +116,8 @@ pub struct ObjectTypeDefinition<'a> {
     pub implements: Vec<Ident<'a>>,
     pub directives: Vec<Directive<'a>>,
     pub fields: Vec<FieldDefinition<'a>>,
+    // keywords & punctuations
+    pub type_keyword: Keyword<'a>,
 }
 
 impl HasPos for ObjectTypeDefinition<'_> {
@@ -142,6 +146,8 @@ pub struct InterfaceTypeDefinition<'a> {
     pub implements: Vec<Ident<'a>>,
     pub directives: Vec<Directive<'a>>,
     pub fields: Vec<FieldDefinition<'a>>,
+    // keywords & punctuations
+    pub interface_keyword: Keyword<'a>,
 }
 
 impl HasPos for InterfaceTypeDefinition<'_> {
@@ -160,6 +166,8 @@ pub struct UnionTypeDefinition<'a> {
     pub name: Ident<'a>,
     pub directives: Vec<Directive<'a>>,
     pub members: Vec<Ident<'a>>,
+    // keywords & punctuations
+    pub union_keyword: Keyword<'a>,
 }
 
 impl HasPos for UnionTypeDefinition<'_> {
@@ -179,6 +187,8 @@ pub struct DirectiveDefinition<'a> {
     pub arguments: Option<ArgumentsDefinition<'a>>,
     pub repeatable: Option<Ident<'a>>,
     pub locations: Vec<Ident<'a>>,
+    // keywords & punctuations
+    pub directive_keyword: Keyword<'a>,
 }
 
 impl HasPos for DirectiveDefinition<'_> {
@@ -221,6 +231,8 @@ pub struct EnumTypeDefinition<'a> {
     pub name: Ident<'a>,
     pub directives: Vec<Directive<'a>>,
     pub values: Vec<EnumValueDefinition<'a>>,
+    // keywords & punctuations
+    pub enum_keyword: Keyword<'a>,
 }
 
 impl HasPos for EnumTypeDefinition<'_> {
@@ -246,6 +258,8 @@ pub struct InputObjectTypeDefinition<'a> {
     pub name: Ident<'a>,
     pub directives: Vec<Directive<'a>>,
     pub fields: Vec<InputValueDefinition<'a>>,
+    // keywords & punctuations
+    pub input_keyword: Keyword<'a>,
 }
 
 impl HasPos for InputObjectTypeDefinition<'_> {

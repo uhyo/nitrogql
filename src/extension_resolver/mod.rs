@@ -169,6 +169,7 @@ fn merge_scalar_definition<'a>(
             position,
             name,
             directives,
+            scalar_keyword,
         },
         extensions,
     ) = input;
@@ -181,6 +182,7 @@ fn merge_scalar_definition<'a>(
             .into_iter()
             .chain(extensions.into_iter().flat_map(|ext| ext.directives))
             .collect(),
+        scalar_keyword,
     }
 }
 
@@ -195,6 +197,7 @@ fn merge_object_type_definition<'a>(
             implements,
             fields,
             directives,
+            type_keyword,
         },
         extensions,
     ) = input;
@@ -218,6 +221,7 @@ fn merge_object_type_definition<'a>(
             .into_iter()
             .chain(ext_directives.into_iter().flatten())
             .collect(),
+        type_keyword,
     }
 }
 
@@ -232,6 +236,7 @@ fn merge_interface_definition<'a>(
             implements,
             fields,
             directives,
+            interface_keyword,
         },
         extensions,
     ) = input;
@@ -255,6 +260,7 @@ fn merge_interface_definition<'a>(
             .into_iter()
             .chain(ext_directives.into_iter().flatten())
             .collect(),
+        interface_keyword,
     }
 }
 
@@ -268,6 +274,7 @@ fn merge_union_definition<'a>(
             name,
             members,
             directives,
+            union_keyword,
         },
         extensions,
     ) = input;
@@ -285,6 +292,7 @@ fn merge_union_definition<'a>(
             .into_iter()
             .chain(ext_directives.into_iter().flatten())
             .collect(),
+        union_keyword,
     }
 }
 
@@ -298,6 +306,7 @@ fn merge_enum_definition<'a>(
             name,
             values,
             directives,
+            enum_keyword,
         },
         extensions,
     ) = input;
@@ -315,6 +324,7 @@ fn merge_enum_definition<'a>(
             .into_iter()
             .chain(ext_directives.into_iter().flatten())
             .collect(),
+        enum_keyword,
     }
 }
 
@@ -331,6 +341,7 @@ fn merge_input_object_definition<'a>(
             name,
             fields,
             directives,
+            input_keyword,
         },
         extensions,
     ) = input;
@@ -348,6 +359,7 @@ fn merge_input_object_definition<'a>(
             .into_iter()
             .chain(ext_directives.into_iter().flatten())
             .collect(),
+        input_keyword,
     }
 }
 

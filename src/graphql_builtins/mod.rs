@@ -1,5 +1,5 @@
 use crate::ast::{
-    base::{Ident, Pos},
+    base::{Ident, Keyword, Pos},
     r#type::{NamedType, NonNullType, Type},
     type_system::{
         ArgumentsDefinition, DirectiveDefinition, InputValueDefinition, ScalarTypeDefinition,
@@ -97,6 +97,7 @@ fn scalar(name: &str) -> TypeDefinition {
         position: Pos::builtin(),
         name: ident(name),
         directives: vec![],
+        scalar_keyword: keyword("scalar"),
     })
 }
 
@@ -128,11 +129,19 @@ fn directive<'a>(
         },
         repeatable: None,
         locations: locations.into_iter().map(ident).collect(),
+        directive_keyword: keyword("directive"),
     }
 }
 
 fn ident(name: &str) -> Ident {
     Ident {
+        name,
+        position: Pos::builtin(),
+    }
+}
+
+fn keyword(name: &str) -> Keyword {
+    Keyword {
         name,
         position: Pos::builtin(),
     }

@@ -46,6 +46,7 @@ fn build_scalar_type_definition(pair: Pair<Rule>) -> ScalarTypeDefinition {
         position: (&keyword).into(),
         name: name.into(),
         directives: directives.map_or(vec![], build_directives),
+        scalar_keyword: keyword.into(),
     }
 }
 
@@ -67,6 +68,7 @@ fn build_object_type_definition(pair: Pair<Rule>) -> ObjectTypeDefinition {
         implements: implements.map_or(vec![], build_implements_interfaces),
         directives: directives.map_or(vec![], build_directives),
         fields: fields.map_or(vec![], build_fields_definition),
+        type_keyword: keyword.into(),
     }
 }
 
@@ -87,6 +89,7 @@ fn build_interface_type_definition(pair: Pair<Rule>) -> InterfaceTypeDefinition 
         implements: implements.map_or(vec![], build_implements_interfaces),
         directives: directives.map_or(vec![], build_directives),
         fields: fields.map_or(vec![], build_fields_definition),
+        interface_keyword: keyword.into(),
     }
 }
 
@@ -108,6 +111,7 @@ fn build_union_type_definition(pair: Pair<Rule>) -> UnionTypeDefinition {
             let pairs = members.all_children(Rule::NamedType);
             pairs.into_iter().map(|pair| pair.into()).collect()
         }),
+        union_keyword: keyword.into(),
     }
 }
 
@@ -129,6 +133,7 @@ fn build_enum_type_definition(pair: Pair<Rule>) -> EnumTypeDefinition {
             let pairs = pair.all_children(Rule::EnumValueDefinition);
             pairs.into_iter().map(build_enum_value_definition).collect()
         }),
+        enum_keyword: keyword.into(),
     }
 }
 
@@ -147,6 +152,7 @@ fn build_input_object_type_definition(pair: Pair<Rule>) -> InputObjectTypeDefini
         name: name.into(),
         directives: directives.map_or(vec![], build_directives),
         fields: fields.map_or(vec![], build_input_fields_definition),
+        input_keyword: keyword.into(),
     }
 }
 

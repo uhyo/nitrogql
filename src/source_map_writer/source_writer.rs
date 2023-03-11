@@ -1,6 +1,9 @@
 use std::{borrow::Cow, io, path::Path};
 
-use crate::{ast::base::HasPos, utils::relative_path::relative_path};
+use crate::{
+    ast::base::{HasPos, HasSpan},
+    utils::relative_path::relative_path,
+};
 
 use self::{mapping_writer::MappingWriter, name_mapper::NameMapper};
 
@@ -79,19 +82,43 @@ impl SourceMapWriter for SourceWriter {
     }
     fn write_for(&mut self, chunk: &str, node: &impl HasPos) {
         let original_pos = node.position();
-        if !original_pos.builtin {
-            let original_name = node.name().map(|name| self.name_mapper.map_name(name));
+        if original_pos.builtin {
+            self.write(chunk);
+            return;
+        }
+        let original_name = node.name();
+        if let Some(original_name) = original_name {
+            let original_name_idx = self.name_mapper.map_name(original_name);
             self.mapping.add_entry(
                 self.current_line,
                 self.current_column,
                 original_pos.line,
                 original_pos.column,
                 original_pos.file,
-                original_name,
+                Some(original_name_idx),
             );
+            self.write(chunk);
+            self.mapping.add_entry(
+                self.current_line,
+                self.current_column,
+                original_pos.line,
+                original_pos.column + utf16_len(original_name),
+                original_pos.file,
+                None,
+            );
+        } else {
+            self.mapping.add_entry(
+                self.current_line,
+                self.current_column,
+                original_pos.line,
+                original_pos.column,
+                original_pos.file,
+                None,
+            );
+            self.write(chunk);
         }
-        self.write(chunk);
     }
+
     fn indent(&mut self) {
         self.indent += 2;
         self.indent_str = " ".repeat(self.indent);
