@@ -14,7 +14,7 @@ pub fn get_ts_type_of_type(ty: &Type) -> TSType {
 /// With nullability flag
 fn get_ts_type_of_type_impl(ty: &Type) -> (TSType, bool) {
     match ty {
-        Type::Named(name) => (TSType::TypeVariable(name.name.name.to_owned()), true),
+        Type::Named(name) => (TSType::TypeVariable((&name.name).into()), true),
         Type::List(ty) => (
             TSType::Array(Box::new(get_ts_type_of_type(&ty.r#type))),
             true,

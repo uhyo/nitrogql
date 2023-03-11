@@ -57,7 +57,7 @@ fn get_schema_metadata_type(document: &TypeSystemDocument) -> TSType {
         return TSType::object(schema_def.definitions.iter().map(|(op, ty)| {
             (
                 op.as_str(),
-                TSType::TypeVariable(ty.name.to_owned()),
+                TSType::TypeVariable(ty.into()),
                 schema_def.description.clone(),
             )
         }));
@@ -74,13 +74,13 @@ fn get_schema_metadata_type(document: &TypeSystemDocument) -> TSType {
 
         match def.name.name {
             "Query" => {
-                operations.push(("query", def.name.name.into()));
+                operations.push(("query", (&def.name).into()));
             }
             "Mutation" => {
-                operations.push(("mutation", def.name.name.into()));
+                operations.push(("mutation", (&def.name).into()));
             }
             "Subscription" => {
-                operations.push(("subscription", def.name.name.into()));
+                operations.push(("subscription", (&def.name).into()));
             }
             _ => {}
         }
@@ -204,7 +204,7 @@ impl TypePrinter for UnionTypeDefinition<'_> {
         let union_type = TSType::Union(
             self.members
                 .iter()
-                .map(|mem| TSType::TypeVariable(mem.name.to_owned()))
+                .map(|mem| TSType::TypeVariable(mem.into()))
                 .collect(),
         );
 

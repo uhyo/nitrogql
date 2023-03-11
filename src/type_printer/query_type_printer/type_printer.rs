@@ -111,7 +111,9 @@ impl TypePrinter for FragmentDefinition<'_> {
         writer.write(" = ");
 
         let parent_type = TSType::IndexType(
-            Box::new(TSType::TypeVariable(options.schema_root_namespace.clone())),
+            Box::new(TSType::TypeVariable(
+                options.schema_root_namespace.as_str().into(),
+            )),
             Box::new(TSType::StringLiteral(self.type_condition.name.to_owned())),
         );
         get_type_for_selection_set(&self.selection_set, parent_type).print_type(writer);
@@ -135,7 +137,7 @@ fn get_type_for_selection_set(selection_set: &SelectionSet, parent_type: TSType)
                 TSType::object(vec![(property_name, field_sel_type, None)])
             }
             Selection::FragmentSpread(ref fragment) => {
-                TSType::TypeVariable(fragment.fragment_name.name.to_owned())
+                TSType::TypeVariable((&fragment.fragment_name).into())
             }
             Selection::InlineFragment(ref fragment) => match fragment.type_condition {
                 None => get_type_for_selection_set(&fragment.selection_set, parent_type.clone()),
@@ -144,7 +146,7 @@ fn get_type_for_selection_set(selection_set: &SelectionSet, parent_type: TSType)
                 {
                     get_type_for_selection_set(
                         &fragment.selection_set,
-                        TSType::TypeVariable(cond.name.to_owned()),
+                        TSType::TypeVariable(cond.into()),
                     )
                 }
             },

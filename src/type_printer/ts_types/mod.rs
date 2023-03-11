@@ -14,7 +14,7 @@ pub mod type_to_ts_type;
 #[derive(Clone, Debug)]
 pub enum TSType {
     /// Type variable
-    TypeVariable(String),
+    TypeVariable(TypeVariable),
     /// Type Function Application
     TypeFunc(Box<TSType>, Vec<TSType>),
     /// String literal type
@@ -41,6 +41,39 @@ pub enum TSType {
     Never,
     /// Unknown
     Unknown,
+}
+
+#[derive(Clone, Debug)]
+pub struct TypeVariable {
+    name: String,
+    pos: Pos,
+}
+
+impl HasPos for TypeVariable {
+    fn name(&self) -> Option<&str> {
+        Some(&self.name)
+    }
+    fn position(&self) -> &Pos {
+        &self.pos
+    }
+}
+
+impl<'a> From<&'a Ident<'a>> for TypeVariable {
+    fn from(value: &'a Ident<'a>) -> Self {
+        TypeVariable {
+            name: value.name.to_owned(),
+            pos: value.position,
+        }
+    }
+}
+
+impl<'a> From<&'a str> for TypeVariable {
+    fn from(value: &'a str) -> Self {
+        TypeVariable {
+            name: value.to_owned(),
+            pos: Pos::builtin(),
+        }
+    }
 }
 
 #[derive(Clone, Debug)]
@@ -90,7 +123,7 @@ impl TSType {
     pub fn print_type(&self, writer: &mut impl SourceMapWriter) {
         match self {
             TSType::TypeVariable(ref v) => {
-                writer.write(v);
+                writer.write_for(&v.name, v);
             }
             TSType::TypeFunc(ref f, ref args) => {
                 f.print_type(writer);
