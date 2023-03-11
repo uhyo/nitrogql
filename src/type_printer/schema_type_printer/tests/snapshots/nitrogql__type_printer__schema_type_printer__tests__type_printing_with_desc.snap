@@ -10,6 +10,7 @@ export type __nitrogql_schema = {
  * This is User.
  */
 export type User = {
+  __typename: "User";
   id: ID;
   /**
    * Name of user.
@@ -24,10 +25,12 @@ export type User = {
 };
 
 export type Bot = {
+  __typename: "Bot";
   id: ID;
 };
 
 export type Post = {
+  __typename: "Post";
   id: ID;
   title: String;
   tags: (String)[] | null;
@@ -35,6 +38,7 @@ export type Post = {
 };
 
 export type Query = {
+  __typename: "Query";
   /**
    * Returns my account.
    * Note that query without authorization header results in a error.
