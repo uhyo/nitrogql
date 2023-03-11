@@ -139,13 +139,18 @@ fn get_type_for_selection_set(
                 let property_name = field.alias.unwrap_or_else(|| field.name.clone()).name;
                 let field_type =
                     wrap_with_selection_field_helper(options, parent_type.clone(), field.name.name);
+                let field_type_var = TSType::TypeVariable("__1".into());
                 let field_sel_type = match field.selection_set {
                     None => field_type,
-                    Some(ref set) => wrap_with_selection_set_helper(
-                        options,
-                        field_type.clone(),
-                        get_type_for_selection_set(options, set, field_type),
-                    ),
+                    Some(ref set) => TSType::Let {
+                        var: "__1".to_owned(),
+                        r#type: Box::new(field_type),
+                        r#in: Box::new(wrap_with_selection_set_helper(
+                            options,
+                            field_type_var.clone(),
+                            get_type_for_selection_set(options, set, field_type_var),
+                        )),
+                    },
                 };
                 TSType::object(vec![(property_name, field_sel_type, None)])
             }

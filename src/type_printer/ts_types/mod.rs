@@ -41,6 +41,12 @@ pub enum TSType {
     Never,
     /// Unknown
     Unknown,
+    /// Not a real TS syntax. Pseudo syntax for defining local type variable
+    Let {
+        var: String,
+        r#type: Box<TSType>,
+        r#in: Box<TSType>,
+    },
 }
 
 #[derive(Clone, Debug)]
@@ -227,6 +233,21 @@ impl TSType {
             TSType::Unknown => {
                 writer.write("unknown");
             }
+            TSType::Let {
+                ref var,
+                r#type: ref ty,
+                r#in: ref in_type,
+            } => {
+                ty.print_type(writer);
+                writer.write(" extends infer ");
+                writer.write(&var);
+                writer.write("\n");
+                writer.indent();
+                writer.write("? ");
+                in_type.print_type(writer);
+                writer.write("\n: unknown");
+                writer.dedent();
+            }
         }
     }
 
@@ -259,6 +280,11 @@ impl TSType {
             TSType::IndexType(t1, t2) => {
                 TSType::IndexType(Box::new((*t1).to_readonly()), Box::new((*t2).to_readonly()))
             }
+            TSType::Let { var, r#type, r#in } => TSType::Let {
+                var,
+                r#type: Box::new((*r#type).to_readonly()),
+                r#in: Box::new((*r#in).to_readonly()),
+            },
             t @ TSType::TypeVariable(_)
             | t @ TSType::StringLiteral(_)
             | t @ TSType::NamespaceMember(_, _)
