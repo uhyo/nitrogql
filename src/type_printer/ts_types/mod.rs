@@ -1,4 +1,10 @@
-use crate::{ast::value::StringValue, source_map_writer::writer::SourceMapWriter};
+use crate::{
+    ast::{
+        base::{HasPos, Ident, Pos},
+        value::StringValue,
+    },
+    source_map_writer::writer::SourceMapWriter,
+};
 
 use super::jsdoc::print_description;
 
@@ -39,11 +45,44 @@ pub enum TSType {
 
 #[derive(Clone, Debug)]
 pub struct ObjectField {
-    pub key: String,
+    pub key: ObjectKey,
     pub r#type: TSType,
     pub readonly: bool,
     pub optional: bool,
     pub description: Option<StringValue>,
+}
+
+#[derive(Clone, Debug)]
+pub struct ObjectKey {
+    pub name: String,
+    pub pos: Pos,
+}
+
+impl HasPos for ObjectKey {
+    fn name(&self) -> Option<&str> {
+        Some(&self.name)
+    }
+    fn position(&self) -> &Pos {
+        &self.pos
+    }
+}
+
+impl<'a> From<&'a Ident<'a>> for ObjectKey {
+    fn from(value: &'a Ident) -> Self {
+        ObjectKey {
+            name: value.name.to_owned(),
+            pos: value.position,
+        }
+    }
+}
+
+impl<'a> From<&'a str> for ObjectKey {
+    fn from(value: &'a str) -> Self {
+        ObjectKey {
+            name: value.to_owned(),
+            pos: Pos::builtin(),
+        }
+    }
 }
 
 impl TSType {
@@ -95,11 +134,11 @@ impl TSType {
                     if field.readonly {
                         writer.write("readonly ");
                     }
-                    if is_raw_ident(&field.key) {
-                        writer.write(&field.key);
+                    if is_raw_ident(&field.key.name) {
+                        writer.write_for(&field.key.name, &field.key);
                     } else {
                         writer.write("\"");
-                        writer.write(&field.key);
+                        writer.write(&field.key.name);
                         writer.write("\"");
                     }
                     if field.optional {
@@ -196,15 +235,20 @@ impl TSType {
         }
     }
 
+    /// Creates an empty object type.
+    pub fn empty_object() -> TSType {
+        TSType::Object(vec![])
+    }
+
     /// Creates an object type from given set of non-readonly, non-optional properties.
-    pub fn object(
-        properties: impl IntoIterator<Item = (String, TSType, Option<StringValue>)>,
+    pub fn object<'a, S: Into<ObjectKey>>(
+        properties: impl IntoIterator<Item = (S, TSType, Option<StringValue>)>,
     ) -> TSType {
         TSType::Object(
             properties
                 .into_iter()
                 .map(|(key, ty, description)| ObjectField {
-                    key,
+                    key: key.into(),
                     r#type: ty,
                     readonly: false,
                     optional: false,

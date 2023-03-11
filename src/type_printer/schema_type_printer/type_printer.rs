@@ -56,7 +56,7 @@ fn get_schema_metadata_type(document: &TypeSystemDocument) -> TSType {
     if let Some(schema_def) = schema_definition {
         return TSType::object(schema_def.definitions.iter().map(|(op, ty)| {
             (
-                op.as_str().to_owned(),
+                op.as_str(),
                 TSType::TypeVariable(ty.name.to_owned()),
                 schema_def.description.clone(),
             )
@@ -74,13 +74,13 @@ fn get_schema_metadata_type(document: &TypeSystemDocument) -> TSType {
 
         match def.name.name {
             "Query" => {
-                operations.push(("query".into(), def.name.name.into()));
+                operations.push(("query", def.name.name.into()));
             }
             "Mutation" => {
-                operations.push(("mutation".into(), def.name.name.into()));
+                operations.push(("mutation", def.name.name.into()));
             }
             "Subscription" => {
-                operations.push(("subscription".into(), def.name.name.into()));
+                operations.push(("subscription", def.name.name.into()));
             }
             _ => {}
         }
@@ -155,7 +155,7 @@ impl TypePrinter for ObjectTypeDefinition<'_> {
     ) -> SchemaTypePrinterResult<()> {
         let obj_type = TSType::object(self.fields.iter().map(|field| {
             (
-                field.name.name.to_owned(),
+                &field.name,
                 get_ts_type_of_type(&field.r#type),
                 field.description.clone(),
             )
@@ -179,7 +179,7 @@ impl TypePrinter for InterfaceTypeDefinition<'_> {
     ) -> SchemaTypePrinterResult<()> {
         let obj_type = TSType::object(self.fields.iter().map(|field| {
             (
-                field.name.name.to_owned(),
+                &field.name,
                 get_ts_type_of_type(&field.r#type),
                 field.description.clone(),
             )
@@ -253,7 +253,7 @@ impl TypePrinter for InputObjectTypeDefinition<'_> {
                 .map(|field| {
                     let ts_type = get_ts_type_of_type(&field.r#type).to_readonly();
                     ObjectField {
-                        key: field.name.name.to_owned(),
+                        key: (&field.name).into(),
                         r#type: ts_type,
                         readonly: true,
                         optional: options.input_nullable_field_is_optional

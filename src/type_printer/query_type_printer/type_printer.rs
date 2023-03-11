@@ -74,12 +74,12 @@ impl TypePrinter for OperationDefinition<'_> {
         let input_variable_type = self
             .variables_definition
             .as_ref()
-            .map_or(TSType::object(vec![]), get_type_for_variable_definitions);
+            .map_or(TSType::empty_object(), get_type_for_variable_definitions);
         let input_variable_name = format!("{}{}", query_name, options.variable_type_suffix);
 
         writer.write("type ");
         writer.write_for(&input_variable_name, &self.name_pos());
-        writer.write_for(" = ", &self.selection_set);
+        writer.write(" = ");
         input_variable_type.print_type(writer);
         writer.write(";\n\n");
 
@@ -125,11 +125,7 @@ fn get_type_for_selection_set(selection_set: &SelectionSet, parent_type: TSType)
         .iter()
         .map(|sel| match sel {
             Selection::Field(ref field) => {
-                let property_name = field
-                    .alias
-                    .unwrap_or_else(|| field.name.clone())
-                    .name
-                    .to_owned();
+                let property_name = field.alias.unwrap_or_else(|| field.name.clone()).name;
                 let key = TSType::StringLiteral(field.name.name.to_owned());
                 let field_type = TSType::IndexType(Box::new(parent_type.clone()), Box::new(key));
                 let field_sel_type = match field.selection_set {
@@ -162,14 +158,14 @@ fn get_type_for_variable_definitions(definitions: &VariablesDefinition) -> TSTyp
         .definitions
         .iter()
         .map(|def| {
-            let property_name = def.name.name.to_owned();
+            let property_name = def.name.name;
             let field_type = get_ts_type_of_type(&def.r#type);
             TSType::object(vec![(property_name, field_type, None)])
         })
         .collect();
 
     if types_for_each_field.is_empty() {
-        TSType::object(vec![])
+        TSType::empty_object()
     } else {
         ts_intersection(types_for_each_field)
     }
