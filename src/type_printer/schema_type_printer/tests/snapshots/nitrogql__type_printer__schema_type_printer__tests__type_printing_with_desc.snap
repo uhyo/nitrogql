@@ -58,12 +58,7 @@ export type Query = {
 /**
  * Node that has an id field.
  */
-export type HasID = {
-  /**
-   * ID of node that is globally unique.
-   */
-  id: ID;
-};
+export type HasID = User | Bot;
 
 export type UserType = "NormalUser" | "PremiumUser";
 

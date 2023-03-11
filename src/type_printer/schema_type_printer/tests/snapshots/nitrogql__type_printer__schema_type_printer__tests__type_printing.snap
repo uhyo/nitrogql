@@ -42,9 +42,7 @@ export type Query = {
   me: User;
 };
 
-export type HasID = {
-  id: ID;
-};
+export type HasID = User | Bot;
 
 export type UserType = "NormalUser" | "PremiumUser";
 

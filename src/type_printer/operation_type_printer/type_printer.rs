@@ -131,50 +131,44 @@ fn get_type_for_selection_set(
     selection_set: &SelectionSet,
     parent_type: TSType,
 ) -> TSType {
-    let types_for_each_field = selection_set
-        .selections
-        .iter()
-        .map(|sel| match sel {
-            Selection::Field(ref field) => {
-                let property_name = field.alias.unwrap_or_else(|| field.name.clone()).name;
-                let field_type =
-                    wrap_with_selection_field_helper(options, parent_type.clone(), field.name.name);
-                let field_type_var = TSType::TypeVariable("__1".into());
-                let field_sel_type = match field.selection_set {
-                    None => field_type,
-                    Some(ref set) => TSType::Let {
-                        var: "__1".to_owned(),
-                        r#type: Box::new(field_type),
-                        r#in: Box::new(wrap_with_selection_set_helper(
-                            options,
-                            field_type_var.clone(),
-                            get_type_for_selection_set(options, set, field_type_var),
-                        )),
-                    },
-                };
-                TSType::object(vec![(property_name, field_sel_type, None)])
+    let types_for_each_field = selection_set.selections.iter().map(|sel| match sel {
+        Selection::Field(ref field) => {
+            let property_name = field.alias.unwrap_or_else(|| field.name.clone()).name;
+            let field_type =
+                wrap_with_selection_field_helper(options, parent_type.clone(), field.name.name);
+            let field_type_var = TSType::TypeVariable("__1".into());
+            let field_sel_type = match field.selection_set {
+                None => field_type,
+                Some(ref set) => TSType::Let {
+                    var: "__1".to_owned(),
+                    r#type: Box::new(field_type),
+                    r#in: Box::new(wrap_with_selection_set_helper(
+                        options,
+                        field_type_var.clone(),
+                        get_type_for_selection_set(options, set, field_type_var),
+                    )),
+                },
+            };
+            TSType::object(vec![(property_name, field_sel_type, None)])
+        }
+        Selection::FragmentSpread(ref fragment) => {
+            TSType::TypeVariable((&fragment.fragment_name).into())
+        }
+        Selection::InlineFragment(ref fragment) => match fragment.type_condition {
+            None => {
+                get_type_for_selection_set(options, &fragment.selection_set, parent_type.clone())
             }
-            Selection::FragmentSpread(ref fragment) => {
-                TSType::TypeVariable((&fragment.fragment_name).into())
-            }
-            Selection::InlineFragment(ref fragment) => match fragment.type_condition {
-                None => get_type_for_selection_set(
+            Some(ref cond) =>
+            // TODO: this isn't correct
+            {
+                get_type_for_selection_set(
                     options,
                     &fragment.selection_set,
-                    parent_type.clone(),
-                ),
-                Some(ref cond) =>
-                // TODO: this isn't correct
-                {
-                    get_type_for_selection_set(
-                        options,
-                        &fragment.selection_set,
-                        TSType::TypeVariable(cond.into()),
-                    )
-                }
-            },
-        })
-        .collect();
+                    TSType::TypeVariable(cond.into()),
+                )
+            }
+        },
+    });
     ts_intersection(types_for_each_field)
 }
 

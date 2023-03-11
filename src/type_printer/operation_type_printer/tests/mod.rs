@@ -100,6 +100,34 @@ fn fragment_spread() {
 }
 
 #[test]
+fn fragment_spread_cond() {
+    let doc = parse_operation_document(
+        "
+        query {
+            me {
+                id name type age
+                posts {
+                    id
+                    ...F
+                    ...P
+                }
+            }
+        }
+        fragment F on HasId {
+            id
+        }
+        fragment P on Post {
+            title
+            body
+        }
+        ",
+    )
+    .unwrap();
+    let printed = print_document(&doc);
+    assert_snapshot!(printed);
+}
+
+#[test]
 fn fragment_inline_spread() {
     let doc = parse_operation_document(
         "

@@ -10,20 +10,22 @@ use crate::{
         TypeSystemDocument,
     },
     source_map_writer::writer::SourceMapWriter,
-    type_printer::ts_types::{type_to_ts_type::get_ts_type_of_type, ObjectField, TSType},
+    type_printer::ts_types::{
+        ts_types_util::ts_union, type_to_ts_type::get_ts_type_of_type, ObjectField, TSType,
+    },
 };
 
 use crate::type_printer::jsdoc::print_description as jsdoc_print_description;
 
 use super::{
     error::{SchemaTypePrinterError, SchemaTypePrinterResult},
-    printer::SchemaTypePrinterOptions,
+    printer::SchemaTypePrinterContext,
 };
 
 pub trait TypePrinter {
     fn print_type(
         &self,
-        options: &SchemaTypePrinterOptions,
+        context: &SchemaTypePrinterContext,
         writer: &mut impl SourceMapWriter,
     ) -> SchemaTypePrinterResult<()>;
 }
@@ -31,12 +33,12 @@ pub trait TypePrinter {
 impl TypePrinter for TypeSystemDocument<'_> {
     fn print_type(
         &self,
-        options: &SchemaTypePrinterOptions,
+        context: &SchemaTypePrinterContext,
         writer: &mut impl SourceMapWriter,
     ) -> SchemaTypePrinterResult<()> {
         let schema_metadata_type = get_schema_metadata_type(self);
         writer.write("export type ");
-        writer.write(&options.schema_metadata_type);
+        writer.write(&context.options.schema_metadata_type);
         writer.write(" = ");
         schema_metadata_type.print_type(writer);
         writer.write(";\n\n");
@@ -55,7 +57,7 @@ export type __SelectionField<Obj, Key extends string> =
         );
 
         for def in self.definitions.iter() {
-            def.print_type(options, writer)?;
+            def.print_type(context, writer)?;
             writer.write("\n");
         }
         Ok(())
@@ -110,12 +112,12 @@ fn get_schema_metadata_type(document: &TypeSystemDocument) -> TSType {
 impl TypePrinter for TypeSystemDefinition<'_> {
     fn print_type(
         &self,
-        options: &SchemaTypePrinterOptions,
+        context: &SchemaTypePrinterContext,
         writer: &mut impl SourceMapWriter,
     ) -> SchemaTypePrinterResult<()> {
         match self {
             TypeSystemDefinition::SchemaDefinition(_) => Ok(()),
-            TypeSystemDefinition::TypeDefinition(def) => def.print_type(options, writer),
+            TypeSystemDefinition::TypeDefinition(def) => def.print_type(context, writer),
             TypeSystemDefinition::DirectiveDefinition(_) => Ok(()),
         }
     }
@@ -124,16 +126,16 @@ impl TypePrinter for TypeSystemDefinition<'_> {
 impl TypePrinter for TypeDefinition<'_> {
     fn print_type(
         &self,
-        options: &SchemaTypePrinterOptions,
+        context: &SchemaTypePrinterContext,
         writer: &mut impl SourceMapWriter,
     ) -> SchemaTypePrinterResult<()> {
         match self {
-            TypeDefinition::Scalar(def) => def.print_type(options, writer),
-            TypeDefinition::Object(def) => def.print_type(options, writer),
-            TypeDefinition::Interface(def) => def.print_type(options, writer),
-            TypeDefinition::Union(def) => def.print_type(options, writer),
-            TypeDefinition::Enum(def) => def.print_type(options, writer),
-            TypeDefinition::InputObject(def) => def.print_type(options, writer),
+            TypeDefinition::Scalar(def) => def.print_type(context, writer),
+            TypeDefinition::Object(def) => def.print_type(context, writer),
+            TypeDefinition::Interface(def) => def.print_type(context, writer),
+            TypeDefinition::Union(def) => def.print_type(context, writer),
+            TypeDefinition::Enum(def) => def.print_type(context, writer),
+            TypeDefinition::InputObject(def) => def.print_type(context, writer),
         }
     }
 }
@@ -141,10 +143,10 @@ impl TypePrinter for TypeDefinition<'_> {
 impl TypePrinter for ScalarTypeDefinition<'_> {
     fn print_type(
         &self,
-        options: &SchemaTypePrinterOptions,
+        context: &SchemaTypePrinterContext,
         writer: &mut impl SourceMapWriter,
     ) -> SchemaTypePrinterResult<()> {
-        let Some(scalar_type_str) = options.scalar_types.get(self.name.name) else {
+        let Some(scalar_type_str) = context.options.scalar_types.get(self.name.name) else {
             return Err(SchemaTypePrinterError::ScalarTypeNotProvided {
                 position: self.position,
                 name: self.name.name.to_owned(),
@@ -164,7 +166,7 @@ impl TypePrinter for ScalarTypeDefinition<'_> {
 impl TypePrinter for ObjectTypeDefinition<'_> {
     fn print_type(
         &self,
-        _options: &SchemaTypePrinterOptions,
+        _context: &SchemaTypePrinterContext,
         writer: &mut impl SourceMapWriter,
     ) -> SchemaTypePrinterResult<()> {
         let type_name_ident = Ident {
@@ -200,22 +202,32 @@ impl TypePrinter for ObjectTypeDefinition<'_> {
 impl TypePrinter for InterfaceTypeDefinition<'_> {
     fn print_type(
         &self,
-        _options: &SchemaTypePrinterOptions,
+        context: &SchemaTypePrinterContext,
         writer: &mut impl SourceMapWriter,
     ) -> SchemaTypePrinterResult<()> {
-        let obj_type = TSType::object(self.fields.iter().map(|field| {
-            (
-                &field.name,
-                get_ts_type_of_type(&field.r#type),
-                field.description.clone(),
-            )
-        }));
+        // In generated type definitions, an interface is expressed as a union of all possible concrete types.
+        let union_constituents = context.document.definitions.iter().filter_map(|def| {
+            if let TypeSystemDefinition::TypeDefinition(TypeDefinition::Object(ref obj_def)) = def {
+                if obj_def
+                    .implements
+                    .iter()
+                    .any(|imp| imp.name == self.name.name)
+                {
+                    Some(TSType::TypeVariable((&obj_def.name).into()))
+                } else {
+                    None
+                }
+            } else {
+                None
+            }
+        });
+        let intf_type = ts_union(union_constituents);
 
         print_description(&self.description, writer);
         writer.write_for("export type ", &self.interface_keyword);
         writer.write_for(self.name.name, &self.name);
         writer.write(" = ");
-        obj_type.print_type(writer);
+        intf_type.print_type(writer);
         writer.write(";\n");
         Ok(())
     }
@@ -224,7 +236,7 @@ impl TypePrinter for InterfaceTypeDefinition<'_> {
 impl TypePrinter for UnionTypeDefinition<'_> {
     fn print_type(
         &self,
-        _options: &SchemaTypePrinterOptions,
+        _context: &SchemaTypePrinterContext,
         writer: &mut impl SourceMapWriter,
     ) -> SchemaTypePrinterResult<()> {
         let union_type = TSType::Union(
@@ -247,7 +259,7 @@ impl TypePrinter for UnionTypeDefinition<'_> {
 impl TypePrinter for EnumTypeDefinition<'_> {
     fn print_type(
         &self,
-        _options: &SchemaTypePrinterOptions,
+        _context: &SchemaTypePrinterContext,
         writer: &mut impl SourceMapWriter,
     ) -> SchemaTypePrinterResult<()> {
         let enum_type = TSType::Union(
@@ -270,7 +282,7 @@ impl TypePrinter for EnumTypeDefinition<'_> {
 impl TypePrinter for InputObjectTypeDefinition<'_> {
     fn print_type(
         &self,
-        options: &SchemaTypePrinterOptions,
+        context: &SchemaTypePrinterContext,
         writer: &mut impl SourceMapWriter,
     ) -> SchemaTypePrinterResult<()> {
         let obj_type = TSType::Object(
@@ -282,7 +294,7 @@ impl TypePrinter for InputObjectTypeDefinition<'_> {
                         key: (&field.name).into(),
                         r#type: ts_type,
                         readonly: true,
-                        optional: options.input_nullable_field_is_optional
+                        optional: context.options.input_nullable_field_is_optional
                             && !field.r#type.is_nonnull(),
                         description: field.description.clone(),
                     }

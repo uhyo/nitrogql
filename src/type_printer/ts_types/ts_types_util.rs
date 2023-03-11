@@ -3,7 +3,7 @@ use std::ops::Not;
 use super::TSType;
 
 /// Calculates intersection of given list of types.
-pub fn ts_intersection(types: Vec<TSType>) -> TSType {
+pub fn ts_intersection(types: impl IntoIterator<Item = TSType>) -> TSType {
     let mut types = types.into_iter();
 
     let Some(fst) = types.next() else {
@@ -35,4 +35,19 @@ pub fn ts_intersection(types: Vec<TSType>) -> TSType {
     } else {
         TSType::Intersection(object_type.into_iter().chain(others).collect())
     }
+}
+
+/// Calculates union of given list of types.
+pub fn ts_union(types: impl IntoIterator<Item = TSType>) -> TSType {
+    let mut types = types.into_iter();
+
+    let Some(fst) = types.next() else {
+        return TSType::Never;
+    };
+    let Some(snd) = types.next() else {
+        return fst;
+    };
+    let types = vec![fst, snd].into_iter().chain(types).collect::<Vec<_>>();
+
+    TSType::Union(types)
 }

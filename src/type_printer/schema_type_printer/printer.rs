@@ -23,6 +23,11 @@ impl Default for SchemaTypePrinterOptions {
     }
 }
 
+pub struct SchemaTypePrinterContext<'src> {
+    pub options: &'src SchemaTypePrinterOptions,
+    pub document: &'src TypeSystemDocument<'src>,
+}
+
 pub struct SchemaTypePrinter<'a, Writer: SourceMapWriter> {
     options: SchemaTypePrinterOptions,
     writer: &'a mut Writer,
@@ -37,7 +42,11 @@ where
     }
 
     pub fn print_document(&mut self, document: &TypeSystemDocument) -> SchemaTypePrinterResult<()> {
-        document.print_type(&self.options, self.writer)?;
+        let context = SchemaTypePrinterContext {
+            options: &self.options,
+            document,
+        };
+        document.print_type(&context, self.writer)?;
         Ok(())
     }
 }
