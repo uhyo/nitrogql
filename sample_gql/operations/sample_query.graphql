@@ -1,5 +1,10 @@
 query sample {
   user {
     id
+    age
+    posts {
+      id
+      title
+    }
   }
 }

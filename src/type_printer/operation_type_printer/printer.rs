@@ -83,13 +83,7 @@ where
             "import type * as {} from \"{}\";\n\n",
             self.options.schema_root_namespace, self.options.schema_source,
         ));
-        // Emit utility type
-        self.writer.write(
-            "type Beautify<Obj> = { [K in keyof Obj]: Obj[K] } & {};
-type KeepDoc<Orig, Obj extends Partial<Record<keyof Orig, unknown>>> = Beautify<Pick<{
-  [K in keyof Orig]: Obj[K]
-}, Extract<keyof Orig, keyof Obj>>>;\n\n",
-        );
+
         document.print_type(&self.options, self.writer);
     }
 }

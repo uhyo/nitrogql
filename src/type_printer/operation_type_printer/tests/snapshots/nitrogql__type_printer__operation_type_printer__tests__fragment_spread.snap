@@ -1,0 +1,28 @@
+---
+source: src/type_printer/operation_type_printer/tests/mod.rs
+expression: printed
+---
+import type { TypedDocumentNode } from "@graphql-typed-document-node/core";
+import type * as Schema from "";
+
+type Query = Schema.__SelectionSet<Schema.Query, {
+  me: Schema.__SelectionSet<Schema.__SelectionField<Schema.Query, "me">, {
+    id: Schema.__SelectionField<Schema.__SelectionField<Schema.Query, "me">, "id">;
+    name: Schema.__SelectionField<Schema.__SelectionField<Schema.Query, "me">, "name">;
+    type: Schema.__SelectionField<Schema.__SelectionField<Schema.Query, "me">, "type">;
+    age: Schema.__SelectionField<Schema.__SelectionField<Schema.Query, "me">, "age">;
+    posts: Schema.__SelectionSet<Schema.__SelectionField<Schema.__SelectionField<Schema.Query, "me">, "posts">, {
+      id: Schema.__SelectionField<Schema.__SelectionField<Schema.__SelectionField<Schema.Query, "me">, "posts">, "id">;
+    } & F>;
+  }>;
+}>;
+
+type Variables = {};
+
+export const Query: TypedDocumentNode<Query, Variables>;
+
+export type F = Schema.__SelectionSet<Schema.HasId, {
+  id: Schema.__SelectionField<Schema.HasId, "id">;
+}>;
+
+

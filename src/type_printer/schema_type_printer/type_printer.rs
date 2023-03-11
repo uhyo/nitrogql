@@ -40,6 +40,19 @@ impl TypePrinter for TypeSystemDocument<'_> {
         writer.write(" = ");
         schema_metadata_type.print_type(writer);
         writer.write(";\n\n");
+        // Print utility types
+        writer.write(
+            "type __Beautify<Obj> = { [K in keyof Obj]: Obj[K] } & {};
+export type __SelectionSet<Orig, Obj> =
+  Orig extends (infer T)[] ? __SelectionSet<T, Obj>[] :
+  __Beautify<Pick<{
+    [K in keyof Orig]: Obj extends Record<K, infer V> ? V : unknown
+  }, Extract<keyof Orig, keyof Obj>>>;
+export type __SelectionField<Obj, Key extends string> =
+  Obj extends (infer T)[] ? __SelectionField<T, Key> :
+  Obj extends Record<Key, infer V> ? V : unknown;
+",
+        );
 
         for def in self.definitions.iter() {
             def.print_type(options, writer)?;

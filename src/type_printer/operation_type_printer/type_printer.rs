@@ -57,16 +57,18 @@ impl TypePrinter for OperationDefinition<'_> {
         writer.write("type ");
         writer.write_for(&query_type_name, &self.name_pos());
         writer.write_for(" = ", &self.selection_set);
-        get_type_for_selection_set(
-            &self.selection_set,
-            TSType::NamespaceMember(
-                options.schema_root_namespace.clone(),
-                match self.operation_type {
-                    OperationType::Query => options.schema_root_types.query.clone(),
-                    OperationType::Mutation => options.schema_root_types.mutation.clone(),
-                    OperationType::Subscription => options.schema_root_types.subscription.clone(),
-                },
-            ),
+        let parent_type = TSType::NamespaceMember(
+            options.schema_root_namespace.clone(),
+            match self.operation_type {
+                OperationType::Query => options.schema_root_types.query.clone(),
+                OperationType::Mutation => options.schema_root_types.mutation.clone(),
+                OperationType::Subscription => options.schema_root_types.subscription.clone(),
+            },
+        );
+        wrap_with_selection_set_helper(
+            options,
+            parent_type.clone(),
+            get_type_for_selection_set(options, &self.selection_set, parent_type),
         )
         .print_type(writer);
         writer.write(";\n\n");
@@ -110,29 +112,40 @@ impl TypePrinter for FragmentDefinition<'_> {
         writer.write_for(&self.name.name, self);
         writer.write(" = ");
 
-        let parent_type = TSType::IndexType(
-            Box::new(TSType::TypeVariable(
-                options.schema_root_namespace.as_str().into(),
-            )),
-            Box::new(TSType::StringLiteral(self.type_condition.name.to_owned())),
+        let parent_type = TSType::NamespaceMember(
+            options.schema_root_namespace.clone(),
+            self.type_condition.name.to_owned(),
         );
-        get_type_for_selection_set(&self.selection_set, parent_type).print_type(writer);
+        let fragment_type = wrap_with_selection_set_helper(
+            options,
+            parent_type.clone(),
+            get_type_for_selection_set(options, &self.selection_set, parent_type),
+        );
+        fragment_type.print_type(writer);
         writer.write(";\n\n");
     }
 }
 
-fn get_type_for_selection_set(selection_set: &SelectionSet, parent_type: TSType) -> TSType {
+fn get_type_for_selection_set(
+    options: &QueryTypePrinterOptions,
+    selection_set: &SelectionSet,
+    parent_type: TSType,
+) -> TSType {
     let types_for_each_field = selection_set
         .selections
         .iter()
         .map(|sel| match sel {
             Selection::Field(ref field) => {
                 let property_name = field.alias.unwrap_or_else(|| field.name.clone()).name;
-                let key = TSType::StringLiteral(field.name.name.to_owned());
-                let field_type = TSType::IndexType(Box::new(parent_type.clone()), Box::new(key));
+                let field_type =
+                    wrap_with_selection_field_helper(options, parent_type.clone(), field.name.name);
                 let field_sel_type = match field.selection_set {
                     None => field_type,
-                    Some(ref set) => get_type_for_selection_set(set, field_type),
+                    Some(ref set) => wrap_with_selection_set_helper(
+                        options,
+                        field_type.clone(),
+                        get_type_for_selection_set(options, set, field_type),
+                    ),
                 };
                 TSType::object(vec![(property_name, field_sel_type, None)])
             }
@@ -140,11 +153,16 @@ fn get_type_for_selection_set(selection_set: &SelectionSet, parent_type: TSType)
                 TSType::TypeVariable((&fragment.fragment_name).into())
             }
             Selection::InlineFragment(ref fragment) => match fragment.type_condition {
-                None => get_type_for_selection_set(&fragment.selection_set, parent_type.clone()),
+                None => get_type_for_selection_set(
+                    options,
+                    &fragment.selection_set,
+                    parent_type.clone(),
+                ),
                 Some(ref cond) =>
                 // TODO: this isn't correct
                 {
                     get_type_for_selection_set(
+                        options,
                         &fragment.selection_set,
                         TSType::TypeVariable(cond.into()),
                     )
@@ -152,7 +170,7 @@ fn get_type_for_selection_set(selection_set: &SelectionSet, parent_type: TSType)
             },
         })
         .collect();
-    wrap_with_keepdoc(parent_type, ts_intersection(types_for_each_field))
+    ts_intersection(types_for_each_field)
 }
 
 fn get_type_for_variable_definitions(definitions: &VariablesDefinition) -> TSType {
@@ -173,10 +191,32 @@ fn get_type_for_variable_definitions(definitions: &VariablesDefinition) -> TSTyp
     }
 }
 
-/// Wraps object type with the KeepDoc utility.
-fn wrap_with_keepdoc(original_type: TSType, wrapped_type: TSType) -> TSType {
+/// Wraps object type with the __SelectionSet utility.
+fn wrap_with_selection_set_helper(
+    options: &QueryTypePrinterOptions,
+    original_type: TSType,
+    wrapped_type: TSType,
+) -> TSType {
     TSType::TypeFunc(
-        Box::new(TSType::TypeVariable("KeepDoc".into())),
+        Box::new(TSType::NamespaceMember(
+            options.schema_root_namespace.clone(),
+            "__SelectionSet".into(),
+        )),
         vec![original_type, wrapped_type],
+    )
+}
+
+/// Wraps type with the __SelectionField utility.
+fn wrap_with_selection_field_helper(
+    options: &QueryTypePrinterOptions,
+    parent: TSType,
+    key: &str,
+) -> TSType {
+    TSType::TypeFunc(
+        Box::new(TSType::NamespaceMember(
+            options.schema_root_namespace.clone(),
+            "__SelectionField".into(),
+        )),
+        vec![parent, TSType::StringLiteral(key.into())],
     )
 }

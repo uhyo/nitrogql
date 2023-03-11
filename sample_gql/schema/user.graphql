@@ -4,7 +4,9 @@ Our precious user.
 type User {
   id: ID!
   name: String!
+  age: Int
   kind: UserKind!
+  posts: [Post!]!
 }
 
 enum UserKind {
