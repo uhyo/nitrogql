@@ -51,6 +51,14 @@ impl SourceWriter {
             names: self.name_mapper.into_names(),
         }
     }
+
+    fn flush_pending_indent(&mut self) {
+        if self.has_indent_flag {
+            self.buffer.push_str(&self.indent_str);
+            self.current_column += self.indent;
+            self.has_indent_flag = false;
+        }
+    }
 }
 
 pub struct SourceWriterBuffers {
@@ -71,11 +79,7 @@ impl SourceMapWriter for SourceWriter {
             if line.is_empty() {
                 continue;
             }
-            if self.has_indent_flag {
-                self.buffer.push_str(&self.indent_str);
-                self.current_column += self.indent;
-                self.has_indent_flag = false;
-            }
+            self.flush_pending_indent();
             self.buffer.push_str(line);
             self.current_column += utf16_len(line);
         }
@@ -89,6 +93,7 @@ impl SourceMapWriter for SourceWriter {
         let original_name = node.name();
         if let Some(original_name) = original_name {
             let original_name_idx = self.name_mapper.map_name(original_name);
+            self.flush_pending_indent();
             self.mapping.add_entry(
                 self.current_line,
                 self.current_column,
