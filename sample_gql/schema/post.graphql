@@ -1,6 +1,15 @@
-type Post {
+interface PostLike {
+  id: ID!
+}
+
+type Post implements PostLike {
   id: ID!
   postedBy: User!
   title: String!
+  body: String!
+}
+
+type Tweet implements PostLike {
+  id: ID!
   body: String!
 }

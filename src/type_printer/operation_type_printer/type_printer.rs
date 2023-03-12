@@ -65,12 +65,7 @@ impl TypePrinter for OperationDefinition<'_> {
                 OperationType::Subscription => options.schema_root_types.subscription.clone(),
             },
         );
-        wrap_with_selection_set_helper(
-            options,
-            parent_type.clone(),
-            get_type_for_selection_set(options, &self.selection_set, parent_type),
-        )
-        .print_type(writer);
+        get_type_for_selection_set(options, &self.selection_set, parent_type).print_type(writer);
         writer.write(";\n\n");
 
         let input_variable_type = self
@@ -116,11 +111,7 @@ impl TypePrinter for FragmentDefinition<'_> {
             options.schema_root_namespace.clone(),
             self.type_condition.name.to_owned(),
         );
-        let fragment_type = wrap_with_selection_set_helper(
-            options,
-            parent_type.clone(),
-            get_type_for_selection_set(options, &self.selection_set, parent_type),
-        );
+        let fragment_type = get_type_for_selection_set(options, &self.selection_set, parent_type);
         fragment_type.print_type(writer);
         writer.write(";\n\n");
     }
@@ -131,7 +122,23 @@ fn get_type_for_selection_set(
     selection_set: &SelectionSet,
     parent_type: TSType,
 ) -> TSType {
-    let types_for_each_field = selection_set.selections.iter().map(|sel| match sel {
+    ts_intersection(
+        get_type_for_selection_set_impl(options, selection_set, parent_type.clone()).map(
+            |(ty, filter_type)| {
+                wrap_with_selection_set_helper(options, parent_type.clone(), ty, filter_type)
+            },
+        ),
+    )
+}
+
+/// Returns an iterator of types that are to be intersected.
+/// Iterator item is a pair of (object type, filter type)
+fn get_type_for_selection_set_impl<'a>(
+    options: &'a QueryTypePrinterOptions,
+    selection_set: &'a SelectionSet,
+    parent_type: TSType,
+) -> impl Iterator<Item = (TSType, TSType)> + 'a {
+    let types_for_simple_fields = selection_set.selections.iter().flat_map(|sel| match sel {
         Selection::Field(ref field) => {
             let property_name = field.alias.unwrap_or_else(|| field.name.clone()).name;
             let field_type =
@@ -142,34 +149,51 @@ fn get_type_for_selection_set(
                 Some(ref set) => TSType::Let {
                     var: "__1".to_owned(),
                     r#type: Box::new(field_type),
-                    r#in: Box::new(wrap_with_selection_set_helper(
-                        options,
-                        field_type_var.clone(),
-                        get_type_for_selection_set(options, set, field_type_var),
-                    )),
+                    r#in: Box::new(get_type_for_selection_set(options, set, field_type_var)),
                 },
             };
-            TSType::object(vec![(property_name, field_sel_type, None)])
+            vec![(property_name, field_sel_type, None)]
         }
-        Selection::FragmentSpread(ref fragment) => {
-            TSType::TypeVariable((&fragment.fragment_name).into())
-        }
-        Selection::InlineFragment(ref fragment) => match fragment.type_condition {
-            None => {
-                get_type_for_selection_set(options, &fragment.selection_set, parent_type.clone())
+        _ => vec![],
+    });
+    let types_for_simple_fields = (TSType::object(types_for_simple_fields), TSType::String);
+    let types_for_fragments = selection_set
+        .selections
+        .iter()
+        .flat_map(move |sel| match sel {
+            Selection::Field(_) => vec![],
+            Selection::FragmentSpread(ref fragment) => {
+                // TODO: this isn't correct
+                vec![(
+                    TSType::TypeVariable((&fragment.fragment_name).into()),
+                    TSType::String,
+                )]
             }
-            Some(ref cond) =>
-            // TODO: this isn't correct
-            {
-                get_type_for_selection_set(
+            Selection::InlineFragment(ref fragment) => match fragment.type_condition {
+                None => get_type_for_selection_set_impl(
                     options,
                     &fragment.selection_set,
-                    TSType::TypeVariable(cond.into()),
+                    parent_type.clone(),
                 )
-            }
-        },
-    });
-    ts_intersection(types_for_each_field)
+                .collect(),
+                Some(ref cond) => get_type_for_selection_set_impl(
+                    options,
+                    &fragment.selection_set,
+                    parent_type.clone(),
+                )
+                .into_iter()
+                .map(|(ty, filter)| {
+                    (
+                        ty,
+                        ts_intersection(vec![filter, TSType::StringLiteral(cond.name.to_owned())]),
+                    )
+                })
+                .collect(),
+            },
+        });
+    vec![types_for_simple_fields]
+        .into_iter()
+        .chain(types_for_fragments)
 }
 
 fn get_type_for_variable_definitions(definitions: &VariablesDefinition) -> TSType {
@@ -195,13 +219,14 @@ fn wrap_with_selection_set_helper(
     options: &QueryTypePrinterOptions,
     original_type: TSType,
     wrapped_type: TSType,
+    filter_type: TSType,
 ) -> TSType {
     TSType::TypeFunc(
         Box::new(TSType::NamespaceMember(
             options.schema_root_namespace.clone(),
             "__SelectionSet".into(),
         )),
-        vec![original_type, wrapped_type],
+        vec![original_type, wrapped_type, filter_type],
     )
 }
 

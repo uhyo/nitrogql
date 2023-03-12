@@ -45,11 +45,13 @@ impl TypePrinter for TypeSystemDocument<'_> {
         // Print utility types
         writer.write(
             "type __Beautify<Obj> = { [K in keyof Obj]: Obj[K] } & {};
-export type __SelectionSet<Orig, Obj> =
-  Orig extends (infer T)[] ? __SelectionSet<T, Obj>[] :
-  __Beautify<Pick<{
-    [K in keyof Orig]: Obj extends Record<K, infer V> ? V : unknown
-  }, Extract<keyof Orig, keyof Obj>>>;
+export type __SelectionSet<Orig, Obj, Filter extends string> =
+  Orig extends (infer T)[] ? __SelectionSet<T, Obj, Filter>[] :
+  Orig extends Record<\"__typename\", Filter> ?
+    __Beautify<Pick<{
+      [K in keyof Orig]: Obj extends Record<K, infer V> ? V : unknown
+    }, Extract<keyof Orig, keyof Obj>>>
+  : unknown;
 export type __SelectionField<Obj, Key extends string> =
   Obj extends (infer T)[] ? __SelectionField<T, Key> :
   Obj extends Record<Key, infer V> ? V : unknown;

@@ -4,7 +4,15 @@ query sample {
     age
     posts {
       id
-      title
+      ...F
+      ... on Tweet {
+        body
+      }
     }
   }
+}
+
+fragment F on Post {
+  title
+  body
 }

@@ -6,7 +6,7 @@ type User {
   name: String!
   age: Int
   kind: UserKind!
-  posts: [Post!]!
+  posts: [PostLike!]!
 }
 
 enum UserKind {

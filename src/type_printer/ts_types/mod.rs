@@ -33,6 +33,8 @@ pub enum TSType {
     Union(Vec<TSType>),
     /// Intersection type
     Intersection(Vec<TSType>),
+    /// string
+    String,
     // /// Undefined
     // Undefined,
     /// Null
@@ -224,6 +226,9 @@ impl TSType {
                     ty.print_type(writer);
                 }
             }
+            TSType::String => {
+                writer.write("string");
+            }
             TSType::Null => {
                 writer.write("null");
             }
@@ -288,6 +293,7 @@ impl TSType {
             t @ TSType::TypeVariable(_)
             | t @ TSType::StringLiteral(_)
             | t @ TSType::NamespaceMember(_, _)
+            | t @ TSType::String
             | t @ TSType::Never
             | t @ TSType::Null
             | t @ TSType::Unknown => t,
