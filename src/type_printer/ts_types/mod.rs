@@ -45,7 +45,9 @@ pub enum TSType {
     Unknown,
     /// Not a real TS syntax. Pseudo syntax for defining local type variable
     Let {
-        var: String,
+        // if Some, `type` extends infer `var`
+        // if None, `type` extends unknown (for union distribution)
+        var: Option<String>,
         r#type: Box<TSType>,
         r#in: Box<TSType>,
     },
@@ -244,8 +246,13 @@ impl TSType {
                 r#in: ref in_type,
             } => {
                 ty.print_type(writer);
-                writer.write(" extends infer ");
-                writer.write(&var);
+                writer.write(" extends ");
+                if let Some(ref var) = var {
+                    writer.write("infer ");
+                    writer.write(&var);
+                } else {
+                    writer.write("unknown");
+                }
                 writer.write("\n");
                 writer.indent();
                 writer.write("? ");

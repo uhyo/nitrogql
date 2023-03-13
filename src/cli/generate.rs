@@ -4,6 +4,7 @@ use std::path::{Path, PathBuf};
 
 use log::debug;
 
+use crate::checker::definition_map::generate_definition_map;
 use crate::cli::error::CliError;
 use crate::source_map_writer::source_writer::SourceWriterBuffers;
 use crate::type_printer::schema_type_printer::printer::{
@@ -36,6 +37,7 @@ pub fn run_generate(mut context: CliContext) -> Result<CliContext> {
             let Some(ref schema_output) = config.schema_output else {
                 return Err(CliError::OptionRequired { option: String::from("schema-output"), command: String::from("generate") }.into())
             };
+            let schema_definitions = generate_definition_map(schema);
             {
                 debug!("Processing schema");
                 let mut writer = SourceWriter::new();
@@ -64,7 +66,7 @@ pub fn run_generate(mut context: CliContext) -> Result<CliContext> {
                         .to_string_lossy()
                         .to_string();
                 let mut printer = QueryTypePrinter::new(printer_options, &mut writer);
-                printer.print_document(&doc);
+                printer.print_document(&doc, schema, &schema_definitions);
 
                 let buffers = writer.into_buffers();
 

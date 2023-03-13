@@ -3,6 +3,7 @@ query sample {
     id
     age
     posts {
+      __typename
       id
       ...F
       ... on Tweet {

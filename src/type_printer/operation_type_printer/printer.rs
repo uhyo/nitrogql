@@ -1,4 +1,13 @@
-use crate::{ast::OperationDocument, source_map_writer::writer::SourceMapWriter};
+use std::collections::HashMap;
+
+use crate::{
+    ast::{
+        operations::{ExecutableDefinition, FragmentDefinition, OperationDefinition},
+        OperationDocument, TypeSystemDocument,
+    },
+    checker::definition_map::DefinitionMap,
+    source_map_writer::writer::SourceMapWriter,
+};
 
 use super::type_printer::TypePrinter;
 
@@ -61,6 +70,13 @@ impl Default for SchemaRootTypes {
     }
 }
 
+pub struct QueryTypePrinterContext<'a, 'src> {
+    pub options: &'a QueryTypePrinterOptions,
+    pub schema: &'a TypeSystemDocument<'src>,
+    pub schema_definitions: &'a DefinitionMap<'src>,
+    pub fragment_definitions: &'a HashMap<&'src str, &'a FragmentDefinition<'src>>,
+}
+
 pub struct QueryTypePrinter<'a, Writer: SourceMapWriter> {
     options: QueryTypePrinterOptions,
     writer: &'a mut Writer,
@@ -74,7 +90,22 @@ where
         QueryTypePrinter { options, writer }
     }
 
-    pub fn print_document(&mut self, document: &OperationDocument) {
+    pub fn print_document(
+        &mut self,
+        document: &OperationDocument,
+        schema: &TypeSystemDocument,
+        definition_map: &DefinitionMap,
+    ) {
+        let fragment_definitions = document
+            .definitions
+            .iter()
+            .filter_map(|def| match def {
+                ExecutableDefinition::OperationDefinition(_) => None,
+                ExecutableDefinition::FragmentDefinition(fragment_def) => {
+                    Some((fragment_def.name.name, fragment_def))
+                }
+            })
+            .collect();
         self.writer.write(&format!(
             "import type {{ TypedDocumentNode }} from \"{}\";\n",
             self.options.typed_document_node_source
@@ -84,6 +115,13 @@ where
             self.options.schema_root_namespace, self.options.schema_source,
         ));
 
-        document.print_type(&self.options, self.writer);
+        let context = QueryTypePrinterContext {
+            options: &self.options,
+            schema,
+            schema_definitions: definition_map,
+            fragment_definitions: &fragment_definitions,
+        };
+
+        document.print_type(&context, self.writer);
     }
 }

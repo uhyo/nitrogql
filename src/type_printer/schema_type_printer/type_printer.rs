@@ -1,6 +1,7 @@
 use crate::{
     ast::{
         base::{Ident, Pos},
+        r#type::Type,
         type_system::{
             EnumTypeDefinition, InputObjectTypeDefinition, InterfaceTypeDefinition,
             ObjectTypeDefinition, ScalarTypeDefinition, TypeDefinition, TypeSystemDefinition,
@@ -10,8 +11,12 @@ use crate::{
         TypeSystemDocument,
     },
     source_map_writer::writer::SourceMapWriter,
-    type_printer::ts_types::{
-        ts_types_util::ts_union, type_to_ts_type::get_ts_type_of_type, ObjectField, TSType,
+    type_printer::{
+        ts_types::{
+            ts_types_util::ts_union, type_to_ts_type::get_ts_type_of_type, ObjectField, TSType,
+            TypeVariable,
+        },
+        utils::interface_implementers,
     },
 };
 
@@ -208,21 +213,8 @@ impl TypePrinter for InterfaceTypeDefinition<'_> {
         writer: &mut impl SourceMapWriter,
     ) -> SchemaTypePrinterResult<()> {
         // In generated type definitions, an interface is expressed as a union of all possible concrete types.
-        let union_constituents = context.document.definitions.iter().filter_map(|def| {
-            if let TypeSystemDefinition::TypeDefinition(TypeDefinition::Object(ref obj_def)) = def {
-                if obj_def
-                    .implements
-                    .iter()
-                    .any(|imp| imp.name == self.name.name)
-                {
-                    Some(TSType::TypeVariable((&obj_def.name).into()))
-                } else {
-                    None
-                }
-            } else {
-                None
-            }
-        });
+        let union_constituents = interface_implementers(context.document, self.name.name)
+            .map(|obj| TSType::TypeVariable((&obj.name).into()));
         let intf_type = ts_union(union_constituents);
 
         print_description(&self.description, writer);

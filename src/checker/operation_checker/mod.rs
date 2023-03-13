@@ -207,7 +207,7 @@ fn check_fragment_definition(
             CheckErrorMessage::InvalidFragmentTarget { name: op.type_condition.name.to_owned() }
             .with_pos(op.type_condition.position)
             .with_additional_info(vec![
-                (*target.position(), CheckErrorMessage::DefinitionPos { name: target.name().expect("Type must have a name").to_owned() })
+                (*target.position(), CheckErrorMessage::DefinitionPos { name: target.name().name.to_owned() })
             ])
         );
         return;
@@ -259,17 +259,17 @@ fn check_selection_set(
     selection_set: &SelectionSet,
     result: &mut Vec<CheckError>,
 ) {
-    let root_type_name = root_type.name().expect("Type definition must have name");
+    let root_type_name = root_type.name();
     let root_fields = direct_fields_of_output_type(root_type);
     let Some(root_fields) = root_fields else {
         result.push(
             CheckErrorMessage::SelectionOnInvalidType { kind: 
                 kind_of_type_definition(root_type),
-                name: root_type_name.to_owned(),
+                name: root_type_name.name.to_owned(),
             }
                 .with_pos(selection_set.position)
                 .with_additional_info(vec![
-                    (*root_type.position(), CheckErrorMessage::DefinitionPos { name: root_type_name.to_owned()})
+                    (*root_type.position(), CheckErrorMessage::DefinitionPos { name: root_type_name.name.to_owned()})
                 ])
         );
         return;
@@ -284,7 +284,7 @@ fn check_selection_set(
                     seen_fragments,
                     variables,
                     *root_type.position(),
-                    root_type_name,
+                    root_type_name.name,
                     &root_fields,
                     field_selection,
                     result,
@@ -615,7 +615,7 @@ fn check_fragment_spread_core(
     check_selection_set(definitions, fragment_map, seen_fragments, variables, fragment_condition, fragment_selection_set, result);
 }
 
-fn direct_fields_of_output_type<'a, 'src>(
+pub fn direct_fields_of_output_type<'a, 'src>(
     ty: &'a TypeDefinition<'src>,
 ) -> Option<Vec<&'a FieldDefinition<'src>>> {
     let meta_field : &FieldDefinition = &TYPENAME_META_FIELD;
