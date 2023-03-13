@@ -6,19 +6,19 @@ import type { TypedDocumentNode } from "@graphql-typed-document-node/core";
 import type * as Schema from "";
 
 type Query = Schema.__SelectionSet<Schema.Query, {
-  me: Schema.__SelectionField<Schema.Query, "me"> extends infer __1
-    ? Schema.__SelectionSet<__1, {
-      id: Schema.__SelectionField<__1, "id">;
-      name: Schema.__SelectionField<__1, "name">;
-      type: Schema.__SelectionField<__1, "type">;
-      age: Schema.__SelectionField<__1, "age">;
-      posts: Schema.__SelectionField<__1, "posts"> extends infer __1
-        ? Schema.__SelectionSet<__1, {
-          id: Schema.__SelectionField<__1, "id">;
-        }>
-        : unknown;
-    }>
-    : unknown;
+  me: Schema.__SelectionSet<Schema.User, {
+    id: Schema.ID;
+    name: Schema.String;
+    type: Schema.UserType;
+    age: Schema.Int | null;
+    posts: (Schema.__SelectionSet<Schema.User, {
+      id: Schema.ID;
+    }> | Schema.__SelectionSet<Schema.Bot, {
+      id: Schema.ID;
+    }> | Schema.__SelectionSet<Schema.Post, {
+      id: Schema.ID;
+    }>)[];
+  }>;
 }>;
 
 type Variables = {};

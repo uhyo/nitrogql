@@ -2,6 +2,7 @@ use insta::assert_snapshot;
 
 use crate::{
     ast::{OperationDocument, TypeSystemDocument},
+    checker::definition_map::generate_definition_map,
     extension_resolver::resolve_extensions,
     graphql_builtins::generate_builtins,
     graphql_parser::parser::{parse_operation_document, parse_type_system_document},
@@ -89,7 +90,7 @@ fn fragment_spread() {
                 }
             }
         }
-        fragment F on HasId {
+        fragment F on HasID {
             id
         }
         ",
@@ -113,7 +114,7 @@ fn fragment_spread_cond() {
                 }
             }
         }
-        fragment F on HasId {
+        fragment F on HasID {
             id
         }
         fragment P on Post {
@@ -152,6 +153,8 @@ fn print_document(document: &OperationDocument) -> String {
     let mut result = String::new();
     let mut writer = JustWriter::new(&mut result);
     let mut printer = QueryTypePrinter::new(QueryTypePrinterOptions::default(), &mut writer);
-    printer.print_document(document);
+    let schema = type_system();
+    let definition_map = generate_definition_map(&schema);
+    printer.print_document(document, &schema, &definition_map);
     result
 }

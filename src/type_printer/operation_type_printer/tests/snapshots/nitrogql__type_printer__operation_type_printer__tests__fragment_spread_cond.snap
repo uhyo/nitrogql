@@ -20,6 +20,8 @@ type Query = Schema.__SelectionSet<Schema.Query, {
     }> | Schema.__SelectionSet<Schema.Post, {
       id: Schema.ID;
       id: Schema.ID;
+      title: Schema.String;
+      body: Schema.String;
     }>)[];
   }>;
 }>;
@@ -34,6 +36,11 @@ export type F = Schema.__SelectionSet<Schema.User, {
   id: Schema.ID;
 }> | Schema.__SelectionSet<Schema.Post, {
   id: Schema.ID;
+}>;
+
+export type P = Schema.__SelectionSet<Schema.Post, {
+  title: Schema.String;
+  body: Schema.String;
 }>;
 
 
