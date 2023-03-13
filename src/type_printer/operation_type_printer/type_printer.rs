@@ -1,6 +1,5 @@
 use crate::{
     ast::{
-        base::Ident,
         operations::{
             ExecutableDefinition, FragmentDefinition, OperationDefinition, OperationType,
             VariablesDefinition,
@@ -67,16 +66,7 @@ impl TypePrinter for OperationDefinition<'_> {
         writer.write("type ");
         writer.write_for(&query_type_name, &self.name_pos());
         writer.write_for(" = ", &self.selection_set);
-        let parent_type = TSType::NamespaceMember(
-            context.options.schema_root_namespace.clone(),
-            match self.operation_type {
-                OperationType::Query => context.options.schema_root_types.query.clone(),
-                OperationType::Mutation => context.options.schema_root_types.mutation.clone(),
-                OperationType::Subscription => {
-                    context.options.schema_root_types.subscription.clone()
-                }
-            },
-        );
+
         let parent_type = context
             .schema_definitions
             .root_type(self.operation_type)
@@ -149,20 +139,16 @@ fn get_type_for_selection_set(
         TypeDefinition::Scalar(_) | TypeDefinition::Enum(_) | TypeDefinition::InputObject(_) => {
             panic!("Type system error")
         }
-        TypeDefinition::Object(obj_def) => TSType::object(get_type_for_selection_set_impl(
-            context,
-            selection_set,
-            obj_def,
-        )),
+        TypeDefinition::Object(obj_def) => {
+            get_object_type_for_selection_set(context, selection_set, obj_def)
+        }
         TypeDefinition::Interface(interface_def) => {
             let object_defs = interface_implementers(context.schema, interface_def.name.name);
-            ts_union(object_defs.map(|obj_def| {
-                TSType::object(get_type_for_selection_set_impl(
-                    context,
-                    selection_set,
-                    obj_def,
-                ))
-            }))
+            ts_union(
+                object_defs.map(|obj_def| {
+                    get_object_type_for_selection_set(context, selection_set, obj_def)
+                }),
+            )
         }
         TypeDefinition::Union(union_def) => {
             let object_defs = union_def.members.iter().map(|member| {
@@ -171,19 +157,40 @@ fn get_type_for_selection_set(
                     _ => panic!("Type system error"),
                 }
             });
-            ts_union(object_defs.map(|obj_def| {
-                TSType::object(get_type_for_selection_set_impl(
-                    context,
-                    selection_set,
-                    obj_def,
-                ))
-            }))
+            ts_union(
+                object_defs.map(|obj_def| {
+                    get_object_type_for_selection_set(context, selection_set, obj_def)
+                }),
+            )
         }
     }
 }
 
+fn get_object_type_for_selection_set(
+    context: &QueryTypePrinterContext,
+    selection_set: &SelectionSet,
+    parent_type: &ObjectTypeDefinition,
+) -> TSType {
+    let actual = TSType::object(get_fields_for_selection_set(
+        context,
+        selection_set,
+        parent_type,
+    ));
+    let schema_type = TSType::NamespaceMember(
+        context.options.schema_root_namespace.clone(),
+        parent_type.name.name.to_owned(),
+    );
+    TSType::TypeFunc(
+        Box::new(TSType::NamespaceMember(
+            context.options.schema_root_namespace.clone(),
+            "__SelectionSet".into(),
+        )),
+        vec![schema_type, actual],
+    )
+}
+
 /// Returns an iterator of object fields.
-fn get_type_for_selection_set_impl<'a>(
+fn get_fields_for_selection_set<'a>(
     context: &'a QueryTypePrinterContext,
     selection_set: &'a SelectionSet,
     parent_type: &'a ObjectTypeDefinition,
@@ -242,29 +249,19 @@ fn get_type_for_selection_set_impl<'a>(
                     .expect("Type system error");
                 if check_fragment_condition(context, parent_type, fragment_def.type_condition.name)
                 {
-                    get_type_for_selection_set_impl(
-                        context,
-                        &fragment_def.selection_set,
-                        &parent_type,
-                    )
-                    .collect()
+                    get_fields_for_selection_set(context, &fragment_def.selection_set, &parent_type)
+                        .collect()
                 } else {
                     vec![]
                 }
             }
             Selection::InlineFragment(ref fragment) => match fragment.type_condition {
-                None => {
-                    get_type_for_selection_set_impl(context, &fragment.selection_set, parent_type)
-                        .collect()
-                }
+                None => get_fields_for_selection_set(context, &fragment.selection_set, parent_type)
+                    .collect(),
                 Some(ref cond) => {
                     if check_fragment_condition(context, parent_type, cond.name) {
-                        get_type_for_selection_set_impl(
-                            context,
-                            &fragment.selection_set,
-                            &parent_type,
-                        )
-                        .collect()
+                        get_fields_for_selection_set(context, &fragment.selection_set, &parent_type)
+                            .collect()
                     } else {
                         vec![]
                     }
@@ -317,37 +314,6 @@ fn get_type_for_variable_definitions(definitions: &VariablesDefinition) -> TSTyp
     } else {
         ts_intersection(types_for_each_field)
     }
-}
-
-/// Wraps object type with the __SelectionSet utility.
-fn wrap_with_selection_set_helper(
-    context: &QueryTypePrinterContext,
-    original_type: TSType,
-    wrapped_type: TSType,
-    filter_type: TSType,
-) -> TSType {
-    TSType::TypeFunc(
-        Box::new(TSType::NamespaceMember(
-            context.options.schema_root_namespace.clone(),
-            "__SelectionSet".into(),
-        )),
-        vec![original_type, wrapped_type, filter_type],
-    )
-}
-
-/// Wraps type with the __SelectionField utility.
-fn wrap_with_selection_field_helper(
-    context: &QueryTypePrinterContext,
-    parent: TSType,
-    key: &str,
-) -> TSType {
-    TSType::TypeFunc(
-        Box::new(TSType::NamespaceMember(
-            context.options.schema_root_namespace.clone(),
-            "__SelectionField".into(),
-        )),
-        vec![parent, TSType::StringLiteral(key.into())],
-    )
 }
 
 /// Map given Type to TSType.
