@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use crate::{
     ast::{
-        operations::{ExecutableDefinition, FragmentDefinition, OperationDefinition},
+        operations::{ExecutableDefinition, FragmentDefinition},
         OperationDocument, TypeSystemDocument,
     },
     checker::definition_map::DefinitionMap,

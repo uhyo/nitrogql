@@ -196,29 +196,39 @@ fn get_type_for_selection_set_impl<'a>(
 
     let parent_fields = direct_fields_of_output_type(parent_type_def).expect("Type system error");
 
-    let types_for_simple_fields = selection_set
-        .selections
-        .iter()
-        .flat_map(move |sel| match sel {
-            Selection::Field(ref field) => {
-                let property_name = field.alias.unwrap_or_else(|| field.name.clone()).name;
-                let field_def = parent_fields
-                    .iter()
-                    .find(|parent_field| parent_field.name.name == field.name.name)
-                    .expect("Type system error");
+    let types_for_simple_fields =
+        selection_set
+            .selections
+            .iter()
+            .filter_map(move |sel| match sel {
+                Selection::Field(ref field) => {
+                    let property_name = field.alias.unwrap_or_else(|| field.name.clone()).name;
+                    if property_name == "__typename" {
+                        // Special handling of reflection
+                        return Some((
+                            property_name,
+                            TSType::StringLiteral(parent_type.name.name.to_owned()),
+                            None,
+                        ));
+                    }
 
-                let field_sel_type =
-                    map_to_tstype(&field_def.r#type, |ty| match field.selection_set {
-                        None => TSType::NamespaceMember(
-                            context.options.schema_root_namespace.clone(),
-                            ty.name.name.to_owned(),
-                        ),
-                        Some(ref set) => get_type_for_selection_set(context, set, ty),
-                    });
-                vec![(property_name, field_sel_type, None)]
-            }
-            _ => vec![],
-        });
+                    let field_def = parent_fields
+                        .iter()
+                        .find(|parent_field| parent_field.name.name == field.name.name)
+                        .expect("Type system error");
+
+                    let field_sel_type =
+                        map_to_tstype(&field_def.r#type, |ty| match field.selection_set {
+                            None => TSType::NamespaceMember(
+                                context.options.schema_root_namespace.clone(),
+                                ty.name.name.to_owned(),
+                            ),
+                            Some(ref set) => get_type_for_selection_set(context, set, ty),
+                        });
+                    Some((property_name, field_sel_type, None))
+                }
+                _ => None,
+            });
 
     let types_for_fragments = selection_set
         .selections
