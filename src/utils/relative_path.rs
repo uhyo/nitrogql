@@ -2,11 +2,8 @@ use std::path::{Component, Path, PathBuf};
 
 /// Calculates relative path between two.
 pub fn relative_path(from: &Path, to: &Path) -> PathBuf {
-    eprintln!("relative_path {} {}", from.display(), to.display());
     let mut from = normalize(from);
-    eprintln!("relative_path {} {}", from.display(), to.display());
     let to = normalize(to);
-    eprintln!("relative_path {} {}", from.display(), to.display());
     // from should be file (not directory), so move to parent dir
     from.pop();
 

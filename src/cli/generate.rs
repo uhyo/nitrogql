@@ -77,7 +77,7 @@ pub fn run_generate(mut context: CliContext) -> Result<CliContext> {
 
                 write_file_and_sourcemap(file_by_index, &decl_file_path, buffers)?;
             }
-            eprintln!("'generate' succeeded without errors");
+            eprintln!("'generate' finished");
             Ok(context)
         }
     }

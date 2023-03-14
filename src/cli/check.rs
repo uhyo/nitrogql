@@ -46,7 +46,7 @@ pub fn run_check(context: CliContext) -> Result<CliContext> {
                 .collect::<Vec<_>>();
             if errors.is_empty() {
                 info!("Check succeeded");
-                eprintln!("'check' succeeded without errors");
+                eprintln!("'check' finished");
             } else {
                 eprintln!(
                     "Found {} error{} in operations:\n",
