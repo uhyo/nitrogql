@@ -36,4 +36,5 @@ export type F = Schema.__SelectionSet<Schema.User, {
   id: Schema.ID;
 }>;
 
+export { Query as default };
 

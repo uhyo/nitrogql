@@ -102,7 +102,7 @@ fn read_config(config: Value) -> Option<ConfigFile> {
         .get("extensions")
         .and_then(|e| e.get("nitrogql"))
         .and_then(|e| e.as_mapping());
-    let generate = extensions.and_then(generate_config).unwrap_or_default();
+    let generate = extensions.map(generate_config).unwrap_or_default();
     Some(ConfigFile {
         schema,
         documents,
@@ -111,19 +111,32 @@ fn read_config(config: Value) -> Option<ConfigFile> {
 }
 
 /// Reads extensions.generate config.
-fn generate_config(extensions: &Mapping) -> Option<GenerateConfig> {
-    let generate = extensions.get("generate")?;
-    let schema_output = generate
+fn generate_config(extensions: &Mapping) -> GenerateConfig {
+    let mut config = GenerateConfig::default();
+    let Some(generate) = extensions.get("generate") else {
+        return config;
+    };
+
+    if let Some(schema_output) = generate
         .get("schema-output")
         .and_then(|path| path.as_str())
-        .map(|path| path.into());
-    let mode = generate
+        .map(PathBuf::from)
+    {
+        config.schema_output = Some(schema_output);
+    }
+    if let Some(mode) = generate
         .get("mode")
         .and_then(|v| v.as_str())
         .and_then(GenerateMode::from_str)
-        .unwrap_or_default();
-    Some(GenerateConfig {
-        schema_output,
-        mode,
-    })
+    {
+        config.mode = mode;
+    }
+    if let Some(default_export_for_operation) = generate
+        .get("defaultExportForOperation")
+        .and_then(|v| v.as_bool())
+    {
+        config.default_export_for_operation = default_export_for_operation;
+    }
+
+    config
 }

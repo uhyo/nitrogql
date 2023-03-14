@@ -18,4 +18,5 @@ type Variables = {};
 
 export const Query: TypedDocumentNode<Query, Variables>;
 
+export { Query as default };
 

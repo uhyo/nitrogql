@@ -47,15 +47,35 @@ impl TypePrinter for ExecutableDefinition<'_> {
     }
 }
 
+/// Calculates a variable name for given operation.
+pub fn operation_variable_name(
+    context: &QueryTypePrinterContext,
+    operation: &OperationDefinition,
+) -> String {
+    let capitalized_name = operation
+        .name
+        .map(|name| capitalize(&name.name))
+        .unwrap_or(String::new());
+    format!(
+        "{}{}",
+        capitalized_name,
+        match operation.operation_type {
+            OperationType::Query => &context.options.query_variable_suffix,
+            OperationType::Mutation => &context.options.mutation_variable_suffix,
+            OperationType::Subscription => &context.options.subscription_variable_suffix,
+        }
+    )
+}
+
 impl TypePrinter for OperationDefinition<'_> {
     fn print_type(&self, context: &QueryTypePrinterContext, writer: &mut impl SourceMapWriter) {
-        let query_name = self
+        let operation = self
             .name
             .map(|name| capitalize(&name.name))
             .unwrap_or(String::new());
-        let query_type_name = format!(
+        let operation_type_name = format!(
             "{}{}",
-            query_name,
+            operation,
             match self.operation_type {
                 OperationType::Query => &context.options.query_result_suffix,
                 OperationType::Mutation => &context.options.mutation_result_suffix,
@@ -64,7 +84,7 @@ impl TypePrinter for OperationDefinition<'_> {
         );
 
         writer.write("type ");
-        writer.write_for(&query_type_name, &self.name_pos());
+        writer.write_for(&operation_type_name, &self.name_pos());
         writer.write_for(" = ", &self.selection_set);
 
         let parent_type = context
@@ -81,7 +101,7 @@ impl TypePrinter for OperationDefinition<'_> {
             .variables_definition
             .as_ref()
             .map_or(TSType::empty_object(), get_type_for_variable_definitions);
-        let input_variable_name = format!("{}{}", query_name, context.options.variable_type_suffix);
+        let input_variable_name = format!("{}{}", operation, context.options.variable_type_suffix);
 
         writer.write("type ");
         writer.write_for(&input_variable_name, &self.name_pos());
@@ -89,21 +109,13 @@ impl TypePrinter for OperationDefinition<'_> {
         input_variable_type.print_type(writer);
         writer.write(";\n\n");
 
-        let query_var_name = format!(
-            "{}{}",
-            query_name,
-            match self.operation_type {
-                OperationType::Query => &context.options.query_variable_suffix,
-                OperationType::Mutation => &context.options.mutation_variable_suffix,
-                OperationType::Subscription => &context.options.subscription_variable_suffix,
-            }
-        );
+        let var_name = operation_variable_name(context, self);
 
         writer.write("export const ");
-        writer.write_for(&query_var_name, &self.name_pos());
+        writer.write_for(&var_name, &self.name_pos());
         writer.write_for(": ", &self.selection_set);
         writer.write("TypedDocumentNode<");
-        writer.write(&query_type_name);
+        writer.write(&operation_type_name);
         writer.write(", ");
         writer.write(&input_variable_name);
         writer.write(">;\n\n");

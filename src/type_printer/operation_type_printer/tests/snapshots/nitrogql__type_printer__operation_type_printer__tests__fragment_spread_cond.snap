@@ -43,4 +43,5 @@ export type P = Schema.__SelectionSet<Schema.Post, {
   body: Schema.String;
 }>;
 
+export { Query as default };
 

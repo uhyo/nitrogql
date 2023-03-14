@@ -11,12 +11,25 @@ pub struct ConfigFile {
 }
 
 /// Config related to the 'generate' command.
-#[derive(Debug, Default)]
+#[derive(Debug)]
 pub struct GenerateConfig {
     /// Mode of generation.
     pub mode: GenerateMode,
     /// Output file path for schema.
     pub schema_output: Option<PathBuf>,
+    /// Whether operation is exported as a default export.
+    /// Effective only when a document contains only one operation.
+    pub default_export_for_operation: bool,
+}
+
+impl Default for GenerateConfig {
+    fn default() -> Self {
+        GenerateConfig {
+            mode: GenerateMode::default(),
+            schema_output: None,
+            default_export_for_operation: true,
+        }
+    }
 }
 
 /// Mode of code generation.

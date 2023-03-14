@@ -2,14 +2,14 @@ use std::collections::HashMap;
 
 use crate::{
     ast::{
-        operations::{ExecutableDefinition, FragmentDefinition},
+        operations::{ExecutableDefinition, FragmentDefinition, OperationDefinition},
         OperationDocument, TypeSystemDocument,
     },
     checker::definition_map::DefinitionMap,
     source_map_writer::writer::SourceMapWriter,
 };
 
-use super::type_printer::TypePrinter;
+use super::type_printer::{operation_variable_name, TypePrinter};
 
 pub struct SchemaRootTypes {
     pub query: String,
@@ -24,6 +24,8 @@ pub struct QueryTypePrinterOptions {
     pub schema_source: String,
     /// Name of operation root types.
     pub schema_root_types: SchemaRootTypes,
+    /// Whether an operation should be default exported when it is the only operation in the document.
+    pub default_export_for_operation: bool,
     /// Suffix for type of query result.
     pub query_result_suffix: String,
     /// Suffix for type of mutation result.
@@ -48,6 +50,7 @@ impl Default for QueryTypePrinterOptions {
             schema_root_namespace: "Schema".into(),
             schema_source: "".into(),
             schema_root_types: SchemaRootTypes::default(),
+            default_export_for_operation: true,
             query_result_suffix: "Query".into(),
             mutation_result_suffix: "Mutation".into(),
             subscription_result_suffix: "Subscription".into(),
@@ -123,5 +126,27 @@ where
         };
 
         document.print_type(&context, self.writer);
+
+        if self.options.default_export_for_operation {
+            let operation_count = document
+                .definitions
+                .iter()
+                .filter(|def| matches!(def, ExecutableDefinition::OperationDefinition(_)))
+                .count();
+            if operation_count == 1 {
+                let first_op = document
+                    .definitions
+                    .iter()
+                    .find_map(|def| match def {
+                        ExecutableDefinition::OperationDefinition(def) => Some(def),
+                        ExecutableDefinition::FragmentDefinition(_) => None,
+                    })
+                    .unwrap();
+                self.writer.write("export { ");
+                self.writer
+                    .write(&operation_variable_name(&context, first_op));
+                self.writer.write(" as default };\n");
+            }
+        }
     }
 }
