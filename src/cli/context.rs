@@ -31,5 +31,7 @@ impl<'src> CliContext<'src> {
 }
 
 pub struct CliConfig {
+    /// Root directory for other paths.
+    pub root_dir: PathBuf,
     pub schema_output: Option<PathBuf>,
 }

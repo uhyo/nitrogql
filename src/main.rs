@@ -2,6 +2,7 @@ mod ast;
 mod base64_vlq;
 mod checker;
 mod cli;
+mod config_file;
 mod error;
 mod extension_resolver;
 mod graphql_builtins;

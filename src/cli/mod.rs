@@ -1,4 +1,7 @@
-use std::{fs, path::PathBuf};
+use std::{
+    env, fs,
+    path::{Path, PathBuf},
+};
 
 use anyhow::Result;
 use clap::Parser;
@@ -9,6 +12,7 @@ use thiserror::Error;
 use crate::{
     ast::{base::set_current_file_of_pos, OperationDocument, TypeSystemOrExtensionDocument},
     cli::{context::CliContext, error::CliError},
+    config_file::load_config,
     error::print_positioned_error,
     graphql_parser::parser::{parse_operation_document, parse_type_system_document},
 };
@@ -22,6 +26,9 @@ mod generate;
 
 #[derive(Parser, Debug)]
 struct Args {
+    #[arg(long)]
+    /// Path to config file.
+    config_file: Option<PathBuf>,
     #[arg(long)]
     /// Path to schema document(s).
     schema: Vec<String>,
@@ -51,10 +58,31 @@ fn run_cli_impl(args: impl IntoIterator<Item = String>) -> Result<()> {
     if args.commands.is_empty() {
         return Err(CliError::NoCommandSpecified.into());
     }
-    if args.schema.is_empty() {
+    let config_file = load_config(args.config_file.as_ref().map(|p| p.as_path()))?;
+    let (root_dir, schema_glob, operation_glob, schema_output) =
+        if let Some((config_path, config_file)) = config_file {
+            debug!("Loaded config file from {}", config_path.display());
+            (
+                config_path
+                    .parent()
+                    .map(|path| path.to_owned())
+                    .unwrap_or(PathBuf::new()),
+                config_file.schema,
+                config_file.documents,
+                config_file.schema_output,
+            )
+        } else {
+            (env::current_dir()?, None, None, None)
+        };
+    let schema_glob = schema_glob.unwrap_or(args.schema);
+    let operation_glob = operation_glob.unwrap_or(args.operation);
+    let schema_output = schema_output.or(args.schema_output);
+
+    if schema_glob.is_empty() {
         return Err(CliError::NoSchemaSpecified.into());
     }
-    let schema_files = load_glob_files(&args.schema)?;
+
+    let schema_files = load_glob_files(&root_dir, &schema_glob)?;
     let file_by_index = schema_files
         .iter()
         .map(|(path, src)| (path.clone(), src.as_str()))
@@ -74,7 +102,7 @@ fn run_cli_impl(args: impl IntoIterator<Item = String>) -> Result<()> {
     let schema_docs = schema_docs?;
     let merged_schema_doc = TypeSystemOrExtensionDocument::merge(schema_docs);
 
-    let operation_files = load_glob_files(&args.operation)?;
+    let operation_files = load_glob_files(&root_dir, &operation_glob)?;
     let op_file_index = file_by_index.len();
 
     let operation_docs = operation_files
@@ -98,7 +126,8 @@ fn run_cli_impl(args: impl IntoIterator<Item = String>) -> Result<()> {
 
     let mut context = CliContext::SchemaUnresolved {
         config: CliConfig {
-            schema_output: args.schema_output,
+            root_dir,
+            schema_output,
         },
         schema: merged_schema_doc,
         operations: operation_docs,
@@ -130,6 +159,7 @@ fn run_command<'a>(command: &str, context: CliContext<'a>) -> crate::error::Resu
 }
 
 fn load_glob_files<'a, S: AsRef<str> + 'a>(
+    root: &Path,
     globs: impl IntoIterator<Item = &'a S>,
 ) -> Result<Vec<(PathBuf, String)>> {
     let path_strs: Vec<&str> = globs.into_iter().map(|s| s.as_ref()).collect();
@@ -137,7 +167,6 @@ fn load_glob_files<'a, S: AsRef<str> + 'a>(
         return Ok(vec![]);
     }
 
-    let root = std::env::current_dir()?;
     let schema_matchers =
         build_matchers(&path_strs, &root).map_err(|err| CliError::GlobError(err))?;
 
