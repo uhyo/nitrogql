@@ -12,7 +12,7 @@ use thiserror::Error;
 use crate::{
     ast::{base::set_current_file_of_pos, OperationDocument, TypeSystemOrExtensionDocument},
     cli::{context::CliContext, error::CliError},
-    config_file::load_config,
+    config_file::{load_config, GenerateConfig},
     error::print_positioned_error,
     graphql_parser::parser::{parse_operation_document, parse_type_system_document},
 };
@@ -26,7 +26,7 @@ mod generate;
 
 #[derive(Parser, Debug)]
 struct Args {
-    #[arg(long)]
+    #[arg(long, short = 'c')]
     /// Path to config file.
     config_file: Option<PathBuf>,
     #[arg(long)]
@@ -59,7 +59,7 @@ fn run_cli_impl(args: impl IntoIterator<Item = String>) -> Result<()> {
         return Err(CliError::NoCommandSpecified.into());
     }
     let config_file = load_config(args.config_file.as_ref().map(|p| p.as_path()))?;
-    let (root_dir, schema_glob, operation_glob, schema_output) =
+    let (root_dir, schema_glob, operation_glob, generate_config) =
         if let Some((config_path, config_file)) = config_file {
             debug!("Loaded config file from {}", config_path.display());
             (
@@ -69,20 +69,24 @@ fn run_cli_impl(args: impl IntoIterator<Item = String>) -> Result<()> {
                     .unwrap_or(PathBuf::new()),
                 config_file.schema,
                 config_file.documents,
-                config_file.schema_output,
+                config_file.generate,
             )
         } else {
-            (env::current_dir()?, None, None, None)
+            (env::current_dir()?, None, None, GenerateConfig::default())
         };
     let schema_glob = schema_glob.unwrap_or(args.schema);
     let operation_glob = operation_glob.unwrap_or(args.operation);
-    let schema_output = schema_output.or(args.schema_output);
+
+    let config = CliConfig {
+        root_dir,
+        generate_config,
+    };
 
     if schema_glob.is_empty() {
         return Err(CliError::NoSchemaSpecified.into());
     }
 
-    let schema_files = load_glob_files(&root_dir, &schema_glob)?;
+    let schema_files = load_glob_files(&config.root_dir, &schema_glob)?;
     let file_by_index = schema_files
         .iter()
         .map(|(path, src)| (path.clone(), src.as_str()))
@@ -102,7 +106,7 @@ fn run_cli_impl(args: impl IntoIterator<Item = String>) -> Result<()> {
     let schema_docs = schema_docs?;
     let merged_schema_doc = TypeSystemOrExtensionDocument::merge(schema_docs);
 
-    let operation_files = load_glob_files(&root_dir, &operation_glob)?;
+    let operation_files = load_glob_files(&config.root_dir, &operation_glob)?;
     let op_file_index = file_by_index.len();
 
     let operation_docs = operation_files
@@ -125,10 +129,7 @@ fn run_cli_impl(args: impl IntoIterator<Item = String>) -> Result<()> {
     let operation_docs = operation_docs?;
 
     let mut context = CliContext::SchemaUnresolved {
-        config: CliConfig {
-            root_dir,
-            schema_output,
-        },
+        config,
         schema: merged_schema_doc,
         operations: operation_docs,
         file_by_index,

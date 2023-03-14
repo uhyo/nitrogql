@@ -1,6 +1,9 @@
 use std::path::PathBuf;
 
-use crate::ast::{OperationDocument, TypeSystemDocument, TypeSystemOrExtensionDocument};
+use crate::{
+    ast::{OperationDocument, TypeSystemDocument, TypeSystemOrExtensionDocument},
+    config_file::GenerateConfig,
+};
 
 /// List of (path, source)
 pub type FileByIndex<'src> = Vec<(PathBuf, &'src str)>;
@@ -30,8 +33,9 @@ impl<'src> CliContext<'src> {
     }
 }
 
+#[derive(Debug)]
 pub struct CliConfig {
     /// Root directory for other paths.
     pub root_dir: PathBuf,
-    pub schema_output: Option<PathBuf>,
+    pub generate_config: GenerateConfig,
 }

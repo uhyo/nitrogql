@@ -3,9 +3,12 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use serde_yaml::Value;
+use serde_yaml::{Mapping, Value};
 
-use super::{config::ConfigFile, error::ConfigFileError};
+use super::{
+    config::{ConfigFile, GenerateConfig, GenerateMode},
+    error::ConfigFileError,
+};
 
 const CONFIG_NAMES: [&str; 7] = [
     "graphql.config.json",
@@ -33,7 +36,8 @@ fn search_graphql_config() -> io::Result<Option<(PathBuf, String)>> {
     Ok(None)
 }
 
-/// Loads config file. Returns a pair of loaded file name and loaded config
+/// Loads config file. Returns a pair of loaded file name and loaded config.
+/// Config file should follow the GraphQL Config format: https://the-guild.dev/graphql/config/docs
 pub fn load_config(
     config_file: Option<&Path>,
 ) -> Result<Option<(PathBuf, ConfigFile)>, ConfigFileError> {
@@ -59,7 +63,10 @@ pub fn load_config(
 
 fn read_config(config: Value) -> Option<ConfigFile> {
     let schema = 'schema: {
-        let schema = config.get("schema")?;
+        let schema = config.get("schema");
+        let Some(schema) = schema else {
+            break 'schema None;
+        };
         if let Some(string) = schema.as_str() {
             break 'schema Some(vec![string.to_owned()]);
         }
@@ -74,7 +81,10 @@ fn read_config(config: Value) -> Option<ConfigFile> {
         None
     };
     let documents = 'documents: {
-        let documents = config.get("documents")?;
+        let documents = config.get("documents");
+        let Some(documents) = documents else {
+            break 'documents None;
+        };
         if let Some(string) = documents.as_str() {
             break 'documents Some(vec![string.to_owned()]);
         }
@@ -88,13 +98,32 @@ fn read_config(config: Value) -> Option<ConfigFile> {
         }
         None
     };
-    let extensions = config["extensions"]["nitrogql"].as_mapping();
-    let schema_output = extensions
-        .and_then(|extensions| extensions["schema-output"].as_str())
-        .map(|path| path.into());
+    let extensions = config
+        .get("extensions")
+        .and_then(|e| e.get("nitrogql"))
+        .and_then(|e| e.as_mapping());
+    let generate = extensions.and_then(generate_config).unwrap_or_default();
     Some(ConfigFile {
         schema,
         documents,
+        generate,
+    })
+}
+
+/// Reads extensions.generate config.
+fn generate_config(extensions: &Mapping) -> Option<GenerateConfig> {
+    let generate = extensions.get("generate")?;
+    let schema_output = generate
+        .get("schema-output")
+        .and_then(|path| path.as_str())
+        .map(|path| path.into());
+    let mode = generate
+        .get("mode")
+        .and_then(|v| v.as_str())
+        .and_then(GenerateMode::from_str)
+        .unwrap_or_default();
+    Some(GenerateConfig {
         schema_output,
+        mode,
     })
 }

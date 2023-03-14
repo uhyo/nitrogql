@@ -2,4 +2,5 @@ schema: schema/*.graphql
 documents: operations/*.graphql
 extensions:
   nitrogql:
-    schema-output: ./schema.d.ts
+    generate:
+      schema-output: ./schema.d.ts

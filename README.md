@@ -8,5 +8,5 @@
 ### Example command
 
 ```sh
-cargo run -- --config-file sample_gql/graphql.config.yaml generate
+cargo run -- generate -c sample_gql/graphql.config.yaml
 ```
