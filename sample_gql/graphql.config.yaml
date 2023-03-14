@@ -3,4 +3,5 @@ documents: operations/*.graphql
 extensions:
   nitrogql:
     generate:
+      mode: with-loader-ts-5.0
       schema-output: ./schema.d.ts

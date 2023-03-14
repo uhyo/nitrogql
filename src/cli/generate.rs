@@ -6,6 +6,7 @@ use log::debug;
 
 use crate::checker::definition_map::generate_definition_map;
 use crate::cli::error::CliError;
+use crate::config_file::GenerateMode;
 use crate::source_map_writer::source_writer::SourceWriterBuffers;
 use crate::type_printer::schema_type_printer::printer::{
     SchemaTypePrinter, SchemaTypePrinterOptions,
@@ -55,7 +56,10 @@ pub fn run_generate(mut context: CliContext) -> Result<CliContext> {
                 debug!("Processing {}", path.to_string_lossy());
                 let decl_file_path = {
                     let mut path = path.clone();
-                    path.set_extension("d.graphql.ts");
+                    path.set_extension(match config.generate_config.mode {
+                        GenerateMode::WithLoaderTS5_0 => "d.graphql.ts",
+                        GenerateMode::WithLoaderTS4_0 => "graphql.d.ts",
+                    });
                     path
                 };
 
@@ -63,7 +67,7 @@ pub fn run_generate(mut context: CliContext) -> Result<CliContext> {
                 let mut printer_options = QueryTypePrinterOptions::default();
                 // Todo custom schema_root_types
                 printer_options.schema_source =
-                    path_to_ts(relative_path(&decl_file_path, &schema_output)?)
+                    path_to_ts(relative_path(&decl_file_path, &schema_output))
                         .to_string_lossy()
                         .to_string();
                 let mut printer = QueryTypePrinter::new(printer_options, &mut writer);

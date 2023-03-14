@@ -137,8 +137,14 @@ fn run_cli_impl(args: impl IntoIterator<Item = String>) -> Result<()> {
 
     for command in args.commands.iter() {
         let file_source_by_index = context.file_by_index();
-        context = run_command(command, context).map_err(|err| CommandError {
-            message: print_positioned_error(&err, &file_source_by_index),
+        context = run_command(command, context).map_err(|err| {
+            if err.has_position() {
+                CommandError::Message {
+                    message: print_positioned_error(&err, &file_source_by_index),
+                }
+            } else {
+                CommandError::Other(err.into_inner())
+            }
         })?;
     }
 
@@ -146,9 +152,11 @@ fn run_cli_impl(args: impl IntoIterator<Item = String>) -> Result<()> {
 }
 
 #[derive(Error, Debug)]
-#[error("Error running command:\n{message}")]
-struct CommandError {
-    message: String,
+enum CommandError {
+    #[error("Error running command:\n{message}")]
+    Message { message: String },
+    #[error("Error running command:\n{0}")]
+    Other(#[from] anyhow::Error),
 }
 
 fn run_command<'a>(command: &str, context: CliContext<'a>) -> crate::error::Result<CliContext<'a>> {

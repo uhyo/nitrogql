@@ -24,18 +24,22 @@ pub struct GenerateConfig {
 pub enum GenerateMode {
     /// To be used with a webpack loader for .graphql files, emits .d.graphql.ts files that are supported by TS 5.0 and later
     WithLoaderTS5_0,
+    /// To be used with a webpack loader for .graphql files, emits .d.graphql.ts files that are supported by TS 4.0
+    WithLoaderTS4_0,
 }
 
 impl GenerateMode {
     pub fn as_str(&self) -> &'static str {
         match self {
             GenerateMode::WithLoaderTS5_0 => "with-loader-ts-5.0",
+            GenerateMode::WithLoaderTS4_0 => "with-loader-ts-4.0",
         }
     }
 
     pub fn from_str(value: &str) -> Option<Self> {
         match value {
             "with-loader-ts-5.0" => Some(GenerateMode::WithLoaderTS5_0),
+            "with-loader-ts-4.0" => Some(GenerateMode::WithLoaderTS4_0),
             _ => None,
         }
     }

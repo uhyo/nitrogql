@@ -1,12 +1,12 @@
-use std::{
-    io,
-    path::{Component, Path, PathBuf},
-};
+use std::path::{Component, Path, PathBuf};
 
 /// Calculates relative path between two.
-pub fn relative_path(from: &Path, to: &Path) -> io::Result<PathBuf> {
-    let mut from = from.canonicalize()?;
-    let to = to.canonicalize()?;
+pub fn relative_path(from: &Path, to: &Path) -> PathBuf {
+    eprintln!("relative_path {} {}", from.display(), to.display());
+    let mut from = normalize(from);
+    eprintln!("relative_path {} {}", from.display(), to.display());
+    let to = normalize(to);
+    eprintln!("relative_path {} {}", from.display(), to.display());
     // from should be file (not directory), so move to parent dir
     from.pop();
 
@@ -34,5 +34,30 @@ pub fn relative_path(from: &Path, to: &Path) -> io::Result<PathBuf> {
     for component in result_components {
         result.push(component.as_os_str());
     }
-    Ok(result)
+    result
+}
+
+fn normalize(path: &Path) -> PathBuf {
+    let mut stack = vec![];
+    for component in path.components() {
+        match component {
+            Component::CurDir => {}
+            c @ Component::Normal(_) => {
+                stack.push(c);
+            }
+            Component::ParentDir => {
+                stack.pop();
+            }
+            c @ Component::Prefix(_) | c @ Component::RootDir => {
+                stack.clear();
+                stack.push(c);
+            }
+        }
+    }
+
+    let mut result = PathBuf::new();
+    for component in stack {
+        result.push(component.as_os_str());
+    }
+    result
 }

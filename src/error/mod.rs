@@ -27,6 +27,14 @@ impl PositionedError {
             additional_info,
         }
     }
+
+    pub fn has_position(&self) -> bool {
+        self.position.is_some()
+    }
+
+    pub fn into_inner(self) -> anyhow::Error {
+        self.inner
+    }
 }
 
 impl<E> From<E> for PositionedError

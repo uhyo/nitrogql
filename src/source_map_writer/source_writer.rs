@@ -146,8 +146,7 @@ pub fn print_source_map_json(
     let sources = source_files
         .into_iter()
         .map(|path| relative_path(file, path))
-        .collect::<io::Result<Vec<_>>>();
-    let sources = sources?;
+        .collect::<Vec<_>>();
     let sources = sources
         .iter()
         .map(|path| path.to_string_lossy())
