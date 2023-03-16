@@ -18,6 +18,8 @@ pub struct SchemaRootTypes {
 }
 
 pub struct QueryTypePrinterOptions {
+    /// Whether value of variables should be printed.
+    pub print_values: bool,
     /// Name of the root TypeScript namespace that contains schema types.
     pub schema_root_namespace: String,
     /// Source of schema type to import from.
@@ -47,6 +49,7 @@ pub struct QueryTypePrinterOptions {
 impl Default for QueryTypePrinterOptions {
     fn default() -> Self {
         QueryTypePrinterOptions {
+            print_values: false,
             schema_root_namespace: "Schema".into(),
             schema_source: "".into(),
             schema_root_types: SchemaRootTypes::default(),
@@ -76,6 +79,7 @@ impl Default for SchemaRootTypes {
 pub struct QueryTypePrinterContext<'a, 'src> {
     pub options: &'a QueryTypePrinterOptions,
     pub schema: &'a TypeSystemDocument<'src>,
+    pub operation: &'a OperationDocument<'src>,
     pub schema_definitions: &'a DefinitionMap<'src>,
     pub fragment_definitions: &'a HashMap<&'src str, &'a FragmentDefinition<'src>>,
 }
@@ -121,6 +125,7 @@ where
         let context = QueryTypePrinterContext {
             options: &self.options,
             schema,
+            operation: document,
             schema_definitions: definition_map,
             fragment_definitions: &fragment_definitions,
         };

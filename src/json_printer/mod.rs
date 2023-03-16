@@ -1,12 +1,12 @@
 use json_writer::JSONObjectWriter;
 use to_json::JsonPrintable;
 
-use crate::ast::operations::ExecutableDefinition;
-
 mod helpers;
 mod tests;
 pub mod to_json;
 
-pub fn print_executable_document(ast: &ExecutableDefinition, buf: &mut String) {
-    ast.print_json(&mut JSONObjectWriter::new(buf));
+pub fn print_to_json_string<T: JsonPrintable + ?Sized>(ast: &T) -> String {
+    let mut buf = String::new();
+    ast.print_json(&mut JSONObjectWriter::new(&mut buf));
+    buf
 }

@@ -59,12 +59,16 @@ pub fn run_generate(mut context: CliContext) -> Result<CliContext> {
                     path.set_extension(match config.generate_config.mode {
                         GenerateMode::WithLoaderTS5_0 => "d.graphql.ts",
                         GenerateMode::WithLoaderTS4_0 => "graphql.d.ts",
+                        GenerateMode::StandaloneTS4_0 => "graphql.ts",
                     });
                     path
                 };
 
                 let mut writer = SourceWriter::new();
                 let mut printer_options = QueryTypePrinterOptions::default();
+                if config.generate_config.mode == GenerateMode::StandaloneTS4_0 {
+                    printer_options.print_values = true;
+                }
                 // Todo custom schema_root_types
                 printer_options.schema_source =
                     path_to_ts(relative_path(&decl_file_path, &schema_output))

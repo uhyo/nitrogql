@@ -1,3 +1,5 @@
+use json_writer::JSONObjectWriter;
+
 use crate::{
     ast::{
         operations::{
@@ -11,6 +13,7 @@ use crate::{
         OperationDocument,
     },
     checker::operation_checker::direct_fields_of_output_type,
+    json_printer::{print_to_json_string, to_json::JsonPrintable},
     source_map_writer::writer::SourceMapWriter,
     type_printer::{
         ts_types::{ts_types_util::ts_union, type_to_ts_type::get_ts_type_of_type},
@@ -118,7 +121,25 @@ impl TypePrinter for OperationDefinition<'_> {
         writer.write(&operation_type_name);
         writer.write(", ");
         writer.write(&input_variable_name);
-        writer.write(">;\n\n");
+        if !context.options.print_values {
+            writer.write(">;\n\n");
+            return;
+        }
+        writer.write("> = ");
+        // To follow the community conventions, generated JSON has only one operation in it
+        let this_document = context
+            .operation
+            .definitions
+            .iter()
+            .filter(|def| match def {
+                ExecutableDefinition::FragmentDefinition(_) => true,
+                ExecutableDefinition::OperationDefinition(op) => {
+                    op.name.map(|ident| ident.name) == self.name.map(|ident| ident.name)
+                }
+            })
+            .collect::<Vec<_>>();
+        writer.write(&print_to_json_string(&this_document[..]));
+        writer.write(";\n\n");
     }
 }
 

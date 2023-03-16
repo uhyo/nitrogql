@@ -27,6 +27,17 @@ impl JsonPrintable for OperationDocument<'_> {
     }
 }
 
+impl JsonPrintable for [&ExecutableDefinition<'_>] {
+    fn print_json(&self, writer: &mut JSONObjectWriter) {
+        writer.value("kind", "Document");
+
+        let mut definitions_writer = writer.array("definitions");
+        for d in self {
+            d.print_json(&mut definitions_writer.object());
+        }
+    }
+}
+
 impl JsonPrintable for ExecutableDefinition<'_> {
     fn print_json(&self, writer: &mut JSONObjectWriter) {
         writer.value("kind", "OperationDefinition");
