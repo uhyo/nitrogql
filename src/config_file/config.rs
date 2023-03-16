@@ -44,14 +44,6 @@ pub enum GenerateMode {
 }
 
 impl GenerateMode {
-    pub fn as_str(&self) -> &'static str {
-        match self {
-            GenerateMode::WithLoaderTS5_0 => "with-loader-ts-5.0",
-            GenerateMode::WithLoaderTS4_0 => "with-loader-ts-4.0",
-            GenerateMode::StandaloneTS4_0 => "standalone-ts-4.0",
-        }
-    }
-
     pub fn from_str(value: &str) -> Option<Self> {
         match value {
             "with-loader-ts-5.0" => Some(GenerateMode::WithLoaderTS5_0),

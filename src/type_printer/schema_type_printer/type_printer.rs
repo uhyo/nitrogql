@@ -1,7 +1,6 @@
 use crate::{
     ast::{
         base::{Ident, Pos},
-        r#type::Type,
         type_system::{
             EnumTypeDefinition, InputObjectTypeDefinition, InterfaceTypeDefinition,
             ObjectTypeDefinition, ScalarTypeDefinition, TypeDefinition, TypeSystemDefinition,
@@ -14,7 +13,6 @@ use crate::{
     type_printer::{
         ts_types::{
             ts_types_util::ts_union, type_to_ts_type::get_ts_type_of_type, ObjectField, TSType,
-            TypeVariable,
         },
         utils::interface_implementers,
     },

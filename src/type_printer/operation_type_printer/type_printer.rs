@@ -1,5 +1,3 @@
-use json_writer::JSONObjectWriter;
-
 use crate::{
     ast::{
         operations::{
@@ -13,7 +11,7 @@ use crate::{
         OperationDocument,
     },
     checker::operation_checker::direct_fields_of_output_type,
-    json_printer::{print_to_json_string, to_json::JsonPrintable},
+    json_printer::print_to_json_string,
     source_map_writer::writer::SourceMapWriter,
     type_printer::{
         ts_types::{ts_types_util::ts_union, type_to_ts_type::get_ts_type_of_type},

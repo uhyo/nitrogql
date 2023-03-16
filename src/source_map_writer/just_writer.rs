@@ -1,4 +1,4 @@
-use crate::ast::base::{HasPos, HasSpan};
+use crate::ast::base::HasPos;
 
 use super::writer::SourceMapWriter;
 
