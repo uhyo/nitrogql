@@ -1,12 +1,9 @@
 #[cfg(test)]
 mod tests {
     use crate::{
-        extension_resolver::{extension_list::ExtensionError, resolve_extensions},
-        graphql_parser::parser::parse_type_system_document,
-        graphql_printer::GraphQLPrinter,
-        source_map_writer::just_writer::JustWriter,
+        extension_resolver::resolve_extensions, graphql_parser::parser::parse_type_system_document,
+        graphql_printer::GraphQLPrinter, source_map_writer::just_writer::JustWriter,
     };
-    use anyhow::Result;
     use insta::assert_snapshot;
 
     #[test]

@@ -384,14 +384,10 @@ mod scalars {
 
 #[cfg(test)]
 mod objects {
-    use insta::{assert_debug_snapshot, assert_snapshot};
+    use insta::assert_debug_snapshot;
 
-    use crate::{
-        checker::type_system_checker::{
-            check_type_system_document, tests::parse_to_type_system_document,
-        },
-        graphql_printer::GraphQLPrinter,
-        source_map_writer::just_writer::JustWriter,
+    use crate::checker::type_system_checker::{
+        check_type_system_document, tests::parse_to_type_system_document,
     };
 
     // https://spec.graphql.org/draft/#sec-Objects.Type-Validation
@@ -701,13 +697,6 @@ mod objects {
             },
         ]
         "###);
-    }
-
-    fn print_graphql<T: GraphQLPrinter>(value: &T) -> String {
-        let mut result = String::new();
-        let mut writer = JustWriter::new(&mut result);
-        value.print_graphql(&mut writer);
-        result
     }
 }
 
