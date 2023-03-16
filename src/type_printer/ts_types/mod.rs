@@ -21,8 +21,6 @@ pub enum TSType {
     StringLiteral(String),
     /// Namespace member access N.K
     NamespaceMember(String, String),
-    /// Index type T[K]
-    IndexType(Box<TSType>, Box<TSType>),
     /// Object type (key, value, readonly)
     Object(Vec<ObjectField>),
     /// Array Type
@@ -33,8 +31,6 @@ pub enum TSType {
     Union(Vec<TSType>),
     /// Intersection type
     Intersection(Vec<TSType>),
-    /// string
-    String,
     // /// Undefined
     // Undefined,
     /// Null
@@ -43,14 +39,6 @@ pub enum TSType {
     Never,
     /// Unknown
     Unknown,
-    /// Not a real TS syntax. Pseudo syntax for defining local type variable
-    Let {
-        // if Some, `type` extends infer `var`
-        // if None, `type` extends unknown (for union distribution)
-        var: Option<String>,
-        r#type: Box<TSType>,
-        r#in: Box<TSType>,
-    },
 }
 
 #[derive(Clone, Debug)]
@@ -156,12 +144,6 @@ impl TSType {
                 writer.write(".");
                 writer.write(key);
             }
-            TSType::IndexType(ref parent, ref key) => {
-                parent.print_type(writer);
-                writer.write("[");
-                key.print_type(writer);
-                writer.write("]");
-            }
             TSType::Object(ref properties) => {
                 if properties.is_empty() {
                     writer.write("{}");
@@ -228,9 +210,6 @@ impl TSType {
                     ty.print_type(writer);
                 }
             }
-            TSType::String => {
-                writer.write("string");
-            }
             TSType::Null => {
                 writer.write("null");
             }
@@ -239,26 +218,6 @@ impl TSType {
             }
             TSType::Unknown => {
                 writer.write("unknown");
-            }
-            TSType::Let {
-                ref var,
-                r#type: ref ty,
-                r#in: ref in_type,
-            } => {
-                ty.print_type(writer);
-                writer.write(" extends ");
-                if let Some(ref var) = var {
-                    writer.write("infer ");
-                    writer.write(&var);
-                } else {
-                    writer.write("unknown");
-                }
-                writer.write("\n");
-                writer.indent();
-                writer.write("? ");
-                in_type.print_type(writer);
-                writer.write("\n: unknown");
-                writer.dedent();
             }
         }
     }
@@ -289,18 +248,9 @@ impl TSType {
             TSType::Union(types) => {
                 TSType::Union(types.into_iter().map(|t| t.to_readonly()).collect())
             }
-            TSType::IndexType(t1, t2) => {
-                TSType::IndexType(Box::new((*t1).to_readonly()), Box::new((*t2).to_readonly()))
-            }
-            TSType::Let { var, r#type, r#in } => TSType::Let {
-                var,
-                r#type: Box::new((*r#type).to_readonly()),
-                r#in: Box::new((*r#in).to_readonly()),
-            },
             t @ TSType::TypeVariable(_)
             | t @ TSType::StringLiteral(_)
             | t @ TSType::NamespaceMember(_, _)
-            | t @ TSType::String
             | t @ TSType::Never
             | t @ TSType::Null
             | t @ TSType::Unknown => t,
