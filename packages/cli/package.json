@@ -1,0 +1,20 @@
+{
+  "name": "@nitrogql/cli",
+  "version": "0.0.1",
+  "description": "GraphQL + TypeScript toolchain",
+  "main": "bin/index.mjs",
+  "bin": {
+    "nitrogql": "bin/index.mjs"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "graphql"
+  ],
+  "author": "uhyo <uhyo@uhy.ooo>",
+  "license": "MIT",
+  "volta": {
+    "node": "18.15.0"
+  }
+}

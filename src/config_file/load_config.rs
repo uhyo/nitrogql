@@ -1,9 +1,11 @@
 use std::{
-    env, fs, io,
+    fs, io,
     path::{Path, PathBuf},
 };
 
 use serde_yaml::{Mapping, Value};
+
+use crate::cli::cwd::get_cwd;
 
 use super::{
     config::{ConfigFile, GenerateConfig, GenerateMode},
@@ -23,13 +25,17 @@ const CONFIG_NAMES: [&str; 7] = [
 /// searches graphql config and loads it if one is found.
 fn search_graphql_config() -> io::Result<Option<(PathBuf, String)>> {
     for name in CONFIG_NAMES.iter() {
-        match fs::read_to_string(name) {
+        let config_file_path = get_cwd()?.join(name);
+        match fs::read_to_string(&config_file_path) {
             Ok(buf) => {
-                let current_dir = env::current_dir()?;
-                let config_file_path = current_dir.join(name);
                 return Ok(Some((config_file_path, buf)));
             }
             Err(err) if err.kind() == io::ErrorKind::NotFound => {}
+            // Maybe a WASI way of expressing file not found error
+            Err(err)
+                if err
+                    .to_string()
+                    .starts_with("failed to find a pre-opened file descriptor through which") => {}
             Err(err) => return Err(err),
         }
     }

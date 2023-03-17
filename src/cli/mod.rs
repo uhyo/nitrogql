@@ -6,7 +6,7 @@ use std::{
 use anyhow::Result;
 use clap::Parser;
 use globmatch::wrappers::{build_matchers, match_paths};
-use log::{debug, error};
+use log::{debug, error, trace};
 use thiserror::Error;
 
 use crate::{
@@ -17,10 +17,11 @@ use crate::{
     graphql_parser::parser::{parse_operation_document, parse_type_system_document},
 };
 
-use self::{check::run_check, context::CliConfig, generate::run_generate};
+use self::{check::run_check, context::CliConfig, cwd::get_cwd, generate::run_generate};
 
 mod check;
 mod context;
+pub mod cwd;
 mod error;
 mod generate;
 
@@ -72,7 +73,7 @@ fn run_cli_impl(args: impl IntoIterator<Item = String>) -> Result<()> {
                 config_file.generate,
             )
         } else {
-            (env::current_dir()?, None, None, GenerateConfig::default())
+            (get_cwd()?, None, None, GenerateConfig::default())
         };
     let schema_glob = schema_glob.unwrap_or(args.schema);
     let operation_glob = operation_glob.unwrap_or(args.operation);
@@ -176,10 +177,19 @@ fn load_glob_files<'a, S: AsRef<str> + 'a>(
         return Ok(vec![]);
     }
 
+    trace!("load_glob_files");
     let schema_matchers =
         build_matchers(&path_strs, &root).map_err(|err| CliError::GlobError(err))?;
+    trace!("schema_matchers {schema_matchers:?}");
+    for matcher in schema_matchers {
+        trace!("matcher {matcher:?}");
+        trace!("root {}", env::current_dir()?.display());
+    }
 
+    let schema_matchers =
+        build_matchers(&path_strs, &root).map_err(|err| CliError::GlobError(err))?;
     let (paths, _) = match_paths(schema_matchers, None, None);
+    trace!("match_paths {paths:?}");
     let results = paths
         .into_iter()
         .map(|path| {
