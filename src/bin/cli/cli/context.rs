@@ -1,9 +1,7 @@
 use std::path::PathBuf;
 
-use crate::{
-    ast::{OperationDocument, TypeSystemDocument, TypeSystemOrExtensionDocument},
-    config_file::GenerateConfig,
-};
+use crate::config_file::GenerateConfig;
+use nitrogql::ast::{OperationDocument, TypeSystemDocument, TypeSystemOrExtensionDocument};
 
 /// List of (path, source)
 pub type FileByIndex<'src> = Vec<(PathBuf, &'src str)>;

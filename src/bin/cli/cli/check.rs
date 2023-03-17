@@ -1,6 +1,6 @@
 use log::{debug, info};
 
-use crate::{
+use nitrogql::{
     checker::{
         operation_checker::check_operation_document,
         type_system_checker::check_type_system_document,

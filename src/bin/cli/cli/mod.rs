@@ -1,5 +1,5 @@
 use std::{
-    env, fs,
+    fs,
     path::{Path, PathBuf},
 };
 
@@ -10,9 +10,12 @@ use log::{debug, error, trace};
 use thiserror::Error;
 
 use crate::{
-    ast::{base::set_current_file_of_pos, OperationDocument, TypeSystemOrExtensionDocument},
     cli::{context::CliContext, error::CliError},
     config_file::{load_config, GenerateConfig},
+};
+
+use nitrogql::{
+    ast::{base::set_current_file_of_pos, OperationDocument, TypeSystemOrExtensionDocument},
     error::print_positioned_error,
     graphql_parser::parser::{parse_operation_document, parse_type_system_document},
 };
@@ -160,7 +163,10 @@ enum CommandError {
     Other(#[from] anyhow::Error),
 }
 
-fn run_command<'a>(command: &str, context: CliContext<'a>) -> crate::error::Result<CliContext<'a>> {
+fn run_command<'a>(
+    command: &str,
+    context: CliContext<'a>,
+) -> nitrogql::error::Result<CliContext<'a>> {
     match command {
         "check" => run_check(context),
         "generate" => run_generate(context),
@@ -183,7 +189,12 @@ fn load_glob_files<'a, S: AsRef<str> + 'a>(
     trace!("schema_matchers {schema_matchers:?}");
     for matcher in schema_matchers {
         trace!("matcher {matcher:?}");
-        trace!("root {}", env::current_dir()?.display());
+        let root = matcher.root();
+        trace!("{root}");
+        for entry in fs::read_dir(&root)? {
+            let entry = entry?;
+            trace!("entry {entry:?}");
+        }
     }
 
     let schema_matchers =

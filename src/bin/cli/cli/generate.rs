@@ -4,15 +4,15 @@ use std::path::{Path, PathBuf};
 
 use log::debug;
 
-use crate::checker::definition_map::generate_definition_map;
 use crate::cli::error::CliError;
 use crate::config_file::GenerateMode;
-use crate::source_map_writer::source_writer::SourceWriterBuffers;
-use crate::type_printer::schema_type_printer::printer::{
+use nitrogql::checker::definition_map::generate_definition_map;
+use nitrogql::source_map_writer::source_writer::SourceWriterBuffers;
+use nitrogql::type_printer::schema_type_printer::printer::{
     SchemaTypePrinter, SchemaTypePrinterOptions,
 };
-use crate::utils::relative_path::relative_path;
-use crate::{
+use nitrogql::utils::relative_path::relative_path;
+use nitrogql::{
     error::Result,
     source_map_writer::source_writer::{print_source_map_json, SourceWriter},
     type_printer::operation_type_printer::{QueryTypePrinter, QueryTypePrinterOptions},
