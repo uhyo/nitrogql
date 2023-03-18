@@ -5,7 +5,7 @@ use nitrogql_ast::{
     OperationDocument, TypeSystemDocument,
 };
 use nitrogql_semantics::DefinitionMap;
-use sourcemap_writer::writer::SourceMapWriter;
+use sourcemap_writer::SourceMapWriter;
 
 use super::type_printer::{operation_variable_name, TypePrinter};
 

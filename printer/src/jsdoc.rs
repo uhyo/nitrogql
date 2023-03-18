@@ -1,6 +1,6 @@
 use nitrogql_ast::value::StringValue;
 use nitrogql_utils::{first_non_space_byte_index, skip_chars};
-use sourcemap_writer::writer::SourceMapWriter;
+use sourcemap_writer::SourceMapWriter;
 
 pub fn print_description(description: &StringValue, writer: &mut impl SourceMapWriter) {
     let desc = dedent(&description.value);

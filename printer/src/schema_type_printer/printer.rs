@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use nitrogql_ast::TypeSystemDocument;
-use sourcemap_writer::writer::SourceMapWriter;
+use sourcemap_writer::SourceMapWriter;
 
 use super::{error::SchemaTypePrinterResult, type_printer::TypePrinter};
 

@@ -14,7 +14,7 @@ use nitrogql_ast::{
     value::StringValue,
     TypeSystemDocument,
 };
-use sourcemap_writer::writer::SourceMapWriter;
+use sourcemap_writer::SourceMapWriter;
 
 use crate::jsdoc::print_description as jsdoc_print_description;
 

@@ -4,7 +4,7 @@ mod operation {
 
     use crate::parser::parse_operation_document;
     use nitrogql_printer::GraphQLPrinter;
-    use sourcemap_writer::just_writer::JustWriter;
+    use sourcemap_writer::JustWriter;
 
     #[test]
     fn simple_query() {
@@ -103,7 +103,7 @@ mod definition {
     use crate::parser::parse_type_system_document;
     use insta::assert_snapshot;
     use nitrogql_printer::GraphQLPrinter;
-    use sourcemap_writer::just_writer::JustWriter;
+    use sourcemap_writer::JustWriter;
 
     #[test]
     fn scalar_definition() {

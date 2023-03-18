@@ -3,7 +3,7 @@ use nitrogql_ast::{
     r#type::Type,
     value::{StringValue, Value},
 };
-use sourcemap_writer::writer::SourceMapWriter;
+use sourcemap_writer::SourceMapWriter;
 
 use super::GraphQLPrinter;
 

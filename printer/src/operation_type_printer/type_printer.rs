@@ -16,7 +16,7 @@ use nitrogql_ast::{
 use nitrogql_checker::operation_checker::direct_fields_of_output_type;
 use nitrogql_json_printer::print_to_json_string;
 use nitrogql_utils::capitalize;
-use sourcemap_writer::writer::SourceMapWriter;
+use sourcemap_writer::SourceMapWriter;
 
 use super::{
     super::ts_types::{ts_types_util::ts_intersection, TSType},

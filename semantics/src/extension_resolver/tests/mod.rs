@@ -4,7 +4,7 @@ mod tests {
     use insta::assert_snapshot;
     use nitrogql_parser::parser::parse_type_system_document;
     use nitrogql_printer::GraphQLPrinter;
-    use sourcemap_writer::just_writer::JustWriter;
+    use sourcemap_writer::JustWriter;
 
     #[test]
     fn resolve() {

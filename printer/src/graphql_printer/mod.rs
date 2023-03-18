@@ -15,7 +15,7 @@ use {
         value::Arguments,
         OperationDocument, TypeSystemDocument, TypeSystemOrExtensionDocument,
     },
-    sourcemap_writer::writer::SourceMapWriter,
+    sourcemap_writer::SourceMapWriter,
 };
 
 mod base;

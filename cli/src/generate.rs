@@ -11,8 +11,7 @@ use nitrogql_printer::{QueryTypePrinter, QueryTypePrinterOptions};
 use nitrogql_printer::{SchemaTypePrinter, SchemaTypePrinterOptions};
 use nitrogql_semantics::generate_definition_map;
 use nitrogql_utils::relative_path;
-use sourcemap_writer::source_writer::SourceWriterBuffers;
-use sourcemap_writer::source_writer::{print_source_map_json, SourceWriter};
+use sourcemap_writer::{print_source_map_json, SourceWriter, SourceWriterBuffers};
 
 use super::context::FileByIndex;
 use super::{check::run_check, context::CliContext};

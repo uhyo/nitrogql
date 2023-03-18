@@ -2,7 +2,7 @@ use nitrogql_ast::{
     base::{HasPos, Ident, Pos},
     value::StringValue,
 };
-use sourcemap_writer::writer::SourceMapWriter;
+use sourcemap_writer::SourceMapWriter;
 
 use super::jsdoc::print_description;
 
