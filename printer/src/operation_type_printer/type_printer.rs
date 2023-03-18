@@ -1,4 +1,5 @@
 use crate::{
+    json_printer::print_to_json_string,
     ts_types::{ts_types_util::ts_union, type_to_ts_type::get_ts_type_of_type},
     utils::interface_implementers,
 };
@@ -13,7 +14,6 @@ use nitrogql_ast::{
     value::StringValue,
     variable::VariablesDefinition,
 };
-use nitrogql_json_printer::print_to_json_string;
 use nitrogql_semantics::direct_fields_of_output_type;
 use nitrogql_utils::capitalize;
 use sourcemap_writer::SourceMapWriter;

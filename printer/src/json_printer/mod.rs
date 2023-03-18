@@ -3,7 +3,7 @@ use to_json::JsonPrintable;
 
 mod helpers;
 mod tests;
-pub mod to_json;
+mod to_json;
 
 pub fn print_to_json_string<T: JsonPrintable + ?Sized>(ast: &T) -> String {
     let mut buf = String::new();

@@ -1,5 +1,6 @@
 mod graphql_printer;
 mod jsdoc;
+mod json_printer;
 mod operation_type_printer;
 mod schema_type_printer;
 mod ts_types;

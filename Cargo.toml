@@ -6,7 +6,6 @@ members = [
   "checker",
   "config-file",
   "error",
-  "json-printer",
   "parser",
   "printer",
   "semantics",

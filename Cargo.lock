@@ -434,15 +434,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "nitrogql-json-printer"
-version = "0.1.0"
-dependencies = [
- "insta",
- "json-writer",
- "nitrogql-ast",
-]
-
-[[package]]
 name = "nitrogql-parser"
 version = "0.1.0"
 dependencies = [
@@ -460,9 +451,9 @@ version = "0.1.0"
 dependencies = [
  "graphql-builtins",
  "insta",
+ "json-writer",
  "nitrogql-ast",
  "nitrogql-checker",
- "nitrogql-json-printer",
  "nitrogql-parser",
  "nitrogql-semantics",
  "nitrogql-utils",
