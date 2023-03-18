@@ -2,7 +2,7 @@
 mod tests {
     use crate::resolve_extensions;
     use insta::assert_snapshot;
-    use nitrogql_parser::parser::parse_type_system_document;
+    use nitrogql_parser::parse_type_system_document;
     use nitrogql_printer::GraphQLPrinter;
     use sourcemap_writer::JustWriter;
 

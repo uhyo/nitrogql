@@ -1,6 +1,6 @@
 use graphql_builtins::generate_builtins;
 use nitrogql_ast::TypeSystemDocument;
-use nitrogql_parser::parser::parse_type_system_document;
+use nitrogql_parser::parse_type_system_document;
 use nitrogql_semantics::resolve_extensions;
 
 mod operations {
@@ -8,7 +8,7 @@ mod operations {
 
     use crate::operation_checker::check_operation_document;
     use nitrogql_ast::TypeSystemDocument;
-    use nitrogql_parser::parser::parse_operation_document;
+    use nitrogql_parser::parse_operation_document;
 
     use super::parse_to_type_system_document;
 
@@ -67,7 +67,7 @@ mod operation_directives {
 
     use crate::operation_checker::check_operation_document;
     use nitrogql_ast::TypeSystemDocument;
-    use nitrogql_parser::parser::parse_operation_document;
+    use nitrogql_parser::parse_operation_document;
 
     use super::parse_to_type_system_document;
 
@@ -287,7 +287,7 @@ mod selection_set {
 
     use crate::operation_checker::check_operation_document;
     use nitrogql_ast::TypeSystemDocument;
-    use nitrogql_parser::parser::parse_operation_document;
+    use nitrogql_parser::parse_operation_document;
 
     use super::parse_to_type_system_document;
 
@@ -433,7 +433,7 @@ mod fragments {
 
     use crate::operation_checker::check_operation_document;
     use nitrogql_ast::TypeSystemDocument;
-    use nitrogql_parser::parser::parse_operation_document;
+    use nitrogql_parser::parse_operation_document;
 
     use super::parse_to_type_system_document;
 

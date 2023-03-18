@@ -16,7 +16,7 @@ use nitrogql_ast::{
     base::set_current_file_of_pos, OperationDocument, TypeSystemOrExtensionDocument,
 };
 use nitrogql_error::print_positioned_error;
-use nitrogql_parser::parser::{parse_operation_document, parse_type_system_document};
+use nitrogql_parser::{parse_operation_document, parse_type_system_document};
 
 use self::{check::run_check, context::CliConfig, cwd::get_cwd, generate::run_generate};
 

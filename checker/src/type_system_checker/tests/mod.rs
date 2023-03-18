@@ -1,5 +1,5 @@
 use nitrogql_ast::TypeSystemDocument;
-use nitrogql_parser::parser::parse_type_system_document;
+use nitrogql_parser::parse_type_system_document;
 use nitrogql_semantics::resolve_extensions;
 
 mod directives {
@@ -9,7 +9,7 @@ mod directives {
     use crate::type_system_checker::{
         check_type_system_document, tests::parse_to_type_system_document,
     };
-    use nitrogql_parser::parser::parse_type_system_document;
+    use nitrogql_parser::parse_type_system_document;
     use nitrogql_semantics::resolve_extensions;
 
     // https://spec.graphql.org/draft/#sec-Type-System.Directives.Validation
