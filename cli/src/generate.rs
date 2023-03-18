@@ -7,9 +7,10 @@ use log::debug;
 use crate::error::CliError;
 use nitrogql_config_file::GenerateMode;
 use nitrogql_error::Result;
-use nitrogql_printer::{QueryTypePrinter, QueryTypePrinterOptions};
-use nitrogql_printer::{SchemaTypePrinter, SchemaTypePrinterOptions};
-use nitrogql_semantics::generate_definition_map;
+use nitrogql_printer::{
+    print_types_for_operation_document, OperationTypePrinterOptions, SchemaTypePrinter,
+    SchemaTypePrinterOptions,
+};
 use nitrogql_utils::relative_path;
 use sourcemap_writer::{print_source_map_json, SourceWriter, SourceWriterBuffers};
 
@@ -34,7 +35,6 @@ pub fn run_generate(mut context: CliContext) -> Result<CliContext> {
                 return Err(CliError::OptionRequired { option: String::from("schema-output"), command: String::from("generate") }.into())
             };
             let schema_output = config.root_dir.join(schema_output);
-            let schema_definitions = generate_definition_map(schema);
             {
                 debug!("Processing schema");
                 let mut writer = SourceWriter::new();
@@ -60,7 +60,7 @@ pub fn run_generate(mut context: CliContext) -> Result<CliContext> {
                 };
 
                 let mut writer = SourceWriter::new();
-                let mut printer_options = QueryTypePrinterOptions::default();
+                let mut printer_options = OperationTypePrinterOptions::default();
                 if config.generate_config.mode == GenerateMode::StandaloneTS4_0 {
                     printer_options.print_values = true;
                 }
@@ -69,8 +69,7 @@ pub fn run_generate(mut context: CliContext) -> Result<CliContext> {
                     path_to_ts(relative_path(&decl_file_path, &schema_output))
                         .to_string_lossy()
                         .to_string();
-                let mut printer = QueryTypePrinter::new(printer_options, &mut writer);
-                printer.print_document(&doc, schema, &schema_definitions);
+                print_types_for_operation_document(printer_options, schema, &doc, &mut writer);
 
                 let buffers = writer.into_buffers();
 

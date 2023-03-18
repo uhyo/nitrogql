@@ -38,7 +38,12 @@ impl DefinitionMap<'_> {
     }
 }
 
-pub fn generate_definition_map<'a>(document: &'a TypeSystemDocument<'a>) -> DefinitionMap<'a> {
+pub fn generate_definition_map<'a, 'src>(
+    document: &'a TypeSystemDocument<'src>,
+) -> DefinitionMap<'src>
+where
+    'a: 'src,
+{
     let mut result = DefinitionMap::new();
     for def in document.definitions.iter() {
         match def {

@@ -1,160 +1,39 @@
+use std::collections::HashMap;
+
 use crate::{
-    json_printer::print_to_json_string,
     ts_types::{ts_types_util::ts_union, type_to_ts_type::get_ts_type_of_type},
     utils::interface_implementers,
 };
 use nitrogql_ast::{
-    operation::{
-        ExecutableDefinition, FragmentDefinition, OperationDefinition, OperationDocument,
-        OperationType,
-    },
+    operation::{FragmentDefinition, OperationDocument},
     r#type::{NamedType, Type},
     selection_set::{Selection, SelectionSet},
     type_system::{ObjectTypeDefinition, TypeDefinition},
     value::StringValue,
     variable::VariablesDefinition,
+    TypeSystemDocument,
 };
-use nitrogql_semantics::direct_fields_of_output_type;
-use nitrogql_utils::capitalize;
+use nitrogql_semantics::{direct_fields_of_output_type, DefinitionMap};
 use sourcemap_writer::SourceMapWriter;
 
 use super::{
     super::ts_types::{ts_types_util::ts_intersection, TSType},
-    printer::QueryTypePrinterContext,
+    visitor::OperationTypePrinterOptions,
 };
+
+pub struct QueryTypePrinterContext<'a, 'src> {
+    pub options: &'a OperationTypePrinterOptions,
+    pub schema: &'a TypeSystemDocument<'src>,
+    pub operation: &'a OperationDocument<'src>,
+    pub schema_definitions: &'a DefinitionMap<'src>,
+    pub fragment_definitions: &'a HashMap<&'src str, &'a FragmentDefinition<'src>>,
+}
 
 pub trait TypePrinter {
     fn print_type(&self, options: &QueryTypePrinterContext, writer: &mut impl SourceMapWriter);
 }
 
-impl TypePrinter for OperationDocument<'_> {
-    fn print_type(&self, options: &QueryTypePrinterContext, writer: &mut impl SourceMapWriter) {
-        for d in self.definitions.iter() {
-            d.print_type(options, writer);
-        }
-    }
-}
-
-impl TypePrinter for ExecutableDefinition<'_> {
-    fn print_type(&self, options: &QueryTypePrinterContext, writer: &mut impl SourceMapWriter) {
-        match self {
-            ExecutableDefinition::OperationDefinition(ref op) => op.print_type(options, writer),
-            ExecutableDefinition::FragmentDefinition(ref fragment) => {
-                fragment.print_type(options, writer);
-            }
-        }
-    }
-}
-
-/// Calculates a variable name for given operation.
-pub fn operation_variable_name(
-    context: &QueryTypePrinterContext,
-    operation: &OperationDefinition,
-) -> String {
-    let capitalized_name = operation
-        .name
-        .map(|name| capitalize(&name.name))
-        .unwrap_or(String::new());
-    format!(
-        "{}{}",
-        capitalized_name,
-        match operation.operation_type {
-            OperationType::Query => &context.options.query_variable_suffix,
-            OperationType::Mutation => &context.options.mutation_variable_suffix,
-            OperationType::Subscription => &context.options.subscription_variable_suffix,
-        }
-    )
-}
-
-impl TypePrinter for OperationDefinition<'_> {
-    fn print_type(&self, context: &QueryTypePrinterContext, writer: &mut impl SourceMapWriter) {
-        let operation = self
-            .name
-            .map(|name| capitalize(&name.name))
-            .unwrap_or(String::new());
-        let operation_type_name = format!(
-            "{}{}",
-            operation,
-            match self.operation_type {
-                OperationType::Query => &context.options.query_result_suffix,
-                OperationType::Mutation => &context.options.mutation_result_suffix,
-                OperationType::Subscription => &context.options.subscription_result_suffix,
-            }
-        );
-
-        writer.write("type ");
-        writer.write_for(&operation_type_name, &self.name_pos());
-        writer.write_for(" = ", &self.selection_set);
-
-        let parent_type = context
-            .schema_definitions
-            .root_type(self.operation_type)
-            .expect("Type system error");
-        let parent_type = NamedType {
-            name: parent_type.name().clone(),
-        };
-        get_type_for_selection_set(context, &self.selection_set, &parent_type).print_type(writer);
-        writer.write(";\n\n");
-
-        let input_variable_type = self
-            .variables_definition
-            .as_ref()
-            .map_or(TSType::empty_object(), get_type_for_variable_definitions);
-        let input_variable_name = format!("{}{}", operation, context.options.variable_type_suffix);
-
-        writer.write("type ");
-        writer.write_for(&input_variable_name, &self.name_pos());
-        writer.write(" = ");
-        input_variable_type.print_type(writer);
-        writer.write(";\n\n");
-
-        let var_name = operation_variable_name(context, self);
-
-        writer.write("export const ");
-        writer.write_for(&var_name, &self.name_pos());
-        writer.write_for(": ", &self.selection_set);
-        writer.write("TypedDocumentNode<");
-        writer.write(&operation_type_name);
-        writer.write(", ");
-        writer.write(&input_variable_name);
-        if !context.options.print_values {
-            writer.write(">;\n\n");
-            return;
-        }
-        writer.write("> = ");
-        // To follow the community conventions, generated JSON has only one operation in it
-        let this_document = context
-            .operation
-            .definitions
-            .iter()
-            .filter(|def| match def {
-                ExecutableDefinition::FragmentDefinition(_) => true,
-                ExecutableDefinition::OperationDefinition(op) => {
-                    op.name.map(|ident| ident.name) == self.name.map(|ident| ident.name)
-                }
-            })
-            .collect::<Vec<_>>();
-        writer.write(&print_to_json_string(&this_document[..]));
-        writer.write(";\n\n");
-    }
-}
-
-impl TypePrinter for FragmentDefinition<'_> {
-    fn print_type(&self, context: &QueryTypePrinterContext, writer: &mut impl SourceMapWriter) {
-        writer.write("export type ");
-        writer.write_for(&self.name.name, self);
-        writer.write(" = ");
-
-        let parent_type = NamedType {
-            name: self.type_condition.clone(),
-        };
-        let fragment_type = get_type_for_selection_set(context, &self.selection_set, &parent_type);
-        fragment_type.print_type(writer);
-        writer.write(";\n\n");
-    }
-}
-
-fn get_type_for_selection_set(
+pub fn get_type_for_selection_set(
     context: &QueryTypePrinterContext,
     selection_set: &SelectionSet,
     parent_type: &NamedType,
@@ -327,7 +206,7 @@ fn check_fragment_condition(
     }
 }
 
-fn get_type_for_variable_definitions(definitions: &VariablesDefinition) -> TSType {
+pub fn get_type_for_variable_definitions(definitions: &VariablesDefinition) -> TSType {
     let types_for_each_field: Vec<_> = definitions
         .definitions
         .iter()

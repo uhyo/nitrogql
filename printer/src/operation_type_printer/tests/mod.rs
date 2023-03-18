@@ -7,7 +7,8 @@ use nitrogql_semantics::generate_definition_map;
 use nitrogql_semantics::resolve_extensions;
 use sourcemap_writer::JustWriter;
 
-use super::{QueryTypePrinter, QueryTypePrinterOptions};
+use crate::print_types_for_operation_document;
+use crate::OperationTypePrinterOptions;
 
 fn type_system() -> TypeSystemDocument<'static> {
     let mut doc = parse_type_system_document(
@@ -150,9 +151,12 @@ fn fragment_inline_spread() {
 fn print_document(document: &OperationDocument) -> String {
     let mut result = String::new();
     let mut writer = JustWriter::new(&mut result);
-    let mut printer = QueryTypePrinter::new(QueryTypePrinterOptions::default(), &mut writer);
     let schema = type_system();
-    let definition_map = generate_definition_map(&schema);
-    printer.print_document(document, &schema, &definition_map);
+    print_types_for_operation_document(
+        OperationTypePrinterOptions::default(),
+        &schema,
+        document,
+        &mut writer,
+    );
     result
 }
