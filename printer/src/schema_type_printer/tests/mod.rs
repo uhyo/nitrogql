@@ -1,12 +1,12 @@
 #![cfg(test)]
 
 use insta::assert_snapshot;
+use nitrogql_ast::type_system::TypeSystemDocument;
 
 use crate::schema_type_printer::{
     error::SchemaTypePrinterResult,
     printer::{SchemaTypePrinter, SchemaTypePrinterOptions},
 };
-use nitrogql_ast::TypeSystemDocument;
 use nitrogql_parser::parse_type_system_document;
 use nitrogql_semantics::resolve_extensions;
 use sourcemap_writer::JustWriter;

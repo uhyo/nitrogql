@@ -1,14 +1,8 @@
-use std::cell::Cell;
+//! This module contains AST nodes for basic components of ASTs.
 
-thread_local! {
-    /// Current file to be used when generating Pos.
-    static CURRENT_FILE_OF_POS: Cell<usize> = Cell::new(0);
-}
+use crate::current_file::get_current_file_of_pos;
 
-pub fn set_current_file_of_pos(file: usize) {
-    CURRENT_FILE_OF_POS.with(|cell| cell.set(file));
-}
-
+/// Position in source file.
 #[derive(Copy, Clone, Debug, Hash, PartialEq, Eq)]
 pub struct Pos {
     /// 0-based line
@@ -27,7 +21,7 @@ impl Pos {
         Pos {
             line,
             column,
-            file: CURRENT_FILE_OF_POS.with(|v| v.get()),
+            file: get_current_file_of_pos(),
             builtin: false,
         }
     }
@@ -93,7 +87,7 @@ impl HasPos for NamePos<'_> {
     }
 }
 
-/// Punctuation
+/// Punctuation token.
 #[derive(Copy, Clone, Debug)]
 pub struct Punc<'a> {
     pub position: Pos,
@@ -109,6 +103,7 @@ impl HasPos for Punc<'_> {
     }
 }
 
+/// Keyword token.
 #[derive(Copy, Clone, Debug, Hash, PartialEq, Eq)]
 pub struct Keyword<'a> {
     pub name: &'a str,
@@ -124,6 +119,7 @@ impl HasPos for Keyword<'_> {
     }
 }
 
+/// identifier token.
 #[derive(Copy, Clone, Debug, Hash, PartialEq, Eq)]
 pub struct Ident<'a> {
     pub name: &'a str,
@@ -131,23 +127,6 @@ pub struct Ident<'a> {
 }
 
 impl HasPos for Ident<'_> {
-    fn position(&self) -> &Pos {
-        &self.position
-    }
-    fn name(&self) -> Option<&str> {
-        Some(self.name)
-    }
-}
-
-#[derive(Copy, Clone, Debug)]
-pub struct Variable<'a> {
-    /// Variable name that does not include '$'
-    pub name: &'a str,
-    /// Position of '$'
-    pub position: Pos,
-}
-
-impl HasPos for Variable<'_> {
     fn position(&self) -> &Pos {
         &self.position
     }

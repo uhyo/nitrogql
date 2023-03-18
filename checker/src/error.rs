@@ -2,7 +2,7 @@ use std::fmt::Display;
 
 use thiserror::Error;
 
-use nitrogql_ast::{base::Pos, operations::OperationType};
+use nitrogql_ast::{base::Pos, operation::OperationType};
 use nitrogql_error::PositionedError;
 
 #[derive(Debug)]

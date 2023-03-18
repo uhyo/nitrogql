@@ -1,6 +1,5 @@
-use nitrogql_ast::{
-    type_system::{ObjectTypeDefinition, TypeDefinition, TypeSystemDefinition},
-    TypeSystemDocument,
+use nitrogql_ast::type_system::{
+    ObjectTypeDefinition, TypeDefinition, TypeSystemDefinition, TypeSystemDocument,
 };
 
 /// Returns an iterator over possible object types that implements given interface.

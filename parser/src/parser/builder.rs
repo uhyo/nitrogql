@@ -1,7 +1,4 @@
 //! This module builds ast from raw parser result.
-//!
-
-use nitrogql_ast::{OperationDocument, TypeSystemOrExtensionDocument};
 
 use self::{
     operation::build_executable_definition, type_system::build_type_system_definition_or_extension,
@@ -9,6 +6,7 @@ use self::{
 };
 
 use super::Rule;
+use nitrogql_ast::{operation::OperationDocument, type_system::TypeSystemOrExtensionDocument};
 use pest::iterators::Pairs;
 
 mod base;

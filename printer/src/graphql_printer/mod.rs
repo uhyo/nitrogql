@@ -1,11 +1,13 @@
+use nitrogql_ast::{
+    operation::OperationDocument,
+    type_system::{TypeSystemDocument, TypeSystemOrExtensionDocument},
+    variable::{Variable, VariableDefinition, VariablesDefinition},
+};
+
 use {
     nitrogql_ast::{
-        base::Variable,
         directive::Directive,
-        operations::{
-            ExecutableDefinition, FragmentDefinition, OperationDefinition, VariableDefinition,
-            VariablesDefinition,
-        },
+        operation::{ExecutableDefinition, FragmentDefinition, OperationDefinition},
         selection_set::{Selection, SelectionSet},
         type_system::{
             ArgumentsDefinition, DirectiveDefinition, EnumValueDefinition, FieldDefinition,
@@ -13,7 +15,6 @@ use {
             TypeSystemDefinition, TypeSystemDefinitionOrExtension,
         },
         value::Arguments,
-        OperationDocument, TypeSystemDocument, TypeSystemOrExtensionDocument,
     },
     sourcemap_writer::SourceMapWriter,
 };

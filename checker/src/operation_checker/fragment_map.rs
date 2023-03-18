@@ -1,9 +1,6 @@
 use std::collections::HashMap;
 
-use nitrogql_ast::{
-    operations::{ExecutableDefinition, FragmentDefinition},
-    OperationDocument,
-};
+use nitrogql_ast::operation::{ExecutableDefinition, FragmentDefinition, OperationDocument};
 
 pub type FragmentMap<'a, 'src> = HashMap<&'a str, &'a FragmentDefinition<'src>>;
 

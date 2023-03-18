@@ -2,11 +2,11 @@ use json_writer::JSONObjectWriter;
 
 use nitrogql_ast::{
     directive::Directive,
-    operations::{ExecutableDefinition, VariableDefinition},
+    operation::{ExecutableDefinition, OperationDocument},
     r#type::{NamedType, Type},
     selection_set::{Field, FragmentSpread, InlineFragment, Selection, SelectionSet},
     value::Value,
-    OperationDocument,
+    variable::VariableDefinition,
 };
 
 use super::helpers::{Argument, JSONValue, Name, Variable};

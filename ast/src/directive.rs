@@ -3,6 +3,7 @@ use super::{
     value::Arguments,
 };
 
+/// One application of a directive.
 #[derive(Clone, Debug)]
 pub struct Directive<'a> {
     pub position: Pos,

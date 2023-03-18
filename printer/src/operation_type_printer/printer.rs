@@ -1,8 +1,8 @@
 use std::collections::HashMap;
 
 use nitrogql_ast::{
-    operations::{ExecutableDefinition, FragmentDefinition},
-    OperationDocument, TypeSystemDocument,
+    operation::{ExecutableDefinition, FragmentDefinition, OperationDocument},
+    type_system::TypeSystemDocument,
 };
 use nitrogql_semantics::DefinitionMap;
 use sourcemap_writer::SourceMapWriter;

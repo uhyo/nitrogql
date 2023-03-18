@@ -1,9 +1,11 @@
 use std::collections::HashMap;
 
 use nitrogql_ast::{
-    operations::OperationType,
-    type_system::{DirectiveDefinition, SchemaDefinition, TypeDefinition, TypeSystemDefinition},
-    TypeSystemDocument,
+    operation::OperationType,
+    type_system::{
+        DirectiveDefinition, SchemaDefinition, TypeDefinition, TypeSystemDefinition,
+        TypeSystemDocument,
+    },
 };
 
 #[derive(Default, Debug)]

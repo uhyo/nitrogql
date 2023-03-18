@@ -1,42 +1,13 @@
-use self::{
-    operations::ExecutableDefinition,
-    type_system::{TypeSystemDefinition, TypeSystemDefinitionOrExtension},
-};
-
 pub mod base;
+mod current_file;
 pub mod directive;
-pub mod operations;
+pub mod operation;
 pub mod selection_set;
 pub mod r#type;
 pub mod type_system;
 pub mod value;
+pub mod variable;
 
-#[derive(Clone, Debug)]
-pub struct OperationDocument<'a> {
-    pub definitions: Vec<ExecutableDefinition<'a>>,
-}
-
-#[derive(Clone, Debug)]
-pub struct TypeSystemOrExtensionDocument<'a> {
-    pub definitions: Vec<TypeSystemDefinitionOrExtension<'a>>,
-}
-
-impl<'a> Extend<TypeSystemDefinitionOrExtension<'a>> for TypeSystemOrExtensionDocument<'a> {
-    fn extend<T: IntoIterator<Item = TypeSystemDefinitionOrExtension<'a>>>(&mut self, iter: T) {
-        self.definitions.extend(iter)
-    }
-}
-
-impl TypeSystemOrExtensionDocument<'_> {
-    /// Merges multiple documents into one.
-    pub fn merge(docs: impl IntoIterator<Item = Self>) -> Self {
-        TypeSystemOrExtensionDocument {
-            definitions: docs.into_iter().flat_map(|doc| doc.definitions).collect(),
-        }
-    }
-}
-
-#[derive(Clone, Debug)]
-pub struct TypeSystemDocument<'a> {
-    pub definitions: Vec<TypeSystemDefinition<'a>>,
-}
+pub use current_file::set_current_file_of_pos;
+pub use operation::OperationDocument;
+pub use type_system::{TypeSystemDocument, TypeSystemOrExtensionDocument};

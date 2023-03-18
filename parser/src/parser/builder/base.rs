@@ -1,7 +1,6 @@
 use super::{utils::PairExt, Rule};
+use nitrogql_ast::variable::Variable;
 use pest::iterators::Pair;
-
-use nitrogql_ast::base::Variable;
 
 pub fn build_variable(pair: Pair<Rule>) -> Variable {
     let position = pair.to_pos();

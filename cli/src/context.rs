@@ -1,6 +1,9 @@
 use std::path::PathBuf;
 
-use nitrogql_ast::{OperationDocument, TypeSystemDocument, TypeSystemOrExtensionDocument};
+use nitrogql_ast::{
+    operation::OperationDocument,
+    type_system::{TypeSystemDocument, TypeSystemOrExtensionDocument},
+};
 use nitrogql_config_file::GenerateConfig;
 
 /// List of (path, source)

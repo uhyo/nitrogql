@@ -9,10 +9,9 @@ use nitrogql_ast::{
     type_system::{
         EnumTypeDefinition, InputObjectTypeDefinition, InterfaceTypeDefinition,
         ObjectTypeDefinition, ScalarTypeDefinition, TypeDefinition, TypeSystemDefinition,
-        UnionTypeDefinition,
+        TypeSystemDocument, UnionTypeDefinition,
     },
     value::StringValue,
-    TypeSystemDocument,
 };
 use sourcemap_writer::SourceMapWriter;
 

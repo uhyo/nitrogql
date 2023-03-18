@@ -1,12 +1,9 @@
-use nitrogql_ast::{
-    type_system::{
-        EnumTypeDefinition, EnumTypeExtension, InputObjectTypeDefinition, InputObjectTypeExtension,
-        InterfaceTypeDefinition, InterfaceTypeExtension, ObjectTypeDefinition, ObjectTypeExtension,
-        ScalarTypeDefinition, ScalarTypeExtension, SchemaDefinition, SchemaExtension,
-        TypeDefinition, TypeExtension, TypeSystemDefinition, TypeSystemDefinitionOrExtension,
-        UnionTypeDefinition, UnionTypeExtension,
-    },
-    TypeSystemDocument, TypeSystemOrExtensionDocument,
+use nitrogql_ast::type_system::{
+    EnumTypeDefinition, EnumTypeExtension, InputObjectTypeDefinition, InputObjectTypeExtension,
+    InterfaceTypeDefinition, InterfaceTypeExtension, ObjectTypeDefinition, ObjectTypeExtension,
+    ScalarTypeDefinition, ScalarTypeExtension, SchemaDefinition, SchemaExtension, TypeDefinition,
+    TypeExtension, TypeSystemDefinition, TypeSystemDefinitionOrExtension, TypeSystemDocument,
+    TypeSystemOrExtensionDocument, UnionTypeDefinition, UnionTypeExtension,
 };
 
 use self::extension_list::{ExtensionError, ExtensionList};

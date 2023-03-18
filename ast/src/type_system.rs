@@ -1,7 +1,7 @@
 use super::{
     base::{HasPos, Ident, Keyword, Pos},
     directive::Directive,
-    operations::OperationType,
+    operation::OperationType,
     r#type::Type,
     value::{StringValue, Value},
 };
@@ -404,4 +404,29 @@ impl HasPos for InputObjectTypeExtension<'_> {
     fn position(&self) -> &Pos {
         &self.position
     }
+}
+
+#[derive(Clone, Debug)]
+pub struct TypeSystemOrExtensionDocument<'a> {
+    pub definitions: Vec<TypeSystemDefinitionOrExtension<'a>>,
+}
+
+impl<'a> Extend<TypeSystemDefinitionOrExtension<'a>> for TypeSystemOrExtensionDocument<'a> {
+    fn extend<T: IntoIterator<Item = TypeSystemDefinitionOrExtension<'a>>>(&mut self, iter: T) {
+        self.definitions.extend(iter)
+    }
+}
+
+impl TypeSystemOrExtensionDocument<'_> {
+    /// Merges multiple documents into one.
+    pub fn merge(docs: impl IntoIterator<Item = Self>) -> Self {
+        TypeSystemOrExtensionDocument {
+            definitions: docs.into_iter().flat_map(|doc| doc.definitions).collect(),
+        }
+    }
+}
+
+#[derive(Clone, Debug)]
+pub struct TypeSystemDocument<'a> {
+    pub definitions: Vec<TypeSystemDefinition<'a>>,
 }

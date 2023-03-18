@@ -1,12 +1,10 @@
 use nitrogql_ast::{
         base::{HasPos, Pos},
-        operations::{
-            ExecutableDefinition, FragmentDefinition, OperationDefinition, OperationType,
-            VariablesDefinition,
+        operation::{
+            ExecutableDefinition, FragmentDefinition, OperationDefinition, OperationType, OperationDocument,
         },
         selection_set::{SelectionSet, Selection, Field, FragmentSpread, InlineFragment},
-        type_system::{FieldDefinition, TypeDefinition},
-        OperationDocument, TypeSystemDocument,
+        type_system::{FieldDefinition, TypeDefinition, TypeSystemDocument}, variable::VariablesDefinition,
 };
 
 use self::{fragment_map::{generate_fragment_map, FragmentMap}, count_selection_set_fields::selection_set_has_more_than_one_fields};

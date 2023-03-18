@@ -1,7 +1,10 @@
 use std::fmt::Display;
 
-use super::base::{HasPos, Ident, Pos, Variable};
+use crate::variable::Variable;
 
+use super::base::{HasPos, Ident, Pos};
+
+/// A GraphQL Value.
 #[derive(Clone, Debug)]
 pub enum Value<'a> {
     Variable(Variable<'a>),

@@ -1,9 +1,8 @@
+use nitrogql_ast::{OperationDocument, TypeSystemOrExtensionDocument};
 use pest::Parser;
 use pest_derive::Parser;
 
 use self::builder::{build_operation_document, build_type_system_or_extension_document};
-
-use nitrogql_ast::{OperationDocument, TypeSystemOrExtensionDocument};
 
 mod builder;
 

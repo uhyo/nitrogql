@@ -1,9 +1,9 @@
+use crate::variable::VariablesDefinition;
+
 use super::{
-    base::{HasPos, Ident, NamePos, Pos, Variable},
+    base::{HasPos, Ident, NamePos, Pos},
     directive::Directive,
-    r#type::Type,
     selection_set::SelectionSet,
-    value::Value,
 };
 
 #[derive(Copy, Clone, PartialEq, Eq, Debug)]
@@ -21,21 +21,6 @@ impl OperationType {
             OperationType::Subscription => "subscription",
         }
     }
-}
-
-#[derive(Clone, Debug)]
-pub struct VariablesDefinition<'a> {
-    pub position: Pos,
-    pub definitions: Vec<VariableDefinition<'a>>,
-}
-
-#[derive(Clone, Debug)]
-pub struct VariableDefinition<'a> {
-    pub pos: Pos,
-    pub name: Variable<'a>,
-    pub r#type: Type<'a>,
-    pub default_value: Option<Value<'a>>,
-    pub directives: Vec<Directive<'a>>,
 }
 
 #[derive(Clone, Debug)]
@@ -110,4 +95,9 @@ impl HasPos for FragmentDefinition<'_> {
     fn position(&self) -> &Pos {
         &self.position
     }
+}
+
+#[derive(Clone, Debug)]
+pub struct OperationDocument<'a> {
+    pub definitions: Vec<ExecutableDefinition<'a>>,
 }

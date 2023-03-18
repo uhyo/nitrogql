@@ -12,7 +12,7 @@ use super::{
 use crate::parts;
 use nitrogql_ast::{
     base::Ident,
-    operations::OperationType,
+    operation::OperationType,
     type_system::{
         DirectiveDefinition, SchemaDefinition, SchemaExtension, TypeSystemDefinitionOrExtension,
     },

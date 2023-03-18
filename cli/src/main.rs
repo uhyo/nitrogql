@@ -7,14 +7,15 @@ use anyhow::Result;
 use clap::Parser;
 use globmatch::wrappers::{build_matchers, match_paths};
 use log::{debug, error, trace};
+use nitrogql_ast::{
+    operation::OperationDocument, set_current_file_of_pos,
+    type_system::TypeSystemOrExtensionDocument,
+};
 use thiserror::Error;
 
 use crate::{context::CliContext, error::CliError};
 use nitrogql_config_file::{load_config, GenerateConfig};
 
-use nitrogql_ast::{
-    base::set_current_file_of_pos, OperationDocument, TypeSystemOrExtensionDocument,
-};
 use nitrogql_error::print_positioned_error;
 use nitrogql_parser::{parse_operation_document, parse_type_system_document};
 

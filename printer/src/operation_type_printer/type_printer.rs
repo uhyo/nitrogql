@@ -3,15 +3,15 @@ use crate::{
     utils::interface_implementers,
 };
 use nitrogql_ast::{
-    operations::{
-        ExecutableDefinition, FragmentDefinition, OperationDefinition, OperationType,
-        VariablesDefinition,
+    operation::{
+        ExecutableDefinition, FragmentDefinition, OperationDefinition, OperationDocument,
+        OperationType,
     },
     r#type::{NamedType, Type},
     selection_set::{Selection, SelectionSet},
     type_system::{ObjectTypeDefinition, TypeDefinition},
     value::StringValue,
-    OperationDocument,
+    variable::VariablesDefinition,
 };
 use nitrogql_json_printer::print_to_json_string;
 use nitrogql_semantics::direct_fields_of_output_type;

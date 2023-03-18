@@ -1,7 +1,7 @@
 use crate::parts;
-use nitrogql_ast::operations::{
-    ExecutableDefinition, FragmentDefinition, OperationDefinition, OperationType,
-    VariableDefinition, VariablesDefinition,
+use nitrogql_ast::{
+    operation::{ExecutableDefinition, FragmentDefinition, OperationDefinition, OperationType},
+    variable::{VariableDefinition, VariablesDefinition},
 };
 
 use super::{

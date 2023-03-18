@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use nitrogql_ast::TypeSystemDocument;
+use nitrogql_ast::type_system::TypeSystemDocument;
 use sourcemap_writer::SourceMapWriter;
 
 use super::{error::SchemaTypePrinterResult, type_printer::TypePrinter};

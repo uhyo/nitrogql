@@ -3,9 +3,8 @@ use nitrogql_ast::{
     type_system::{
         ArgumentsDefinition, DirectiveDefinition, EnumTypeDefinition, InputObjectTypeDefinition,
         InterfaceTypeDefinition, ObjectTypeDefinition, ScalarTypeDefinition, SchemaDefinition,
-        TypeDefinition, TypeSystemDefinition, UnionTypeDefinition,
+        TypeDefinition, TypeSystemDefinition, TypeSystemDocument, UnionTypeDefinition,
     },
-    TypeSystemDocument,
 };
 
 use self::{

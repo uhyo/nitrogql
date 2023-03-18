@@ -1,12 +1,12 @@
 use log::warn;
 
 use nitrogql_ast::{
-    base::{HasPos, Pos, Variable},
+    base::{HasPos, Pos},
     directive::Directive,
-    operations::{VariableDefinition, VariablesDefinition},
     r#type::Type,
     type_system::{ArgumentsDefinition, TypeDefinition},
     value::{Arguments, Value},
+    variable::{Variable, VariableDefinition, VariablesDefinition},
 };
 use nitrogql_semantics::DefinitionMap;
 
