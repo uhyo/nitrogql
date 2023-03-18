@@ -12,6 +12,6 @@ thiserror = "1.0.40"
 
 [dev-dependencies]
 insta = "1.28.0"
-nitrogql-graphql-printer = { path = "../graphql-printer" }
+nitrogql-printer = { path = "../printer" }
 nitrogql-parser = { path = "../parser" }
 sourcemap-writer = { path = "../sourcemap-writer" }

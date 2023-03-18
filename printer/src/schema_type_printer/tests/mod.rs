@@ -1,3 +1,5 @@
+#![cfg(test)]
+
 use insta::assert_snapshot;
 
 use crate::schema_type_printer::{

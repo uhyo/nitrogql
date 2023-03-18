@@ -435,14 +435,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "nitrogql-graphql-printer"
-version = "0.1.0"
-dependencies = [
- "nitrogql-ast",
- "sourcemap-writer",
-]
-
-[[package]]
 name = "nitrogql-json-printer"
 version = "0.1.0"
 dependencies = [
@@ -457,7 +449,7 @@ version = "0.1.0"
 dependencies = [
  "insta",
  "nitrogql-ast",
- "nitrogql-graphql-printer",
+ "nitrogql-printer",
  "pest",
  "pest_derive",
  "sourcemap-writer",
@@ -486,8 +478,8 @@ dependencies = [
  "insta",
  "nitrogql-ast",
  "nitrogql-error",
- "nitrogql-graphql-printer",
  "nitrogql-parser",
+ "nitrogql-printer",
  "sourcemap-writer",
  "thiserror",
 ]

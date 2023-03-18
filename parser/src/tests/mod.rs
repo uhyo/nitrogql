@@ -3,7 +3,7 @@ mod operation {
     use insta::assert_snapshot;
 
     use crate::parser::parse_operation_document;
-    use nitrogql_graphql_printer::GraphQLPrinter;
+    use nitrogql_printer::GraphQLPrinter;
     use sourcemap_writer::just_writer::JustWriter;
 
     #[test]
@@ -102,7 +102,7 @@ mod operation {
 mod definition {
     use crate::parser::parse_type_system_document;
     use insta::assert_snapshot;
-    use nitrogql_graphql_printer::GraphQLPrinter;
+    use nitrogql_printer::GraphQLPrinter;
     use sourcemap_writer::just_writer::JustWriter;
 
     #[test]

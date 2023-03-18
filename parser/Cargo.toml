@@ -12,5 +12,5 @@ pest_derive = "2.5.5"
 
 [dev-dependencies]
 insta = "1.28.0"
-nitrogql-graphql-printer = { path = "../graphql-printer" }
+nitrogql-printer = { path = "../printer" }
 sourcemap-writer = { path = "../sourcemap-writer" }
