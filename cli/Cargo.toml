@@ -13,6 +13,7 @@ nitrogql-error = { path = "../error" }
 nitrogql-extension-resolver = { path = "../extension-resolver" }
 nitrogql-parser = { path = "../parser" }
 nitrogql-printer = { path = "../printer" }
+nitrogql-semantics = { path = "../semantics" }
 nitrogql-utils = { path = "../utils" }
 sourcemap-writer = { path = "../sourcemap-writer" }
 graphql-builtins = { path = "../builtins" }

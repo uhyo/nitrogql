@@ -4,7 +4,7 @@ use nitrogql_ast::{
     operations::{ExecutableDefinition, FragmentDefinition},
     OperationDocument, TypeSystemDocument,
 };
-use nitrogql_checker::definition_map::DefinitionMap;
+use nitrogql_semantics::DefinitionMap;
 use sourcemap_writer::writer::SourceMapWriter;
 
 use super::type_printer::{operation_variable_name, TypePrinter};

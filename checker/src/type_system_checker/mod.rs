@@ -14,10 +14,10 @@ use self::{
 
 use super::{
     common::check_directives,
-    definition_map::{generate_definition_map, DefinitionMap},
     error::{CheckError, CheckErrorMessage},
     types::inout_kind_of_type,
 };
+use nitrogql_semantics::{generate_definition_map, DefinitionMap};
 
 mod check_directive_recursion;
 mod interfaces;

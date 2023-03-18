@@ -8,11 +8,9 @@ use nitrogql_ast::{
     type_system::{ArgumentsDefinition, TypeDefinition},
     value::{Arguments, Value},
 };
+use nitrogql_semantics::DefinitionMap;
 
-use super::{
-    definition_map::DefinitionMap,
-    error::{CheckError, CheckErrorMessage},
-};
+use super::error::{CheckError, CheckErrorMessage};
 
 pub fn check_directives(
     definitions: &DefinitionMap,

@@ -11,6 +11,7 @@ members = [
   "json-printer",
   "parser",
   "printer",
+  "semantics",
   "sourcemap-writer",
   "utils"
 ]

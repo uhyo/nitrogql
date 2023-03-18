@@ -1,7 +1,8 @@
 use nitrogql_ast::{type_system::{InterfaceTypeDefinition, FieldDefinition}, base::Ident};
-use crate::{definition_map::DefinitionMap, error::CheckError, types::is_subtype};
+use nitrogql_semantics::DefinitionMap;
+use crate::{error::CheckError, types::is_subtype};
 
-use super::{CheckErrorMessage};
+use super::CheckErrorMessage;
 
 /// Checks if given object or interface validly implements given interface.
 /// https://spec.graphql.org/draft/#IsValidImplementation()

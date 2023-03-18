@@ -9,6 +9,7 @@ edition = "2021"
 nitrogql-ast = { path = "../ast" }
 nitrogql-json-printer = { path = "../json-printer" }
 nitrogql-checker = { path = "../checker" }
+nitrogql-semantics = { path = "../semantics" }
 nitrogql-utils = { path = "../utils" }
 sourcemap-writer = { path = "../sourcemap-writer" }
 thiserror = "1.0.40"

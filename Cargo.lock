@@ -379,6 +379,7 @@ dependencies = [
  "nitrogql-error",
  "nitrogql-extension-resolver",
  "nitrogql-parser",
+ "nitrogql-semantics",
  "once_cell",
  "sourcemap-writer",
  "thiserror",
@@ -405,6 +406,7 @@ dependencies = [
  "nitrogql-extension-resolver",
  "nitrogql-parser",
  "nitrogql-printer",
+ "nitrogql-semantics",
  "nitrogql-utils",
  "once_cell",
  "pest",
@@ -487,9 +489,17 @@ dependencies = [
  "nitrogql-extension-resolver",
  "nitrogql-json-printer",
  "nitrogql-parser",
+ "nitrogql-semantics",
  "nitrogql-utils",
  "sourcemap-writer",
  "thiserror",
+]
+
+[[package]]
+name = "nitrogql-semantics"
+version = "0.1.0"
+dependencies = [
+ "nitrogql-ast",
 ]
 
 [[package]]

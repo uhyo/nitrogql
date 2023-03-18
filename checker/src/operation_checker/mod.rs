@@ -13,7 +13,8 @@ use nitrogql_ast::{
 
 use self::{fragment_map::{generate_fragment_map, FragmentMap}, count_selection_set_fields::selection_set_has_more_than_one_fields};
 
-use super::{definition_map::{DefinitionMap, generate_definition_map}, error::{CheckError, CheckErrorMessage, TypeKind}, common::{check_directives, check_arguments}, types::{inout_kind_of_type}};
+use super::{error::{CheckError, CheckErrorMessage, TypeKind}, common::{check_directives, check_arguments}, types::inout_kind_of_type};
+use nitrogql_semantics::{DefinitionMap, generate_definition_map};
 
 #[cfg(test)]
 mod tests;

@@ -1,6 +1,6 @@
 use nitrogql_ast::{r#type::Type, type_system::TypeDefinition};
 
-use crate::definition_map::DefinitionMap;
+use nitrogql_semantics::DefinitionMap;
 
 #[derive(Copy, Clone, PartialEq, Eq)]
 pub enum TypeInOutKind {

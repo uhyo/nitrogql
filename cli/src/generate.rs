@@ -5,11 +5,11 @@ use std::path::{Path, PathBuf};
 use log::debug;
 
 use crate::error::CliError;
-use nitrogql_checker::definition_map::generate_definition_map;
 use nitrogql_config_file::GenerateMode;
 use nitrogql_error::Result;
 use nitrogql_printer::operation_type_printer::{QueryTypePrinter, QueryTypePrinterOptions};
 use nitrogql_printer::schema_type_printer::printer::{SchemaTypePrinter, SchemaTypePrinterOptions};
+use nitrogql_semantics::generate_definition_map;
 use nitrogql_utils::relative_path;
 use sourcemap_writer::source_writer::SourceWriterBuffers;
 use sourcemap_writer::source_writer::{print_source_map_json, SourceWriter};

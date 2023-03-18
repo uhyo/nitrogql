@@ -1,13 +1,11 @@
 use std::collections::HashSet;
 
-use crate::{
-    definition_map::DefinitionMap,
-    error::{CheckError, CheckErrorMessage},
-};
+use crate::error::{CheckError, CheckErrorMessage};
 use nitrogql_ast::{
     directive::Directive,
     type_system::{DirectiveDefinition, TypeDefinition},
 };
+use nitrogql_semantics::DefinitionMap;
 
 /// Checks and generates diagnostics for recursed directives.
 pub fn check_directive_recursion(
