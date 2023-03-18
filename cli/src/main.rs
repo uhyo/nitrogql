@@ -1,6 +1,7 @@
 use std::{
     fs,
     path::{Path, PathBuf},
+    process,
 };
 
 use anyhow::Result;
@@ -44,9 +45,9 @@ struct Args {
     commands: Vec<String>,
 }
 
-fn main() -> anyhow::Result<()> {
-    run_cli(std::env::args());
-    Ok(())
+fn main() {
+    let exit_code = run_cli(std::env::args());
+    process::exit(exit_code.try_into().unwrap());
 }
 
 /// Run as CLI. Returns 0 if successful

@@ -6,6 +6,7 @@ members = [
   "checker",
   "config-file",
   "error",
+  "graphql-loader",
   "parser",
   "printer",
   "semantics",
