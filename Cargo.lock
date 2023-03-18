@@ -372,10 +372,15 @@ version = "0.1.0"
 name = "nitrogql-checker"
 version = "0.1.0"
 dependencies = [
+ "graphql-builtins",
+ "insta",
  "log",
  "nitrogql-ast",
  "nitrogql-error",
+ "nitrogql-extension-resolver",
+ "nitrogql-parser",
  "once_cell",
+ "sourcemap-writer",
  "thiserror",
 ]
 
@@ -433,8 +438,12 @@ dependencies = [
 name = "nitrogql-extension-resolver"
 version = "0.1.0"
 dependencies = [
+ "insta",
  "nitrogql-ast",
  "nitrogql-error",
+ "nitrogql-graphql-printer",
+ "nitrogql-parser",
+ "sourcemap-writer",
  "thiserror",
 ]
 
@@ -450,6 +459,7 @@ dependencies = [
 name = "nitrogql-json-printer"
 version = "0.1.0"
 dependencies = [
+ "insta",
  "json-writer",
  "nitrogql-ast",
 ]
@@ -460,17 +470,23 @@ version = "0.1.0"
 dependencies = [
  "insta",
  "nitrogql-ast",
+ "nitrogql-graphql-printer",
  "pest",
  "pest_derive",
+ "sourcemap-writer",
 ]
 
 [[package]]
 name = "nitrogql-printer"
 version = "0.1.0"
 dependencies = [
+ "graphql-builtins",
+ "insta",
  "nitrogql-ast",
  "nitrogql-checker",
+ "nitrogql-extension-resolver",
  "nitrogql-json-printer",
+ "nitrogql-parser",
  "nitrogql-utils",
  "sourcemap-writer",
  "thiserror",

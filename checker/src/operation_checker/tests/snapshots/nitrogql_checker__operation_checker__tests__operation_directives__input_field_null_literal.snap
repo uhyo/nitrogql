@@ -1,0 +1,5 @@
+---
+source: checker/src/operation_checker/tests/mod.rs
+expression: "check_operation_document(&schema, &doc)"
+---
+[]

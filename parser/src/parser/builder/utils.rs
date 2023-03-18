@@ -56,7 +56,7 @@ impl<'a> PairExt<'a> for Pair<'a, Rule> {
     fn to_pos(&self) -> Pos {
         let (line, column) = self.line_col();
         // convert 1-based to 0-based
-        Pos::new(line, column)
+        Pos::new(line - 1, column - 1)
     }
     fn to_punc(&self) -> Punc<'a> {
         Punc {

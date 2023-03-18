@@ -1,0 +1,5 @@
+---
+source: json-printer/src/tests/mod.rs
+expression: "print_json_to_string(Type::Named(NamedType {\n            name: Ident { position: POS, name: \"tyty\" },\n        }))"
+---
+{"kind":"NamedType","name":{"type":"Name","value":"tyty"}}

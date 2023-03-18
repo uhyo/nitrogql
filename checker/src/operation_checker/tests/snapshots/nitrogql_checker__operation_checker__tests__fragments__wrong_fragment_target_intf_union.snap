@@ -1,0 +1,18 @@
+---
+source: checker/src/operation_checker/tests/mod.rs
+expression: "check_operation_document(&schema, &doc)"
+---
+[
+    CheckError {
+        position: Pos {
+            line: 13,
+            column: 26,
+            file: 0,
+            builtin: false,
+        },
+        message: UnknownType {
+            name: "UserOrPost",
+        },
+        additional_info: [],
+    },
+]

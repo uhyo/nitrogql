@@ -1,0 +1,42 @@
+---
+source: checker/src/operation_checker/tests/mod.rs
+expression: "check_operation_document(&schema, &doc)"
+---
+[
+    CheckError {
+        position: Pos {
+            line: 2,
+            column: 16,
+            file: 0,
+            builtin: false,
+        },
+        message: FragmentConditionNeverMatches {
+            condition: "PostOrTag",
+            scope: "UserOrSchedule",
+        },
+        additional_info: [
+            (
+                Pos {
+                    line: 44,
+                    column: 12,
+                    file: 0,
+                    builtin: false,
+                },
+                DefinitionPos {
+                    name: "UserOrSchedule",
+                },
+            ),
+            (
+                Pos {
+                    line: 45,
+                    column: 12,
+                    file: 0,
+                    builtin: false,
+                },
+                DefinitionPos {
+                    name: "PostOrTag",
+                },
+            ),
+        ],
+    },
+]

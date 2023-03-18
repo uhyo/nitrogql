@@ -1,0 +1,5 @@
+---
+source: json-printer/src/tests/mod.rs
+expression: "print_json_to_string(InlineFragment {\n        position: POS,\n        type_condition: None,\n        directives: vec![],\n        selection_set: SelectionSet {\n            position: POS,\n            selections: vec![Selection ::\n                Field(Field\n                {\n                    alias : None, name : Ident\n                    { position : POS, name : \"field\" }, arguments : None,\n                    directives : vec! [], selection_set : None\n                })],\n        },\n    })"
+---
+{"kind":"InlineFragment","directives":[],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"type":"Name","value":"field"},"arguments":[],"directives":[]}]}}

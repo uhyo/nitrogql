@@ -1,0 +1,42 @@
+---
+source: checker/src/operation_checker/tests/mod.rs
+expression: "check_operation_document(&schema, &doc)"
+---
+[
+    CheckError {
+        position: Pos {
+            line: 3,
+            column: 20,
+            file: 0,
+            builtin: false,
+        },
+        message: FragmentConditionNeverMatches {
+            condition: "HasTitle",
+            scope: "User",
+        },
+        additional_info: [
+            (
+                Pos {
+                    line: 29,
+                    column: 12,
+                    file: 0,
+                    builtin: false,
+                },
+                DefinitionPos {
+                    name: "HasTitle",
+                },
+            ),
+            (
+                Pos {
+                    line: 12,
+                    column: 12,
+                    file: 0,
+                    builtin: false,
+                },
+                DefinitionPos {
+                    name: "User",
+                },
+            ),
+        ],
+    },
+]

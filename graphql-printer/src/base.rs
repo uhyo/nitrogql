@@ -1,11 +1,9 @@
-use crate::{
-    ast::{
-        base::Ident,
-        r#type::Type,
-        value::{StringValue, Value},
-    },
-    source_map_writer::writer::SourceMapWriter,
+use nitrogql_ast::{
+    base::Ident,
+    r#type::Type,
+    value::{StringValue, Value},
 };
+use sourcemap_writer::writer::SourceMapWriter;
 
 use super::GraphQLPrinter;
 

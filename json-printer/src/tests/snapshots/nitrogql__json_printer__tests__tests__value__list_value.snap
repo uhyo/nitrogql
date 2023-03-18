@@ -1,5 +1,0 @@
----
-source: src/json_printer/tests/mod.rs
-expression: "print_json_to_string(Value::ListValue(ListValue {\n            position: POS,\n            values: vec![Value ::\n                IntValue(IntValue { position : POS, value : \"1\" }), Value ::\n                IntValue(IntValue { position : POS, value : \"2\" }), Value ::\n                IntValue(IntValue { position : POS, value : \"3\" }),],\n        }))"
----
-{"kind":"ListValue","values":[{"kind":"IntValue","value":"1"},{"kind":"IntValue","value":"2"},{"kind":"IntValue","value":"3"}]}

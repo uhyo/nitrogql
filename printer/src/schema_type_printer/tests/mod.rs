@@ -1,15 +1,13 @@
 use insta::assert_snapshot;
 
-use crate::{
-    ast::TypeSystemDocument,
-    extension_resolver::resolve_extensions,
-    graphql_parser::parser::parse_type_system_document,
-    source_map_writer::just_writer::JustWriter,
-    type_printer::schema_type_printer::{
-        error::SchemaTypePrinterResult,
-        printer::{SchemaTypePrinter, SchemaTypePrinterOptions},
-    },
+use crate::schema_type_printer::{
+    error::SchemaTypePrinterResult,
+    printer::{SchemaTypePrinter, SchemaTypePrinterOptions},
 };
+use nitrogql_ast::TypeSystemDocument;
+use nitrogql_extension_resolver::resolve_extensions;
+use nitrogql_parser::parser::parse_type_system_document;
+use sourcemap_writer::just_writer::JustWriter;
 
 #[test]
 fn type_printing() {

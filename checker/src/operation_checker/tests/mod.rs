@@ -1,15 +1,14 @@
-use crate::{
-    ast::TypeSystemDocument, extension_resolver::resolve_extensions,
-    graphql_builtins::generate_builtins, graphql_parser::parser::parse_type_system_document,
-};
+use graphql_builtins::generate_builtins;
+use nitrogql_ast::TypeSystemDocument;
+use nitrogql_extension_resolver::resolve_extensions;
+use nitrogql_parser::parser::parse_type_system_document;
 
 mod operations {
     use insta::assert_debug_snapshot;
 
-    use crate::{
-        ast::TypeSystemDocument, checker::operation_checker::check_operation_document,
-        graphql_parser::parser::parse_operation_document,
-    };
+    use crate::operation_checker::check_operation_document;
+    use nitrogql_ast::TypeSystemDocument;
+    use nitrogql_parser::parser::parse_operation_document;
 
     use super::parse_to_type_system_document;
 
@@ -66,10 +65,9 @@ mod operations {
 mod operation_directives {
     use insta::assert_debug_snapshot;
 
-    use crate::{
-        ast::TypeSystemDocument, checker::operation_checker::check_operation_document,
-        graphql_parser::parser::parse_operation_document,
-    };
+    use crate::operation_checker::check_operation_document;
+    use nitrogql_ast::TypeSystemDocument;
+    use nitrogql_parser::parser::parse_operation_document;
 
     use super::parse_to_type_system_document;
 
@@ -287,10 +285,9 @@ mod operation_directives {
 mod selection_set {
     use insta::assert_debug_snapshot;
 
-    use crate::{
-        ast::TypeSystemDocument, checker::operation_checker::check_operation_document,
-        graphql_parser::parser::parse_operation_document,
-    };
+    use crate::operation_checker::check_operation_document;
+    use nitrogql_ast::TypeSystemDocument;
+    use nitrogql_parser::parser::parse_operation_document;
 
     use super::parse_to_type_system_document;
 
@@ -434,10 +431,9 @@ mod selection_set {
 mod fragments {
     use insta::assert_debug_snapshot;
 
-    use crate::{
-        ast::TypeSystemDocument, checker::operation_checker::check_operation_document,
-        graphql_parser::parser::parse_operation_document,
-    };
+    use crate::operation_checker::check_operation_document;
+    use nitrogql_ast::TypeSystemDocument;
+    use nitrogql_parser::parser::parse_operation_document;
 
     use super::parse_to_type_system_document;
 

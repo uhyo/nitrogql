@@ -1,0 +1,12 @@
+---
+source: parser/src/tests/mod.rs
+expression: "print_graphql(parse_operation_document(\"\n                subscription a {\n                    foo\n                    ... on F {\n                        bar\n                        baz\n                    }\n                }\n                \").unwrap())"
+---
+subscription a {
+  foo
+  ... on F {
+    bar
+    baz
+  }
+}
+

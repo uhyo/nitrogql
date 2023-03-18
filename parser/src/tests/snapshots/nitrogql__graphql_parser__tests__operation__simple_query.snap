@@ -1,9 +1,0 @@
----
-source: src/graphql_parser/tests/mod.rs
-expression: "print_graphql(parse_operation_document(\"query { foo bar }\").unwrap())"
----
-query {
-  foo
-  bar
-}
-

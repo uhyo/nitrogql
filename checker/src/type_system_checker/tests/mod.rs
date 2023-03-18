@@ -1,19 +1,16 @@
-use crate::{
-    ast::TypeSystemDocument, extension_resolver::resolve_extensions,
-    graphql_parser::parser::parse_type_system_document,
-};
+use nitrogql_ast::TypeSystemDocument;
+use nitrogql_extension_resolver::resolve_extensions;
+use nitrogql_parser::parser::parse_type_system_document;
 
 mod directives {
+    use graphql_builtins::generate_builtins;
     use insta::assert_debug_snapshot;
 
-    use crate::{
-        checker::type_system_checker::{
-            check_type_system_document, tests::parse_to_type_system_document,
-        },
-        extension_resolver::resolve_extensions,
-        graphql_builtins::generate_builtins,
-        graphql_parser::parser::parse_type_system_document,
+    use crate::type_system_checker::{
+        check_type_system_document, tests::parse_to_type_system_document,
     };
+    use nitrogql_extension_resolver::resolve_extensions;
+    use nitrogql_parser::parser::parse_type_system_document;
 
     // https://spec.graphql.org/draft/#sec-Type-System.Directives.Validation
     #[test]
@@ -248,7 +245,7 @@ mod directives {
 mod schemas {
     use insta::assert_debug_snapshot;
 
-    use crate::checker::type_system_checker::{
+    use crate::type_system_checker::{
         check_type_system_document, tests::parse_to_type_system_document,
     };
 
@@ -327,7 +324,7 @@ mod schemas {
 mod scalars {
     use insta::assert_debug_snapshot;
 
-    use crate::checker::type_system_checker::{
+    use crate::type_system_checker::{
         check_type_system_document, tests::parse_to_type_system_document,
     };
 
@@ -386,7 +383,7 @@ mod scalars {
 mod objects {
     use insta::assert_debug_snapshot;
 
-    use crate::checker::type_system_checker::{
+    use crate::type_system_checker::{
         check_type_system_document, tests::parse_to_type_system_document,
     };
 
@@ -704,7 +701,7 @@ mod objects {
 mod interfaces {
     use insta::assert_debug_snapshot;
 
-    use crate::checker::type_system_checker::{
+    use crate::type_system_checker::{
         check_type_system_document, tests::parse_to_type_system_document,
     };
 
@@ -1055,7 +1052,7 @@ mod interfaces {
 mod unions {
     use insta::assert_debug_snapshot;
 
-    use crate::checker::type_system_checker::{
+    use crate::type_system_checker::{
         check_type_system_document, tests::parse_to_type_system_document,
     };
 
@@ -1215,7 +1212,7 @@ mod unions {
 mod enums {
     use insta::assert_debug_snapshot;
 
-    use crate::checker::type_system_checker::{
+    use crate::type_system_checker::{
         check_type_system_document, tests::parse_to_type_system_document,
     };
 
@@ -1292,7 +1289,7 @@ mod enums {
 mod input_objects {
     use insta::assert_debug_snapshot;
 
-    use crate::checker::type_system_checker::{
+    use crate::type_system_checker::{
         check_type_system_document, tests::parse_to_type_system_document,
     };
 
@@ -1458,7 +1455,7 @@ mod input_objects {
 }
 
 fn parse_to_type_system_document(source: &str) -> TypeSystemDocument {
-    use crate::graphql_builtins::generate_builtins;
+    use graphql_builtins::generate_builtins;
 
     let mut doc = parse_type_system_document(source).unwrap();
     doc.extend(generate_builtins());

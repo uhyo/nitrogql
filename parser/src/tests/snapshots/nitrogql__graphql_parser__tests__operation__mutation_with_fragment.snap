@@ -1,9 +1,0 @@
----
-source: src/graphql_parser/tests/mod.rs
-expression: "print_graphql(parse_operation_document(\"\n                mutation($foo: Boolean) {\n                    foo\n                    ...Fragment\n                }\n                \").unwrap())"
----
-mutation($foo: Boolean) {
-  foo
-  ... Fragment
-}
-

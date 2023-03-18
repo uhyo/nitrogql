@@ -1,0 +1,29 @@
+---
+source: printer/src/operation_type_printer/tests/mod.rs
+expression: printed
+---
+import type { TypedDocumentNode } from "@graphql-typed-document-node/core";
+import type * as Schema from "";
+
+type Query = Schema.__SelectionSet<Schema.Query, {
+  me: Schema.__SelectionSet<Schema.User, {
+    id: Schema.ID;
+    name: Schema.String;
+    type: Schema.UserType;
+    age: Schema.Int | null;
+    posts: (Schema.__SelectionSet<Schema.User, {
+      id: Schema.ID;
+    }> | Schema.__SelectionSet<Schema.Bot, {
+      id: Schema.ID;
+    }> | Schema.__SelectionSet<Schema.Post, {
+      id: Schema.ID;
+    }>)[];
+  }>;
+}>;
+
+type Variables = {};
+
+export const Query: TypedDocumentNode<Query, Variables>;
+
+export { Query as default };
+

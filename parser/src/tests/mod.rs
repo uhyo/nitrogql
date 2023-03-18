@@ -2,10 +2,9 @@
 mod operation {
     use insta::assert_snapshot;
 
-    use crate::{
-        graphql_printer::GraphQLPrinter, parser::parse_operation_document,
-        source_map_writer::just_writer::JustWriter,
-    };
+    use crate::parser::parse_operation_document;
+    use nitrogql_graphql_printer::GraphQLPrinter;
+    use sourcemap_writer::just_writer::JustWriter;
 
     #[test]
     fn simple_query() {
@@ -101,11 +100,10 @@ mod operation {
 
 #[cfg(test)]
 mod definition {
-    use crate::{
-        graphql_printer::GraphQLPrinter, parser::parse_type_system_document,
-        source_map_writer::just_writer::JustWriter,
-    };
+    use crate::parser::parse_type_system_document;
     use insta::assert_snapshot;
+    use nitrogql_graphql_printer::GraphQLPrinter;
+    use sourcemap_writer::just_writer::JustWriter;
 
     #[test]
     fn scalar_definition() {

@@ -1,0 +1,30 @@
+---
+source: checker/src/operation_checker/tests/mod.rs
+expression: "check_operation_document(&schema, &doc)"
+---
+[
+    CheckError {
+        position: Pos {
+            line: 2,
+            column: 30,
+            file: 0,
+            builtin: false,
+        },
+        message: TypeMismatch {
+            type: "MyInput",
+        },
+        additional_info: [
+            (
+                Pos {
+                    line: 2,
+                    column: 51,
+                    file: 0,
+                    builtin: false,
+                },
+                UnknownField {
+                    name: "str",
+                },
+            ),
+        ],
+    },
+]

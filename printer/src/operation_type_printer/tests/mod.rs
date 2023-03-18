@@ -1,13 +1,11 @@
 use insta::assert_snapshot;
 
-use crate::{
-    ast::{OperationDocument, TypeSystemDocument},
-    checker::definition_map::generate_definition_map,
-    extension_resolver::resolve_extensions,
-    graphql_builtins::generate_builtins,
-    graphql_parser::parser::{parse_operation_document, parse_type_system_document},
-    source_map_writer::just_writer::JustWriter,
-};
+use graphql_builtins::generate_builtins;
+use nitrogql_ast::{OperationDocument, TypeSystemDocument};
+use nitrogql_checker::definition_map::generate_definition_map;
+use nitrogql_extension_resolver::resolve_extensions;
+use nitrogql_parser::parser::{parse_operation_document, parse_type_system_document};
+use sourcemap_writer::just_writer::JustWriter;
 
 use super::{QueryTypePrinter, QueryTypePrinterOptions};
 

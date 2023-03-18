@@ -8,3 +8,6 @@ edition = "2021"
 [dependencies]
 json-writer = "0.2.1"
 nitrogql-ast = { path = "../ast" }
+
+[dev-dependencies]
+insta = "1.28.0"

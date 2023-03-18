@@ -1,5 +1,0 @@
----
-source: src/json_printer/tests/mod.rs
-expression: "print_json_to_string(Type::NonNull(Box::new(NonNullType {\n                r#type: Type::Named(NamedType {\n                        name: Ident { position: POS, name: \"tyty\" },\n                    }),\n            })))"
----
-{"kind":"NonNullType","type":{"kind":"NamedType","name":{"type":"Name","value":"tyty"}}}

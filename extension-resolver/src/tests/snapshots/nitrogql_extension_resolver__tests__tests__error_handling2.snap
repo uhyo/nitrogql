@@ -1,0 +1,5 @@
+---
+source: extension-resolver/src/tests/mod.rs
+expression: resolved.message.to_string()
+---
+Duplicated declaration of type 'A'

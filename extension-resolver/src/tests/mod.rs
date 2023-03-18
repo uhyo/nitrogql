@@ -1,10 +1,10 @@
 #[cfg(test)]
 mod tests {
-    use crate::{
-        extension_resolver::resolve_extensions, graphql_parser::parser::parse_type_system_document,
-        graphql_printer::GraphQLPrinter, source_map_writer::just_writer::JustWriter,
-    };
+    use crate::resolve_extensions;
     use insta::assert_snapshot;
+    use nitrogql_graphql_printer::GraphQLPrinter;
+    use nitrogql_parser::parser::parse_type_system_document;
+    use sourcemap_writer::just_writer::JustWriter;
 
     #[test]
     fn resolve() {

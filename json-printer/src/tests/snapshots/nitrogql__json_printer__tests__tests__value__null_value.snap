@@ -1,5 +1,0 @@
----
-source: src/json_printer/tests/mod.rs
-expression: "print_json_to_string(Value::NullValue(NullValue {\n            position: POS,\n            keyword: \"null\",\n        }))"
----
-{"kind":"NullValue"}

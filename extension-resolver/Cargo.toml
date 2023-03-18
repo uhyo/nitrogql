@@ -9,3 +9,9 @@ edition = "2021"
 nitrogql-ast = { path = "../ast" }
 nitrogql-error = { path = "../error" }
 thiserror = "1.0.40"
+
+[dev-dependencies]
+insta = "1.28.0"
+sourcemap-writer = { path = "../sourcemap-writer" }
+nitrogql-parser = { path = "../parser" }
+nitrogql-graphql-printer = { path = "../graphql-printer" }

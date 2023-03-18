@@ -12,3 +12,9 @@ nitrogql-checker = { path = "../checker" }
 nitrogql-utils = { path = "../utils" }
 sourcemap-writer = { path = "../sourcemap-writer" }
 thiserror = "1.0.40"
+
+[dev-dependencies]
+graphql-builtins = { path = "../builtins" }
+nitrogql-extension-resolver = { path = "../extension-resolver" }
+nitrogql-parser = { path = "../parser" }
+insta = "1.28.0"
