@@ -1,7 +1,7 @@
 use graphql_builtins::generate_builtins;
 use nitrogql_ast::TypeSystemDocument;
-use nitrogql_extension_resolver::resolve_extensions;
 use nitrogql_parser::parser::parse_type_system_document;
+use nitrogql_semantics::resolve_extensions;
 
 mod operations {
     use insta::assert_debug_snapshot;

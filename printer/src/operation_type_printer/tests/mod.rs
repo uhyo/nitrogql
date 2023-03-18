@@ -2,9 +2,9 @@ use insta::assert_snapshot;
 
 use graphql_builtins::generate_builtins;
 use nitrogql_ast::{OperationDocument, TypeSystemDocument};
-use nitrogql_extension_resolver::resolve_extensions;
 use nitrogql_parser::parser::{parse_operation_document, parse_type_system_document};
 use nitrogql_semantics::generate_definition_map;
+use nitrogql_semantics::resolve_extensions;
 use sourcemap_writer::just_writer::JustWriter;
 
 use super::{QueryTypePrinter, QueryTypePrinterOptions};

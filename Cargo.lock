@@ -377,7 +377,6 @@ dependencies = [
  "log",
  "nitrogql-ast",
  "nitrogql-error",
- "nitrogql-extension-resolver",
  "nitrogql-parser",
  "nitrogql-semantics",
  "once_cell",
@@ -403,7 +402,6 @@ dependencies = [
  "nitrogql-checker",
  "nitrogql-config-file",
  "nitrogql-error",
- "nitrogql-extension-resolver",
  "nitrogql-parser",
  "nitrogql-printer",
  "nitrogql-semantics",
@@ -434,19 +432,6 @@ dependencies = [
  "colored",
  "nitrogql-ast",
  "nitrogql-utils",
-]
-
-[[package]]
-name = "nitrogql-extension-resolver"
-version = "0.1.0"
-dependencies = [
- "insta",
- "nitrogql-ast",
- "nitrogql-error",
- "nitrogql-graphql-printer",
- "nitrogql-parser",
- "sourcemap-writer",
- "thiserror",
 ]
 
 [[package]]
@@ -486,7 +471,6 @@ dependencies = [
  "insta",
  "nitrogql-ast",
  "nitrogql-checker",
- "nitrogql-extension-resolver",
  "nitrogql-json-printer",
  "nitrogql-parser",
  "nitrogql-semantics",
@@ -499,7 +483,13 @@ dependencies = [
 name = "nitrogql-semantics"
 version = "0.1.0"
 dependencies = [
+ "insta",
  "nitrogql-ast",
+ "nitrogql-error",
+ "nitrogql-graphql-printer",
+ "nitrogql-parser",
+ "sourcemap-writer",
+ "thiserror",
 ]
 
 [[package]]

@@ -7,7 +7,6 @@ members = [
   "config-file",
   "error",
   "graphql-printer",
-  "extension-resolver",
   "json-printer",
   "parser",
   "printer",

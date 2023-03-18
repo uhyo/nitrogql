@@ -5,8 +5,8 @@ use crate::schema_type_printer::{
     printer::{SchemaTypePrinter, SchemaTypePrinterOptions},
 };
 use nitrogql_ast::TypeSystemDocument;
-use nitrogql_extension_resolver::resolve_extensions;
 use nitrogql_parser::parser::parse_type_system_document;
+use nitrogql_semantics::resolve_extensions;
 use sourcemap_writer::just_writer::JustWriter;
 
 #[test]

@@ -5,7 +5,7 @@ use nitrogql_checker::{
     operation_checker::check_operation_document, type_system_checker::check_type_system_document,
 };
 use nitrogql_error::{print_positioned_error, Result};
-use nitrogql_extension_resolver::resolve_extensions;
+use nitrogql_semantics::resolve_extensions;
 
 use super::{error::CliError, CliContext};
 

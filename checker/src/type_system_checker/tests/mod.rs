@@ -1,6 +1,6 @@
 use nitrogql_ast::TypeSystemDocument;
-use nitrogql_extension_resolver::resolve_extensions;
 use nitrogql_parser::parser::parse_type_system_document;
+use nitrogql_semantics::resolve_extensions;
 
 mod directives {
     use graphql_builtins::generate_builtins;
@@ -9,8 +9,8 @@ mod directives {
     use crate::type_system_checker::{
         check_type_system_document, tests::parse_to_type_system_document,
     };
-    use nitrogql_extension_resolver::resolve_extensions;
     use nitrogql_parser::parser::parse_type_system_document;
+    use nitrogql_semantics::resolve_extensions;
 
     // https://spec.graphql.org/draft/#sec-Type-System.Directives.Validation
     #[test]
