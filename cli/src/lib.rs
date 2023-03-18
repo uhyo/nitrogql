@@ -1,12 +1,10 @@
-pub mod ast;
-pub mod base64_vlq;
+mod base64_vlq;
 pub mod checker;
 pub mod error;
 pub mod extension_resolver;
 pub mod graphql_builtins;
-pub mod graphql_parser;
 pub mod graphql_printer;
-pub mod json_printer;
+mod json_printer;
 pub mod source_map_writer;
 pub mod type_printer;
 pub mod utils;

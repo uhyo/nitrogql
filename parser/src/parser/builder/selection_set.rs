@@ -1,13 +1,11 @@
 use super::{directives::build_directives, utils::PairExt, value::build_arguments, Rule};
 use pest::iterators::Pair;
 
-use crate::{
-    ast::selection_set::{Field, FragmentSpread, InlineFragment, Selection, SelectionSet},
-    parts,
-};
+use crate::parts;
+use nitrogql_ast::selection_set::{Field, FragmentSpread, InlineFragment, Selection, SelectionSet};
 
 pub fn build_selection_set(pair: Pair<Rule>) -> SelectionSet {
-    let position = (&pair).into();
+    let position = pair.to_pos();
     SelectionSet {
         position,
         selections: pair
@@ -38,9 +36,9 @@ fn build_field(pair: Pair<Rule>) -> Field {
     Field {
         alias: alias.map(|pair| {
             let name_pair = pair.only_child();
-            name_pair.into()
+            name_pair.to_ident()
         }),
-        name: name.into(),
+        name: name.to_ident(),
         arguments: arguments.map(build_arguments),
         directives: directives.map_or(vec![], build_directives),
         selection_set: selection_set.map(build_selection_set),
@@ -48,7 +46,7 @@ fn build_field(pair: Pair<Rule>) -> Field {
 }
 
 fn build_fragment_spread(pair: Pair<Rule>) -> FragmentSpread {
-    let position = (&pair).into();
+    let position = pair.to_pos();
     let (name, directives) = parts!(
         pair,
         FragmentName,
@@ -56,13 +54,13 @@ fn build_fragment_spread(pair: Pair<Rule>) -> FragmentSpread {
     );
     FragmentSpread {
         position,
-        fragment_name: name.into(),
+        fragment_name: name.to_ident(),
         directives: directives.map_or(vec![], build_directives),
     }
 }
 
 fn build_inline_fragment(pair: Pair<Rule>) -> InlineFragment {
-    let position = (&pair).into();
+    let position = pair.to_pos();
     let (type_condition, directives, selection_set) = parts!(
         pair,
         TypeCondition opt,
@@ -73,7 +71,7 @@ fn build_inline_fragment(pair: Pair<Rule>) -> InlineFragment {
         position,
         type_condition: type_condition.map(|type_condition_pair| {
             let (_, name) = parts!(type_condition_pair, KEYWORD_on, NamedType);
-            name.into()
+            name.to_ident()
         }),
         directives: directives.map_or(vec![], build_directives),
         selection_set: build_selection_set(selection_set),

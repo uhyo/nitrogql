@@ -2,18 +2,18 @@ use pest::iterators::Pair;
 
 use super::{super::Rule, build_description};
 use crate::{
-    ast::{
-        base::Ident,
-        type_system::{
-            ArgumentsDefinition, EnumTypeDefinition, EnumValueDefinition, FieldDefinition,
-            InputObjectTypeDefinition, InputValueDefinition, InterfaceTypeDefinition,
-            ObjectTypeDefinition, ScalarTypeDefinition, TypeDefinition, UnionTypeDefinition,
-        },
-    },
-    graphql_parser::parser::builder::{
+    parser::builder::{
         directives::build_directives, r#type::build_type, utils::PairExt, value::build_value,
     },
     parts,
+};
+use nitrogql_ast::{
+    base::Ident,
+    type_system::{
+        ArgumentsDefinition, EnumTypeDefinition, EnumValueDefinition, FieldDefinition,
+        InputObjectTypeDefinition, InputValueDefinition, InterfaceTypeDefinition,
+        ObjectTypeDefinition, ScalarTypeDefinition, TypeDefinition, UnionTypeDefinition,
+    },
 };
 
 pub fn build_type_definition(pair: Pair<Rule>) -> TypeDefinition {
@@ -43,10 +43,10 @@ fn build_scalar_type_definition(pair: Pair<Rule>) -> ScalarTypeDefinition {
     );
     ScalarTypeDefinition {
         description: description.map(build_description),
-        position: (&keyword).into(),
-        name: name.into(),
+        position: keyword.to_pos(),
+        name: name.to_ident(),
         directives: directives.map_or(vec![], build_directives),
-        scalar_keyword: keyword.into(),
+        scalar_keyword: keyword.to_keyword(),
     }
 }
 
@@ -63,12 +63,12 @@ fn build_object_type_definition(pair: Pair<Rule>) -> ObjectTypeDefinition {
 
     ObjectTypeDefinition {
         description: description.map(build_description),
-        position: (&keyword).into(),
-        name: name.into(),
+        position: keyword.to_pos(),
+        name: name.to_ident(),
         implements: implements.map_or(vec![], build_implements_interfaces),
         directives: directives.map_or(vec![], build_directives),
         fields: fields.map_or(vec![], build_fields_definition),
-        type_keyword: keyword.into(),
+        type_keyword: keyword.to_keyword(),
     }
 }
 
@@ -84,12 +84,12 @@ fn build_interface_type_definition(pair: Pair<Rule>) -> InterfaceTypeDefinition 
     );
     InterfaceTypeDefinition {
         description: description.map(build_description),
-        position: (&keyword).into(),
-        name: name.into(),
+        position: keyword.to_pos(),
+        name: name.to_ident(),
         implements: implements.map_or(vec![], build_implements_interfaces),
         directives: directives.map_or(vec![], build_directives),
         fields: fields.map_or(vec![], build_fields_definition),
-        interface_keyword: keyword.into(),
+        interface_keyword: keyword.to_keyword(),
     }
 }
 
@@ -104,14 +104,14 @@ fn build_union_type_definition(pair: Pair<Rule>) -> UnionTypeDefinition {
     );
     UnionTypeDefinition {
         description: description.map(build_description),
-        position: (&keyword).into(),
-        name: name.into(),
+        position: keyword.to_pos(),
+        name: name.to_ident(),
         directives: directives.map_or(vec![], build_directives),
         members: members.map_or(vec![], |members| {
             let pairs = members.all_children(Rule::NamedType);
-            pairs.into_iter().map(|pair| pair.into()).collect()
+            pairs.into_iter().map(|pair| pair.to_ident()).collect()
         }),
-        union_keyword: keyword.into(),
+        union_keyword: keyword.to_keyword(),
     }
 }
 
@@ -126,14 +126,14 @@ fn build_enum_type_definition(pair: Pair<Rule>) -> EnumTypeDefinition {
     );
     EnumTypeDefinition {
         description: description.map(build_description),
-        position: (&keyword).into(),
-        name: name.into(),
+        position: keyword.to_pos(),
+        name: name.to_ident(),
         directives: directives.map_or(vec![], build_directives),
         values: values.map_or(vec![], |pair| {
             let pairs = pair.all_children(Rule::EnumValueDefinition);
             pairs.into_iter().map(build_enum_value_definition).collect()
         }),
-        enum_keyword: keyword.into(),
+        enum_keyword: keyword.to_keyword(),
     }
 }
 
@@ -148,11 +148,11 @@ fn build_input_object_type_definition(pair: Pair<Rule>) -> InputObjectTypeDefini
     );
     InputObjectTypeDefinition {
         description: description.map(build_description),
-        position: (&keyword).into(),
-        name: name.into(),
+        position: keyword.to_pos(),
+        name: name.to_ident(),
         directives: directives.map_or(vec![], build_directives),
         fields: fields.map_or(vec![], build_input_fields_definition),
-        input_keyword: keyword.into(),
+        input_keyword: keyword.to_keyword(),
     }
 }
 
@@ -175,7 +175,7 @@ pub fn build_implements_interfaces(pair: Pair<Rule>) -> Vec<Ident> {
                     first_pair.as_rule()
                 );
             }
-            pair.into()
+            pair.to_ident()
         })
         .collect()
 }
@@ -195,7 +195,7 @@ pub fn build_fields_definition(pair: Pair<Rule>) -> Vec<FieldDefinition> {
             );
             FieldDefinition {
                 description: description.map(build_description),
-                name: name.into(),
+                name: name.to_ident(),
                 arguments: arguments.map(build_arguments_definition),
                 r#type: build_type(ty),
                 directives: directives.map_or(vec![], build_directives),
@@ -219,8 +219,8 @@ pub fn build_arguments_definition(pair: Pair<Rule>) -> ArgumentsDefinition {
             );
             InputValueDefinition {
                 description: description.map(build_description),
-                position: (&name).into(),
-                name: name.into(),
+                position: name.to_pos(),
+                name: name.to_ident(),
                 r#type: build_type(ty),
                 default_value: default_value.map(|pair| {
                     let child = pair.only_child();
@@ -242,7 +242,7 @@ pub fn build_enum_value_definition(pair: Pair<Rule>) -> EnumValueDefinition {
     );
     EnumValueDefinition {
         description: description.map(build_description),
-        name: value.into(),
+        name: value.to_ident(),
         directives: directives.map_or(vec![], build_directives),
     }
 }
@@ -262,8 +262,8 @@ pub fn build_input_fields_definition(pair: Pair<Rule>) -> Vec<InputValueDefiniti
             );
             InputValueDefinition {
                 description: description.map(build_description),
-                position: (&name).into(),
-                name: name.into(),
+                position: name.to_pos(),
+                name: name.to_ident(),
                 r#type: build_type(ty),
                 default_value: default_value.map(|pair| build_value(pair.only_child())),
                 directives: directives.map_or(vec![], build_directives),

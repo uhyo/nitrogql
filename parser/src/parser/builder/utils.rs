@@ -1,6 +1,7 @@
 //! Utils for dealing with Pair<Rule>
 
 use super::super::Rule;
+use nitrogql_ast::base::{Ident, Keyword, Pos, Punc};
 use pest::iterators::Pair;
 
 pub trait PairExt<'a> {
@@ -10,6 +11,14 @@ pub trait PairExt<'a> {
     fn is_rule(&self, rule: Rule) -> bool;
     /// Validates that all inner Pairs are of given rule and returns them.
     fn all_children(self, rule: Rule) -> Vec<Pair<'a, Rule>>;
+    /// Generate a Pos for this pair.
+    fn to_pos(&self) -> Pos;
+    /// Generate a Punc from this pair.
+    fn to_punc(&self) -> Punc<'a>;
+    /// Generate a Keyword from this pair.
+    fn to_keyword(&self) -> Keyword<'a>;
+    /// Generate an Ident from this pair.
+    fn to_ident(&self) -> Ident<'a>;
 }
 
 impl<'a> PairExt<'a> for Pair<'a, Rule> {
@@ -42,6 +51,30 @@ impl<'a> PairExt<'a> for Pair<'a, Rule> {
                 true
             })
             .collect()
+    }
+
+    fn to_pos(&self) -> Pos {
+        let (line, column) = self.line_col();
+        // convert 1-based to 0-based
+        Pos::new(line, column)
+    }
+    fn to_punc(&self) -> Punc<'a> {
+        Punc {
+            position: self.to_pos(),
+            token: self.as_str(),
+        }
+    }
+    fn to_keyword(&self) -> Keyword<'a> {
+        Keyword {
+            position: self.to_pos(),
+            name: self.as_str(),
+        }
+    }
+    fn to_ident(&self) -> Ident<'a> {
+        Ident {
+            position: self.to_pos(),
+            name: self.as_str(),
+        }
     }
 }
 

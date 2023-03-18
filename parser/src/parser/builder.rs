@@ -1,7 +1,7 @@
 //! This module builds ast from raw parser result.
 //!
 
-use crate::ast::{OperationDocument, TypeSystemOrExtensionDocument};
+use nitrogql_ast::{OperationDocument, TypeSystemOrExtensionDocument};
 
 use self::{
     operation::build_executable_definition, type_system::build_type_system_definition_or_extension,

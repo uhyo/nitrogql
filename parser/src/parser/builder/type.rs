@@ -1,10 +1,7 @@
 use super::{utils::PairExt, Rule};
 use pest::iterators::Pair;
 
-use crate::ast::{
-    base::Pos,
-    r#type::{ListType, NamedType, NonNullType, Type},
-};
+use nitrogql_ast::r#type::{ListType, NamedType, NonNullType, Type};
 
 /// Builds Type from given Pair for Type.
 pub fn build_type(pair: Pair<Rule>) -> Type {
@@ -22,7 +19,7 @@ pub fn build_type(pair: Pair<Rule>) -> Type {
                 }
             }
             Rule::ListType => {
-                let position: Pos = (&pair).into();
+                let position = pair.to_pos();
                 let child = pair.only_child();
                 Type::List(Box::new(ListType {
                     position,
@@ -30,7 +27,7 @@ pub fn build_type(pair: Pair<Rule>) -> Type {
                 }))
             }
             Rule::NamedType => Type::Named(NamedType {
-                name: pair.only_child().into(),
+                name: pair.only_child().to_ident(),
             }),
             rule => panic!("Unexpected rule as child of Type: {:?}", rule),
         }

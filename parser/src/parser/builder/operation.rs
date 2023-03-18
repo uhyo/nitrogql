@@ -1,12 +1,7 @@
-use crate::{
-    ast::{
-        base::Pos,
-        operations::{
-            ExecutableDefinition, FragmentDefinition, OperationDefinition, OperationType,
-            VariableDefinition, VariablesDefinition,
-        },
-    },
-    parts,
+use crate::parts;
+use nitrogql_ast::operations::{
+    ExecutableDefinition, FragmentDefinition, OperationDefinition, OperationType,
+    VariableDefinition, VariablesDefinition,
 };
 
 use super::{
@@ -17,7 +12,7 @@ use pest::iterators::Pair;
 
 /// Parses a VariablesDefinition Pair.
 pub fn build_variables_definition(pair: Pair<Rule>) -> VariablesDefinition {
-    let position: Pos = (&pair).into();
+    let position = pair.to_pos();
     let defs = pair.all_children(Rule::VariableDefinition);
     VariablesDefinition {
         position,
@@ -27,7 +22,7 @@ pub fn build_variables_definition(pair: Pair<Rule>) -> VariablesDefinition {
 
 /// Parses one VariableDefinition Pair.
 pub fn build_variable_definition(pair: Pair<Rule>) -> VariableDefinition {
-    let pos: Pos = (&pair).into();
+    let pos = pair.to_pos();
     let (variable, ty, default_value, directives) = parts!(
         pair,
         Variable,
@@ -50,7 +45,7 @@ pub fn build_variable_definition(pair: Pair<Rule>) -> VariableDefinition {
 
 pub fn build_executable_definition(pair: Pair<Rule>) -> ExecutableDefinition {
     let pair = pair.only_child();
-    let position = (&pair).into();
+    let position = pair.to_pos();
     match pair.as_rule() {
         Rule::OperationDefinition => {
             // TODO: handling of OperationSet (abbreviated syntax)
@@ -65,7 +60,7 @@ pub fn build_executable_definition(pair: Pair<Rule>) -> ExecutableDefinition {
             ExecutableDefinition::OperationDefinition(OperationDefinition {
                 position,
                 operation_type: str_to_operation_type(operation_type.as_str()),
-                name: name.map(|pair| pair.into()),
+                name: name.map(|pair| pair.to_ident()),
                 variables_definition: variables_definition.map(build_variables_definition),
                 directives: directives.map_or(vec![], build_directives),
                 selection_set: build_selection_set(selection_set),
@@ -82,10 +77,10 @@ pub fn build_executable_definition(pair: Pair<Rule>) -> ExecutableDefinition {
             );
             ExecutableDefinition::FragmentDefinition(FragmentDefinition {
                 position,
-                name: name.into(),
+                name: name.to_ident(),
                 type_condition: {
                     let (_, name) = parts!(type_condition, KEYWORD_on, NamedType);
-                    name.into()
+                    name.to_ident()
                 },
                 directives: directives.map_or(vec![], build_directives),
                 selection_set: build_selection_set(selection_set),

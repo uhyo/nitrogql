@@ -1,21 +1,17 @@
+use crate::parts;
+
 use super::{base::build_variable, utils::PairExt, Rule};
 use pest::iterators::Pair;
 
-use crate::{
-    ast::{
-        base::Pos,
-        value::{
-            Arguments, BooleanValue, EnumValue, FloatValue, IntValue, ListValue, NullValue,
-            ObjectValue, StringValue, Value,
-        },
-    },
-    parts,
+use nitrogql_ast::value::{
+    Arguments, BooleanValue, EnumValue, FloatValue, IntValue, ListValue, NullValue, ObjectValue,
+    StringValue, Value,
 };
 
 /// Builds Value from given Pair for Value.
 pub fn build_value(pair: Pair<Rule>) -> Value {
     let pair = pair.only_child();
-    let position: Pos = (&pair).into();
+    let position = pair.to_pos();
     match pair.as_rule() {
         Rule::Variable => Value::Variable(build_variable(pair)),
         Rule::IntValue => Value::IntValue(IntValue {
@@ -61,7 +57,7 @@ pub fn build_value(pair: Pair<Rule>) -> Value {
                 .into_iter()
                 .map(|field| {
                     let (name, value) = parts!(field, Name, Value);
-                    (name.into(), build_value(value))
+                    (name.to_ident(), build_value(value))
                 })
                 .collect();
             Value::ObjectValue(ObjectValue { position, fields })
@@ -72,7 +68,7 @@ pub fn build_value(pair: Pair<Rule>) -> Value {
 
 /// Builds Arguments from given Pair for Arguments.
 pub fn build_arguments(pair: Pair<Rule>) -> Arguments {
-    let position: Pos = (&pair).into();
+    let position = pair.to_pos();
     Arguments {
         position,
         arguments: pair
@@ -80,7 +76,7 @@ pub fn build_arguments(pair: Pair<Rule>) -> Arguments {
             .into_iter()
             .map(|pair| {
                 let (name, value) = parts!(pair, Name, Value);
-                (name.into(), build_value(value))
+                (name.to_ident(), build_value(value))
             })
             .collect(),
     }
@@ -88,7 +84,7 @@ pub fn build_arguments(pair: Pair<Rule>) -> Arguments {
 
 pub fn build_string_value(pair: Pair<Rule>) -> StringValue {
     let pair = pair.only_child();
-    let position = (&pair).into();
+    let position = pair.to_pos();
     match pair.as_rule() {
         Rule::EmptyStringValue => StringValue {
             position,

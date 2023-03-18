@@ -1,8 +1,5 @@
 use std::cell::Cell;
 
-use crate::graphql_parser::parser::Rule;
-use pest::iterators::Pair;
-
 thread_local! {
     /// Current file to be used when generating Pos.
     static CURRENT_FILE_OF_POS: Cell<usize> = Cell::new(0);
@@ -25,6 +22,16 @@ pub struct Pos {
 }
 
 impl Pos {
+    /// Generates a non-built-in Pos.
+    pub fn new(line: usize, column: usize) -> Self {
+        Pos {
+            line,
+            column,
+            file: CURRENT_FILE_OF_POS.with(|v| v.get()),
+            builtin: false,
+        }
+    }
+
     /// Generates a built-in Pos.
     pub fn builtin() -> Self {
         Pos {
@@ -32,19 +39,6 @@ impl Pos {
             column: 0,
             file: 0,
             builtin: true,
-        }
-    }
-}
-
-impl From<&Pair<'_, Rule>> for Pos {
-    fn from(value: &Pair<'_, Rule>) -> Self {
-        let (line, column) = value.line_col();
-        // convert 1-based to0-based
-        Pos {
-            line: line - 1,
-            column: column - 1,
-            file: CURRENT_FILE_OF_POS.with(|v| v.get()),
-            builtin: false,
         }
     }
 }
@@ -114,14 +108,6 @@ impl HasPos for Punc<'_> {
         &self.position
     }
 }
-impl<'a> From<Pair<'a, Rule>> for Punc<'a> {
-    fn from(value: Pair<'a, Rule>) -> Self {
-        Punc {
-            position: (&value).into(),
-            token: value.as_str(),
-        }
-    }
-}
 
 #[derive(Copy, Clone, Debug, Hash, PartialEq, Eq)]
 pub struct Keyword<'a> {
@@ -138,15 +124,6 @@ impl HasPos for Keyword<'_> {
     }
 }
 
-impl<'a> From<Pair<'a, Rule>> for Keyword<'a> {
-    fn from(value: Pair<'a, Rule>) -> Self {
-        Keyword {
-            position: (&value).into(),
-            name: value.as_str(),
-        }
-    }
-}
-
 #[derive(Copy, Clone, Debug, Hash, PartialEq, Eq)]
 pub struct Ident<'a> {
     pub name: &'a str,
@@ -159,15 +136,6 @@ impl HasPos for Ident<'_> {
     }
     fn name(&self) -> Option<&str> {
         Some(self.name)
-    }
-}
-
-impl<'a> From<Pair<'a, Rule>> for Ident<'a> {
-    fn from(value: Pair<'a, Rule>) -> Self {
-        Ident {
-            position: (&value).into(),
-            name: value.as_str(),
-        }
     }
 }
 

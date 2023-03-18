@@ -9,16 +9,14 @@ use super::{
     directives::build_directives, operation::str_to_operation_type, utils::PairExt,
     value::build_string_value, Rule,
 };
-use crate::{
-    ast::{
-        base::Ident,
-        operations::OperationType,
-        type_system::{
-            DirectiveDefinition, SchemaDefinition, SchemaExtension, TypeSystemDefinitionOrExtension,
-        },
-        value::StringValue,
+use crate::parts;
+use nitrogql_ast::{
+    base::Ident,
+    operations::OperationType,
+    type_system::{
+        DirectiveDefinition, SchemaDefinition, SchemaExtension, TypeSystemDefinitionOrExtension,
     },
-    parts,
+    value::StringValue,
 };
 
 mod type_definition;
@@ -65,7 +63,7 @@ pub fn build_type_system_definition_or_extension(
 }
 
 fn build_schema_definition(pair: Pair<Rule>) -> SchemaDefinition {
-    let position = (&pair).into();
+    let position = pair.to_pos();
     let (description, _, directives, root_operation_type_definitions) = parts!(
         pair,
         Description opt,
@@ -95,20 +93,20 @@ fn build_directive_definition(pair: Pair<Rule>) -> DirectiveDefinition {
     );
     DirectiveDefinition {
         description: description.map(build_description),
-        position: (&keyword).into(),
-        name: name.into(),
+        position: keyword.to_pos(),
+        name: name.to_ident(),
         arguments: arguments.map(build_arguments_definition),
-        repeatable: repeatable.map(|pair| pair.into()),
+        repeatable: repeatable.map(|pair| pair.to_ident()),
         locations: {
             let locations = locations.all_children(Rule::DirectiveLocation);
-            locations.into_iter().map(|pair| pair.into()).collect()
+            locations.into_iter().map(|pair| pair.to_ident()).collect()
         },
-        directive_keyword: keyword.into(),
+        directive_keyword: keyword.to_keyword(),
     }
 }
 
 fn build_schema_extension(pair: Pair<Rule>) -> SchemaExtension {
-    let position = (&pair).into();
+    let position = pair.to_pos();
     let (_, _, directives, root_operation_type_definition) = parts!(
         pair,
         KEYWORD_extend,
@@ -131,7 +129,7 @@ fn build_root_operation_type_definitions(pair: Pair<Rule>) -> Vec<(OperationType
             let (operation_type, named_type) = parts!(def, OperationType, NamedType);
             (
                 str_to_operation_type(operation_type.as_str()),
-                named_type.into(),
+                named_type.to_ident(),
             )
         })
         .collect()

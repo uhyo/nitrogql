@@ -1,16 +1,14 @@
 use super::{utils::PairExt, value::build_arguments, Rule};
 use pest::iterators::Pair;
 
-use crate::{
-    ast::{base::Pos, directive::Directive},
-    parts,
-};
+use crate::parts;
+use nitrogql_ast::directive::Directive;
 
 pub fn build_directives(pair: Pair<Rule>) -> Vec<Directive> {
     pair.all_children(Rule::Directive)
         .into_iter()
         .map(|pair| {
-            let position: Pos = (&pair).into();
+            let position = pair.to_pos();
             let (name, arguments) = parts!(
                 pair,
                 Name,
@@ -18,7 +16,7 @@ pub fn build_directives(pair: Pair<Rule>) -> Vec<Directive> {
             );
             Directive {
                 position,
-                name: name.into(),
+                name: name.to_ident(),
                 arguments: arguments.map(build_arguments),
             }
         })

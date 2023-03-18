@@ -8,12 +8,12 @@ use super::{
     },
 };
 use crate::{
-    ast::type_system::{
-        EnumTypeExtension, InputObjectTypeExtension, InterfaceTypeExtension, ObjectTypeExtension,
-        ScalarTypeExtension, TypeExtension, UnionTypeExtension,
-    },
-    graphql_parser::parser::builder::{directives::build_directives, utils::PairExt},
+    parser::builder::{directives::build_directives, utils::PairExt},
     parts,
+};
+use nitrogql_ast::type_system::{
+    EnumTypeExtension, InputObjectTypeExtension, InterfaceTypeExtension, ObjectTypeExtension,
+    ScalarTypeExtension, TypeExtension, UnionTypeExtension,
 };
 
 pub fn build_type_extension(pair: Pair<Rule>) -> TypeExtension {
@@ -42,8 +42,8 @@ fn build_scalar_type_extension(pair: Pair<Rule>) -> ScalarTypeExtension {
         Directives opt
     );
     ScalarTypeExtension {
-        position: (&keyword).into(),
-        name: name.into(),
+        position: keyword.to_pos(),
+        name: name.to_ident(),
         directives: directives.map_or(vec![], build_directives),
     }
 }
@@ -60,8 +60,8 @@ fn build_object_type_extension(pair: Pair<Rule>) -> ObjectTypeExtension {
     );
 
     ObjectTypeExtension {
-        position: (&keyword).into(),
-        name: name.into(),
+        position: keyword.to_pos(),
+        name: name.to_ident(),
         implements: implements.map_or(vec![], build_implements_interfaces),
         directives: directives.map_or(vec![], build_directives),
         fields: fields.map_or(vec![], build_fields_definition),
@@ -79,8 +79,8 @@ fn build_interface_type_extension(pair: Pair<Rule>) -> InterfaceTypeExtension {
         FieldsDefinition opt
     );
     InterfaceTypeExtension {
-        position: (&keyword).into(),
-        name: name.into(),
+        position: keyword.to_pos(),
+        name: name.to_ident(),
         implements: implements.map_or(vec![], build_implements_interfaces),
         directives: directives.map_or(vec![], build_directives),
         fields: fields.map_or(vec![], build_fields_definition),
@@ -97,12 +97,12 @@ fn build_union_type_extension(pair: Pair<Rule>) -> UnionTypeExtension {
         UnionMemberTypes opt
     );
     UnionTypeExtension {
-        position: (&keyword).into(),
-        name: name.into(),
+        position: keyword.to_pos(),
+        name: name.to_ident(),
         directives: directives.map_or(vec![], build_directives),
         members: members.map_or(vec![], |members| {
             let pairs = members.all_children(Rule::NamedType);
-            pairs.into_iter().map(|pair| pair.into()).collect()
+            pairs.into_iter().map(|pair| pair.to_ident()).collect()
         }),
     }
 }
@@ -117,8 +117,8 @@ fn build_enum_type_extension(pair: Pair<Rule>) -> EnumTypeExtension {
         EnumValuesDefinition opt
     );
     EnumTypeExtension {
-        position: (&keyword).into(),
-        name: name.into(),
+        position: keyword.to_pos(),
+        name: name.to_ident(),
         directives: directives.map_or(vec![], build_directives),
         values: values.map_or(vec![], |pair| {
             let pairs = pair.all_children(Rule::EnumValueDefinition);
@@ -137,8 +137,8 @@ fn build_input_object_type_extension(pair: Pair<Rule>) -> InputObjectTypeExtensi
         InputFieldsDefinition opt
     );
     InputObjectTypeExtension {
-        position: (&keyword).into(),
-        name: name.into(),
+        position: keyword.to_pos(),
+        name: name.to_ident(),
         directives: directives.map_or(vec![], build_directives),
         fields: fields.map_or(vec![], build_input_fields_definition),
     }
