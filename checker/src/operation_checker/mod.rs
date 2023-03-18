@@ -64,7 +64,7 @@ pub fn check_operation_document(
                                 }
                                 .with_pos(name.position).with_additional_info(vec![(
                                     *other.position(),
-                                    CheckErrorMessage::AnotherDefinitionPos { name: name.name.to_owned()  }
+                                    CheckErrorMessage::AnotherDefinitionPos { name: name.to_string()  }
                                 )]),
                             );
                         }
@@ -229,7 +229,7 @@ fn check_variables_definition(
         match type_kind {
             None => {
                 result.push(
-                    CheckErrorMessage::UnknownType { name: v.r#type.unwrapped_type().name.name.to_owned() }
+                    CheckErrorMessage::UnknownType { name: v.r#type.unwrapped_type().name.to_string() }
                     .with_pos(*v.r#type.position())
                 );
             }
@@ -237,7 +237,7 @@ fn check_variables_definition(
             }
             _ => {
                 result.push(
-                    CheckErrorMessage::NoOutputType { name: v.r#type.unwrapped_type().name.name.to_owned() }
+                    CheckErrorMessage::NoOutputType { name: v.r#type.unwrapped_type().name.to_string() }
                     .with_pos(*v.r#type.position())
                 );
             }
@@ -260,11 +260,11 @@ fn check_selection_set(
         result.push(
             CheckErrorMessage::SelectionOnInvalidType { kind: 
                 kind_of_type_definition(root_type),
-                name: root_type_name.name.to_owned(),
+                name: root_type_name.to_string(),
             }
                 .with_pos(selection_set.position)
                 .with_additional_info(vec![
-                    (*root_type.position(), CheckErrorMessage::DefinitionPos { name: root_type_name.name.to_owned()})
+                    (*root_type.position(), CheckErrorMessage::DefinitionPos { name: root_type_name.to_string()})
                 ])
         );
         return;
@@ -313,7 +313,7 @@ fn check_selection_field(
     let Some(target_field) = target_field else {
         result.push(
             CheckErrorMessage::FieldNotFound { field_name: 
-                field_selection.name.name.to_owned(),
+                field_selection.name.to_string(),
                     type_name: root_type_name.to_owned(),
                 }.with_pos(field_selection.name.position)
                 .with_additional_info(vec![
@@ -361,7 +361,7 @@ fn check_fragment_spread(
     
     if seen_fragments.contains(&fragment_spread.fragment_name.name) {
         result.push(
-            CheckErrorMessage::RecursingFragmentSpread { name: fragment_spread.fragment_name.name.to_owned() }
+            CheckErrorMessage::RecursingFragmentSpread { name: fragment_spread.fragment_name.to_string() }
             .with_pos(fragment_spread.position)
         );
         return;
@@ -370,7 +370,7 @@ fn check_fragment_spread(
     let seen_fragments = &seen_fragments;
     let Some(target) = fragment_map.get(fragment_spread.fragment_name.name) else {
         result.push(
-            CheckErrorMessage::UnknownFragment { name: fragment_spread.fragment_name.name.to_owned() }
+            CheckErrorMessage::UnknownFragment { name: fragment_spread.fragment_name.to_string() }
             .with_pos(fragment_spread.fragment_name.position)
         );
         return;
@@ -447,18 +447,18 @@ fn check_fragment_spread_core(
         (TypeDefinition::Object(obj_definition), TypeDefinition::Object(cond_obj_definition)) => {
             if obj_definition.name.name != cond_obj_definition.name.name {
                 result.push(
-                    CheckErrorMessage::FragmentConditionNeverMatches { condition: cond_obj_definition.name.name.to_owned(), scope: 
-                        obj_definition.name.name.to_owned()
+                    CheckErrorMessage::FragmentConditionNeverMatches { condition: cond_obj_definition.name.to_string(), scope: 
+                        obj_definition.name.to_string()
                         }
                         .with_pos(spread_pos)
                         .with_additional_info(vec![
                         (
                             cond_obj_definition.position,
-                            CheckErrorMessage::DefinitionPos { name: cond_obj_definition.name.name.to_owned() }
+                            CheckErrorMessage::DefinitionPos { name: cond_obj_definition.name.to_string() }
                         ),
                         (
                             obj_definition.position,
-                            CheckErrorMessage::DefinitionPos { name: obj_definition.name.name.to_owned() }
+                            CheckErrorMessage::DefinitionPos { name: obj_definition.name.to_string() }
                         ),
                         ])
                 );
@@ -469,18 +469,18 @@ fn check_fragment_spread_core(
             let obj_implements_intf = obj_definition.implements.iter().find(|im| im.name == intf_definition.name.name);
             if obj_implements_intf.is_none() {
                 result.push(
-                    CheckErrorMessage::FragmentConditionNeverMatches { condition: intf_definition.name.name.to_owned(), scope: 
-                        obj_definition.name.name.to_owned()
+                    CheckErrorMessage::FragmentConditionNeverMatches { condition: intf_definition.name.to_string(), scope: 
+                        obj_definition.name.to_string()
                         }
                         .with_pos(spread_pos)
                         .with_additional_info(vec![
                         (
                             intf_definition.position,
-                            CheckErrorMessage::DefinitionPos { name: intf_definition.name.name.to_owned() }
+                            CheckErrorMessage::DefinitionPos { name: intf_definition.name.to_string() }
                         ),
                         (
                             obj_definition.position,
-                            CheckErrorMessage::DefinitionPos { name: obj_definition.name.name.to_owned() }
+                            CheckErrorMessage::DefinitionPos { name: obj_definition.name.to_string() }
                         ),
                         ])
                 );
@@ -491,18 +491,18 @@ fn check_fragment_spread_core(
             let obj_in_union = cond_union_definition.members.iter().find(|mem| mem.name == obj_definition.name.name);
             if obj_in_union.is_none() {
                 result.push(
-                    CheckErrorMessage::FragmentConditionNeverMatches { condition: cond_union_definition.name.name.to_owned(), scope: 
-                        obj_definition.name.name.to_owned()
+                    CheckErrorMessage::FragmentConditionNeverMatches { condition: cond_union_definition.name.to_string(), scope: 
+                        obj_definition.name.to_string()
                         }
                         .with_pos(spread_pos)
                         .with_additional_info(vec![
                         (
                             cond_union_definition.position,
-                            CheckErrorMessage::DefinitionPos { name: cond_union_definition.name.name.to_owned() }
+                            CheckErrorMessage::DefinitionPos { name: cond_union_definition.name.to_string() }
                         ),
                         (
                             obj_definition.position,
-                            CheckErrorMessage::DefinitionPos { name: obj_definition.name.name.to_owned() }
+                            CheckErrorMessage::DefinitionPos { name: obj_definition.name.to_string() }
                         ),
                         ])
                 );
@@ -526,18 +526,18 @@ fn check_fragment_spread_core(
             if !any_obj_implements_both_type {
                 result.push(
                     CheckErrorMessage::FragmentConditionNeverMatches {
-                        condition: interface_definition2.name.name.to_owned(),
-                        scope: interface_definition2.name.name.to_owned(),
+                        condition: interface_definition2.name.to_string(),
+                        scope: interface_definition2.name.to_string(),
                     }
                         .with_pos(spread_pos)
                         .with_additional_info(vec![
                         (
                             interface_definition2.position,
-                            CheckErrorMessage::DefinitionPos { name: interface_definition2.name.name.to_owned() }
+                            CheckErrorMessage::DefinitionPos { name: interface_definition2.name.to_string() }
                         ),
                         (
                             interface_definition1.position,
-                            CheckErrorMessage::DefinitionPos { name: interface_definition1.name.name.to_owned() }
+                            CheckErrorMessage::DefinitionPos { name: interface_definition1.name.to_string() }
                         ),
                     ])
                 );
@@ -564,18 +564,18 @@ fn check_fragment_spread_core(
             if !some_member_implements_interface {
                 result.push(
                     CheckErrorMessage::FragmentConditionNeverMatches {
-                        condition: union_definition.name.name.to_owned(),
-                        scope: interface_definition.name.name.to_owned(),
+                        condition: union_definition.name.to_string(),
+                        scope: interface_definition.name.to_string(),
                     }
                         .with_pos(spread_pos)
                         .with_additional_info(vec![
                         (
                             interface_definition.position,
-                            CheckErrorMessage::DefinitionPos { name: interface_definition.name.name.to_owned() }
+                            CheckErrorMessage::DefinitionPos { name: interface_definition.name.to_string() }
                         ),
                         (
                             union_definition.position,
-                            CheckErrorMessage::DefinitionPos { name: union_definition.name.name.to_owned() }
+                            CheckErrorMessage::DefinitionPos { name: union_definition.name.to_string() }
                         ),
                     ])
                 );
@@ -588,18 +588,18 @@ fn check_fragment_spread_core(
             if !there_is_overlapping_member {
                 result.push(
                     CheckErrorMessage::FragmentConditionNeverMatches {
-                        condition: union_definition2.name.name.to_owned(),
-                        scope: union_definition1.name.name.to_owned(),
+                        condition: union_definition2.name.to_string(),
+                        scope: union_definition1.name.to_string(),
                     }
                         .with_pos(spread_pos)
                         .with_additional_info(vec![
                         (
                             union_definition2.position,
-                            CheckErrorMessage::DefinitionPos { name: union_definition1.name.name.to_owned() }
+                            CheckErrorMessage::DefinitionPos { name: union_definition1.name.to_string() }
                         ),
                         (
                             union_definition1.position,
-                            CheckErrorMessage::DefinitionPos { name: union_definition2.name.name.to_owned() }
+                            CheckErrorMessage::DefinitionPos { name: union_definition2.name.to_string() }
                         ),
                     ])
                 );

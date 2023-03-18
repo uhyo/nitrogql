@@ -1,5 +1,7 @@
 //! This module contains AST nodes for basic components of ASTs.
 
+use std::fmt::Display;
+
 use crate::current_file::get_current_file_of_pos;
 
 /// Position in source file.
@@ -132,5 +134,11 @@ impl HasPos for Ident<'_> {
     }
     fn name(&self) -> Option<&str> {
         Some(self.name)
+    }
+}
+
+impl Display for Ident<'_> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.name)
     }
 }

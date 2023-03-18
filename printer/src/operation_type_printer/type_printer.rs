@@ -207,7 +207,7 @@ fn get_object_type_for_selection_set(
     ));
     let schema_type = TSType::NamespaceMember(
         context.options.schema_root_namespace.clone(),
-        parent_type.name.name.to_owned(),
+        parent_type.name.to_string(),
     );
     TSType::TypeFunc(
         Box::new(TSType::NamespaceMember(
@@ -243,7 +243,7 @@ fn get_fields_for_selection_set<'a>(
                         // Special handling of reflection
                         return Some((
                             property_name,
-                            TSType::StringLiteral(parent_type.name.name.to_owned()),
+                            TSType::StringLiteral(parent_type.name.to_string()),
                             None,
                         ));
                     }
@@ -257,7 +257,7 @@ fn get_fields_for_selection_set<'a>(
                         map_to_tstype(&field_def.r#type, |ty| match field.selection_set {
                             None => TSType::NamespaceMember(
                                 context.options.schema_root_namespace.clone(),
-                                ty.name.name.to_owned(),
+                                ty.name.to_string(),
                             ),
                             Some(ref set) => get_type_for_selection_set(context, set, ty),
                         });

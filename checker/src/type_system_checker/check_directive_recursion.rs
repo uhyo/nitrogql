@@ -22,7 +22,7 @@ pub fn check_directive_recursion(
                 // Recursion!
                 result.push(
                     CheckErrorMessage::RecursingDirective {
-                        name: d.name.name.to_owned(),
+                        name: d.name.to_string(),
                     }
                     .with_pos(d.position),
                 );

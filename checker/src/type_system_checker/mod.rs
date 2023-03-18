@@ -113,7 +113,7 @@ fn check_object(
         if seen_fields.contains(&f.name.name) {
             result.push(
                 CheckErrorMessage::DuplicatedName {
-                    name: f.name.name.to_owned(),
+                    name: f.name.to_string(),
                 }
                 .with_pos(*f.name.position()),
             );
@@ -128,7 +128,7 @@ fn check_object(
             Some(false) => {
                 result.push(
                     CheckErrorMessage::NoInputType {
-                        name: f.r#type.unwrapped_type().name.name.to_owned(),
+                        name: f.r#type.unwrapped_type().name.to_string(),
                     }
                     .with_pos(*f.r#type.position()),
                 );
@@ -136,7 +136,7 @@ fn check_object(
             None => {
                 result.push(
                     CheckErrorMessage::UnknownType {
-                        name: f.r#type.unwrapped_type().name.name.to_owned(),
+                        name: f.r#type.unwrapped_type().name.to_string(),
                     }
                     .with_pos(*f.r#type.position()),
                 );
@@ -187,7 +187,7 @@ fn check_interface(
         if seen_fields.contains(&f.name.name) {
             result.push(
                 CheckErrorMessage::DuplicatedName {
-                    name: f.name.name.to_owned(),
+                    name: f.name.to_string(),
                 }
                 .with_pos(*f.name.position()),
             );
@@ -200,7 +200,7 @@ fn check_interface(
         if inout_kind_of_type(definitions, &f.r#type).map_or(false, |k| !k.is_output_type()) {
             result.push(
                 CheckErrorMessage::NoInputType {
-                    name: f.r#type.unwrapped_type().name.name.to_owned(),
+                    name: f.r#type.unwrapped_type().name.to_string(),
                 }
                 .with_pos(*f.r#type.position()),
             );
@@ -296,7 +296,7 @@ fn check_enum(
         if seen_values.contains(&v.name.name) {
             result.push(
                 CheckErrorMessage::DuplicatedName {
-                    name: v.name.name.to_owned(),
+                    name: v.name.to_string(),
                 }
                 .with_pos(v.name.position),
             );
@@ -322,7 +322,7 @@ fn check_input_object(
         if seen_fields.contains(&f.name.name) {
             result.push(
                 CheckErrorMessage::DuplicatedName {
-                    name: f.name.name.to_owned(),
+                    name: f.name.to_string(),
                 }
                 .with_pos(f.name.position),
             )
@@ -346,7 +346,7 @@ fn check_input_object(
             None => {
                 result.push(
                     CheckErrorMessage::UnknownType {
-                        name: f.r#type.unwrapped_type().name.name.to_owned(),
+                        name: f.r#type.unwrapped_type().name.to_string(),
                     }
                     .with_pos(*f.r#type.position()),
                 );
@@ -354,7 +354,7 @@ fn check_input_object(
             Some(true) => {
                 result.push(
                     CheckErrorMessage::NoOutputType {
-                        name: f.r#type.unwrapped_type().name.name.to_owned(),
+                        name: f.r#type.unwrapped_type().name.to_string(),
                     }
                     .with_pos(*f.r#type.position()),
                 );
@@ -377,7 +377,7 @@ fn check_arguments_definition(
         if argument_names.contains(&v.name.name) {
             result.push(
                 CheckErrorMessage::DuplicatedName {
-                    name: v.name.name.to_owned(),
+                    name: v.name.to_string(),
                 }
                 .with_pos(v.name.position),
             );
@@ -389,7 +389,7 @@ fn check_arguments_definition(
         if type_is_not_input_type {
             result.push(
                 CheckErrorMessage::NoOutputType {
-                    name: v.r#type.unwrapped_type().name.name.to_owned(),
+                    name: v.r#type.unwrapped_type().name.to_string(),
                 }
                 .with_pos(*v.r#type.position()),
             );

@@ -24,7 +24,7 @@ pub fn check_directives(
         match definitions.directives.get(d.name.name) {
             None => result.push(
                 CheckErrorMessage::UnknownDirective {
-                    name: d.name.name.to_owned(),
+                    name: d.name.to_string(),
                 }
                 .with_pos(d.name.position),
             ),
@@ -37,7 +37,7 @@ pub fn check_directives(
                 {
                     result.push(
                         CheckErrorMessage::DirectiveLocationNotAllowed {
-                            name: d.name.name.to_owned(),
+                            name: d.name.to_string(),
                         }
                         .with_pos(d.position),
                     );
@@ -46,7 +46,7 @@ pub fn check_directives(
                     if def.repeatable.is_none() {
                         result.push(
                             CheckErrorMessage::RepeatedDirective {
-                                name: d.name.name.to_owned(),
+                                name: d.name.to_string(),
                             }
                             .with_pos(d.position),
                         )
@@ -122,13 +122,13 @@ pub fn check_arguments(
                         } else {
                             result.push(
                                 CheckErrorMessage::RequiredArgumentNotSpecified {
-                                    name: arg_def.name.name.to_owned(),
+                                    name: arg_def.name.to_string(),
                                 }
                                 .with_pos(argument_pos)
                                 .with_additional_info(vec![(
                                     arg_def.position,
                                     CheckErrorMessage::DefinitionPos {
-                                        name: arg_def.name.name.to_owned(),
+                                        name: arg_def.name.to_string(),
                                     },
                                 )]),
                             )
@@ -151,7 +151,7 @@ pub fn check_arguments(
                     {
                         result.push(
                             CheckErrorMessage::UnknownArgument {
-                                name: arg_name.name.to_owned(),
+                                name: arg_name.to_string(),
                             }
                             .with_pos(arg_name.position),
                         );
@@ -208,7 +208,7 @@ pub fn check_value(
                         .with_pos(*expected_name.name.position())
                         .with_additional_info(vec![(
                             expected_name.name.position,
-                            CheckErrorMessage::UnknownType { name: expected_name.name.name.to_owned() }
+                            CheckErrorMessage::UnknownType { name: expected_name.name.to_string() }
                         )])
                     );
                     return;
@@ -276,13 +276,13 @@ fn is_value_compatible_type_def(
                     result.push(
                         CheckErrorMessage::UnknownEnumMember {
                             member: value.value.to_owned(),
-                            r#enum: enum_def.name.name.to_owned(),
+                            r#enum: enum_def.name.to_string(),
                         }
                         .with_pos(value.position)
                         .with_additional_info(vec![(
                             enum_def.position,
                             CheckErrorMessage::DefinitionPos {
-                                name: enum_def.name.name.to_owned(),
+                                name: enum_def.name.to_string(),
                             },
                         )]),
                     );
@@ -316,7 +316,7 @@ fn is_value_compatible_type_def(
                             additional_info.push((
                                 expected_field.position,
                                 CheckErrorMessage::RequiredFieldNotSpecified {
-                                    name: expected_field.name.name.to_owned(),
+                                    name: expected_field.name.to_string(),
                                 },
                             ));
                         } else {

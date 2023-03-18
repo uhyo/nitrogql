@@ -145,7 +145,7 @@ impl TypePrinter for ScalarTypeDefinition<'_> {
         let Some(scalar_type_str) = context.options.scalar_types.get(self.name.name) else {
             return Err(SchemaTypePrinterError::ScalarTypeNotProvided {
                 position: self.position,
-                name: self.name.name.to_owned(),
+                name: self.name.to_string(),
             });
         };
 
@@ -172,7 +172,7 @@ impl TypePrinter for ObjectTypeDefinition<'_> {
         let obj_type = TSType::object(
             vec![(
                 &type_name_ident,
-                TSType::StringLiteral(self.name.name.to_owned()),
+                TSType::StringLiteral(self.name.to_string()),
                 None,
             )]
             .into_iter()
@@ -247,7 +247,7 @@ impl TypePrinter for EnumTypeDefinition<'_> {
         let enum_type = TSType::Union(
             self.values
                 .iter()
-                .map(|mem| TSType::StringLiteral(mem.name.name.to_owned()))
+                .map(|mem| TSType::StringLiteral(mem.name.to_string()))
                 .collect(),
         );
 
