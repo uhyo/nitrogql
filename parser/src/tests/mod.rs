@@ -3,7 +3,7 @@ mod operation {
     use insta::assert_snapshot;
 
     use crate::{
-        graphql_parser::parser::parse_operation_document, graphql_printer::GraphQLPrinter,
+        graphql_printer::GraphQLPrinter, parser::parse_operation_document,
         source_map_writer::just_writer::JustWriter,
     };
 
@@ -102,7 +102,7 @@ mod operation {
 #[cfg(test)]
 mod definition {
     use crate::{
-        graphql_parser::parser::parse_type_system_document, graphql_printer::GraphQLPrinter,
+        graphql_printer::GraphQLPrinter, parser::parse_type_system_document,
         source_map_writer::just_writer::JustWriter,
     };
     use insta::assert_snapshot;

@@ -1,5 +1,5 @@
 [package]
-name = "nitrogql-parser"
+name = "graphql-builtins"
 version = "0.1.0"
 edition = "2021"
 
@@ -7,8 +7,3 @@ edition = "2021"
 
 [dependencies]
 nitrogql-ast = { path = "../ast" }
-pest = "2.5.5"
-pest_derive = "2.5.5"
-
-[dev-dependencies]
-insta = "1.28.0"

@@ -24,9 +24,9 @@ dependencies = [
 
 [[package]]
 name = "anyhow"
-version = "1.0.69"
+version = "1.0.70"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "224afbd727c3d6e4b90103ece64b8d1b67fbb1973b1046c2281eed3f3803f800"
+checksum = "7de8ce5e0f9f8d88245311066a578d72b7af3e7088f32783804676302df237e4"
 
 [[package]]
 name = "atty"
@@ -99,7 +99,7 @@ dependencies = [
  "proc-macro-error",
  "proc-macro2",
  "quote",
- "syn",
+ "syn 1.0.107",
 ]
 
 [[package]]
@@ -229,6 +229,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "graphql-builtins"
+version = "0.1.0"
+dependencies = [
+ "nitrogql-ast",
+]
+
+[[package]]
 name = "hashbrown"
 version = "0.12.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -343,6 +350,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "lru"
+version = "0.10.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "03f1160296536f10c833a82dca22267d5486734230d47bf00bf435885814ba1e"
+dependencies = [
+ "hashbrown 0.13.2",
+]
+
+[[package]]
 name = "memchr"
 version = "2.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -353,6 +369,17 @@ name = "nitrogql-ast"
 version = "0.1.0"
 
 [[package]]
+name = "nitrogql-checker"
+version = "0.1.0"
+dependencies = [
+ "log",
+ "nitrogql-ast",
+ "nitrogql-error",
+ "once_cell",
+ "thiserror",
+]
+
+[[package]]
 name = "nitrogql-cli"
 version = "0.1.0"
 dependencies = [
@@ -361,27 +388,97 @@ dependencies = [
  "colored",
  "glob",
  "globmatch",
+ "graphql-builtins",
  "insta",
  "json-writer",
  "log",
- "lru",
+ "lru 0.9.0",
+ "nitrogql-ast",
+ "nitrogql-checker",
+ "nitrogql-config-file",
+ "nitrogql-error",
+ "nitrogql-extension-resolver",
+ "nitrogql-parser",
+ "nitrogql-printer",
+ "nitrogql-utils",
  "once_cell",
  "pest",
  "pest_derive",
  "pretty_env_logger",
  "serde",
  "serde_yaml",
+ "sourcemap-writer",
  "thiserror",
+]
+
+[[package]]
+name = "nitrogql-config-file"
+version = "0.1.0"
+dependencies = [
+ "serde_yaml",
+ "thiserror",
+]
+
+[[package]]
+name = "nitrogql-error"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "colored",
+ "nitrogql-ast",
+ "nitrogql-utils",
+]
+
+[[package]]
+name = "nitrogql-extension-resolver"
+version = "0.1.0"
+dependencies = [
+ "nitrogql-ast",
+ "nitrogql-error",
+ "thiserror",
+]
+
+[[package]]
+name = "nitrogql-graphql-printer"
+version = "0.1.0"
+dependencies = [
+ "nitrogql-ast",
+ "sourcemap-writer",
+]
+
+[[package]]
+name = "nitrogql-json-printer"
+version = "0.1.0"
+dependencies = [
+ "json-writer",
+ "nitrogql-ast",
 ]
 
 [[package]]
 name = "nitrogql-parser"
 version = "0.1.0"
 dependencies = [
+ "insta",
  "nitrogql-ast",
  "pest",
  "pest_derive",
 ]
+
+[[package]]
+name = "nitrogql-printer"
+version = "0.1.0"
+dependencies = [
+ "nitrogql-ast",
+ "nitrogql-checker",
+ "nitrogql-json-printer",
+ "nitrogql-utils",
+ "sourcemap-writer",
+ "thiserror",
+]
+
+[[package]]
+name = "nitrogql-utils"
+version = "0.1.0"
 
 [[package]]
 name = "once_cell"
@@ -425,7 +522,7 @@ dependencies = [
  "pest_meta",
  "proc-macro2",
  "quote",
- "syn",
+ "syn 1.0.107",
 ]
 
 [[package]]
@@ -458,7 +555,7 @@ dependencies = [
  "proc-macro-error-attr",
  "proc-macro2",
  "quote",
- "syn",
+ "syn 1.0.107",
  "version_check",
 ]
 
@@ -475,9 +572,9 @@ dependencies = [
 
 [[package]]
 name = "proc-macro2"
-version = "1.0.50"
+version = "1.0.52"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6ef7d57beacfaf2d8aee5937dab7b7f28de3cb8b1828479bb5de2a7106f2bae2"
+checksum = "1d0e1ae9e836cc3beddd63db0df682593d7e2d3d891ae8c9083d2113e1744224"
 dependencies = [
  "unicode-ident",
 ]
@@ -490,9 +587,9 @@ checksum = "a1d01941d82fa2ab50be1e79e6714289dd7cde78eba4c074bc5a4374f650dfe0"
 
 [[package]]
 name = "quote"
-version = "1.0.23"
+version = "1.0.26"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8856d8364d252a14d474036ea1358d63c9e6965c8e5c1885c18f73d70bff9c7b"
+checksum = "4424af4bf778aae2051a77b60283332f386554255d722233d09fbfc7e30da2fc"
 dependencies = [
  "proc-macro2",
 ]
@@ -566,6 +663,16 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "420acb44afdae038210c99e69aae24109f32f15500aa708e81d46c9f29d55fcf"
 
 [[package]]
+name = "sourcemap-writer"
+version = "0.1.0"
+dependencies = [
+ "json-writer",
+ "lru 0.10.0",
+ "nitrogql-ast",
+ "nitrogql-utils",
+]
+
+[[package]]
 name = "strsim"
 version = "0.10.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -583,6 +690,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "syn"
+version = "2.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4cff13bb1732bccfe3b246f3fdb09edfd51c01d6f5299b7ccd9457c2e4e37774"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "unicode-ident",
+]
+
+[[package]]
 name = "termcolor"
 version = "1.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -593,22 +711,22 @@ dependencies = [
 
 [[package]]
 name = "thiserror"
-version = "1.0.38"
+version = "1.0.40"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6a9cd18aa97d5c45c6603caea1da6628790b37f7a34b6ca89522331c5180fed0"
+checksum = "978c9a314bd8dc99be594bc3c175faaa9794be04a5a5e153caba6915336cebac"
 dependencies = [
  "thiserror-impl",
 ]
 
 [[package]]
 name = "thiserror-impl"
-version = "1.0.38"
+version = "1.0.40"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1fb327af4685e4d03fa8cbcf1716380da910eeb2bb8be417e7f9fd3fb164f36f"
+checksum = "f9456a42c5b0d803c8cd86e73dd7cc9edd429499f37a3550d286d5e86720569f"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn",
+ "syn 2.0.0",
 ]
 
 [[package]]

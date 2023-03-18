@@ -1,2 +1,16 @@
 [workspace]
-members = ["ast", "cli", "parser"]
+members = [
+  "ast",
+  "builtins",
+  "cli",
+  "checker",
+  "config-file",
+  "error",
+  "graphql-printer",
+  "extension-resolver",
+  "json-printer",
+  "parser",
+  "printer",
+  "sourcemap-writer",
+  "utils"
+]

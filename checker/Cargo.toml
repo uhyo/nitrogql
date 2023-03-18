@@ -1,5 +1,5 @@
 [package]
-name = "nitrogql-parser"
+name = "nitrogql-checker"
 version = "0.1.0"
 edition = "2021"
 
@@ -7,8 +7,7 @@ edition = "2021"
 
 [dependencies]
 nitrogql-ast = { path = "../ast" }
-pest = "2.5.5"
-pest_derive = "2.5.5"
-
-[dev-dependencies]
-insta = "1.28.0"
+nitrogql-error = { path = "../error" }
+log = "0.4.17"
+once_cell = "1.17.1"
+thiserror = "1.0.40"
