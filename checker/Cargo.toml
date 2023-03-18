@@ -10,7 +10,6 @@ nitrogql-ast = { path = "../ast" }
 nitrogql-error = { path = "../error" }
 nitrogql-semantics = { path = "../semantics" }
 log = "0.4.17"
-once_cell = "1.17.1"
 thiserror = "1.0.40"
 
 [dev-dependencies]

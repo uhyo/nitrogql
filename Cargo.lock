@@ -379,7 +379,6 @@ dependencies = [
  "nitrogql-error",
  "nitrogql-parser",
  "nitrogql-semantics",
- "once_cell",
  "sourcemap-writer",
  "thiserror",
 ]
@@ -480,6 +479,7 @@ dependencies = [
  "nitrogql-error",
  "nitrogql-parser",
  "nitrogql-printer",
+ "once_cell",
  "sourcemap-writer",
  "thiserror",
 ]

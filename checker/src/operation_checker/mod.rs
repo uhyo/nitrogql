@@ -1,20 +1,18 @@
-use once_cell::sync::Lazy;
-
 use nitrogql_ast::{
-        base::{HasPos, Pos, Ident},
+        base::{HasPos, Pos},
         operations::{
             ExecutableDefinition, FragmentDefinition, OperationDefinition, OperationType,
             VariablesDefinition,
         },
         selection_set::{SelectionSet, Selection, Field, FragmentSpread, InlineFragment},
         type_system::{FieldDefinition, TypeDefinition},
-        OperationDocument, TypeSystemDocument, r#type::{Type, NonNullType, NamedType},
+        OperationDocument, TypeSystemDocument,
 };
 
 use self::{fragment_map::{generate_fragment_map, FragmentMap}, count_selection_set_fields::selection_set_has_more_than_one_fields};
 
 use super::{error::{CheckError, CheckErrorMessage, TypeKind}, common::{check_directives, check_arguments}, types::inout_kind_of_type};
-use nitrogql_semantics::{DefinitionMap, generate_definition_map};
+use nitrogql_semantics::{DefinitionMap, generate_definition_map, direct_fields_of_output_type};
 
 #[cfg(test)]
 mod tests;
@@ -613,32 +611,6 @@ fn check_fragment_spread_core(
     }
     check_selection_set(definitions, fragment_map, seen_fragments, variables, fragment_condition, fragment_selection_set, result);
 }
-
-pub fn direct_fields_of_output_type<'a, 'src>(
-    ty: &'a TypeDefinition<'src>,
-) -> Option<Vec<&'a FieldDefinition<'src>>> {
-    let meta_field : &FieldDefinition = &TYPENAME_META_FIELD;
-    match ty {
-        TypeDefinition::Object(obj) => Some(obj.fields.iter().chain(vec![meta_field]).collect()),
-        TypeDefinition::Interface(obj) => Some(obj.fields.iter().chain(vec![meta_field]).collect()),
-        TypeDefinition::Union(_) => Some(vec![meta_field]),
-        | TypeDefinition::Scalar(_)
-        | TypeDefinition::Enum(_)
-        | TypeDefinition::InputObject(_) => None,
-    }
-}
-
-static TYPENAME_META_FIELD: Lazy<FieldDefinition<'static>> = Lazy::new(|| FieldDefinition {
-    description: None,
-    name: Ident { name: "__typename", position: Pos::builtin() },
-    arguments: None,
-    r#type: Type::NonNull(Box::new(NonNullType {
-        r#type: Type::Named(NamedType {
-            name: Ident { name: "String", position: Pos::builtin() },
-        })
-    })),
-    directives: vec![],
-});
 
 fn kind_of_type_definition(definition: &TypeDefinition) -> TypeKind {
     match definition {

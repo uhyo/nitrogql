@@ -13,8 +13,8 @@ use nitrogql_ast::{
     value::StringValue,
     OperationDocument,
 };
-use nitrogql_checker::operation_checker::direct_fields_of_output_type;
 use nitrogql_json_printer::print_to_json_string;
+use nitrogql_semantics::direct_fields_of_output_type;
 use nitrogql_utils::capitalize;
 use sourcemap_writer::SourceMapWriter;
 
