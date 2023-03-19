@@ -23,14 +23,13 @@ impl Default for OperationJSPrinterOptions {
 }
 
 pub struct OperationJSPrinterVisitor<'a, 'src> {
-    options: OperationJSPrinterOptions,
     context: OperationJSPrinterContext<'a, 'src>,
 }
 
 impl<'a, 'src> OperationJSPrinterVisitor<'a, 'src> {
-    pub fn new(options: OperationJSPrinterOptions, operation: &'a OperationDocument<'src>) -> Self {
+    pub fn new(operation: &'a OperationDocument<'src>) -> Self {
         let context = OperationJSPrinterContext { operation };
-        Self { options, context }
+        Self { context }
     }
 }
 

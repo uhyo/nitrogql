@@ -1,7 +1,7 @@
 #![no_main]
 mod js_printer;
 
-use std::{cell::RefCell, mem::ManuallyDrop, path::Path, ptr, slice};
+use std::{cell::RefCell, mem::ManuallyDrop, path::Path, slice};
 
 use js_printer::print_js;
 use log::{debug, error};

@@ -105,7 +105,7 @@ impl<'a, 'src> OperationPrinterVisitor for OperationTypePrinterVisitor<'a, 'src>
             self.options.schema_root_namespace, self.options.schema_source,
         ));
     }
-    fn print_trailer(&self, writer: &mut impl SourceMapWriter) {}
+    fn print_trailer(&self, _writer: &mut impl SourceMapWriter) {}
     fn print_operation_definition(
         &self,
         context: PrintOperationContext,
