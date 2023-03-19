@@ -12,6 +12,7 @@ use nitrogql_ast::{
     operation::OperationDocument, set_current_file_of_pos,
     type_system::TypeSystemOrExtensionDocument,
 };
+use nitrogql_utils::get_cwd;
 use thiserror::Error;
 
 use crate::{context::CliContext, error::CliError};
@@ -20,11 +21,10 @@ use nitrogql_config_file::{load_config, GenerateConfig};
 use nitrogql_error::print_positioned_error;
 use nitrogql_parser::{parse_operation_document, parse_type_system_document};
 
-use self::{check::run_check, context::CliConfig, cwd::get_cwd, generate::run_generate};
+use self::{check::run_check, context::CliConfig, generate::run_generate};
 
 mod check;
 mod context;
-pub mod cwd;
 mod error;
 mod generate;
 

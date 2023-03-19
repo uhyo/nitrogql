@@ -239,7 +239,15 @@ dependencies = [
 name = "graphql-loader"
 version = "0.1.0"
 dependencies = [
+ "anyhow",
+ "log",
  "nitrogql-ast",
+ "nitrogql-config-file",
+ "nitrogql-parser",
+ "nitrogql-printer",
+ "nitrogql-utils",
+ "pretty_env_logger",
+ "sourcemap-writer",
 ]
 
 [[package]]

@@ -157,7 +157,10 @@ impl<'a, 'src> OperationPrinterVisitor for OperationTypePrinterVisitor<'a, 'src>
         input_variable_type.print_type(writer);
         writer.write(";\n\n");
 
-        writer.write("export const ");
+        if context.exported {
+            writer.write("export ");
+        }
+        writer.write("const ");
         writer.write_for(&context.var_name, &operation.name_pos());
         writer.write_for(": ", &operation.selection_set);
         writer.write("TypedDocumentNode<");
@@ -192,7 +195,10 @@ impl<'a, 'src> OperationPrinterVisitor for OperationTypePrinterVisitor<'a, 'src>
         writer: &mut impl SourceMapWriter,
     ) {
         let fragment = context.fragment;
-        writer.write("export type ");
+        if context.exported {
+            writer.write("export ");
+        }
+        writer.write("type ");
         writer.write_for(&fragment.name.name, fragment);
         writer.write(" = ");
 
