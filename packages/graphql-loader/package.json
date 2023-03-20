@@ -2,9 +2,8 @@
   "name": "@nitrogql/graphql-loader",
   "version": "0.0.1",
   "description": "GraphQL + TypeScript toolchain",
-  "main": "bin/index.mjs",
-  "bin": {
-    "nitrogql": "bin/index.mjs"
+  "exports": {
+    ".": "./lib/index.mjs"
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
@@ -16,5 +15,8 @@
   "license": "MIT",
   "volta": {
     "node": "18.15.0"
+  },
+  "devDependencies": {
+    "webpack": "^5.76.2"
   }
 }

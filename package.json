@@ -1,0 +1,14 @@
+{
+  "name": "nitrogql",
+  "private": true,
+  "version": "0.0.0",
+  "description": "",
+  "keywords": [
+    "graphql"
+  ],
+  "author": "uhyo <uhyo@uhy.ooo>",
+  "license": "MIT",
+  "workspaces": [
+    "packages/*"
+  ]
+}
