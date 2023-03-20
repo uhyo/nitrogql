@@ -1,1 +1,6 @@
 schema: ./src/schema/*.graphql
+documents: ./src/features/**/*.graphql
+extensions:
+  nitrogql:
+    generate:
+      schema-output: ./src/generated/schema.d.ts
