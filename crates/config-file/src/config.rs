@@ -1,4 +1,4 @@
-use std::path::PathBuf;
+use std::{collections::HashMap, path::PathBuf};
 
 #[derive(Debug)]
 pub struct Config {
@@ -27,6 +27,8 @@ pub struct GenerateConfig {
     pub mode: GenerateMode,
     /// Output file path for schema.
     pub schema_output: Option<PathBuf>,
+    /// Mapping from GraphQL scalar types to TypeScript types.
+    pub scalar_types: HashMap<String, String>,
     /// Whether operation is exported as a default export.
     /// Effective only when a document contains only one operation.
     pub default_export_for_operation: bool,
@@ -35,8 +37,9 @@ pub struct GenerateConfig {
 impl Default for GenerateConfig {
     fn default() -> Self {
         GenerateConfig {
-            mode: GenerateMode::default(),
+            mode: Default::default(),
             schema_output: None,
+            scalar_types: Default::default(),
             default_export_for_operation: true,
         }
     }

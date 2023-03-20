@@ -69,7 +69,7 @@ fn generate_config(extensions: &Mapping) -> GenerateConfig {
     };
 
     if let Some(schema_output) = generate
-        .get("schema-output")
+        .get("schemaOutput")
         .and_then(|path| path.as_str())
         .map(PathBuf::from)
     {
@@ -87,6 +87,15 @@ fn generate_config(extensions: &Mapping) -> GenerateConfig {
         .and_then(|v| v.as_bool())
     {
         config.default_export_for_operation = default_export_for_operation;
+    }
+    if let Some(scalar_types) = generate.get("scalarTypes").and_then(|v| v.as_mapping()) {
+        config.scalar_types = scalar_types
+            .iter()
+            .filter_map(|(key, value)| match (key.as_str(), value.as_str()) {
+                (Some(key), Some(value)) => Some((key.to_owned(), value.to_owned())),
+                _ => None,
+            })
+            .collect();
     }
 
     config

@@ -37,9 +37,17 @@ pub fn run_generate(mut context: CliContext) -> Result<CliContext> {
             let schema_output = config.root_dir.join(schema_output);
             {
                 debug!("Processing schema");
+                let mut options = SchemaTypePrinterOptions::default();
+                options.scalar_types.extend(
+                    config
+                        .config
+                        .generate
+                        .scalar_types
+                        .iter()
+                        .map(|(key, value)| (key.to_owned(), value.to_owned())),
+                );
                 let mut writer = SourceWriter::new();
-                let mut printer =
-                    SchemaTypePrinter::new(SchemaTypePrinterOptions::default(), &mut writer);
+                let mut printer = SchemaTypePrinter::new(options, &mut writer);
 
                 printer.print_document(schema)?;
 

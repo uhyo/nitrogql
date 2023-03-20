@@ -3,4 +3,7 @@ documents: ./src/features/**/*.graphql
 extensions:
   nitrogql:
     generate:
-      schema-output: ./src/generated/schema.d.ts
+      mode: with-loader-ts-5.0
+      schemaOutput: ./src/generated/schema.d.ts
+      scalarTypes:
+        Date: Date
