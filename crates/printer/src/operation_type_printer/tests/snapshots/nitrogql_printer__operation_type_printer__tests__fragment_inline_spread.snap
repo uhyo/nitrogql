@@ -1,5 +1,5 @@
 ---
-source: printer/src/operation_type_printer/tests/mod.rs
+source: crates/printer/src/operation_type_printer/tests/mod.rs
 expression: printed
 ---
 import type { TypedDocumentNode } from "@graphql-typed-document-node/core";
@@ -13,12 +13,9 @@ type QueryResult = Schema.__SelectionSet<Schema.Query, {
     age: Schema.Int | null;
     posts: (Schema.__SelectionSet<Schema.User, {
       id: Schema.ID;
-      id: Schema.ID;
     }> | Schema.__SelectionSet<Schema.Bot, {
       id: Schema.ID;
-      id: Schema.ID;
     }> | Schema.__SelectionSet<Schema.Post, {
-      id: Schema.ID;
       id: Schema.ID;
     }>)[];
   }>;
@@ -26,16 +23,8 @@ type QueryResult = Schema.__SelectionSet<Schema.Query, {
 
 type QueryVariables = {};
 
-export const Query: TypedDocumentNode<QueryResult, QueryVariables>;
+const Query: TypedDocumentNode<QueryResult, QueryVariables>;
 
 export { Query as default };
-
-export type F = Schema.__SelectionSet<Schema.User, {
-  id: Schema.ID;
-}> | Schema.__SelectionSet<Schema.Bot, {
-  id: Schema.ID;
-}> | Schema.__SelectionSet<Schema.Post, {
-  id: Schema.ID;
-}>;
 
 

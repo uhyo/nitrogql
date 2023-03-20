@@ -1,4 +1,4 @@
-#![no_main]
+#![cfg_attr(target_family = "wasm", no_main)]
 mod js_printer;
 
 use std::{cell::RefCell, mem::ManuallyDrop, slice};
@@ -14,6 +14,9 @@ thread_local! {
     /// Result of last operation.
     static RESULT: RefCell<Option<String>> = RefCell::new(None);
 }
+
+#[cfg(not(target_family = "wasm"))]
+fn main() {}
 
 /// Initialize this reactor
 #[no_mangle]

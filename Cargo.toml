@@ -1,15 +1,15 @@
 [workspace]
 members = [
-  "ast",
-  "builtins",
-  "cli",
-  "checker",
-  "config-file",
-  "error",
-  "graphql-loader",
-  "parser",
-  "printer",
-  "semantics",
-  "sourcemap-writer",
-  "utils"
+  "crates/ast",
+  "crates/builtins",
+  "crates/cli",
+  "crates/checker",
+  "crates/config-file",
+  "crates/error",
+  "crates/graphql-loader",
+  "crates/parser",
+  "crates/printer",
+  "crates/semantics",
+  "crates/sourcemap-writer",
+  "crates/utils"
 ]

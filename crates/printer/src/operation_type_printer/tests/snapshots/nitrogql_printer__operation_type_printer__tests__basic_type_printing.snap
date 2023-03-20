@@ -1,6 +1,5 @@
 ---
-source: printer/src/operation_type_printer/tests/mod.rs
-assertion_line: 148
+source: crates/printer/src/operation_type_printer/tests/mod.rs
 expression: printed
 ---
 import type { TypedDocumentNode } from "@graphql-typed-document-node/core";
@@ -12,13 +11,6 @@ type QueryResult = Schema.__SelectionSet<Schema.Query, {
     name: Schema.String;
     type: Schema.UserType;
     age: Schema.Int | null;
-    posts: (Schema.__SelectionSet<Schema.User, {
-      id: Schema.ID;
-    }> | Schema.__SelectionSet<Schema.Bot, {
-      id: Schema.ID;
-    }> | Schema.__SelectionSet<Schema.Post, {
-      id: Schema.ID;
-    }>)[];
   }>;
 }>;
 
