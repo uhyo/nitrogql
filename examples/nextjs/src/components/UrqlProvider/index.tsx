@@ -1,14 +1,14 @@
 "use client";
 
 import { useMemo } from "react";
-import { Client, Provider } from "urql";
+import { Provider, createClient } from "urql";
 
 export const UrqlProvider: React.FC<React.PropsWithChildren> = ({
   children,
 }) => {
   const client = useMemo(() => {
-    return new Client({
-      url: "/api/graphql",
+    return createClient({
+      url: "/graphql",
     });
   }, []);
   return <Provider value={client}>{children}</Provider>;
