@@ -1,13 +1,12 @@
 #![no_main]
 mod js_printer;
 
-use std::{cell::RefCell, mem::ManuallyDrop, path::Path, slice};
+use std::{cell::RefCell, mem::ManuallyDrop, slice};
 
 use js_printer::print_js;
 use log::{debug, error};
 use nitrogql_config_file::ConfigFile;
 use nitrogql_parser::parse_operation_document;
-use nitrogql_utils::get_cwd;
 
 thread_local! {
     /// Loaded config.
@@ -42,21 +41,11 @@ pub extern "C" fn free_string(ptr: *mut u8, len_bytes: usize) {
     let _ = unsafe { String::from_raw_parts(ptr, 0, len_bytes) };
 }
 
-/// Loads config. Returns true if successful
+/// Loads config from given source. Returns true if successful
 #[no_mangle]
 pub extern "C" fn load_config(config_file_ptr: *const u8, config_file_len: usize) -> bool {
-    let config_file = if config_file_ptr.is_null() {
-        None
-    } else {
-        Some(read_str_ptr(config_file_ptr, config_file_len))
-    };
-    match load_config_impl(config_file) {
-        Ok(_) => true,
-        Err(err) => {
-            error!("{err}");
-            false
-        }
-    }
+    let config_file = read_str_ptr(config_file_ptr, config_file_len);
+    load_config_impl(config_file)
 }
 
 /// Converts given GraphQL string to JS.
@@ -104,20 +93,16 @@ fn convert_to_js_impl(source: &str) -> anyhow::Result<String> {
     Ok(js)
 }
 
-fn load_config_impl(config_file: Option<&str>) -> anyhow::Result<()> {
-    let config_file = config_file.map(Path::new);
-    let cwd = get_cwd()?;
-    let config = nitrogql_config_file::load_config(&cwd, config_file)?;
+fn load_config_impl(config_file: &str) -> bool {
+    let config = nitrogql_config_file::parse_config(config_file);
     match config {
-        None => {
-            debug!("Config file not found");
-        }
-        Some((path, config)) => {
+        None => false,
+        Some(config) => {
             CONFIG.with(|cell| cell.replace(Some(config)));
-            debug!("Loaded config from {}", path.display());
+            debug!("Loaded config from given source");
+            true
         }
     }
-    Ok(())
 }
 
 fn read_str_ptr(ptr: *const u8, len: usize) -> &'static str {
