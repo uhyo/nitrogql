@@ -1,0 +1,4 @@
+type Tag {
+  id: ID!
+  label: String!
+}

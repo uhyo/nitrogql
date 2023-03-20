@@ -1,0 +1,8 @@
+type Query {
+  todos(filter: TodoFilter): [Todo!]!
+}
+
+input TodoFilter {
+  "Whether to return only unfinished TODOs."
+  unfinishedOnly: Boolean
+}

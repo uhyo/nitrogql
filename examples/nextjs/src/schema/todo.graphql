@@ -1,0 +1,13 @@
+"One todo item."
+type Todo {
+  "ID of this todo item."
+  id: ID!
+  "Contents of this todo item."
+  body: String!
+  "When not null, date when this item was marked done."
+  finishedAt: Date
+  "Date when this item was created."
+  createdDate: Date!
+  "Tags associated to this item."
+  tags: [Tag!]!
+}
