@@ -114,9 +114,16 @@ fn write_file_and_sourcemap(
         }
         path
     };
-    let mut output_file = File::create(output_file_path)?;
 
     debug!("Writing {}", output_file_path.to_string_lossy());
+    {
+        let parent_dir = output_file_path.parent();
+        if let Some(parent_dir) = parent_dir {
+            fs::create_dir_all(parent_dir)?;
+        }
+    }
+    let mut output_file = File::create(output_file_path)?;
+
     writeln!(&mut output_file, "{}", &buffers.buffer)?;
     writeln!(
         &mut output_file,

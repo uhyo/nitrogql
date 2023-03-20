@@ -3,6 +3,17 @@ const nextConfig = {
   experimental: {
     appDir: true,
   },
-}
+  webpack(config) {
+    config.module.rules.push({
+      test: /\.graphql$/,
+      loader: "@nitrogql/graphql-loader",
+      options: {
+        configFile: "./graphql.config.yaml",
+      },
+    });
 
-module.exports = nextConfig
+    return config;
+  },
+};
+
+module.exports = nextConfig;

@@ -20,9 +20,11 @@
     "next": "13.2.4",
     "react": "18.2.0",
     "react-dom": "18.2.0",
-    "typescript": "5.0.2"
+    "typescript": "5.0.2",
+    "urql": "^3.0.4"
   },
   "devDependencies": {
+    "@graphql-typed-document-node/core": "^3.2.0",
     "@nitrogql/cli": "file:../../packages/cli"
   }
 }

@@ -1,3 +1,4 @@
+import { UrqlProvider } from "@/components/UrqlProvider";
 import "./globals.css";
 
 export const metadata = {
@@ -11,7 +12,9 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body>
+        <UrqlProvider>{children}</UrqlProvider>
+      </body>
     </html>
   );
 }
