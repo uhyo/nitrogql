@@ -16,7 +16,7 @@ use nitrogql_utils::get_cwd;
 use thiserror::Error;
 
 use crate::{context::CliContext, error::CliError};
-use nitrogql_config_file::{load_config, GenerateConfig};
+use nitrogql_config_file::load_config;
 
 use nitrogql_error::print_positioned_error;
 use nitrogql_parser::{parse_operation_document, parse_type_system_document};
@@ -69,34 +69,36 @@ fn run_cli_impl(args: impl IntoIterator<Item = String>) -> Result<()> {
     }
     let cwd = get_cwd()?;
     let config_file = load_config(&cwd, args.config_file.as_ref().map(|p| p.as_path()))?;
-    let (root_dir, schema_glob, operation_glob, generate_config) =
-        if let Some((config_path, config_file)) = config_file {
-            debug!("Loaded config file from {}", config_path.display());
-            (
-                config_path
-                    .parent()
-                    .map(|path| path.to_owned())
-                    .unwrap_or(PathBuf::new()),
-                config_file.schema,
-                config_file.documents,
-                config_file.generate,
-            )
-        } else {
-            (get_cwd()?, None, None, GenerateConfig::default())
-        };
-    let schema_glob = schema_glob.unwrap_or(args.schema);
-    let operation_glob = operation_glob.unwrap_or(args.operation);
-
-    let config = CliConfig {
-        root_dir,
-        generate_config,
+    let (root_dir, mut config) = if let Some((config_path, config_file)) = config_file {
+        debug!("Loaded config file from {}", config_path.display());
+        (
+            config_path
+                .parent()
+                .map(|path| path.to_owned())
+                .unwrap_or(PathBuf::new()),
+            config_file,
+        )
+    } else {
+        (get_cwd()?, Default::default())
     };
+    // Override config with args
+    if !args.schema.is_empty() {
+        config.schema = args.schema;
+    }
+    if !args.operation.is_empty() {
+        config.operations = args.operation;
+    }
+    if let Some(path) = args.schema_output {
+        config.generate.schema_output = Some(path);
+    }
 
-    if schema_glob.is_empty() {
+    let config = CliConfig { root_dir, config };
+
+    if config.config.schema.is_empty() {
         return Err(CliError::NoSchemaSpecified.into());
     }
 
-    let schema_files = load_glob_files(&config.root_dir, &schema_glob)?;
+    let schema_files = load_glob_files(&config.root_dir, &config.config.schema)?;
     let file_by_index = schema_files
         .iter()
         .map(|(path, src)| (path.clone(), src.as_str()))
@@ -116,7 +118,7 @@ fn run_cli_impl(args: impl IntoIterator<Item = String>) -> Result<()> {
     let schema_docs = schema_docs?;
     let merged_schema_doc = TypeSystemOrExtensionDocument::merge(schema_docs);
 
-    let operation_files = load_glob_files(&config.root_dir, &operation_glob)?;
+    let operation_files = load_glob_files(&config.root_dir, &config.config.operations)?;
     let op_file_index = file_by_index.len();
 
     let operation_docs = operation_files

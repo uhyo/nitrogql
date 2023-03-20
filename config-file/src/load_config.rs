@@ -3,7 +3,7 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use crate::config::ConfigFile;
+use crate::config::Config;
 use crate::parse_config::parse_config;
 
 use super::error::ConfigFileError;
@@ -43,7 +43,7 @@ fn search_graphql_config(cwd: &Path) -> io::Result<Option<(PathBuf, String)>> {
 pub fn load_config(
     cwd: &Path,
     config_file: Option<&Path>,
-) -> Result<Option<(PathBuf, ConfigFile)>, ConfigFileError> {
+) -> Result<Option<(PathBuf, Config)>, ConfigFileError> {
     let config_source = match config_file {
         Some(path) => fs::read_to_string(path).map(|source| Some((path.to_owned(), source))),
         None => search_graphql_config(cwd),

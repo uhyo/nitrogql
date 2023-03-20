@@ -5,12 +5,12 @@ use std::{cell::RefCell, mem::ManuallyDrop, slice};
 
 use js_printer::print_js;
 use log::{debug, error};
-use nitrogql_config_file::ConfigFile;
+use nitrogql_config_file::Config;
 use nitrogql_parser::parse_operation_document;
 
 thread_local! {
     /// Loaded config.
-    static CONFIG: RefCell<Option<ConfigFile>> = RefCell::new(None);
+    static CONFIG: RefCell<Option<Config>> = RefCell::new(None);
     /// Result of last operation.
     static RESULT: RefCell<Option<String>> = RefCell::new(None);
 }

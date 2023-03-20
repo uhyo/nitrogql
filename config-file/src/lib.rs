@@ -4,7 +4,7 @@ mod error;
 mod load_config;
 mod parse_config;
 
-pub use config::{ConfigFile, GenerateConfig, GenerateMode};
+pub use config::{Config, GenerateConfig, GenerateMode};
 #[cfg(feature = "fs")]
 pub use load_config::load_config;
 pub use parse_config::parse_config;

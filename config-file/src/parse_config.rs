@@ -2,24 +2,24 @@ use std::path::PathBuf;
 
 use serde_yaml::{Mapping, Value};
 
-use crate::{ConfigFile, GenerateConfig, GenerateMode};
+use crate::{Config, GenerateConfig, GenerateMode};
 
 /// Parse config file from given string.
 /// Returns None if there is a validation error.
-pub fn parse_config(source: &str) -> Option<ConfigFile> {
+pub fn parse_config(source: &str) -> Option<Config> {
     let parsed: Value = serde_yaml::from_str(&source).ok()?;
 
     read_config(parsed)
 }
 
-fn read_config(config: Value) -> Option<ConfigFile> {
+fn read_config(config: Value) -> Option<Config> {
     let schema = 'schema: {
         let schema = config.get("schema");
         let Some(schema) = schema else {
-            break 'schema None;
+            break 'schema vec![];
         };
         if let Some(string) = schema.as_str() {
-            break 'schema Some(vec![string.to_owned()]);
+            break 'schema vec![string.to_owned()];
         }
         if let Some(seq) = schema.as_sequence() {
             let strs: Option<Vec<String>> = seq
@@ -27,17 +27,17 @@ fn read_config(config: Value) -> Option<ConfigFile> {
                 .map(|value| value.as_str().map(|s| s.to_owned()))
                 .collect();
             let strs = strs?;
-            break 'schema Some(strs);
+            break 'schema strs;
         }
-        None
+        vec![]
     };
     let documents = 'documents: {
         let documents = config.get("documents");
         let Some(documents) = documents else {
-            break 'documents None;
+            break 'documents vec![];
         };
         if let Some(string) = documents.as_str() {
-            break 'documents Some(vec![string.to_owned()]);
+            break 'documents vec![string.to_owned()];
         }
         if let Some(seq) = documents.as_sequence() {
             let strs: Option<Vec<String>> = seq
@@ -45,18 +45,18 @@ fn read_config(config: Value) -> Option<ConfigFile> {
                 .map(|value| value.as_str().map(|s| s.to_owned()))
                 .collect();
             let strs = strs?;
-            break 'documents Some(strs);
+            break 'documents strs;
         }
-        None
+        vec![]
     };
     let extensions = config
         .get("extensions")
         .and_then(|e| e.get("nitrogql"))
         .and_then(|e| e.as_mapping());
     let generate = extensions.map(generate_config).unwrap_or_default();
-    Some(ConfigFile {
+    Some(Config {
         schema,
-        documents,
+        operations: documents,
         generate,
     })
 }

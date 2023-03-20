@@ -4,7 +4,7 @@ use nitrogql_ast::{
     operation::OperationDocument,
     type_system::{TypeSystemDocument, TypeSystemOrExtensionDocument},
 };
-use nitrogql_config_file::GenerateConfig;
+use nitrogql_config_file::Config;
 
 /// List of (path, source)
 pub type FileByIndex<'src> = Vec<(PathBuf, &'src str)>;
@@ -38,5 +38,5 @@ impl<'src> CliContext<'src> {
 pub struct CliConfig {
     /// Root directory for other paths.
     pub root_dir: PathBuf,
-    pub generate_config: GenerateConfig,
+    pub config: Config,
 }

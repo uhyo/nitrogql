@@ -31,7 +31,7 @@ pub fn run_generate(mut context: CliContext) -> Result<CliContext> {
             ref file_by_index,
             ..
         } => {
-            let Some(ref schema_output) = config.generate_config.schema_output else {
+            let Some(ref schema_output) = config.config.generate.schema_output else {
                 return Err(CliError::OptionRequired { option: String::from("schema-output"), command: String::from("generate") }.into())
             };
             let schema_output = config.root_dir.join(schema_output);
@@ -51,7 +51,7 @@ pub fn run_generate(mut context: CliContext) -> Result<CliContext> {
                 debug!("Processing {}", path.to_string_lossy());
                 let decl_file_path = {
                     let mut path = path.clone();
-                    path.set_extension(match config.generate_config.mode {
+                    path.set_extension(match config.config.generate.mode {
                         GenerateMode::WithLoaderTS5_0 => "d.graphql.ts",
                         GenerateMode::WithLoaderTS4_0 => "graphql.d.ts",
                         GenerateMode::StandaloneTS4_0 => "graphql.ts",
@@ -61,7 +61,7 @@ pub fn run_generate(mut context: CliContext) -> Result<CliContext> {
 
                 let mut writer = SourceWriter::new();
                 let mut printer_options = OperationTypePrinterOptions::default();
-                if config.generate_config.mode == GenerateMode::StandaloneTS4_0 {
+                if config.config.generate.mode == GenerateMode::StandaloneTS4_0 {
                     printer_options.print_values = true;
                 }
                 // Todo custom schema_root_types

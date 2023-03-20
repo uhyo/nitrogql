@@ -1,13 +1,23 @@
 use std::path::PathBuf;
 
 #[derive(Debug)]
-pub struct ConfigFile {
+pub struct Config {
     /// Path(s) to schema definition files.
-    pub schema: Option<Vec<String>>,
+    pub schema: Vec<String>,
     /// Path(s) to operation definition files.
-    pub documents: Option<Vec<String>>,
+    pub operations: Vec<String>,
     // extensions
     pub generate: GenerateConfig,
+}
+
+impl Default for Config {
+    fn default() -> Self {
+        Self {
+            schema: vec![],
+            operations: vec![],
+            generate: Default::default(),
+        }
+    }
 }
 
 /// Config related to the 'generate' command.
