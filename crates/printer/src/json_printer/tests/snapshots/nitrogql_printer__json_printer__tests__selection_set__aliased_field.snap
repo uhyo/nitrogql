@@ -1,5 +1,5 @@
 ---
-source: printer/src/json_printer/tests/mod.rs
+source: crates/printer/src/json_printer/tests/mod.rs
 expression: "print_json_to_string(Field {\n        alias: Some(Ident { position: POS, name: \"orig\" }),\n        name: Ident { position: POS, name: \"field\" },\n        arguments: None,\n        directives: vec![],\n        selection_set: None,\n    })"
 ---
-{"kind":"Field","name":{"type":"Name","value":"field"},"alias":{"type":"Name","value":"orig"},"arguments":[],"directives":[]}
+{"kind":"Field","name":{"kind":"Name","value":"field"},"alias":{"kind":"Name","value":"orig"},"arguments":[],"directives":[]}

@@ -23,7 +23,7 @@ pub struct Name<'a>(pub &'a str);
 
 impl JsonPrintable for Name<'_> {
     fn print_json(&self, writer: &mut JSONObjectWriter) {
-        writer.value("type", "Name");
+        writer.value("kind", "Name");
         writer.value("value", self.0);
     }
 }

@@ -1,5 +1,5 @@
 ---
-source: printer/src/json_printer/tests/mod.rs
+source: crates/printer/src/json_printer/tests/mod.rs
 expression: "print_json_to_string(Type::List(Box::new(ListType {\n                position: POS,\n                r#type: Type::Named(NamedType {\n                        name: Ident { position: POS, name: \"String\" },\n                    }),\n            })))"
 ---
-{"kind":"ListType","type":{"kind":"NamedType","name":{"type":"Name","value":"String"}}}
+{"kind":"ListType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}

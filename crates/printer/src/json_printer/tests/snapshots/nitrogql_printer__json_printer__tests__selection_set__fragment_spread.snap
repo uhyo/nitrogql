@@ -1,5 +1,5 @@
 ---
-source: printer/src/json_printer/tests/mod.rs
+source: crates/printer/src/json_printer/tests/mod.rs
 expression: "print_json_to_string(FragmentSpread {\n        position: POS,\n        fragment_name: Ident { position: POS, name: \"F\" },\n        directives: vec![],\n    })"
 ---
-{"kind":"FragmentSpread","name":{"type":"Name","value":"F"},"directives":[]}
+{"kind":"FragmentSpread","name":{"kind":"Name","value":"F"},"directives":[]}

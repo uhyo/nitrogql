@@ -1,5 +1,5 @@
 ---
-source: printer/src/json_printer/tests/mod.rs
+source: crates/printer/src/json_printer/tests/mod.rs
 expression: "print_json_to_string(Value::ObjectValue(ObjectValue {\n            position: POS,\n            fields: vec![(Ident { position : POS, name : \"foo\" }, Value ::\n                NullValue(NullValue { position : POS, keyword : \"null\" }))],\n        }))"
 ---
-{"kind":"ObjectValue","fields":[{"kind":"ObjectField","name":{"type":"Name","value":"foo"},"value":{"kind":"NullValue"}}]}
+{"kind":"ObjectValue","fields":[{"kind":"ObjectField","name":{"kind":"Name","value":"foo"},"value":{"kind":"NullValue"}}]}
