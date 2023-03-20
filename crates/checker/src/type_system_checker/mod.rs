@@ -384,15 +384,25 @@ fn check_arguments_definition(
         } else {
             argument_names.push(v.name.name);
         }
-        let type_is_not_input_type =
-            inout_kind_of_type(definitions, &v.r#type).map_or(false, |k| !k.is_input_type());
-        if type_is_not_input_type {
-            result.push(
-                CheckErrorMessage::NoOutputType {
-                    name: v.r#type.unwrapped_type().name.to_string(),
-                }
-                .with_pos(*v.r#type.position()),
-            );
+
+        match inout_kind_of_type(definitions, &v.r#type) {
+            None => {
+                result.push(
+                    CheckErrorMessage::UnknownType {
+                        name: v.r#type.unwrapped_type().name.to_string(),
+                    }
+                    .with_pos(*v.r#type.position()),
+                );
+            }
+            Some(k) if !k.is_input_type() => {
+                result.push(
+                    CheckErrorMessage::NoOutputType {
+                        name: v.r#type.unwrapped_type().name.to_string(),
+                    }
+                    .with_pos(*v.r#type.position()),
+                );
+            }
+            Some(_) => {}
         }
 
         check_directives(

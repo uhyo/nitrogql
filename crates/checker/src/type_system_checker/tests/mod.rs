@@ -93,6 +93,10 @@ mod directives {
         let doc = parse_to_type_system_document(
             "
         directive @__heyhey(arg1: MyType!) on OBJECT
+
+        input MyType {
+            foo: Int!
+        }
         ",
         );
         let errors = check_type_system_document(&doc);
@@ -118,6 +122,10 @@ mod directives {
         let doc = parse_to_type_system_document(
             "
         directive @heyhey(__arg1: MyType!) on OBJECT
+
+        input MyType {
+            foo: Int!
+        }
         ",
         );
         let errors = check_type_system_document(&doc);
@@ -143,6 +151,10 @@ mod directives {
         let doc = parse_to_type_system_document(
             "
         directive @heyhey(arg1: MyType!, arg1: Int!) on OBJECT
+
+        input MyType {
+            foo: Int!
+        }
         ",
         );
         let errors = check_type_system_document(&doc);
@@ -566,6 +578,34 @@ mod objects {
                 },
                 message: NoOutputType {
                     name: "MyType",
+                },
+                additional_info: [],
+            },
+        ]
+        "###);
+    }
+
+    #[test]
+    fn argument_undefined_type() {
+        let doc = parse_to_type_system_document(
+            "
+            type MyType {
+                field1(arg: Input!): Int!
+            }
+        ",
+        );
+        let errors = check_type_system_document(&doc);
+        assert_debug_snapshot!(errors, @r###"
+        [
+            CheckError {
+                position: Pos {
+                    line: 2,
+                    column: 28,
+                    file: 0,
+                    builtin: false,
+                },
+                message: UnknownType {
+                    name: "Input",
                 },
                 additional_info: [],
             },
