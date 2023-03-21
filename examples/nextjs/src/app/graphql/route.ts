@@ -1,6 +1,9 @@
 import { ApolloServer, HeaderMap, HTTPGraphQLRequest } from "@apollo/server";
 import { readFile } from "fs/promises";
 import { glob } from "glob";
+import { getTodos } from "./todoMaster";
+import { fileURLToPath } from "url";
+import { dirname, join } from "path";
 
 export async function POST(request: Request) {
   server ??= await initServer();
@@ -45,11 +48,27 @@ export async function POST(request: Request) {
 let server: ApolloServer | undefined;
 
 async function initServer(): Promise<ApolloServer> {
-  const schemas = await glob("../../schema/**/*.graphql", {
-    cwd: import.meta.url,
-  }).then((files) => Promise.all(files.map((file) => readFile(file, "utf-8"))));
+  const currentDirectory = dirname(fileURLToPath(import.meta.url));
+  const schemas = await glob("../../schema/*.graphql", {
+    cwd: currentDirectory,
+  }).then((files) =>
+    Promise.all(
+      files.map((file) => readFile(join(currentDirectory, file), "utf-8"))
+    )
+  );
 
-  return new ApolloServer({
+  const resolvers = {
+    Query: {
+      todos(_) {
+        return getTodos();
+      },
+    },
+  };
+
+  const server = new ApolloServer({
     typeDefs: schemas,
+    resolvers,
   });
+  await server.start();
+  return server;
 }

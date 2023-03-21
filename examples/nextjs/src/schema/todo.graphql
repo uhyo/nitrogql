@@ -7,7 +7,7 @@ type Todo {
   "When not null, date when this item was marked done."
   finishedAt: Date
   "Date when this item was created."
-  createdDate: Date!
+  createdAt: Date!
   "Tags associated to this item."
   tags: [Tag!]!
 }

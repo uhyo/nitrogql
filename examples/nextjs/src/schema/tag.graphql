@@ -1,4 +1,5 @@
 type Tag {
   id: ID!
   label: String!
+  color: String!
 }
