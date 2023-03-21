@@ -53,7 +53,7 @@ fn type_printing() {
     )
     .unwrap();
     let doc = resolve_extensions(doc).unwrap();
-    let printed = print_document(&doc).unwrap();
+    let printed = print_document(&doc, Default::default()).unwrap();
     assert_snapshot!(printed);
 }
 
@@ -111,14 +111,36 @@ fn type_printing_with_desc() {
     )
     .unwrap();
     let doc = resolve_extensions(doc).unwrap();
-    let printed = print_document(&doc).unwrap();
+    let printed = print_document(&doc, Default::default()).unwrap();
     assert_snapshot!(printed);
 }
 
-fn print_document(document: &TypeSystemDocument) -> SchemaTypePrinterResult<String> {
+#[test]
+fn scalar_printing() {
+    let doc = parse_type_system_document(
+        "
+        scalar BigInt
+        scalar Date
+        ",
+    )
+    .unwrap();
+    let doc = resolve_extensions(doc).unwrap();
+    let mut options = SchemaTypePrinterOptions::default();
+    options.scalar_types.extend(vec![
+        ("BigInt".to_owned(), "bigint".to_owned()),
+        ("Date".to_owned(), "Date".to_owned()),
+    ]);
+    let printed = print_document(&doc, options).unwrap();
+    assert_snapshot!(printed);
+}
+
+fn print_document(
+    document: &TypeSystemDocument,
+    options: SchemaTypePrinterOptions,
+) -> SchemaTypePrinterResult<String> {
     let mut result = String::new();
     let mut writer = JustWriter::new(&mut result);
-    let mut printer = SchemaTypePrinter::new(SchemaTypePrinterOptions::default(), &mut writer);
+    let mut printer = SchemaTypePrinter::new(options, &mut writer);
     printer.print_document(document)?;
     Ok(result)
 }

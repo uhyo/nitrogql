@@ -117,9 +117,7 @@ pub fn check_arguments(
                                 Some(_) => true,
                             }
                         };
-                        if null_is_allowed {
-                            seen_args += 1;
-                        } else {
+                        if !null_is_allowed {
                             result.push(
                                 CheckErrorMessage::RequiredArgumentNotSpecified {
                                     name: arg_def.name.to_string(),

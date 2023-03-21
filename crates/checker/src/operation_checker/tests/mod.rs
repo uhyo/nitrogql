@@ -405,6 +405,23 @@ mod selection_set {
     }
 
     #[test]
+    fn check_field_arguments_variable() {
+        let schema = type_system();
+        let doc = parse_operation_document(
+            "
+            query($str: String!, $num: Int!, $maybeNum: Int) {
+                users1: users(name: $str)
+                users2: users(name: $num)
+                users2: users(name: $maybeNum)
+            }
+        ",
+        )
+        .unwrap();
+
+        assert_debug_snapshot!(check_operation_document(&schema, &doc))
+    }
+
+    #[test]
     fn supports_typename_metafield() {
         let schema = type_system();
         let doc = parse_operation_document(

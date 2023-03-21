@@ -150,11 +150,18 @@ impl TypePrinter for ScalarTypeDefinition<'_> {
         };
 
         print_description(&self.description, writer);
-        writer.write_for("export type ", &self.scalar_keyword);
-        writer.write_for(self.name.name, &self.name);
-        writer.write(" = ");
-        writer.write(&scalar_type_str);
-        writer.write(";\n");
+        // Special casing for reexport
+        if self.name.name == scalar_type_str {
+            writer.write_for("export type { ", &self.scalar_keyword);
+            writer.write_for(&scalar_type_str, &self.name);
+            writer.write(" };\n");
+        } else {
+            writer.write_for("export type ", &self.scalar_keyword);
+            writer.write_for(self.name.name, &self.name);
+            writer.write(" = ");
+            writer.write(&scalar_type_str);
+            writer.write(";\n");
+        }
         Ok(())
     }
 }

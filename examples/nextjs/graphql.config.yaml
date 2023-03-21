@@ -1,9 +1,9 @@
 schema: ./src/schema/*.graphql
-documents: ./src/features/**/*.graphql
+documents: ./src/app/**/*.graphql
 extensions:
   nitrogql:
     generate:
       mode: with-loader-ts-5.0
       schemaOutput: ./src/generated/schema.d.ts
       scalarTypes:
-        Date: Date
+        Date: string

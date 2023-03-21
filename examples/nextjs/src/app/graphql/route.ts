@@ -59,8 +59,15 @@ async function initServer(): Promise<ApolloServer> {
 
   const resolvers = {
     Query: {
-      todos(_) {
-        return getTodos();
+      todos(
+        _parent: unknown,
+        variables: { filter?: { unfinishedOnly?: boolean | null } }
+      ) {
+        if (variables.filter?.unfinishedOnly) {
+          return getTodos().filter((todo) => todo.finishedAt === null);
+        } else {
+          return getTodos();
+        }
       },
     },
   };
