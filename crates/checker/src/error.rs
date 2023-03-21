@@ -101,6 +101,8 @@ pub enum CheckErrorMessage {
     NoRootType { operation_type: OperationType },
     #[error("Cannot select fields of {kind} '{name}'")]
     SelectionOnInvalidType { kind: TypeKind, name: String },
+    #[error("Must specify selection set for field '{name}'")]
+    MustSpecifySelectionSet { name: String },
     #[error("Field '{field_name}' is not found on type '{type_name}'")]
     FieldNotFound {
         field_name: String,

@@ -1,7 +1,7 @@
 import { ApolloServer, HeaderMap, HTTPGraphQLRequest } from "@apollo/server";
 import { readFile } from "fs/promises";
 import { glob } from "glob";
-import { getTodos } from "./todoMaster";
+import { getTodos, toggleTodo } from "./todoMaster";
 import { fileURLToPath } from "url";
 import { dirname, join } from "path";
 
@@ -68,6 +68,14 @@ async function initServer(): Promise<ApolloServer> {
         } else {
           return getTodos();
         }
+      },
+    },
+    Mutation: {
+      toggleTodo(
+        _parent: unknown,
+        variables: { id: string; finished: boolean }
+      ) {
+        return toggleTodo(variables.id, variables.finished);
       },
     },
   };

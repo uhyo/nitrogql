@@ -37,7 +37,7 @@ mod operations {
         let doc = parse_operation_document(
             "
             subscription a { foo { hoge piyo } }
-            subscription b { foo bar }
+            subscription b { foo { hoge } bar }
         ",
         )
         .unwrap();
@@ -326,7 +326,7 @@ mod selection_set {
             "
             query
             {
-                user
+                user { id }
                 user2
             }
         ",
@@ -342,12 +342,12 @@ mod selection_set {
         let doc = parse_operation_document(
             "
             query q1 {
-                user
+                user { id }
                 user { id name }
             }
             query q2 {
-                user
-                alias: user # ← this is ok
+                user { id }
+                alias: user { id name } # ← this is ok
             }
         ",
         )
@@ -363,8 +363,8 @@ mod selection_set {
             "
             query
             {
-                user
-                user: foo
+                user { id }
+                user: foo 
             }
         ",
         )
@@ -395,7 +395,7 @@ mod selection_set {
             "
             query {
                 users(name: \"uhyo\") { id name age }
-                user(arg: 123)
+                user(arg: 123) { id }
             }
         ",
         )
@@ -410,9 +410,35 @@ mod selection_set {
         let doc = parse_operation_document(
             "
             query($str: String!, $num: Int!, $maybeNum: Int) {
-                users1: users(name: $str)
-                users2: users(name: $num)
-                users2: users(name: $maybeNum)
+                users1: users(name: $str) { id }
+                users2: users(name: $num) { id }
+                users2: users(name: $maybeNum) { id }
+            }
+        ",
+        )
+        .unwrap();
+
+        assert_debug_snapshot!(check_operation_document(&schema, &doc))
+    }
+
+    #[test]
+    fn must_specify_selection_set_for_non_leaf_field() {
+        let schema = type_system();
+        let doc = parse_operation_document(
+            "
+            query {
+                foo
+                user
+                users(name: \"uhyo\")
+                user2: user {
+                    id
+                    name
+                    age
+                }
+                users2: users {
+                    id
+                    name
+                }
             }
         ",
         )
@@ -511,7 +537,7 @@ mod fragments {
         let schema = type_system();
         let doc = parse_operation_document(
             "
-            query { user }
+            query { user { id } }
             fragment A on Nothing {
                 id
             }
@@ -527,7 +553,7 @@ mod fragments {
         let schema = type_system();
         let doc = parse_operation_document(
             "
-            query { user }
+            query { user { id }}
             fragment OnScalar on CustomScalar {
                 id
             }

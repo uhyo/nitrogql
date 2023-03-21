@@ -41,7 +41,7 @@ impl Variable<'_> {
 impl JsonPrintable for Variable<'_> {
     fn print_json(&self, writer: &mut JSONObjectWriter) {
         writer.value("kind", "Variable");
-        writer.value("variable", JSONValue(&self.name));
+        writer.value("name", JSONValue(&self.name));
     }
 }
 

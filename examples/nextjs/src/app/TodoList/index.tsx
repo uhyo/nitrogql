@@ -1,7 +1,8 @@
 "use client";
 
-import { useQuery } from "urql";
+import { useMutation, useQuery } from "urql";
 import Query from "./myTodoList.graphql";
+import ToggleTodo from "./toggleTodo.graphql";
 import classes from "./TodoList.module.css";
 import { Filter } from "../useControls";
 
@@ -14,6 +15,7 @@ export const TodoList: React.FC<{
       unfinishedOnly: filter === "unfinished" ? true : null,
     },
   });
+  const [, runToggleTodo] = useMutation(ToggleTodo);
   if (data === undefined) {
     return null;
   }
@@ -30,24 +32,49 @@ export const TodoList: React.FC<{
             ))}
           </div>
           <div>
-            <div>
-              Created at{" "}
-              <time dateTime={new Date(todo.createdAt).toISOString()}>
-                {new Date(todo.createdAt).toLocaleString()}
-              </time>
-            </div>
-            {todo.finishedAt !== null && (
-              <div>
+            {todo.finishedAt !== null ? (
+              <>
                 Finished at{" "}
                 <time dateTime={new Date(todo.finishedAt).toISOString()}>
                   {new Date(todo.finishedAt).toLocaleString()}
                 </time>
-              </div>
+              </>
+            ) : (
+              <>
+                Created at{" "}
+                <time dateTime={new Date(todo.createdAt).toISOString()}>
+                  {new Date(todo.createdAt).toLocaleString()}
+                </time>
+              </>
             )}
           </div>
-          <button type="button" aria-label="Mark as done">
-            ⬜️
-          </button>
+          {todo.finishedAt === null ? (
+            <button
+              type="button"
+              aria-label="Mark as done"
+              onClick={() =>
+                runToggleTodo({
+                  id: todo.id,
+                  finished: true,
+                })
+              }
+            >
+              ⬜️
+            </button>
+          ) : (
+            <button
+              type="button"
+              aria-label="Mark as undone"
+              onClick={() =>
+                runToggleTodo({
+                  id: todo.id,
+                  finished: false,
+                })
+              }
+            >
+              ✅
+            </button>
+          )}
         </div>
       ))}
     </div>

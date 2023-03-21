@@ -1,0 +1,3 @@
+type Mutation {
+  toggleTodo(id: ID!, finished: Boolean!): Todo!
+}

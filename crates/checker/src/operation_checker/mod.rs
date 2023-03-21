@@ -336,15 +336,21 @@ fn check_selection_field(
         target_field.arguments.as_ref(),
         result,
     );
-    if let Some(ref selection_set) = field_selection.selection_set {
         let Some(target_field_type) = definitions.types.get(
             target_field.r#type.unwrapped_type().name.name
         ) else {
-            result.push(CheckErrorMessage::TypeSystemError.with_pos(selection_set.position));
+            result.push(CheckErrorMessage::TypeSystemError.with_pos(field_selection.name.position));
             return;
         };
 
+    if let Some(ref selection_set) = field_selection.selection_set {
         check_selection_set(definitions, fragment_map, seen_fragments, variables, target_field_type, selection_set, result);
+    } else {
+        // No selection set
+        if direct_fields_of_output_type(target_field_type).is_some() {
+            result.push(CheckErrorMessage::MustSpecifySelectionSet { name: field_selection.name.to_string() }.with_pos(field_selection.name.position));
+            return;
+        }
     }
 
 }

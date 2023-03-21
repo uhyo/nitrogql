@@ -14,7 +14,11 @@ export const useControls = (): [filter: Filter, controls: JSX.Element] => {
         <input
           type="radio"
           checked={filter === "unfinished"}
-          onClick={() => setFilter("unfinished")}
+          onChange={(e) => {
+            if (e.target.checked) {
+              setFilter("unfinished");
+            }
+          }}
         />
         Unfinished TODOs
       </label>
@@ -22,7 +26,11 @@ export const useControls = (): [filter: Filter, controls: JSX.Element] => {
         <input
           type="radio"
           checked={filter === "all"}
-          onClick={() => setFilter("all")}
+          onChange={(e) => {
+            if (e.target.checked) {
+              setFilter("all");
+            }
+          }}
         />
         All TODOs
       </label>

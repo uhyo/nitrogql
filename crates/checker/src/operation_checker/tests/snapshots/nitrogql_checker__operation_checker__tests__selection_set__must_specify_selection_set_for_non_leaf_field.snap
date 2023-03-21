@@ -1,0 +1,30 @@
+---
+source: crates/checker/src/operation_checker/tests/mod.rs
+expression: "check_operation_document(&schema, &doc)"
+---
+[
+    CheckError {
+        position: Pos {
+            line: 3,
+            column: 16,
+            file: 0,
+            builtin: false,
+        },
+        message: MustSpecifySelectionSet {
+            name: "user",
+        },
+        additional_info: [],
+    },
+    CheckError {
+        position: Pos {
+            line: 4,
+            column: 16,
+            file: 0,
+            builtin: false,
+        },
+        message: MustSpecifySelectionSet {
+            name: "users",
+        },
+        additional_info: [],
+    },
+]

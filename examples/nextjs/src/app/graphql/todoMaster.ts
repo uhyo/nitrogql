@@ -1,11 +1,11 @@
 import { randomUUID } from "crypto";
 
 type Todo = {
-  readonly id: string;
-  readonly body: string;
-  readonly tags: readonly Tag[];
-  readonly createdAt: Date;
-  readonly finishedAt: Date | null;
+  id: string;
+  body: string;
+  tags: readonly Tag[];
+  createdAt: Date;
+  finishedAt: Date | null;
 };
 
 type Tag = {
@@ -86,3 +86,21 @@ const todoMaster: Todo[] = [
  * @returns Get current Todos.
  */
 export const getTodos = () => todoMaster.concat([]);
+
+/**
+ * Toggle state of a Todo.
+ */
+export const toggleTodo = (id: string, finished: boolean): Todo => {
+  const todo = todoMaster.find((todo) => todo.id === id);
+  if (todo === undefined) {
+    throw new Error(`Cannot find TODO of ID '${id}'`);
+  }
+
+  if (finished) {
+    todo.finishedAt = new Date();
+  } else {
+    todo.finishedAt = null;
+  }
+
+  return todo;
+};
