@@ -32,7 +32,7 @@ pub fn run_generate(mut context: CliContext) -> Result<CliContext> {
             ..
         } => {
             let Some(ref schema_output) = config.config.generate.schema_output else {
-                return Err(CliError::OptionRequired { option: String::from("schema-output"), command: String::from("generate") }.into())
+                return Err(CliError::OptionRequired { option: String::from("schemaOutput"), command: String::from("generate") }.into())
             };
             let schema_output = config.root_dir.join(schema_output);
             {

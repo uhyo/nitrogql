@@ -69,6 +69,8 @@ export const TodoList: React.FC<{
                 runToggleTodo({
                   id: todo.id,
                   finished: false,
+                }).then(() => {
+                  debugger;
                 })
               }
             >

@@ -5,5 +5,6 @@ This project shows how to use nitrogql in your Next.js App.
 ## How to run
 
 ```sh
+npm install
 npm run dev
 ```

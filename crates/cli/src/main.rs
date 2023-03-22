@@ -91,6 +91,7 @@ fn run_cli_impl(args: impl IntoIterator<Item = String>) -> Result<()> {
     if let Some(path) = args.schema_output {
         config.generate.schema_output = Some(path);
     }
+    debug!("Loaded config {config:?}");
 
     let config = CliConfig { root_dir, config };
 
@@ -192,19 +193,6 @@ fn load_glob_files<'a, S: AsRef<str> + 'a>(
     }
 
     trace!("load_glob_files");
-    let schema_matchers =
-        build_matchers(&path_strs, &root).map_err(|err| CliError::GlobError(err))?;
-    trace!("schema_matchers {schema_matchers:?}");
-    for matcher in schema_matchers {
-        trace!("matcher {matcher:?}");
-        let root = matcher.root();
-        trace!("{root}");
-        for entry in fs::read_dir(&root)? {
-            let entry = entry?;
-            trace!("entry {entry:?}");
-        }
-    }
-
     let schema_matchers =
         build_matchers(&path_strs, &root).map_err(|err| CliError::GlobError(err))?;
     let (paths, _) = match_paths(schema_matchers, None, None);

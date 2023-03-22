@@ -5,7 +5,7 @@ set -eux
 # Requirements: cargo (nightly), wasm-opt (from binaryen)
 (
   cd crates/cli
-  cargo +nightly rustc --target wasm32-wasi --release -- -Z wasi-exec-model=reactor
+  cargo +nightly rustc --target wasm32-wasi --release
 )
 (
   cd target/wasm32-wasi/release
