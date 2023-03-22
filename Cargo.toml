@@ -11,5 +11,6 @@ members = [
   "crates/printer",
   "crates/semantics",
   "crates/sourcemap-writer",
+  "crates/type-system",
   "crates/utils"
 ]

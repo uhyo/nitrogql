@@ -251,6 +251,10 @@ dependencies = [
 ]
 
 [[package]]
+name = "graphql-type-system"
+version = "0.1.0"
+
+[[package]]
 name = "hashbrown"
 version = "0.12.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -480,6 +484,7 @@ dependencies = [
 name = "nitrogql-semantics"
 version = "0.1.0"
 dependencies = [
+ "graphql-type-system",
  "insta",
  "nitrogql-ast",
  "nitrogql-error",
