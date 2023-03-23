@@ -1,4 +1,8 @@
-use crate::{node::Node, r#type::Type, text::Text};
+use crate::{
+    node::{Node, OriginalNodeRef},
+    r#type::Type,
+    text::Text,
+};
 
 /// Definition of a schema type.
 #[derive(Debug, Clone)]
@@ -11,7 +15,7 @@ pub enum TypeDefinition<Str, OriginalNode> {
     InputObject(InputObjectDefinition<Str, OriginalNode>),
 }
 
-impl<Str: Text, OriginalNode> TypeDefinition<Str, OriginalNode> {
+impl<'a, Str: Text<'a>, OriginalNode> TypeDefinition<Str, OriginalNode> {
     /// Get name of this type.
     fn name(&self) -> &str {
         match self {
@@ -40,6 +44,19 @@ impl<Str: Text, OriginalNode> TypeDefinition<Str, OriginalNode> {
             TypeDefinition::InputObject(def) => {
                 def.description.as_ref().map(|opt| opt.as_ref().borrow())
             }
+        }
+    }
+}
+
+impl<Str, OriginalNode> OriginalNodeRef<OriginalNode> for TypeDefinition<Str, OriginalNode> {
+    fn original_node_ref(&self) -> &OriginalNode {
+        match self {
+            TypeDefinition::Scalar(def) => def.name.original_node_ref(),
+            TypeDefinition::Object(def) => def.name.original_node_ref(),
+            TypeDefinition::Interface(def) => def.name.original_node_ref(),
+            TypeDefinition::Union(def) => def.name.original_node_ref(),
+            TypeDefinition::Enum(def) => def.name.original_node_ref(),
+            TypeDefinition::InputObject(def) => def.name.original_node_ref(),
         }
     }
 }
@@ -125,6 +142,12 @@ pub struct Field<Str, OriginalNode> {
     pub arguments: Vec<InputValue<Str, OriginalNode>>,
 }
 
+impl<Str, OriginalNode> OriginalNodeRef<OriginalNode> for Field<Str, OriginalNode> {
+    fn original_node_ref(&self) -> &OriginalNode {
+        self.name.original_node_ref()
+    }
+}
+
 /// Represents an argument to a field.
 #[derive(Debug, Clone)]
 pub struct InputValue<Str, OriginalNode> {
@@ -137,6 +160,12 @@ pub struct InputValue<Str, OriginalNode> {
     /// Default value of input value.
     /// TODO: hold default value
     pub default_value: Option<Node<(), OriginalNode>>,
+}
+
+impl<Str, OriginalNode> OriginalNodeRef<OriginalNode> for InputValue<Str, OriginalNode> {
+    fn original_node_ref(&self) -> &OriginalNode {
+        self.name.original_node_ref()
+    }
 }
 
 /// Represents an enum member.
@@ -157,4 +186,6 @@ pub struct DirectiveDefinition<Str, OriginalNode> {
     pub locations: Vec<Node<Str, OriginalNode>>,
     /// Arguments of this directive. Empty list means no args.
     pub arguments: Vec<InputValue<Str, OriginalNode>>,
+    /// Whether this is repeatable. Some means this is repeatable.
+    pub repeatable: Option<Node<(), OriginalNode>>,
 }

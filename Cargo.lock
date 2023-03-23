@@ -392,6 +392,7 @@ name = "nitrogql-checker"
 version = "0.1.0"
 dependencies = [
  "graphql-builtins",
+ "graphql-type-system",
  "insta",
  "log",
  "nitrogql-ast",

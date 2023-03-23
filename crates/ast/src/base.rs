@@ -39,6 +39,12 @@ impl Pos {
     }
 }
 
+impl Default for Pos {
+    fn default() -> Self {
+        Self::builtin()
+    }
+}
+
 impl Ord for Pos {
     fn cmp(&self, other: &Self) -> std::cmp::Ordering {
         self.line

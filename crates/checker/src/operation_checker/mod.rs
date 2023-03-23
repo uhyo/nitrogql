@@ -1,3 +1,4 @@
+use graphql_type_system::{Schema, RootTypes};
 use nitrogql_ast::{
         base::{HasPos, Pos},
         operation::{
@@ -10,7 +11,7 @@ use nitrogql_ast::{
 use self::{fragment_map::{generate_fragment_map, FragmentMap}, count_selection_set_fields::selection_set_has_more_than_one_fields};
 
 use super::{error::{CheckError, CheckErrorMessage, TypeKind}, common::{check_directives, check_arguments}, types::inout_kind_of_type};
-use nitrogql_semantics::{DefinitionMap, generate_definition_map, direct_fields_of_output_type};
+use nitrogql_semantics::{direct_fields_of_output_type, ast_to_type_system};
 
 #[cfg(test)]
 mod tests;
@@ -22,7 +23,7 @@ pub fn check_operation_document(
     document: &OperationDocument,
 ) -> Vec<CheckError> {
     let mut result = vec![];
-    let definitions = generate_definition_map(schema);
+    let definitions = ast_to_type_system(schema);
 
     let fragment_map = generate_fragment_map(document);
 
@@ -102,52 +103,41 @@ pub fn check_operation_document(
 }
 
 fn check_operation(
-    definitions: &DefinitionMap,
+    definitions: &Schema<&str, Pos>,
     fragment_map: &FragmentMap,
     op: &OperationDefinition,
     result: &mut Vec<CheckError>,
 ) {
     let root_type = {
-        let root_type_name = definitions
-            .schema
-            .map(|schema_def| {
-                schema_def
-                    .definitions
-                    .iter()
-                    .find_map(|(key, value)| (*key == op.operation_type).then_some(value.name))
-                    .ok_or(schema_def)
-            })
-            .unwrap_or_else(|| {
-                Ok(match op.operation_type {
-                    OperationType::Query => "Query",
-                    OperationType::Mutation => "Mutation",
-                    OperationType::Subscription => "Subscription",
-                })
-            });
-
-        match root_type_name {
-            Ok(root_type_name) => {
-                let Some(root_type) = definitions.types.get(root_type_name) else {
-                    result.push(
-                        CheckErrorMessage::UnknownType { name: root_type_name.to_owned() }.with_pos(op.position)
-                    );
-                    return;
-                };
-                root_type
-            }
-            Err(schema_def) => {
+        let root_types = definitions
+            .root_types();
+        if !root_types.original_node_ref().builtin {
+            // When RootTypes has a non-builtin Pos, there is an explicit schema definition.
+            // This means that type for operation must also be declared explicitly.
+            let root_type_name = operation_type_from_root_types(root_types.as_ref(), op.operation_type);
+            if root_type_name.is_none() {
                 result.push(
                     CheckErrorMessage::NoRootType {
                         operation_type: op.operation_type,
                     }
                     .with_pos(*op.position())
                     .with_additional_info(vec![
-                        (schema_def.position, CheckErrorMessage::RootTypesAreDefinedHere)
+                        (*root_types.original_node_ref(), CheckErrorMessage::RootTypesAreDefinedHere)
                     ])
                 );
                 return;
             }
         }
+        let root_types = root_types.as_ref().unwrap_or_default();
+        let root_type_name = operation_type_from_root_types(&root_types, op.operation_type);
+
+        let Some(root_type) = definitions.get_type(root_type_name.as_ref()) else {
+            result.push(
+                CheckErrorMessage::UnknownType { name: root_type_name.to_string() }.with_pos(op.position)
+            );
+            return;
+        };
+        root_type
     };
     check_directives(definitions,
         op.variables_definition.as_ref(),
@@ -180,8 +170,19 @@ fn check_operation(
     );
 }
 
+fn operation_type_from_root_types<T>(
+    root_types: &RootTypes<T>,
+    op: OperationType
+) -> &T {
+    match op {
+        OperationType::Query => &root_types.query_type,
+        OperationType::Mutation => &root_types.mutation_type,
+        OperationType::Subscription => &root_types.subscription_type,
+    }
+}
+
 fn check_fragment_definition(
-    definitions: &DefinitionMap,
+    definitions: &Schema<&str, Pos>,
     op: &FragmentDefinition,
     result: &mut Vec<CheckError>,
 ) {
@@ -211,7 +212,7 @@ fn check_fragment_definition(
 }
 
 fn check_variables_definition(
-    definitions: &DefinitionMap,
+    definitions: &Schema<&str, Pos>,
     variables: &VariablesDefinition,
     result: &mut Vec<CheckError>,
 ) {
@@ -246,7 +247,7 @@ fn check_variables_definition(
 }
 
 fn check_selection_set(
-    definitions: &DefinitionMap,
+    definitions: &Schema<&str, Pos>,
     fragment_map: &FragmentMap,
     seen_fragments: &[&str],
     variables: Option<&VariablesDefinition>,
@@ -297,7 +298,7 @@ fn check_selection_set(
 }
 
 fn check_selection_field(
-    definitions: &DefinitionMap,
+    definitions: &Schema<&str, Pos>,
     fragment_map: &FragmentMap,
     seen_fragments: &[&str],
     variables: Option<&VariablesDefinition>,
@@ -356,7 +357,7 @@ fn check_selection_field(
 }
 
 fn check_fragment_spread(
-    definitions: &DefinitionMap,
+    definitions: &Schema<&str, Pos>,
     fragment_map: &FragmentMap,
     seen_fragments: &[&str],
     variables: Option<&VariablesDefinition>,
@@ -399,7 +400,7 @@ fn check_fragment_spread(
 }
 
 fn check_inline_fragment(
-    definitions: &DefinitionMap,
+    definitions: &Schema<&str, Pos>,
     fragment_map: &FragmentMap,
     seen_fragments: &[&str],
     variables: Option<&VariablesDefinition>,
@@ -435,7 +436,7 @@ fn check_inline_fragment(
 }
 
 fn check_fragment_spread_core(
-    definitions: &DefinitionMap,
+    definitions: &Schema<&str, Pos>,
     fragment_map: &FragmentMap,
     seen_fragments: &[&str],
     variables: Option<&VariablesDefinition>,

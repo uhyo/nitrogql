@@ -1,6 +1,8 @@
 use std::{borrow::Borrow, hash::Hash};
 
 /// Trait that expresses owned or borrowed text.
-pub trait Text: Eq + Clone + Hash + Borrow<str> {}
+pub trait Text<'a>: Eq + Clone + Hash + Borrow<str> + From<&'a str> {}
 
-impl Text for &'_ str {}
+impl<'a> Text<'a> for &'a str {}
+
+impl Text<'static> for String {}

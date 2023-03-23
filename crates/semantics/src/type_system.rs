@@ -1,12 +1,11 @@
 use graphql_type_system::{
     DirectiveDefinition, EnumDefinition, EnumMember, Field, InputObjectDefinition, InputValue,
-    InterfaceDefinition, ListType, NamedType, Node, NonNullType, ObjectDefinition,
-    ScalarDefinition, Schema, SchemaBuilder, Type, TypeDefinition, UnionDefinition,
+    InterfaceDefinition, Node, ObjectDefinition, ScalarDefinition, Schema, SchemaBuilder,
+    TypeDefinition, UnionDefinition,
 };
 use nitrogql_ast::{
-    base::{HasPos, Ident, Pos},
+    base::{HasPos, Pos},
     operation::OperationType,
-    r#type::Type as AstType,
     type_system::{
         ArgumentsDefinition, FieldDefinition, TypeDefinition as AstTypeDefinition,
         TypeSystemDefinition,
@@ -14,6 +13,8 @@ use nitrogql_ast::{
     value::StringValue,
     TypeSystemDocument,
 };
+
+use crate::type_system_utils::{convert_type, ident_to_node};
 
 /// Convert TypeSystemDocument AST to type system struct.
 pub fn ast_to_type_system<'a>(document: &'a TypeSystemDocument) -> Schema<&'a str, Pos> {
@@ -24,14 +25,13 @@ pub fn ast_to_type_system<'a>(document: &'a TypeSystemDocument) -> Schema<&'a st
                 if let Some(ref desc) = def.description {
                     builder.set_description(Node::from(&desc.value, desc.position));
                 }
+                let root_types = builder.set_root_types(def.position);
                 for (operation, def) in def.definitions.iter() {
                     match operation {
-                        OperationType::Query => builder.set_root_query_type(ident_to_node(def)),
-                        OperationType::Mutation => {
-                            builder.set_root_mutation_type(ident_to_node(def))
-                        }
+                        OperationType::Query => root_types.set_query_type(ident_to_node(def)),
+                        OperationType::Mutation => root_types.set_mutation_type(ident_to_node(def)),
                         OperationType::Subscription => {
-                            builder.set_root_subscription_type(ident_to_node(def))
+                            root_types.set_subscription_type(ident_to_node(def))
                         }
                     }
                 }
@@ -116,6 +116,7 @@ pub fn ast_to_type_system<'a>(document: &'a TypeSystemDocument) -> Schema<&'a st
                         .map(|loc| Node::from(loc.name, loc.position))
                         .collect(),
                     arguments: convert_arguments(&def.arguments),
+                    repeatable: def.repeatable.map(|ident| Node::from((), ident.position)),
                 },
             )]),
         }
@@ -124,24 +125,10 @@ pub fn ast_to_type_system<'a>(document: &'a TypeSystemDocument) -> Schema<&'a st
     builder.into()
 }
 
-fn ident_to_node<'src>(ident: &Ident<'src>) -> Node<&'src str, Pos> {
-    Node::from(ident.name, ident.position)
-}
-
 fn convert_description<'src>(description: &Option<StringValue>) -> Option<Node<&str, Pos>> {
     description
         .as_ref()
         .map(|desc| Node::from(desc.value.as_ref(), desc.position))
-}
-
-fn convert_type<'src>(ty: &AstType<'src>) -> Type<&'src str, Pos> {
-    match ty {
-        AstType::Named(ty) => Type::Named(NamedType::from(ident_to_node(&ty.name))),
-        AstType::List(ty) => Type::List(Box::new(ListType::from(convert_type(&ty.r#type)))),
-        AstType::NonNull(ty) => {
-            Type::NonNull(Box::new(NonNullType::from(convert_type(&ty.r#type))))
-        }
-    }
 }
 
 fn convert_arguments<'src, 'a: 'src>(

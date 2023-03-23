@@ -1,19 +1,18 @@
+use graphql_type_system::{InputValue, OriginalNodeRef, Schema, Type, TypeDefinition};
 use log::warn;
 
 use nitrogql_ast::{
     base::{HasPos, Pos},
     directive::Directive,
-    r#type::Type,
-    type_system::{ArgumentsDefinition, TypeDefinition},
     value::{Arguments, Value},
     variable::{Variable, VariableDefinition, VariablesDefinition},
 };
-use nitrogql_semantics::DefinitionMap;
+use nitrogql_semantics::type_system_utils::convert_type;
 
 use super::error::{CheckError, CheckErrorMessage};
 
 pub fn check_directives(
-    definitions: &DefinitionMap,
+    definitions: &Schema<&str, Pos>,
     variables: Option<&VariablesDefinition>,
     directives: &[Directive],
     current_position: &str,
@@ -21,7 +20,7 @@ pub fn check_directives(
 ) {
     let mut seen_directives = vec![];
     for d in directives {
-        match definitions.directives.get(d.name.name) {
+        match definitions.get_directive(d.name.name) {
             None => result.push(
                 CheckErrorMessage::UnknownDirective {
                     name: d.name.to_string(),
@@ -32,7 +31,7 @@ pub fn check_directives(
                 if def
                     .locations
                     .iter()
-                    .find(|loc| loc.name == current_position)
+                    .find(|loc| *loc.as_ref() == current_position)
                     .is_none()
                 {
                     result.push(
@@ -71,18 +70,18 @@ pub fn check_directives(
 }
 
 pub fn check_arguments(
-    definitions: &DefinitionMap,
+    definitions: &Schema<&str, Pos>,
     variables: Option<&VariablesDefinition>,
     parent_pos: Pos,
     parent_name: &str,
     parent_kind: &'static str,
     arguments: Option<&Arguments>,
-    arguments_definition: Option<&ArgumentsDefinition>,
+    arguments_definition: &[InputValue<&str, Pos>],
     result: &mut Vec<CheckError>,
 ) {
-    match (arguments, arguments_definition) {
-        (None, None) => {}
-        (Some(args), None) => {
+    match arguments {
+        None if arguments_definition.is_empty() => {}
+        Some(args) if arguments_definition.is_empty() => {
             result.push(
                 CheckErrorMessage::ArgumentsNotNeeded { kind: parent_kind }
                     .with_pos(args.position)
@@ -94,17 +93,17 @@ pub fn check_arguments(
                     )]),
             );
         }
-        (arguments, Some(arguments_definition)) => {
+        arguments => {
             let argument_pos = arguments.map_or(parent_pos, |args| args.position);
             let arguments: Vec<_> = arguments
                 .into_iter()
                 .flat_map(|arg| arg.arguments.iter())
                 .collect();
             let mut seen_args = 0;
-            for arg_def in arguments_definition.input_values.iter() {
+            for arg_def in arguments_definition.iter() {
                 let arg = arguments
                     .iter()
-                    .find(|(arg_name, _)| arg_name.name == arg_def.name.name);
+                    .find(|(arg_name, _)| arg_def.name == arg_name.name);
                 match arg {
                     None => {
                         let null_is_allowed = 'b: {
@@ -113,7 +112,8 @@ pub fn check_arguments(
                             }
                             match arg_def.default_value {
                                 None => false,
-                                Some(ref v) if matches!(v, Value::NullValue(_)) => false,
+                                // TODO: maybe check for null default value
+                                // Some(ref v) if matches!(v, Value::NullValue(_)) => false,
                                 Some(_) => true,
                             }
                         };
@@ -124,7 +124,7 @@ pub fn check_arguments(
                                 }
                                 .with_pos(argument_pos)
                                 .with_additional_info(vec![(
-                                    arg_def.position,
+                                    *arg_def.name.original_node_ref(),
                                     CheckErrorMessage::DefinitionPos {
                                         name: arg_def.name.to_string(),
                                     },
@@ -142,9 +142,8 @@ pub fn check_arguments(
                 // There are extra arguments
                 for (arg_name, _) in arguments {
                     if arguments_definition
-                        .input_values
                         .iter()
-                        .find(|arg_def| arg_def.name.name == arg_name.name)
+                        .find(|arg_def| arg_def.name == arg_name.name)
                         .is_none()
                     {
                         result.push(
@@ -161,10 +160,10 @@ pub fn check_arguments(
 }
 
 pub fn check_value(
-    definitions: &DefinitionMap,
+    definitions: &Schema<&str, Pos>,
     variables: Option<&VariablesDefinition>,
     value: &Value,
-    expected_type: &Type,
+    expected_type: &Type<&str, Pos>,
     result: &mut Vec<CheckError>,
 ) {
     let mut additional_info = vec![];
@@ -177,21 +176,31 @@ pub fn check_value(
                 );
                 return;
             };
-            break 'b !check_type_compatibility(definitions, &v_def.r#type, expected_type);
+            break 'b !check_type_compatibility(
+                definitions,
+                &convert_type(&v_def.r#type),
+                expected_type,
+            );
         }
         match expected_type {
             Type::NonNull(inner) => match value {
                 Value::NullValue(_) => true,
                 Value::Variable(_) => unreachable!(),
                 value => {
-                    check_value(definitions, variables, value, &inner.r#type, result);
+                    check_value(definitions, variables, value, (**inner).as_ref(), result);
                     false
                 }
             },
             Type::List(expected_inner) => match value {
                 Value::ListValue(inner) => {
                     for elem in inner.values.iter() {
-                        check_value(definitions, variables, elem, &expected_inner.r#type, result);
+                        check_value(
+                            definitions,
+                            variables,
+                            elem,
+                            (**expected_inner).as_ref(),
+                            result,
+                        );
                     }
                     false
                 }
@@ -199,14 +208,14 @@ pub fn check_value(
                 _ => true,
             },
             Type::Named(expected_name) => {
-                let Some(type_def) = definitions.types.get(expected_name.name.name) else {
+                let Some(type_def) = definitions.get_type(expected_name.as_ref().as_ref()) else {
                     // unknown type name
                     result.push(
                         CheckErrorMessage::TypeSystemError
-                        .with_pos(*expected_name.name.position())
+                        .with_pos(*expected_name.as_ref().original_node_ref())
                         .with_additional_info(vec![(
-                            expected_name.name.position,
-                            CheckErrorMessage::UnknownType { name: expected_name.name.to_string() }
+                            *expected_name.as_ref().original_node_ref(),
+                            CheckErrorMessage::UnknownType { name: expected_name.as_ref().to_string() }
                         )])
                     );
                     return;
@@ -231,17 +240,17 @@ pub fn check_value(
 
 // Note: this function does not consider Value::Variable
 fn is_value_compatible_type_def(
-    definitions: &DefinitionMap,
+    definitions: &Schema<&str, Pos>,
     variables: Option<&VariablesDefinition>,
     value: &Value,
-    expected_type: &TypeDefinition,
+    expected_type: &TypeDefinition<&str, Pos>,
     result: &mut Vec<CheckError>,
 ) -> (bool, Vec<(Pos, CheckErrorMessage)>) {
     match expected_type {
         TypeDefinition::Scalar(scalar_def) => {
             // TODO: better handling of scalar, including custom scalars
             (
-                match scalar_def.name.name {
+                match *scalar_def.name.as_ref() {
                     "Boolean" => matches!(value, Value::BooleanValue(_) | Value::NullValue(_)),
                     "Int" => matches!(value, Value::IntValue(_) | Value::NullValue(_)),
                     "Float" => matches!(value, Value::FloatValue(_) | Value::NullValue(_)),
@@ -266,9 +275,9 @@ fn is_value_compatible_type_def(
             Value::NullValue(_) => (true, vec![]),
             Value::EnumValue(value) => {
                 if enum_def
-                    .values
+                    .members
                     .iter()
-                    .find(|v| v.name.name == value.value)
+                    .find(|v| v.name == value.value)
                     .is_none()
                 {
                     result.push(
@@ -278,7 +287,7 @@ fn is_value_compatible_type_def(
                         }
                         .with_pos(value.position)
                         .with_additional_info(vec![(
-                            enum_def.position,
+                            *enum_def.name.original_node_ref(),
                             CheckErrorMessage::DefinitionPos {
                                 name: enum_def.name.to_string(),
                             },
@@ -303,7 +312,7 @@ fn is_value_compatible_type_def(
                 let value_field = value
                     .fields
                     .iter()
-                    .find(|(key, _)| key.name == expected_field.name.name);
+                    .find(|(key, _)| expected_field.name == key.name);
                 match value_field {
                     None => {
                         if expected_field.r#type.is_nonnull()
@@ -312,7 +321,7 @@ fn is_value_compatible_type_def(
                             // When field does not exist and the expected field is both non-nullable and has no default value, then it is an error.
                             res = false;
                             additional_info.push((
-                                expected_field.position,
+                                *expected_field.original_node_ref(),
                                 CheckErrorMessage::RequiredFieldNotSpecified {
                                     name: expected_field.name.to_string(),
                                 },
@@ -337,7 +346,7 @@ fn is_value_compatible_type_def(
                 // Value has extraneous field
                 res = false;
                 for (key, _) in value.fields.iter() {
-                    let field_def = object_def.fields.iter().find(|f| f.name.name == key.name);
+                    let field_def = object_def.fields.iter().find(|f| f.name == key.name);
                     if field_def.is_none() {
                         additional_info.push((
                             key.position,
@@ -355,26 +364,30 @@ fn is_value_compatible_type_def(
 
 /// Returns true if `value_type` is assignable to `expected_type`.
 fn check_type_compatibility(
-    definitions: &DefinitionMap,
-    value_type: &Type,
-    expected_type: &Type,
+    definitions: &Schema<&str, Pos>,
+    value_type: &Type<&str, Pos>,
+    expected_type: &Type<&str, Pos>,
 ) -> bool {
     // https://spec.graphql.org/draft/#AreTypesCompatible()
     match (expected_type, value_type) {
-        (Type::NonNull(expected_inner), Type::NonNull(value_inner)) => {
-            check_type_compatibility(definitions, &value_inner.r#type, &expected_inner.r#type)
-        }
+        (Type::NonNull(expected_inner), Type::NonNull(value_inner)) => check_type_compatibility(
+            definitions,
+            (**value_inner).as_ref(),
+            (**expected_inner).as_ref(),
+        ),
         (_, Type::NonNull(value_inner)) => {
-            check_type_compatibility(definitions, &value_inner.r#type, expected_type)
+            check_type_compatibility(definitions, (**value_inner).as_ref(), expected_type)
         }
         (Type::NonNull(_), _) => false,
-        (Type::List(expected_inner), Type::List(value_inner)) => {
-            check_type_compatibility(definitions, &value_inner.r#type, &expected_inner.r#type)
-        }
+        (Type::List(expected_inner), Type::List(value_inner)) => check_type_compatibility(
+            definitions,
+            (**value_inner).as_ref(),
+            (**expected_inner).as_ref(),
+        ),
         (Type::List(_), _) => false,
         (_, Type::List(_)) => false,
         (Type::Named(expected_name), Type::Named(value_inner)) => {
-            expected_name.name.name == value_inner.name.name
+            expected_name.as_ref() == value_inner.as_ref().as_ref()
         }
     }
 }
