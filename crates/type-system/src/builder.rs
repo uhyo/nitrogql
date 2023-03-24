@@ -6,7 +6,7 @@ use crate::{root_types::RootTypes, text::Text, DirectiveDefinition, Node, Schema
 pub struct SchemaBuilder<Str, OriginalNode> {
     description: Option<Node<Str, OriginalNode>>,
     type_definitions: HashMap<Str, Node<TypeDefinition<Str, OriginalNode>, OriginalNode>>,
-    directive_definitions: HashMap<Str, DirectiveDefinition<Str, OriginalNode>>,
+    directive_definitions: HashMap<Str, Node<DirectiveDefinition<Str, OriginalNode>, OriginalNode>>,
     type_names: Vec<Str>,
     directive_names: Vec<Str>,
     root_types: Option<Node<RootTypes<Option<Node<Str, OriginalNode>>>, OriginalNode>>,
@@ -66,10 +66,20 @@ impl<'a, Str: Text<'a>, OriginalNode>
     }
 }
 
-impl<'a, Str: Text<'a>, OriginalNode> Extend<(Str, DirectiveDefinition<Str, OriginalNode>)>
-    for SchemaBuilder<Str, OriginalNode>
+impl<'a, Str: Text<'a>, OriginalNode>
+    Extend<(
+        Str,
+        Node<DirectiveDefinition<Str, OriginalNode>, OriginalNode>,
+    )> for SchemaBuilder<Str, OriginalNode>
 {
-    fn extend<T: IntoIterator<Item = (Str, DirectiveDefinition<Str, OriginalNode>)>>(
+    fn extend<
+        T: IntoIterator<
+            Item = (
+                Str,
+                Node<DirectiveDefinition<Str, OriginalNode>, OriginalNode>,
+            ),
+        >,
+    >(
         &mut self,
         iter: T,
     ) {

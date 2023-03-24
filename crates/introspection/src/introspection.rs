@@ -1,9 +1,9 @@
 use std::ops::Deref;
 
 use graphql_type_system::{
-    EnumDefinition, EnumMember, Field, InputObjectDefinition, InputValue, InterfaceDefinition,
-    ListType, NamedType, Node, NonNullType, ObjectDefinition, ScalarDefinition, Schema,
-    SchemaBuilder, Type, TypeDefinition, UnionDefinition,
+    DirectiveDefinition, EnumDefinition, EnumMember, Field, InputObjectDefinition, InputValue,
+    InterfaceDefinition, ListType, NamedType, Node, NonNullType, ObjectDefinition,
+    ScalarDefinition, Schema, SchemaBuilder, Type, TypeDefinition, UnionDefinition,
 };
 
 use crate::{
@@ -46,6 +46,17 @@ pub fn introspection<D: Default>(value: &GraphQLValue<String>) -> Schema<&str, D
         builder.extend(types.map(|ty| (*ty.name(), ty)));
     }
 
+    if let Some(directives) = schema.get("directives").and_then(|v| v.as_list()) {
+        let directives = directives
+            .values
+            .iter()
+            .map(as_directive_definition)
+            .filter_map(|v| v.ok())
+            .map(node);
+
+        builder.extend(directives.map(|ty| (*ty.name(), ty)));
+    }
+
     builder.into()
 }
 
@@ -55,7 +66,7 @@ fn as_type<'a, Str: PartialEq<&'a str> + Deref, D: Default>(
 ) -> Result<Type<&Str::Target, D>, IntrospectionError> {
     let obj = object_type_as("__Type", value)
         .ok_or_else(|| IntrospectionError::Introspection("__Type expected".into()))?;
-    let Some(kind) = obj.get("kind").and_then(|v| as_enum(v)) else {
+    let Some(kind) = obj.get("kind").and_then(|v| v.as_enum()) else {
         return Err(IntrospectionError::Introspection("__Type does not have the 'kind' field".into()));
     };
     if *kind == "OBJECT" {
@@ -96,7 +107,7 @@ fn as_type_definition<'a, Str: PartialEq<&'a str> + Deref, D: Default>(
 ) -> Result<TypeDefinition<&Str::Target, D>, IntrospectionError> {
     let obj = object_type_as("__Type", value)
         .ok_or_else(|| IntrospectionError::Introspection("__Type expected".into()))?;
-    let Some(kind) = obj.get("kind").and_then(|v| as_enum(v)) else {
+    let Some(kind) = obj.get("kind").and_then(|v| v.as_enum()) else {
         return Err(IntrospectionError::Introspection("__Type does not have the 'kind' field".into()));
     };
     let Some(name) = obj.get("name").and_then(|v| v.as_string()).map(deref_node) else {
@@ -190,10 +201,10 @@ fn as_type_definition<'a, Str: PartialEq<&'a str> + Deref, D: Default>(
                     object_type_as("__EnumValue", ev).ok_or(IntrospectionError::Introspection(
                         "Value of 'eunmValues' must be an __EnumValue".into(),
                     ))?;
-    let Some(name) = ev.get("name").and_then(|v| v.as_string()).map(deref_node) else {
-        return Err(IntrospectionError::Introspection("__EnumValue must have a string 'name' field".into()));
-    };
-    let description = ev.get("description").and_then(|v| v.as_string()).map(deref_node);
+                let Some(name) = ev.get("name").and_then(|v| v.as_string()).map(deref_node) else {
+                    return Err(IntrospectionError::Introspection("__EnumValue must have a string 'name' field".into()));
+                };
+                let description = ev.get("description").and_then(|v| v.as_string()).map(deref_node);
 
                 Ok(EnumMember {
                     name,
@@ -291,12 +302,55 @@ fn as_input_value<'a, Str: PartialEq<&'a str> + Deref, D: Default>(
     })
 }
 
-fn as_enum<'a, 'b, Str: PartialEq<&'a str>>(value: &'b GraphQLValue<Str>) -> Option<&'b Str> {
-    if let GraphQLValue::Enum(ref e) = value {
-        Some(e)
-    } else {
-        None
-    }
+fn as_directive_definition<'a, Str: PartialEq<&'a str> + Deref, D: Default>(
+    value: &GraphQLValue<Str>,
+) -> Result<DirectiveDefinition<&Str::Target, D>, IntrospectionError> {
+    let obj = object_type_as("__Directive", value)
+        .ok_or_else(|| IntrospectionError::Introspection("__Directive expected".into()))?;
+    let Some(name) = obj.get("name").and_then(|v| v.as_string()).map(deref_node) else {
+        return Err(IntrospectionError::Introspection("__Directive must have a string 'name' field".into()));
+    };
+    let is_repeatable = obj
+        .get("isRepeatable")
+        .and_then(|v| v.as_boolean())
+        .unwrap_or(false);
+    let description = obj
+        .get("description")
+        .and_then(|v| v.as_string())
+        .map(deref_node);
+    let Some(locations) = obj.get("locations").and_then(|v| v.as_list()) else {
+        return Err(IntrospectionError::Introspection("__Directive must have a list 'locations' field".into()));
+    };
+    let locations = locations
+        .values
+        .iter()
+        .map(|loc| {
+            loc.as_enum()
+                .ok_or(IntrospectionError::Introspection(
+                    "Value of 'locations' must be an __EnumValue".into(),
+                ))
+                .map(deref_node)
+        })
+        .collect::<Result<Vec<_>, _>>()?;
+    let arguments = obj
+        .get("args")
+        .and_then(|v| v.as_list())
+        .map(|args| {
+            args.values
+                .iter()
+                .map(as_input_value)
+                .collect::<Result<Vec<_>, _>>()
+        })
+        .transpose()?
+        .unwrap_or(vec![]);
+
+    Ok(DirectiveDefinition {
+        name,
+        description,
+        arguments,
+        locations,
+        repeatable: is_repeatable.then(|| node(())),
+    })
 }
 
 fn node<T, D: Default>(value: T) -> Node<T, D> {

@@ -16,7 +16,8 @@ pub struct Schema<Str, OriginalNode> {
     pub(crate) type_definitions:
         HashMap<Str, Node<TypeDefinition<Str, OriginalNode>, OriginalNode>>,
     /// Directives in this schema.
-    pub(crate) directive_definitions: HashMap<Str, DirectiveDefinition<Str, OriginalNode>>,
+    pub(crate) directive_definitions:
+        HashMap<Str, Node<DirectiveDefinition<Str, OriginalNode>, OriginalNode>>,
     /// Keeps insertion order for stable iteration order.
     pub(crate) type_names: Vec<Str>,
     /// Keeps insertion order for stable iteration order.
@@ -40,7 +41,10 @@ impl<'a, Str: Text<'a>, OriginalNode> Schema<Str, OriginalNode> {
         self.type_definitions.get(name)
     }
     /// Queries a directive by name.
-    pub fn get_directive(&self, name: &str) -> Option<&DirectiveDefinition<Str, OriginalNode>> {
+    pub fn get_directive(
+        &self,
+        name: &str,
+    ) -> Option<&Node<DirectiveDefinition<Str, OriginalNode>, OriginalNode>> {
         self.directive_definitions.get(name)
     }
 
@@ -62,7 +66,12 @@ impl<'a, Str: Text<'a>, OriginalNode> Schema<Str, OriginalNode> {
     /// Iterate over directives.
     pub fn iter_directives<'b: 'a>(
         &'b self,
-    ) -> impl Iterator<Item = (&'a Str, &'a DirectiveDefinition<Str, OriginalNode>)> {
+    ) -> impl Iterator<
+        Item = (
+            &'a Str,
+            &'a Node<DirectiveDefinition<Str, OriginalNode>, OriginalNode>,
+        ),
+    > {
         self.directive_names.iter().filter_map(|type_name| {
             self.directive_definitions
                 .get(type_name.borrow())

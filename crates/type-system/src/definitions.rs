@@ -199,3 +199,10 @@ pub struct DirectiveDefinition<Str, OriginalNode> {
     /// Whether this is repeatable. Some means this is repeatable.
     pub repeatable: Option<Node<(), OriginalNode>>,
 }
+
+impl<Str, OriginalNode> DirectiveDefinition<Str, OriginalNode> {
+    /// Get name of this directive.
+    pub fn name(&self) -> &Str {
+        &self.name
+    }
+}

@@ -93,6 +93,7 @@ pub fn ast_to_type_system<'a>(document: &'a TypeSystemDocument) -> Schema<&'a st
                                 .iter()
                                 .map(|mem| EnumMember {
                                     name: ident_to_node(&mem.name),
+                                    description: convert_description(&mem.description),
                                 })
                                 .collect(),
                         }),
@@ -125,17 +126,20 @@ pub fn ast_to_type_system<'a>(document: &'a TypeSystemDocument) -> Schema<&'a st
             },
             TypeSystemDefinition::DirectiveDefinition(ref def) => builder.extend(vec![(
                 def.name.name,
-                DirectiveDefinition {
-                    name: ident_to_node(&def.name),
-                    description: convert_description(&def.description),
-                    locations: def
-                        .locations
-                        .iter()
-                        .map(|loc| Node::from(loc.name, loc.position))
-                        .collect(),
-                    arguments: convert_arguments(&def.arguments),
-                    repeatable: def.repeatable.map(|ident| Node::from((), ident.position)),
-                },
+                Node::from(
+                    DirectiveDefinition {
+                        name: ident_to_node(&def.name),
+                        description: convert_description(&def.description),
+                        locations: def
+                            .locations
+                            .iter()
+                            .map(|loc| Node::from(loc.name, loc.position))
+                            .collect(),
+                        arguments: convert_arguments(&def.arguments),
+                        repeatable: def.repeatable.map(|ident| Node::from((), ident.position)),
+                    },
+                    def.position,
+                ),
             )]),
         }
     }

@@ -9,6 +9,7 @@ pub enum GraphQLValue<Str> {
     List(ListValue<Str>),
     String(Str),
     Enum(Str),
+    Boolean(bool),
     Null,
 }
 
@@ -16,6 +17,18 @@ impl<Str> GraphQLValue<Str> {
     pub fn as_string(&self) -> Option<&Str> {
         match self {
             GraphQLValue::String(ref s) => Some(s),
+            _ => None,
+        }
+    }
+    pub fn as_enum(&self) -> Option<&Str> {
+        match self {
+            GraphQLValue::Enum(ref s) => Some(s),
+            _ => None,
+        }
+    }
+    pub fn as_boolean(&self) -> Option<bool> {
+        match self {
+            GraphQLValue::Boolean(b) => Some(*b),
             _ => None,
         }
     }
@@ -68,6 +81,13 @@ fn value_to_value(value: Value) -> Result<GraphQLValue<String>, IntrospectionErr
 
     match kind {
         "NullValue" => Ok(GraphQLValue::Null),
+        "BooleanValue" => Ok(GraphQLValue::Boolean({
+            let Some(Value::Bool(value)) = object.remove("value") else {
+                return Err(IntrospectionError::GraphQLError("'value' field of Boolean must be a boolean".into()));
+            };
+
+            value
+        })),
         "StringValue" => Ok(GraphQLValue::String({
             let Some(Value::String(value)) = object.remove("value") else {
                 return Err(IntrospectionError::GraphQLError("'value' field of StringValue must be a string".into()));
