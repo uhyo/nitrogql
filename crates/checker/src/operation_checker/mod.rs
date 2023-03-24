@@ -203,7 +203,7 @@ fn check_fragment_definition(
             CheckErrorMessage::InvalidFragmentTarget { name: op.type_condition.name.to_owned() }
             .with_pos(op.type_condition.position)
             .with_additional_info(vec![
-                (*target.original_node_ref(), CheckErrorMessage::DefinitionPos { name: target.name().to_owned() })
+                (*target.original_node_ref(), CheckErrorMessage::DefinitionPos { name: (*target.name()).to_owned() })
             ])
         );
         return;

@@ -7,6 +7,7 @@ members = [
   "crates/config-file",
   "crates/error",
   "crates/graphql-loader",
+  "crates/introspection",
   "crates/parser",
   "crates/printer",
   "crates/semantics",

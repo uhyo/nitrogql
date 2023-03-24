@@ -17,14 +17,14 @@ pub enum TypeDefinition<Str, OriginalNode> {
 
 impl<'a, Str: Text<'a>, OriginalNode> TypeDefinition<Str, OriginalNode> {
     /// Get name of this type.
-    pub fn name(&self) -> &str {
+    pub fn name(&self) -> &Str {
         match self {
-            TypeDefinition::Scalar(def) => def.name.borrow(),
-            TypeDefinition::Object(def) => def.name.borrow(),
-            TypeDefinition::Interface(def) => def.name.borrow(),
-            TypeDefinition::Union(def) => def.name.borrow(),
-            TypeDefinition::Enum(def) => def.name.borrow(),
-            TypeDefinition::InputObject(def) => def.name.borrow(),
+            TypeDefinition::Scalar(def) => &def.name,
+            TypeDefinition::Object(def) => &def.name,
+            TypeDefinition::Interface(def) => &def.name,
+            TypeDefinition::Union(def) => &def.name,
+            TypeDefinition::Enum(def) => &def.name,
+            TypeDefinition::InputObject(def) => &def.name,
         }
     }
     /// Get description of this type.
@@ -181,6 +181,8 @@ impl<Str, OriginalNode> OriginalNodeRef<OriginalNode> for InputValue<Str, Origin
 pub struct EnumMember<Str, OriginalNode> {
     /// Name of enum member.
     pub name: Node<Str, OriginalNode>,
+    /// Description of enum member.
+    pub description: Option<Node<Str, OriginalNode>>,
 }
 
 /// Represents a directive definition.
