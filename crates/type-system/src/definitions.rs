@@ -17,33 +17,33 @@ pub enum TypeDefinition<Str, OriginalNode> {
 
 impl<'a, Str: Text<'a>, OriginalNode> TypeDefinition<Str, OriginalNode> {
     /// Get name of this type.
-    fn name(&self) -> &str {
+    pub fn name(&self) -> &str {
         match self {
-            TypeDefinition::Scalar(def) => def.name.as_ref().borrow(),
-            TypeDefinition::Object(def) => def.name.as_ref().borrow(),
-            TypeDefinition::Interface(def) => def.name.as_ref().borrow(),
-            TypeDefinition::Union(def) => def.name.as_ref().borrow(),
-            TypeDefinition::Enum(def) => def.name.as_ref().borrow(),
-            TypeDefinition::InputObject(def) => def.name.as_ref().borrow(),
+            TypeDefinition::Scalar(def) => def.name.borrow(),
+            TypeDefinition::Object(def) => def.name.borrow(),
+            TypeDefinition::Interface(def) => def.name.borrow(),
+            TypeDefinition::Union(def) => def.name.borrow(),
+            TypeDefinition::Enum(def) => def.name.borrow(),
+            TypeDefinition::InputObject(def) => def.name.borrow(),
         }
     }
     /// Get description of this type.
-    fn description(&self) -> Option<&str> {
+    pub fn description(&self) -> Option<&str> {
         match self {
-            TypeDefinition::Scalar(def) => {
-                def.description.as_ref().map(|opt| opt.as_ref().borrow())
-            }
-            TypeDefinition::Object(def) => {
-                def.description.as_ref().map(|opt| opt.as_ref().borrow())
-            }
-            TypeDefinition::Interface(def) => {
-                def.description.as_ref().map(|opt| opt.as_ref().borrow())
-            }
-            TypeDefinition::Union(def) => def.description.as_ref().map(|opt| opt.as_ref().borrow()),
-            TypeDefinition::Enum(def) => def.description.as_ref().map(|opt| opt.as_ref().borrow()),
-            TypeDefinition::InputObject(def) => {
-                def.description.as_ref().map(|opt| opt.as_ref().borrow())
-            }
+            TypeDefinition::Scalar(def) => def.description.as_ref().map(|opt| opt.borrow()),
+            TypeDefinition::Object(def) => def.description.as_ref().map(|opt| opt.borrow()),
+            TypeDefinition::Interface(def) => def.description.as_ref().map(|opt| opt.borrow()),
+            TypeDefinition::Union(def) => def.description.as_ref().map(|opt| opt.borrow()),
+            TypeDefinition::Enum(def) => def.description.as_ref().map(|opt| opt.borrow()),
+            TypeDefinition::InputObject(def) => def.description.as_ref().map(|opt| opt.borrow()),
+        }
+    }
+
+    /// Returns Some if self is an output object type.
+    pub fn as_object(&self) -> Option<&ObjectDefinition<Str, OriginalNode>> {
+        match self {
+            TypeDefinition::Object(ref def) => Some(def),
+            _ => None,
         }
     }
 }

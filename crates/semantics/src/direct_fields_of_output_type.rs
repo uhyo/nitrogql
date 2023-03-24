@@ -1,32 +1,20 @@
-use nitrogql_ast::{
-    base::{Ident, Pos},
-    r#type::{NamedType, NonNullType, Type},
-    type_system::{FieldDefinition, TypeDefinition},
-};
+use graphql_type_system::{Field, NamedType, Node, NonNullType, Type, TypeDefinition};
+use nitrogql_ast::base::Pos;
 use once_cell::sync::Lazy;
 
-static TYPENAME_META_FIELD: Lazy<FieldDefinition<'static>> = Lazy::new(|| FieldDefinition {
+static TYPENAME_META_FIELD: Lazy<Field<&'static str, Pos>> = Lazy::new(|| Field {
     description: None,
-    name: Ident {
-        name: "__typename",
-        position: Pos::builtin(),
-    },
-    arguments: None,
-    r#type: Type::NonNull(Box::new(NonNullType {
-        r#type: Type::Named(NamedType {
-            name: Ident {
-                name: "String",
-                position: Pos::builtin(),
-            },
-        }),
-    })),
-    directives: vec![],
+    name: Node::from("__typename", Pos::builtin()),
+    arguments: vec![],
+    r#type: Type::NonNull(Box::new(NonNullType::from(Type::Named(NamedType::from(
+        Node::from("String", Pos::builtin()),
+    ))))),
 });
 
 pub fn direct_fields_of_output_type<'a, 'src>(
-    ty: &'a TypeDefinition<'src>,
-) -> Option<Vec<&'a FieldDefinition<'src>>> {
-    let meta_field: &FieldDefinition = &TYPENAME_META_FIELD;
+    ty: &'a TypeDefinition<&'src str, Pos>,
+) -> Option<Vec<&'a Field<&'src str, Pos>>> {
+    let meta_field: &Field<&str, Pos> = &TYPENAME_META_FIELD;
     match ty {
         TypeDefinition::Object(obj) => Some(obj.fields.iter().chain(vec![meta_field]).collect()),
         TypeDefinition::Interface(obj) => Some(obj.fields.iter().chain(vec![meta_field]).collect()),

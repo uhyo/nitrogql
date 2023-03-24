@@ -1,11 +1,11 @@
-use graphql_type_system::{Schema, RootTypes};
+use graphql_type_system::{Schema, RootTypes, OriginalNodeRef, TypeDefinition, Field};
 use nitrogql_ast::{
         base::{HasPos, Pos},
         operation::{
             ExecutableDefinition, FragmentDefinition, OperationDefinition, OperationType, OperationDocument,
         },
-        selection_set::{SelectionSet, Selection, Field, FragmentSpread, InlineFragment},
-        type_system::{FieldDefinition, TypeDefinition, TypeSystemDocument}, variable::VariablesDefinition,
+        selection_set::{SelectionSet, Selection, Field as SelectionField, FragmentSpread, InlineFragment},
+        variable::VariablesDefinition, TypeSystemDocument,
 };
 
 use self::{fragment_map::{generate_fragment_map, FragmentMap}, count_selection_set_fields::selection_set_has_more_than_one_fields};
@@ -114,7 +114,7 @@ fn check_operation(
         if !root_types.original_node_ref().builtin {
             // When RootTypes has a non-builtin Pos, there is an explicit schema definition.
             // This means that type for operation must also be declared explicitly.
-            let root_type_name = operation_type_from_root_types(root_types.as_ref(), op.operation_type);
+            let root_type_name = operation_type_from_root_types(root_types, op.operation_type);
             if root_type_name.is_none() {
                 result.push(
                     CheckErrorMessage::NoRootType {
@@ -128,7 +128,7 @@ fn check_operation(
                 return;
             }
         }
-        let root_types = root_types.as_ref().unwrap_or_default();
+        let root_types = root_types.unwrap_or_default();
         let root_type_name = operation_type_from_root_types(&root_types, op.operation_type);
 
         let Some(root_type) = definitions.get_type(root_type_name.as_ref()) else {
@@ -186,7 +186,7 @@ fn check_fragment_definition(
     op: &FragmentDefinition,
     result: &mut Vec<CheckError>,
 ) {
-    let target = definitions.types.get(op.type_condition.name);
+    let target = definitions.get_type(op.type_condition.name);
     let Some(target) = target else {
         result.push(
             CheckErrorMessage::UnknownType { name: op.type_condition.name.to_owned() }
@@ -203,7 +203,7 @@ fn check_fragment_definition(
             CheckErrorMessage::InvalidFragmentTarget { name: op.type_condition.name.to_owned() }
             .with_pos(op.type_condition.position)
             .with_additional_info(vec![
-                (*target.position(), CheckErrorMessage::DefinitionPos { name: target.name().name.to_owned() })
+                (*target.original_node_ref(), CheckErrorMessage::DefinitionPos { name: target.name().to_owned() })
             ])
         );
         return;
@@ -226,7 +226,7 @@ fn check_variables_definition(
         } else {
             seen_variables.push(v.name.name);
         }
-        let type_kind = inout_kind_of_type(definitions, &v.r#type);
+        let type_kind = inout_kind_of_type(definitions, &v.r#type.unwrapped_type().name.name);
         match type_kind {
             None => {
                 result.push(
@@ -251,7 +251,7 @@ fn check_selection_set(
     fragment_map: &FragmentMap,
     seen_fragments: &[&str],
     variables: Option<&VariablesDefinition>,
-    root_type: &TypeDefinition,
+    root_type: &TypeDefinition<&str, Pos>,
     selection_set: &SelectionSet,
     result: &mut Vec<CheckError>,
 ) {
@@ -265,7 +265,7 @@ fn check_selection_set(
             }
                 .with_pos(selection_set.position)
                 .with_additional_info(vec![
-                    (*root_type.position(), CheckErrorMessage::DefinitionPos { name: root_type_name.to_string()})
+                    (*root_type.original_node_ref(), CheckErrorMessage::DefinitionPos { name: root_type_name.to_string()})
                 ])
         );
         return;
@@ -279,8 +279,8 @@ fn check_selection_set(
                     fragment_map,
                     seen_fragments,
                     variables,
-                    *root_type.position(),
-                    root_type_name.name,
+                    *root_type.original_node_ref(),
+                    root_type_name,
                     &root_fields,
                     field_selection,
                     result,
@@ -304,19 +304,19 @@ fn check_selection_field(
     variables: Option<&VariablesDefinition>,
     root_type_pos: Pos,
     root_type_name: &str,
-    root_fields: &[&FieldDefinition],
-    field_selection: &Field,
+    root_fields: &[&Field<&str, Pos>],
+    field_selection: &SelectionField,
     result: &mut Vec<CheckError>
 ) {
     let target_field = root_fields.iter().find(|field| {
-        field.name.name == field_selection.name.name
+        field.name == field_selection.name.name
     });
     let Some(target_field) = target_field else {
         result.push(
             CheckErrorMessage::FieldNotFound { field_name: 
                 field_selection.name.to_string(),
                     type_name: root_type_name.to_owned(),
-                }.with_pos(field_selection.name.position)
+                }.with_pos(*field_selection.name.position())
                 .with_additional_info(vec![
                 (root_type_pos, CheckErrorMessage::DefinitionPos {
                     name: root_type_name.to_owned()
@@ -337,8 +337,8 @@ fn check_selection_field(
         target_field.arguments.as_ref(),
         result,
     );
-        let Some(target_field_type) = definitions.types.get(
-            target_field.r#type.unwrapped_type().name.name
+        let Some(target_field_type) = definitions.get_type(
+            target_field.r#type.unwrapped().as_ref()
         ) else {
             result.push(CheckErrorMessage::TypeSystemError.with_pos(field_selection.name.position));
             return;
@@ -361,7 +361,7 @@ fn check_fragment_spread(
     fragment_map: &FragmentMap,
     seen_fragments: &[&str],
     variables: Option<&VariablesDefinition>,
-    root_type: &TypeDefinition,
+    root_type: &TypeDefinition<&str, Pos>,
     fragment_spread: &FragmentSpread,
     result: &mut Vec<CheckError>
 ) {
@@ -382,7 +382,7 @@ fn check_fragment_spread(
         );
         return;
     };
-    let Some(fragment_condition) = definitions.types.get(target.type_condition.name) else {
+    let Some(fragment_condition) = definitions.get_type(target.type_condition.name) else {
         // This should be checked elsewhere
         return;
     };
@@ -404,7 +404,7 @@ fn check_inline_fragment(
     fragment_map: &FragmentMap,
     seen_fragments: &[&str],
     variables: Option<&VariablesDefinition>,
-    root_type: &TypeDefinition,
+    root_type: &TypeDefinition<&str, Pos>,
     inline_fragment: &InlineFragment,
     result: &mut Vec<CheckError>
 ) {
@@ -413,7 +413,7 @@ fn check_inline_fragment(
             check_selection_set(definitions, fragment_map, seen_fragments, variables, root_type, &inline_fragment.selection_set, result);
         }
         Some(ref type_cond) => {
-            let Some(type_cond_definition) = definitions.types.get(type_cond.name) else {
+            let Some(type_cond_definition) = definitions.get_type(type_cond.name) else {
                 result.push(
                     CheckErrorMessage::UnknownType { name: type_cond.name.to_owned() }
                     .with_pos(type_cond.position)
@@ -440,9 +440,9 @@ fn check_fragment_spread_core(
     fragment_map: &FragmentMap,
     seen_fragments: &[&str],
     variables: Option<&VariablesDefinition>,
-    root_type: &TypeDefinition,
+    root_type: &TypeDefinition<&str, Pos>,
     spread_pos: Pos,
-    fragment_condition: &TypeDefinition,
+    fragment_condition: &TypeDefinition<&str, Pos>,
     fragment_selection_set: &SelectionSet,
     result: &mut Vec<CheckError>
 ) {
@@ -452,7 +452,7 @@ fn check_fragment_spread_core(
             return
         }
         (TypeDefinition::Object(obj_definition), TypeDefinition::Object(cond_obj_definition)) => {
-            if obj_definition.name.name != cond_obj_definition.name.name {
+            if obj_definition.name != cond_obj_definition.name {
                 result.push(
                     CheckErrorMessage::FragmentConditionNeverMatches { condition: cond_obj_definition.name.to_string(), scope: 
                         obj_definition.name.to_string()
@@ -460,11 +460,11 @@ fn check_fragment_spread_core(
                         .with_pos(spread_pos)
                         .with_additional_info(vec![
                         (
-                            cond_obj_definition.position,
+                            *root_type.original_node_ref(),
                             CheckErrorMessage::DefinitionPos { name: cond_obj_definition.name.to_string() }
                         ),
                         (
-                            obj_definition.position,
+                            *fragment_condition.original_node_ref(),
                             CheckErrorMessage::DefinitionPos { name: obj_definition.name.to_string() }
                         ),
                         ])
@@ -473,7 +473,7 @@ fn check_fragment_spread_core(
         }
         (TypeDefinition::Object(obj_definition), TypeDefinition::Interface(intf_definition)) |
         (TypeDefinition::Interface(intf_definition), TypeDefinition::Object(obj_definition)) => {
-            let obj_implements_intf = obj_definition.implements.iter().find(|im| im.name == intf_definition.name.name);
+            let obj_implements_intf = obj_definition.interfaces.iter().find(|im| **im == intf_definition.name);
             if obj_implements_intf.is_none() {
                 result.push(
                     CheckErrorMessage::FragmentConditionNeverMatches { condition: intf_definition.name.to_string(), scope: 
@@ -482,11 +482,11 @@ fn check_fragment_spread_core(
                         .with_pos(spread_pos)
                         .with_additional_info(vec![
                         (
-                            intf_definition.position,
+                            *root_type.original_node_ref(),
                             CheckErrorMessage::DefinitionPos { name: intf_definition.name.to_string() }
                         ),
                         (
-                            obj_definition.position,
+                            *fragment_condition.original_node_ref(),
                             CheckErrorMessage::DefinitionPos { name: obj_definition.name.to_string() }
                         ),
                         ])
@@ -495,7 +495,7 @@ fn check_fragment_spread_core(
         }
         (TypeDefinition::Object(obj_definition), TypeDefinition::Union(cond_union_definition)) |
         (TypeDefinition::Union(cond_union_definition), TypeDefinition::Object(obj_definition)) => {
-            let obj_in_union = cond_union_definition.members.iter().find(|mem| mem.name == obj_definition.name.name);
+            let obj_in_union = cond_union_definition.possible_types.iter().find(|mem| **mem == obj_definition.name);
             if obj_in_union.is_none() {
                 result.push(
                     CheckErrorMessage::FragmentConditionNeverMatches { condition: cond_union_definition.name.to_string(), scope: 
@@ -504,11 +504,11 @@ fn check_fragment_spread_core(
                         .with_pos(spread_pos)
                         .with_additional_info(vec![
                         (
-                            cond_union_definition.position,
+                            *root_type.original_node_ref(),
                             CheckErrorMessage::DefinitionPos { name: cond_union_definition.name.to_string() }
                         ),
                         (
-                            obj_definition.position,
+                            *fragment_condition.original_node_ref(),
                             CheckErrorMessage::DefinitionPos { name: obj_definition.name.to_string() }
                         ),
                         ])
@@ -516,18 +516,18 @@ fn check_fragment_spread_core(
             }
         }
         (TypeDefinition::Interface(interface_definition1), TypeDefinition::Interface(interface_definition2)) => {
-            if interface_definition1.name.name == interface_definition2.name.name {
+            if interface_definition1.name == interface_definition2.name {
                 // fast path
                 return
             }
             // When matching interfaces, we have to look for concrete types that implement both interfaces 
-            let any_obj_implements_both_type = definitions.types.iter().any(|(_, type_def)| {
-                match type_def {
-                    TypeDefinition::Object(obj_def) => {
-                        obj_def.implements.iter().any(|imp| imp.name == interface_definition1.name.name) &&
-                        obj_def.implements.iter().any(|imp| imp.name == interface_definition2.name.name)
+            let any_obj_implements_both_type = definitions.iter_types().any(|(_, type_def)| {
+                match type_def.as_object() {
+                    Some(obj_def) => {
+                        obj_def.interfaces.iter().any(|imp| *imp == interface_definition1.name) &&
+                        obj_def.interfaces.iter().any(|imp| *imp == interface_definition2.name)
                     }
-                    _ => false
+                    None => false
                 }
             });
             if !any_obj_implements_both_type {
@@ -539,11 +539,11 @@ fn check_fragment_spread_core(
                         .with_pos(spread_pos)
                         .with_additional_info(vec![
                         (
-                            interface_definition2.position,
+                            *root_type.original_node_ref(),
                             CheckErrorMessage::DefinitionPos { name: interface_definition2.name.to_string() }
                         ),
                         (
-                            interface_definition1.position,
+                            *fragment_condition.original_node_ref(),
                             CheckErrorMessage::DefinitionPos { name: interface_definition1.name.to_string() }
                         ),
                     ])
@@ -552,17 +552,17 @@ fn check_fragment_spread_core(
         }
         (TypeDefinition::Interface(interface_definition), TypeDefinition::Union(union_definition)) |
         (TypeDefinition::Union(union_definition), TypeDefinition::Interface(interface_definition)) => {
-            let some_member_implements_interface = union_definition.members.iter().any(|mem| {
-                let mem_def = definitions.types.get(mem.name);
+            let some_member_implements_interface = union_definition.possible_types.iter().any(|mem| {
+                let mem_def = definitions.get_type(&mem).and_then(|ty| ty.as_object());
                 match mem_def {
-                    Some(TypeDefinition::Object(mem_def)) => {
-                        mem_def.implements.iter().any(|imp| {
-                            imp.name == interface_definition.name.name
+                    Some(mem_def) => {
+                        mem_def.interfaces.iter().any(|imp| {
+                            *imp == interface_definition.name
                         })
                     }
                     _ => {
                         result.push(
-                            CheckErrorMessage::TypeSystemError.with_pos(mem.position)
+                            CheckErrorMessage::TypeSystemError.with_pos(*mem.original_node_ref())
                         );
                         true
                     }
@@ -577,11 +577,11 @@ fn check_fragment_spread_core(
                         .with_pos(spread_pos)
                         .with_additional_info(vec![
                         (
-                            interface_definition.position,
+                            *root_type.original_node_ref(),
                             CheckErrorMessage::DefinitionPos { name: interface_definition.name.to_string() }
                         ),
                         (
-                            union_definition.position,
+                            *fragment_condition.original_node_ref(),
                             CheckErrorMessage::DefinitionPos { name: union_definition.name.to_string() }
                         ),
                     ])
@@ -589,8 +589,8 @@ fn check_fragment_spread_core(
             }
         }
         (TypeDefinition::Union(union_definition1), TypeDefinition::Union(union_definition2)) => {
-            let there_is_overlapping_member = union_definition2.members.iter().any(|mem2| {
-                union_definition1.members.iter().any(|mem1| mem1.name == mem2.name)
+            let there_is_overlapping_member = union_definition2.possible_types.iter().any(|mem2| {
+                union_definition1.possible_types.iter().any(|mem1| mem1 == mem2)
             });
             if !there_is_overlapping_member {
                 result.push(
@@ -601,11 +601,11 @@ fn check_fragment_spread_core(
                         .with_pos(spread_pos)
                         .with_additional_info(vec![
                         (
-                            union_definition2.position,
+                            *root_type.original_node_ref(),
                             CheckErrorMessage::DefinitionPos { name: union_definition1.name.to_string() }
                         ),
                         (
-                            union_definition1.position,
+                            *fragment_condition.original_node_ref(),
                             CheckErrorMessage::DefinitionPos { name: union_definition2.name.to_string() }
                         ),
                     ])
@@ -617,7 +617,7 @@ fn check_fragment_spread_core(
     check_selection_set(definitions, fragment_map, seen_fragments, variables, fragment_condition, fragment_selection_set, result);
 }
 
-fn kind_of_type_definition(definition: &TypeDefinition) -> TypeKind {
+fn kind_of_type_definition(definition: &TypeDefinition<&str, Pos>) -> TypeKind {
     match definition {
         TypeDefinition::Scalar(_) => TypeKind::Scalar,
         TypeDefinition::Object(_) => TypeKind::Object,

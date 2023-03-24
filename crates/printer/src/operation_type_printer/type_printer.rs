@@ -4,16 +4,15 @@ use crate::{
     ts_types::{ts_types_util::ts_union, type_to_ts_type::get_ts_type_of_type},
     utils::interface_implementers,
 };
+use graphql_type_system::{NamedType, ObjectDefinition, Schema, Type, TypeDefinition};
 use nitrogql_ast::{
+    base::Pos,
     operation::{FragmentDefinition, OperationDocument},
-    r#type::{NamedType, Type},
     selection_set::{Selection, SelectionSet},
-    type_system::{ObjectTypeDefinition, TypeDefinition},
     value::StringValue,
     variable::VariablesDefinition,
-    TypeSystemDocument,
 };
-use nitrogql_semantics::{direct_fields_of_output_type, DefinitionMap};
+use nitrogql_semantics::direct_fields_of_output_type;
 use sourcemap_writer::SourceMapWriter;
 
 use super::{
@@ -23,9 +22,8 @@ use super::{
 
 pub struct QueryTypePrinterContext<'a, 'src> {
     pub options: &'a OperationTypePrinterOptions,
-    pub schema: &'a TypeSystemDocument<'src>,
+    pub schema: &'a Schema<&'src str, Pos>,
     pub operation: &'a OperationDocument<'src>,
-    pub schema_definitions: &'a DefinitionMap<'src>,
     pub fragment_definitions: &'a HashMap<&'src str, &'a FragmentDefinition<'src>>,
 }
 
@@ -36,12 +34,11 @@ pub trait TypePrinter {
 pub fn get_type_for_selection_set(
     context: &QueryTypePrinterContext,
     selection_set: &SelectionSet,
-    parent_type: &NamedType,
+    parent_type: &NamedType<&str, Pos>,
 ) -> TSType {
     let parent_type_def = context
-        .schema_definitions
-        .types
-        .get(parent_type.name.name)
+        .schema
+        .get_type(&parent_type)
         .expect("Type system error");
     match parent_type_def {
         TypeDefinition::Scalar(_) | TypeDefinition::Enum(_) | TypeDefinition::InputObject(_) => {
@@ -51,7 +48,7 @@ pub fn get_type_for_selection_set(
             get_object_type_for_selection_set(context, selection_set, obj_def)
         }
         TypeDefinition::Interface(interface_def) => {
-            let object_defs = interface_implementers(context.schema, interface_def.name.name);
+            let object_defs = interface_implementers(context.schema, &interface_def.name);
             ts_union(
                 object_defs.map(|obj_def| {
                     get_object_type_for_selection_set(context, selection_set, obj_def)
@@ -59,8 +56,8 @@ pub fn get_type_for_selection_set(
             )
         }
         TypeDefinition::Union(union_def) => {
-            let object_defs = union_def.members.iter().map(|member| {
-                match context.schema_definitions.types.get(member.name) {
+            let object_defs = union_def.possible_types.iter().map(|member| {
+                match context.schema.get_type(member) {
                     Some(TypeDefinition::Object(obj_def)) => obj_def,
                     _ => panic!("Type system error"),
                 }
@@ -77,7 +74,7 @@ pub fn get_type_for_selection_set(
 fn get_object_type_for_selection_set(
     context: &QueryTypePrinterContext,
     selection_set: &SelectionSet,
-    parent_type: &ObjectTypeDefinition,
+    parent_type: &ObjectDefinition<&str, Pos>,
 ) -> TSType {
     let actual = TSType::object(get_fields_for_selection_set(
         context,
@@ -101,12 +98,11 @@ fn get_object_type_for_selection_set(
 fn get_fields_for_selection_set<'a>(
     context: &'a QueryTypePrinterContext,
     selection_set: &'a SelectionSet,
-    parent_type: &'a ObjectTypeDefinition,
+    parent_type: &'a ObjectDefinition<&str, Pos>,
 ) -> impl Iterator<Item = (&'a str, TSType, Option<StringValue>)> + 'a {
     let parent_type_def = context
-        .schema_definitions
-        .types
-        .get(parent_type.name.name)
+        .schema
+        .get_type(&parent_type.name)
         .expect("Type system error");
 
     let parent_fields = direct_fields_of_output_type(parent_type_def).expect("Type system error");
@@ -129,14 +125,14 @@ fn get_fields_for_selection_set<'a>(
 
                     let field_def = parent_fields
                         .iter()
-                        .find(|parent_field| parent_field.name.name == field.name.name)
+                        .find(|parent_field| parent_field.name == field.name.name)
                         .expect("Type system error");
 
                     let field_sel_type =
                         map_to_tstype(&field_def.r#type, |ty| match field.selection_set {
                             None => TSType::NamespaceMember(
                                 context.options.schema_root_namespace.clone(),
-                                ty.name.to_string(),
+                                ty.to_string(),
                             ),
                             Some(ref set) => get_type_for_selection_set(context, set, ty),
                         });
@@ -182,24 +178,20 @@ fn get_fields_for_selection_set<'a>(
 /// Returns whether given object type implements given condition.
 fn check_fragment_condition(
     context: &QueryTypePrinterContext,
-    object_def: &ObjectTypeDefinition,
+    object_def: &ObjectDefinition<&str, Pos>,
     cond: &str,
 ) -> bool {
-    let cond_type = context
-        .schema_definitions
-        .types
-        .get(cond)
-        .expect("Type system error");
+    let cond_type = context.schema.get_type(cond).expect("Type system error");
     match cond_type {
-        TypeDefinition::Object(obj) => object_def.name.name == obj.name.name,
+        TypeDefinition::Object(obj) => object_def.name == obj.name,
         TypeDefinition::Interface(interface) => object_def
-            .implements
+            .interfaces
             .iter()
-            .any(|imp| imp.name == interface.name.name),
+            .any(|imp| *imp == interface.name),
         TypeDefinition::Union(union) => union
-            .members
+            .possible_types
             .iter()
-            .any(|mem| mem.name == object_def.name.name),
+            .any(|mem| *mem == object_def.name),
         TypeDefinition::Scalar(_) | TypeDefinition::Enum(_) | TypeDefinition::InputObject(_) => {
             false
         }
@@ -225,7 +217,10 @@ pub fn get_type_for_variable_definitions(definitions: &VariablesDefinition) -> T
 }
 
 /// Map given Type to TSType.
-fn map_to_tstype(ty: &Type, mapper: impl FnOnce(&NamedType) -> TSType) -> TSType {
+fn map_to_tstype<Str, OriginalNode>(
+    ty: &Type<Str, OriginalNode>,
+    mapper: impl FnOnce(&NamedType<Str, OriginalNode>) -> TSType,
+) -> TSType {
     let (res, nullable) = map_to_tstype_impl(ty, mapper);
     if nullable {
         ts_union(vec![res, TSType::Null])
@@ -234,15 +229,15 @@ fn map_to_tstype(ty: &Type, mapper: impl FnOnce(&NamedType) -> TSType) -> TSType
     }
 }
 
-fn map_to_tstype_impl(ty: &Type, mapper: impl FnOnce(&NamedType) -> TSType) -> (TSType, bool) {
+fn map_to_tstype_impl<Str, OriginalNode>(
+    ty: &Type<Str, OriginalNode>,
+    mapper: impl FnOnce(&NamedType<Str, OriginalNode>) -> TSType,
+) -> (TSType, bool) {
     match ty {
         Type::Named(name) => (mapper(name), true),
-        Type::List(inner) => (
-            TSType::Array(Box::new(map_to_tstype(&inner.r#type, mapper))),
-            true,
-        ),
+        Type::List(inner) => (TSType::Array(Box::new(map_to_tstype(&inner, mapper))), true),
         Type::NonNull(inner) => {
-            let (inner_ty, _) = map_to_tstype_impl(&inner.r#type, mapper);
+            let (inner_ty, _) = map_to_tstype_impl(&inner, mapper);
             (inner_ty, false)
         }
     }

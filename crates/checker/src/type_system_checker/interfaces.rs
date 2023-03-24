@@ -1,5 +1,5 @@
 use nitrogql_ast::{type_system::{InterfaceTypeDefinition, FieldDefinition}, base::Ident};
-use nitrogql_semantics::DefinitionMap;
+use nitrogql_semantics::{DefinitionMap, type_system_utils::convert_type};
 use crate::{error::CheckError, types::is_subtype};
 
 use super::CheckErrorMessage;
@@ -71,7 +71,7 @@ pub fn check_valid_implementation(
             }
         }
         // field must return a type which is equal to or a sub-type of (covariant) the return type of implementedField field’s return type:
-        if is_subtype(definitions, &field.r#type, &imp_field.r#type) == Some(false) {
+        if is_subtype(&definitions.type_system, &convert_type(&field.r#type), &convert_type(&imp_field.r#type)) == Some(false) {
             result.push(CheckErrorMessage::FieldTypeMisMatchWithInterface {
                 interface_name: interface.name.to_string(),
             }.with_pos(field.name.position));

@@ -31,7 +31,7 @@ pub fn check_directives(
                 if def
                     .locations
                     .iter()
-                    .find(|loc| *loc.as_ref() == current_position)
+                    .find(|loc| **loc == current_position)
                     .is_none()
                 {
                     result.push(
@@ -187,20 +187,14 @@ pub fn check_value(
                 Value::NullValue(_) => true,
                 Value::Variable(_) => unreachable!(),
                 value => {
-                    check_value(definitions, variables, value, (**inner).as_ref(), result);
+                    check_value(definitions, variables, value, inner, result);
                     false
                 }
             },
             Type::List(expected_inner) => match value {
                 Value::ListValue(inner) => {
                     for elem in inner.values.iter() {
-                        check_value(
-                            definitions,
-                            variables,
-                            elem,
-                            (**expected_inner).as_ref(),
-                            result,
-                        );
+                        check_value(definitions, variables, elem, expected_inner, result);
                     }
                     false
                 }
@@ -208,14 +202,14 @@ pub fn check_value(
                 _ => true,
             },
             Type::Named(expected_name) => {
-                let Some(type_def) = definitions.get_type(expected_name.as_ref().as_ref()) else {
+                let Some(type_def) = definitions.get_type(expected_name) else {
                     // unknown type name
                     result.push(
                         CheckErrorMessage::TypeSystemError
-                        .with_pos(*expected_name.as_ref().original_node_ref())
+                        .with_pos(*expected_name.original_node_ref())
                         .with_additional_info(vec![(
-                            *expected_name.as_ref().original_node_ref(),
-                            CheckErrorMessage::UnknownType { name: expected_name.as_ref().to_string() }
+                            *expected_name.original_node_ref(),
+                            CheckErrorMessage::UnknownType { name: expected_name.to_string() }
                         )])
                     );
                     return;
@@ -250,7 +244,7 @@ fn is_value_compatible_type_def(
         TypeDefinition::Scalar(scalar_def) => {
             // TODO: better handling of scalar, including custom scalars
             (
-                match *scalar_def.name.as_ref() {
+                match *scalar_def.name {
                     "Boolean" => matches!(value, Value::BooleanValue(_) | Value::NullValue(_)),
                     "Int" => matches!(value, Value::IntValue(_) | Value::NullValue(_)),
                     "Float" => matches!(value, Value::FloatValue(_) | Value::NullValue(_)),
@@ -370,25 +364,19 @@ fn check_type_compatibility(
 ) -> bool {
     // https://spec.graphql.org/draft/#AreTypesCompatible()
     match (expected_type, value_type) {
-        (Type::NonNull(expected_inner), Type::NonNull(value_inner)) => check_type_compatibility(
-            definitions,
-            (**value_inner).as_ref(),
-            (**expected_inner).as_ref(),
-        ),
+        (Type::NonNull(expected_inner), Type::NonNull(value_inner)) => {
+            check_type_compatibility(definitions, value_inner, expected_inner)
+        }
         (_, Type::NonNull(value_inner)) => {
-            check_type_compatibility(definitions, (**value_inner).as_ref(), expected_type)
+            check_type_compatibility(definitions, value_inner, expected_type)
         }
         (Type::NonNull(_), _) => false,
-        (Type::List(expected_inner), Type::List(value_inner)) => check_type_compatibility(
-            definitions,
-            (**value_inner).as_ref(),
-            (**expected_inner).as_ref(),
-        ),
+        (Type::List(expected_inner), Type::List(value_inner)) => {
+            check_type_compatibility(definitions, value_inner, expected_inner)
+        }
         (Type::List(_), _) => false,
         (_, Type::List(_)) => false,
-        (Type::Named(expected_name), Type::Named(value_inner)) => {
-            expected_name.as_ref() == value_inner.as_ref().as_ref()
-        }
+        (Type::Named(expected_name), Type::Named(value_inner)) => **expected_name == **value_inner,
     }
 }
 

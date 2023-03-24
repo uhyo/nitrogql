@@ -1,19 +1,13 @@
-use nitrogql_ast::type_system::{
-    ObjectTypeDefinition, TypeDefinition, TypeSystemDefinition, TypeSystemDocument,
-};
+use graphql_type_system::{ObjectDefinition, Schema};
 
 /// Returns an iterator over possible object types that implements given interface.
-pub fn interface_implementers<'a>(
-    schema: &'a TypeSystemDocument<'a>,
+pub fn interface_implementers<'a, OriginalNode>(
+    schema: &'a Schema<&'a str, OriginalNode>,
     interface_name: &'a str,
-) -> impl Iterator<Item = &'a ObjectTypeDefinition<'a>> + 'a {
-    schema.definitions.iter().filter_map(move |def| {
-        if let TypeSystemDefinition::TypeDefinition(TypeDefinition::Object(ref obj_def)) = def {
-            if obj_def
-                .implements
-                .iter()
-                .any(|imp| imp.name == interface_name)
-            {
+) -> impl Iterator<Item = &'a ObjectDefinition<&'a str, OriginalNode>> + 'a {
+    schema.iter_types().filter_map(move |(_, def)| {
+        if let Some(obj_def) = def.as_object() {
+            if obj_def.interfaces.iter().any(|imp| *imp == interface_name) {
                 Some(obj_def)
             } else {
                 None

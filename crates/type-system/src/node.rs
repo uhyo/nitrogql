@@ -1,4 +1,7 @@
-use std::fmt::Display;
+use std::{
+    fmt::Display,
+    ops::{Deref, DerefMut},
+};
 
 /// Object that might be associated with an original node.
 #[derive(Copy, Clone, Debug, Default)]
@@ -25,14 +28,15 @@ impl<T, OriginalNode> Node<T, OriginalNode> {
     }
 }
 
-impl<T, OriginalNode> AsRef<T> for Node<T, OriginalNode> {
-    fn as_ref(&self) -> &T {
+impl<T, OriginalNode> Deref for Node<T, OriginalNode> {
+    type Target = T;
+    fn deref(&self) -> &Self::Target {
         &self.inner
     }
 }
 
-impl<T, OriginalNode> AsMut<T> for Node<T, OriginalNode> {
-    fn as_mut(&mut self) -> &mut T {
+impl<T, OriginalNode> DerefMut for Node<T, OriginalNode> {
+    fn deref_mut(&mut self) -> &mut Self::Target {
         &mut self.inner
     }
 }
@@ -46,6 +50,15 @@ impl<T: Display, OriginalNode> Display for Node<T, OriginalNode> {
 impl<T: PartialEq, OriginalNode> PartialEq<T> for Node<T, OriginalNode> {
     fn eq(&self, other: &T) -> bool {
         self.inner == *other
+    }
+}
+
+// Note: equality between Node does not take OriginalNode in consideration.
+impl<T: PartialEq, OriginalNode, OriginalNode2> PartialEq<Node<T, OriginalNode2>>
+    for Node<T, OriginalNode>
+{
+    fn eq(&self, other: &Node<T, OriginalNode2>) -> bool {
+        self.inner == other.inner
     }
 }
 

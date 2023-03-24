@@ -1,4 +1,5 @@
-use nitrogql_ast::{r#type::Type, type_system::TypeDefinition};
+use graphql_type_system::{Schema, Type, TypeDefinition};
+use nitrogql_ast::base::Pos;
 
 use nitrogql_semantics::DefinitionMap;
 
@@ -25,9 +26,11 @@ impl TypeInOutKind {
 }
 
 /// classifies given type into output, input or both.
-pub fn inout_kind_of_type(definitions: &DefinitionMap, ty: &Type) -> Option<TypeInOutKind> {
-    let ty = ty.unwrapped_type();
-    let ty_def = definitions.types.get(ty.name.name);
+pub fn inout_kind_of_type(
+    definitions: &Schema<&str, Pos>,
+    type_name: &str,
+) -> Option<TypeInOutKind> {
+    let ty_def = definitions.get_type(type_name);
     ty_def.map(|def| match def {
         TypeDefinition::Scalar(_) => TypeInOutKind::Both,
         TypeDefinition::Object(_) => TypeInOutKind::Output,
@@ -40,37 +43,40 @@ pub fn inout_kind_of_type(definitions: &DefinitionMap, ty: &Type) -> Option<Type
 
 /// Checks if target type is a subtype of other type.
 /// Returns None if unknown.
-pub fn is_subtype(definitions: &DefinitionMap, target: &Type, other: &Type) -> Option<bool> {
+pub fn is_subtype(
+    definitions: &Schema<&str, Pos>,
+    target: &Type<&str, Pos>,
+    other: &Type<&str, Pos>,
+) -> Option<bool> {
     match target {
         Type::NonNull(target_inner) => {
             let other = if let Type::NonNull(other_inner) = other {
-                &other_inner.r#type
+                other_inner.as_inner()
             } else {
                 other
             };
-            return is_subtype(definitions, &target_inner.r#type, other);
+            return is_subtype(definitions, target_inner.as_inner(), other);
         }
         Type::List(target_inner) => {
             if let Type::List(other_inner) = other {
-                return is_subtype(definitions, &target_inner.r#type, &other_inner.r#type);
+                return is_subtype(definitions, target_inner.as_inner(), other_inner.as_inner());
             } else {
                 return Some(false);
             };
         }
         Type::Named(target_name) => {
             let other_name = if let Type::Named(other_name) = other {
-                if target_name.name.name == other_name.name.name {
+                if **target_name == **other_name {
                     return Some(true);
                 }
                 Some(other_name)
             } else {
                 None
             };
-            let Some(target_def) = definitions.types.get(target_name.name.name) else {
+            let Some(target_def) = definitions.get_type(&target_name) else {
                 return None;
             };
-            let other_def =
-                other_name.and_then(|other_name| definitions.types.get(other_name.name.name));
+            let other_def = other_name.and_then(|other_name| definitions.get_type(&other_name));
             match target_def {
                 TypeDefinition::Scalar(_)
                 | TypeDefinition::Enum(_)
@@ -81,12 +87,8 @@ pub fn is_subtype(definitions: &DefinitionMap, target: &Type, other: &Type) -> O
                 }
                 TypeDefinition::Interface(target_def) => {
                     // Interface type is considered a subtype of another when it explicitly implements the other
-                    if let Some(ref other_name) = other_name {
-                        if target_def
-                            .implements
-                            .iter()
-                            .any(|imp| imp.name == other_name.name.name)
-                        {
+                    if let Some(other_name) = other_name {
+                        if target_def.interfaces.iter().any(|imp| imp == &**other_name) {
                             return Some(true);
                         } else {
                             if other_def.is_some() {
@@ -100,12 +102,8 @@ pub fn is_subtype(definitions: &DefinitionMap, target: &Type, other: &Type) -> O
                     }
                 }
                 TypeDefinition::Object(target_def) => {
-                    if let Some(ref other_name) = other_name {
-                        if target_def
-                            .implements
-                            .iter()
-                            .any(|imp| imp.name == other_name.name.name)
-                        {
+                    if let Some(other_name) = other_name {
+                        if target_def.interfaces.iter().any(|imp| imp == &**other_name) {
                             return Some(true);
                         }
                     } else {
@@ -113,9 +111,9 @@ pub fn is_subtype(definitions: &DefinitionMap, target: &Type, other: &Type) -> O
                     }
                     if let Some(TypeDefinition::Union(ref other_def)) = other_def {
                         if other_def
-                            .members
+                            .possible_types
                             .iter()
-                            .any(|mem| mem.name == target_name.name.name)
+                            .any(|mem| mem == &**target_name)
                         {
                             return Some(true);
                         }

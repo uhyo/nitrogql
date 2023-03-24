@@ -1,4 +1,4 @@
-use std::fmt::Display;
+use std::{fmt::Display, ops::Deref};
 
 use crate::node::Node;
 
@@ -14,6 +14,14 @@ impl<Str, OriginalNode> Type<Str, OriginalNode> {
     /// Returns whether this is a non-null type.
     pub fn is_nonnull(&self) -> bool {
         matches!(self, Type::NonNull(_))
+    }
+    /// Returns unwrapped type of this type.
+    pub fn unwrapped(&self) -> &NamedType<Str, OriginalNode> {
+        match self {
+            Type::Named(named) => named,
+            Type::List(inner) => inner.inner.unwrapped(),
+            Type::NonNull(inner) => inner.inner.unwrapped(),
+        }
     }
 }
 
@@ -32,8 +40,9 @@ pub struct NamedType<Str, OriginalNode> {
     name: Node<Str, OriginalNode>,
 }
 
-impl<Str, OriginalNode> AsRef<Node<Str, OriginalNode>> for NamedType<Str, OriginalNode> {
-    fn as_ref(&self) -> &Node<Str, OriginalNode> {
+impl<Str, OriginalNode> Deref for NamedType<Str, OriginalNode> {
+    type Target = Node<Str, OriginalNode>;
+    fn deref(&self) -> &Self::Target {
         &self.name
     }
 }
@@ -57,11 +66,16 @@ impl<Str, OriginalNode> ListType<Str, OriginalNode> {
     pub fn into_inner(self) -> Type<Str, OriginalNode> {
         self.inner
     }
+
+    pub fn as_inner(&self) -> &Type<Str, OriginalNode> {
+        &self.inner
+    }
 }
 
-impl<Str, OriginalNode> AsRef<Type<Str, OriginalNode>> for ListType<Str, OriginalNode> {
-    fn as_ref(&self) -> &Type<Str, OriginalNode> {
-        &self.inner
+impl<Str, OriginalNode> Deref for ListType<Str, OriginalNode> {
+    type Target = Type<Str, OriginalNode>;
+    fn deref(&self) -> &Self::Target {
+        self.as_inner()
     }
 }
 
@@ -78,10 +92,15 @@ impl<Str, OriginalNode> NonNullType<Str, OriginalNode> {
     pub fn into_inner(self) -> Type<Str, OriginalNode> {
         self.inner
     }
+
+    pub fn as_inner(&self) -> &Type<Str, OriginalNode> {
+        &self.inner
+    }
 }
 
-impl<Str, OriginalNode> AsRef<Type<Str, OriginalNode>> for NonNullType<Str, OriginalNode> {
-    fn as_ref(&self) -> &Type<Str, OriginalNode> {
-        &self.inner
+impl<Str, OriginalNode> Deref for NonNullType<Str, OriginalNode> {
+    type Target = Type<Str, OriginalNode>;
+    fn deref(&self) -> &Self::Target {
+        self.as_inner()
     }
 }

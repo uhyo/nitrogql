@@ -470,6 +470,7 @@ name = "nitrogql-printer"
 version = "0.1.0"
 dependencies = [
  "graphql-builtins",
+ "graphql-type-system",
  "insta",
  "json-writer",
  "nitrogql-ast",

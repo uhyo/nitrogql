@@ -27,9 +27,9 @@ impl<Str, OriginalNode: Default> SchemaBuilder<Str, OriginalNode> {
         match self.root_types {
             None => {
                 self.root_types = Some(Node::from(RootTypes::default(), node));
-                self.root_types.as_mut().unwrap().as_mut()
+                self.root_types.as_mut().unwrap()
             }
-            Some(ref mut root_types) => root_types.as_mut(),
+            Some(ref mut root_types) => root_types,
         }
     }
 }

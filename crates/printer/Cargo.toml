@@ -6,6 +6,7 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+graphql-type-system = { path = "../type-system" }
 json-writer = "0.2.1"
 nitrogql-ast = { path = "../ast" }
 nitrogql-checker = { path = "../checker" }
