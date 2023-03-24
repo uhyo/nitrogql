@@ -13,7 +13,8 @@ pub struct Schema<Str, OriginalNode> {
     /// Description of schema.
     pub(crate) description: Option<Node<Str, OriginalNode>>,
     /// Types in this schema.
-    pub(crate) type_definitions: HashMap<Str, TypeDefinition<Str, OriginalNode>>,
+    pub(crate) type_definitions:
+        HashMap<Str, Node<TypeDefinition<Str, OriginalNode>, OriginalNode>>,
     /// Directives in this schema.
     pub(crate) directive_definitions: HashMap<Str, DirectiveDefinition<Str, OriginalNode>>,
     /// Keeps insertion order for stable iteration order.
@@ -32,7 +33,10 @@ impl<Str, OriginalNode> Schema<Str, OriginalNode> {
 
 impl<'a, Str: Text<'a>, OriginalNode> Schema<Str, OriginalNode> {
     /// Queries a type by name.
-    pub fn get_type(&self, name: &str) -> Option<&TypeDefinition<Str, OriginalNode>> {
+    pub fn get_type(
+        &self,
+        name: &str,
+    ) -> Option<&Node<TypeDefinition<Str, OriginalNode>, OriginalNode>> {
         self.type_definitions.get(name)
     }
     /// Queries a directive by name.
@@ -43,7 +47,12 @@ impl<'a, Str: Text<'a>, OriginalNode> Schema<Str, OriginalNode> {
     /// Iterate over types.
     pub fn iter_types<'b: 'a>(
         &'b self,
-    ) -> impl Iterator<Item = (&'a Str, &'a TypeDefinition<Str, OriginalNode>)> {
+    ) -> impl Iterator<
+        Item = (
+            &'a Str,
+            &'a Node<TypeDefinition<Str, OriginalNode>, OriginalNode>,
+        ),
+    > {
         self.type_names.iter().filter_map(|type_name| {
             self.type_definitions
                 .get(type_name.borrow())

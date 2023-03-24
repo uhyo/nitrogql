@@ -39,70 +39,88 @@ pub fn ast_to_type_system<'a>(document: &'a TypeSystemDocument) -> Schema<&'a st
             TypeSystemDefinition::TypeDefinition(ref def) => match def {
                 AstTypeDefinition::Scalar(ref def) => builder.extend(vec![(
                     def.name.name,
-                    TypeDefinition::Scalar(ScalarDefinition {
-                        name: ident_to_node(&def.name),
-                        description: convert_description(&def.description),
-                    }),
+                    Node::from(
+                        TypeDefinition::Scalar(ScalarDefinition {
+                            name: ident_to_node(&def.name),
+                            description: convert_description(&def.description),
+                        }),
+                        def.position,
+                    ),
                 )]),
                 AstTypeDefinition::Object(ref def) => builder.extend(vec![(
                     def.name.name,
-                    TypeDefinition::Object(ObjectDefinition {
-                        name: ident_to_node(&def.name),
-                        description: convert_description(&def.description),
-                        fields: def.fields.iter().map(convert_field).collect(),
-                        interfaces: def.implements.iter().map(ident_to_node).collect(),
-                    }),
+                    Node::from(
+                        TypeDefinition::Object(ObjectDefinition {
+                            name: ident_to_node(&def.name),
+                            description: convert_description(&def.description),
+                            fields: def.fields.iter().map(convert_field).collect(),
+                            interfaces: def.implements.iter().map(ident_to_node).collect(),
+                        }),
+                        def.position,
+                    ),
                 )]),
                 AstTypeDefinition::Interface(ref def) => builder.extend(vec![(
                     def.name.name,
-                    TypeDefinition::Interface(InterfaceDefinition {
-                        name: ident_to_node(&def.name),
-                        description: convert_description(&def.description),
-                        fields: def.fields.iter().map(convert_field).collect(),
-                        interfaces: def.implements.iter().map(ident_to_node).collect(),
-                    }),
+                    Node::from(
+                        TypeDefinition::Interface(InterfaceDefinition {
+                            name: ident_to_node(&def.name),
+                            description: convert_description(&def.description),
+                            fields: def.fields.iter().map(convert_field).collect(),
+                            interfaces: def.implements.iter().map(ident_to_node).collect(),
+                        }),
+                        def.position,
+                    ),
                 )]),
                 AstTypeDefinition::Union(ref def) => builder.extend(vec![(
                     def.name.name,
-                    TypeDefinition::Union(UnionDefinition {
-                        name: ident_to_node(&def.name),
-                        description: convert_description(&def.description),
-                        possible_types: def.members.iter().map(ident_to_node).collect(),
-                    }),
+                    Node::from(
+                        TypeDefinition::Union(UnionDefinition {
+                            name: ident_to_node(&def.name),
+                            description: convert_description(&def.description),
+                            possible_types: def.members.iter().map(ident_to_node).collect(),
+                        }),
+                        def.position,
+                    ),
                 )]),
                 AstTypeDefinition::Enum(ref def) => builder.extend(vec![(
                     def.name.name,
-                    TypeDefinition::Enum(EnumDefinition {
-                        name: ident_to_node(&def.name),
-                        description: convert_description(&def.description),
-                        members: def
-                            .values
-                            .iter()
-                            .map(|mem| EnumMember {
-                                name: ident_to_node(&mem.name),
-                            })
-                            .collect(),
-                    }),
+                    Node::from(
+                        TypeDefinition::Enum(EnumDefinition {
+                            name: ident_to_node(&def.name),
+                            description: convert_description(&def.description),
+                            members: def
+                                .values
+                                .iter()
+                                .map(|mem| EnumMember {
+                                    name: ident_to_node(&mem.name),
+                                })
+                                .collect(),
+                        }),
+                        def.position,
+                    ),
                 )]),
                 AstTypeDefinition::InputObject(ref def) => builder.extend(vec![(
                     def.name.name,
-                    TypeDefinition::InputObject(InputObjectDefinition {
-                        name: ident_to_node(&def.name),
-                        description: convert_description(&def.description),
-                        fields: def
-                            .fields
-                            .iter()
-                            .map(|input| InputValue {
-                                name: ident_to_node(&input.name),
-                                description: convert_description(&input.description),
-                                r#type: convert_type(&input.r#type),
-                                default_value: input
-                                    .default_value
-                                    .as_ref()
-                                    .map(|value| Node::from((), *value.position())),
-                            })
-                            .collect(),
-                    }),
+                    Node::from(
+                        TypeDefinition::InputObject(InputObjectDefinition {
+                            name: ident_to_node(&def.name),
+                            description: convert_description(&def.description),
+                            fields: def
+                                .fields
+                                .iter()
+                                .map(|input| InputValue {
+                                    name: ident_to_node(&input.name),
+                                    description: convert_description(&input.description),
+                                    r#type: convert_type(&input.r#type),
+                                    default_value: input
+                                        .default_value
+                                        .as_ref()
+                                        .map(|value| Node::from((), *value.position())),
+                                })
+                                .collect(),
+                        }),
+                        def.position,
+                    ),
                 )]),
             },
             TypeSystemDefinition::DirectiveDefinition(ref def) => builder.extend(vec![(

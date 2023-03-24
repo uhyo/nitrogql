@@ -1,5 +1,5 @@
 ---
-source: checker/src/operation_checker/tests/mod.rs
+source: crates/checker/src/operation_checker/tests/mod.rs
 expression: "check_operation_document(&schema, &doc)"
 ---
 [
@@ -17,7 +17,7 @@ expression: "check_operation_document(&schema, &doc)"
         additional_info: [
             (
                 Pos {
-                    line: 24,
+                    line: 12,
                     column: 12,
                     file: 0,
                     builtin: false,
@@ -28,7 +28,7 @@ expression: "check_operation_document(&schema, &doc)"
             ),
             (
                 Pos {
-                    line: 12,
+                    line: 24,
                     column: 12,
                     file: 0,
                     builtin: false,

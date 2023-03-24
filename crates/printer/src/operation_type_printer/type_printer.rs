@@ -40,14 +40,14 @@ pub fn get_type_for_selection_set(
         .schema
         .get_type(&parent_type)
         .expect("Type system error");
-    match parent_type_def {
+    match **parent_type_def {
         TypeDefinition::Scalar(_) | TypeDefinition::Enum(_) | TypeDefinition::InputObject(_) => {
             panic!("Type system error")
         }
-        TypeDefinition::Object(obj_def) => {
+        TypeDefinition::Object(ref obj_def) => {
             get_object_type_for_selection_set(context, selection_set, obj_def)
         }
-        TypeDefinition::Interface(interface_def) => {
+        TypeDefinition::Interface(ref interface_def) => {
             let object_defs = interface_implementers(context.schema, &interface_def.name);
             ts_union(
                 object_defs.map(|obj_def| {
@@ -55,12 +55,13 @@ pub fn get_type_for_selection_set(
                 }),
             )
         }
-        TypeDefinition::Union(union_def) => {
+        TypeDefinition::Union(ref union_def) => {
             let object_defs = union_def.possible_types.iter().map(|member| {
-                match context.schema.get_type(member) {
-                    Some(TypeDefinition::Object(obj_def)) => obj_def,
-                    _ => panic!("Type system error"),
-                }
+                context
+                    .schema
+                    .get_type(member)
+                    .and_then(|def| def.as_object())
+                    .expect("Type system error")
             });
             ts_union(
                 object_defs.map(|obj_def| {
@@ -182,13 +183,13 @@ fn check_fragment_condition(
     cond: &str,
 ) -> bool {
     let cond_type = context.schema.get_type(cond).expect("Type system error");
-    match cond_type {
-        TypeDefinition::Object(obj) => object_def.name == obj.name,
-        TypeDefinition::Interface(interface) => object_def
+    match **cond_type {
+        TypeDefinition::Object(ref obj) => object_def.name == obj.name,
+        TypeDefinition::Interface(ref interface) => object_def
             .interfaces
             .iter()
             .any(|imp| *imp == interface.name),
-        TypeDefinition::Union(union) => union
+        TypeDefinition::Union(ref union) => union
             .possible_types
             .iter()
             .any(|mem| *mem == object_def.name),

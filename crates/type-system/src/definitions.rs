@@ -46,6 +46,14 @@ impl<'a, Str: Text<'a>, OriginalNode> TypeDefinition<Str, OriginalNode> {
             _ => None,
         }
     }
+
+    /// Returns Some if self is a union type.
+    pub fn as_union(&self) -> Option<&UnionDefinition<Str, OriginalNode>> {
+        match self {
+            TypeDefinition::Union(ref def) => Some(def),
+            _ => None,
+        }
+    }
 }
 
 impl<Str, OriginalNode> OriginalNodeRef<OriginalNode> for TypeDefinition<Str, OriginalNode> {

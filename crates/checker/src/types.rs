@@ -31,7 +31,7 @@ pub fn inout_kind_of_type(
     type_name: &str,
 ) -> Option<TypeInOutKind> {
     let ty_def = definitions.get_type(type_name);
-    ty_def.map(|def| match def {
+    ty_def.map(|def| match **def {
         TypeDefinition::Scalar(_) => TypeInOutKind::Both,
         TypeDefinition::Object(_) => TypeInOutKind::Output,
         TypeDefinition::Interface(_) => TypeInOutKind::Output,
@@ -77,7 +77,7 @@ pub fn is_subtype(
                 return None;
             };
             let other_def = other_name.and_then(|other_name| definitions.get_type(&other_name));
-            match target_def {
+            match **target_def {
                 TypeDefinition::Scalar(_)
                 | TypeDefinition::Enum(_)
                 | TypeDefinition::Union(_)
@@ -85,7 +85,7 @@ pub fn is_subtype(
                     // These types cannot be a union member, so it can only be subtype of itself
                     return Some(false);
                 }
-                TypeDefinition::Interface(target_def) => {
+                TypeDefinition::Interface(ref target_def) => {
                     // Interface type is considered a subtype of another when it explicitly implements the other
                     if let Some(other_name) = other_name {
                         if target_def.interfaces.iter().any(|imp| imp == &**other_name) {
@@ -101,7 +101,7 @@ pub fn is_subtype(
                         return Some(false);
                     }
                 }
-                TypeDefinition::Object(target_def) => {
+                TypeDefinition::Object(ref target_def) => {
                     if let Some(other_name) = other_name {
                         if target_def.interfaces.iter().any(|imp| imp == &**other_name) {
                             return Some(true);
@@ -109,7 +109,7 @@ pub fn is_subtype(
                     } else {
                         return Some(false);
                     }
-                    if let Some(TypeDefinition::Union(ref other_def)) = other_def {
+                    if let Some(other_def) = other_def.and_then(|def| def.as_union()) {
                         if other_def
                             .possible_types
                             .iter()

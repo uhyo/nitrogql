@@ -5,7 +5,7 @@ use crate::{root_types::RootTypes, text::Text, DirectiveDefinition, Node, Schema
 /// Struct for building Schema.
 pub struct SchemaBuilder<Str, OriginalNode> {
     description: Option<Node<Str, OriginalNode>>,
-    type_definitions: HashMap<Str, TypeDefinition<Str, OriginalNode>>,
+    type_definitions: HashMap<Str, Node<TypeDefinition<Str, OriginalNode>, OriginalNode>>,
     directive_definitions: HashMap<Str, DirectiveDefinition<Str, OriginalNode>>,
     type_names: Vec<Str>,
     directive_names: Vec<Str>,
@@ -46,10 +46,13 @@ impl<Str, OriginalNode> Default for SchemaBuilder<Str, OriginalNode> {
     }
 }
 
-impl<'a, Str: Text<'a>, OriginalNode> Extend<(Str, TypeDefinition<Str, OriginalNode>)>
+impl<'a, Str: Text<'a>, OriginalNode>
+    Extend<(Str, Node<TypeDefinition<Str, OriginalNode>, OriginalNode>)>
     for SchemaBuilder<Str, OriginalNode>
 {
-    fn extend<T: IntoIterator<Item = (Str, TypeDefinition<Str, OriginalNode>)>>(
+    fn extend<
+        T: IntoIterator<Item = (Str, Node<TypeDefinition<Str, OriginalNode>, OriginalNode>)>,
+    >(
         &mut self,
         iter: T,
     ) {
