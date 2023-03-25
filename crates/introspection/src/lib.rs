@@ -7,6 +7,8 @@ use json_to_value::GraphQLValue;
 mod error;
 mod introspection;
 mod json_to_value;
+#[cfg(test)]
+mod tests;
 
 pub use json_to_value::json_to_value;
 
