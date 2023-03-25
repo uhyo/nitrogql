@@ -12,3 +12,4 @@ pub use node::{Node, OriginalNodeRef};
 pub use r#type::*;
 pub use root_types::RootTypes;
 pub use schema::Schema;
+pub use text::Text;

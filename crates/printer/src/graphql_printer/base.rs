@@ -5,6 +5,7 @@ use nitrogql_ast::{
 };
 use sourcemap_writer::SourceMapWriter;
 
+use super::utils::print_string;
 use super::GraphQLPrinter;
 
 impl GraphQLPrinter for Type<'_> {
@@ -87,49 +88,7 @@ impl GraphQLPrinter for Value<'_> {
 
 impl GraphQLPrinter for StringValue {
     fn print_graphql(&self, writer: &mut impl SourceMapWriter) {
-        let mut result = String::with_capacity(self.value.capacity());
-        let is_multiline = self.value.find('\n').is_some();
-        if is_multiline {
-            // print as multiline string
-            result.push_str("\"\"\"");
-            let mut dq_count: usize = 0;
-            for c in self.value.chars() {
-                if c != '"' {
-                    if dq_count > 0 {
-                        result.push_str(&"\"".repeat(dq_count));
-                        dq_count = 0;
-                    }
-                    result.push(c);
-                    continue;
-                }
-                dq_count += 1;
-                if dq_count == 3 {
-                    // """ in string
-                    result.push_str("\\\"\"\"");
-                    dq_count = 0;
-                }
-            }
-            if dq_count > 0 {
-                result.push_str(&"\"".repeat(dq_count));
-            }
-            result.push_str("\"\"\"");
-            writer.write(&result);
-        } else {
-            // single line string
-            result.push('"');
-            for c in self.value.chars() {
-                match c {
-                    '\r' => result.push_str("\\r"),
-                    '\n' => result.push_str("\\n"),
-                    c if c.is_control() => {
-                        result.push_str(&format!("\\u{{{:x}}}", c as u32));
-                    }
-                    c => result.push(c),
-                }
-            }
-            result.push('"');
-            writer.write(&result);
-        }
+        print_string(&self.value, writer);
     }
 }
 

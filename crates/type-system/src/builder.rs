@@ -109,13 +109,3 @@ impl<Str, OriginalNode: Default> Into<Schema<Str, OriginalNode>>
         }
     }
 }
-
-fn get_or_insert_default<T: Default>(option: &mut Option<T>) -> &mut T {
-    match option {
-        None => {
-            option.insert(T::default());
-            option.as_mut().unwrap()
-        }
-        Some(ref mut v) => v,
-    }
-}

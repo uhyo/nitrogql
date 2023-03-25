@@ -1,8 +1,6 @@
 use graphql_type_system::{Schema, Type, TypeDefinition};
 use nitrogql_ast::base::Pos;
 
-use nitrogql_semantics::DefinitionMap;
-
 #[derive(Copy, Clone, PartialEq, Eq)]
 pub enum TypeInOutKind {
     Input,

@@ -166,8 +166,7 @@ pub struct InputValue<Str, OriginalNode> {
     /// Type of input value.
     pub r#type: Type<Str, OriginalNode>,
     /// Default value of input value.
-    /// TODO: hold default value
-    pub default_value: Option<Node<(), OriginalNode>>,
+    pub default_value: Option<Node<Str, OriginalNode>>,
 }
 
 impl<Str, OriginalNode> OriginalNodeRef<OriginalNode> for InputValue<Str, OriginalNode> {

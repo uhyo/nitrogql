@@ -26,6 +26,10 @@ pub struct Schema<Str, OriginalNode> {
 }
 
 impl<Str, OriginalNode> Schema<Str, OriginalNode> {
+    /// Returns description of schema.
+    pub fn description(&self) -> &Option<Node<Str, OriginalNode>> {
+        &self.description
+    }
     /// Returns the set of root operation types.
     pub fn root_types(&self) -> &Node<RootTypes<Option<Node<Str, OriginalNode>>>, OriginalNode> {
         &self.root_types
@@ -49,30 +53,25 @@ impl<'a, Str: Text<'a>, OriginalNode> Schema<Str, OriginalNode> {
     }
 
     /// Iterate over types.
-    pub fn iter_types<'b: 'a>(
-        &'b self,
-    ) -> impl Iterator<
-        Item = (
-            &'a Str,
-            &'a Node<TypeDefinition<Str, OriginalNode>, OriginalNode>,
-        ),
-    > {
-        self.type_names.iter().filter_map(|type_name| {
+    pub fn iter_types(
+        &self,
+    ) -> impl Iterator<Item = (&Str, &Node<TypeDefinition<Str, OriginalNode>, OriginalNode>)> {
+        self.type_names.iter().filter_map(move |type_name| {
             self.type_definitions
                 .get(type_name.borrow())
                 .map(|ty| (type_name, ty))
         })
     }
     /// Iterate over directives.
-    pub fn iter_directives<'b: 'a>(
-        &'b self,
+    pub fn iter_directives(
+        &self,
     ) -> impl Iterator<
         Item = (
-            &'a Str,
-            &'a Node<DirectiveDefinition<Str, OriginalNode>, OriginalNode>,
+            &Str,
+            &Node<DirectiveDefinition<Str, OriginalNode>, OriginalNode>,
         ),
     > {
-        self.directive_names.iter().filter_map(|type_name| {
+        self.directive_names.iter().filter_map(move |type_name| {
             self.directive_definitions
                 .get(type_name.borrow())
                 .map(|ty| (type_name, ty))

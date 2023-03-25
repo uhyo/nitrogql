@@ -298,7 +298,7 @@ fn as_input_value<'a, Str: PartialEq<&'a str> + Deref, D: Default>(
         name,
         description,
         r#type: ty,
-        default_value: default_value.map(|_| node(())),
+        default_value: default_value.map(deref_node),
     })
 }
 
