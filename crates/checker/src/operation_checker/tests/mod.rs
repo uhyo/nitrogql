@@ -4,16 +4,20 @@ use nitrogql_parser::parse_type_system_document;
 use nitrogql_semantics::resolve_extensions;
 
 mod operations {
+    use std::borrow::Cow;
+
+    use graphql_type_system::Schema;
     use insta::assert_debug_snapshot;
+    use nitrogql_semantics::ast_to_type_system;
 
     use crate::operation_checker::check_operation_document;
-    use nitrogql_ast::TypeSystemDocument;
+    use nitrogql_ast::base::Pos;
     use nitrogql_parser::parse_operation_document;
 
     use super::parse_to_type_system_document;
 
-    fn type_system() -> TypeSystemDocument<'static> {
-        parse_to_type_system_document(
+    fn type_system() -> Schema<Cow<'static, str>, Pos> {
+        let doc = parse_to_type_system_document(
             "
             schema {
                 subscription: S
@@ -28,7 +32,8 @@ mod operations {
                 piyo: Int!
             }
         ",
-        )
+        );
+        ast_to_type_system(&doc)
     }
 
     #[test]
@@ -63,16 +68,20 @@ mod operations {
 }
 
 mod operation_directives {
+    use std::borrow::Cow;
+
+    use graphql_type_system::Schema;
     use insta::assert_debug_snapshot;
+    use nitrogql_semantics::ast_to_type_system;
 
     use crate::operation_checker::check_operation_document;
-    use nitrogql_ast::TypeSystemDocument;
+    use nitrogql_ast::base::Pos;
     use nitrogql_parser::parse_operation_document;
 
     use super::parse_to_type_system_document;
 
-    fn type_system() -> TypeSystemDocument<'static> {
-        parse_to_type_system_document(
+    fn type_system() -> Schema<Cow<'static, str>, Pos> {
+        let doc = parse_to_type_system_document(
             "
             directive @dir_bool_nonnull(bool: Boolean!) repeatable on QUERY | FIELD
             directive @dir_bool(bool: Boolean) repeatable on MUTATION | FIELD
@@ -90,7 +99,8 @@ mod operation_directives {
                 int: Int!
             }
         ",
-        )
+        );
+        ast_to_type_system(&doc)
     }
 
     #[test]
@@ -283,16 +293,20 @@ mod operation_directives {
 }
 
 mod selection_set {
+    use std::borrow::Cow;
+
+    use graphql_type_system::Schema;
     use insta::assert_debug_snapshot;
+    use nitrogql_semantics::ast_to_type_system;
 
     use crate::operation_checker::check_operation_document;
-    use nitrogql_ast::TypeSystemDocument;
+    use nitrogql_ast::base::Pos;
     use nitrogql_parser::parse_operation_document;
 
     use super::parse_to_type_system_document;
 
-    fn type_system() -> TypeSystemDocument<'static> {
-        parse_to_type_system_document(
+    fn type_system() -> Schema<Cow<'static, str>, Pos> {
+        let doc = parse_to_type_system_document(
             "
             type Query {
                 foo: Int!
@@ -316,7 +330,8 @@ mod selection_set {
             }
             union UserOrPost = User | Post
         ",
-        )
+        );
+        ast_to_type_system(&doc)
     }
 
     #[test]
@@ -472,16 +487,20 @@ mod selection_set {
 }
 
 mod fragments {
+    use std::borrow::Cow;
+
+    use graphql_type_system::Schema;
     use insta::assert_debug_snapshot;
+    use nitrogql_semantics::ast_to_type_system;
 
     use crate::operation_checker::check_operation_document;
-    use nitrogql_ast::TypeSystemDocument;
+    use nitrogql_ast::{base::Pos, TypeSystemDocument};
     use nitrogql_parser::parse_operation_document;
 
     use super::parse_to_type_system_document;
 
-    fn type_system() -> TypeSystemDocument<'static> {
-        parse_to_type_system_document(
+    fn type_system() -> Schema<Cow<'static, str>, Pos> {
+        let doc = parse_to_type_system_document(
             "
             directive @dir_bool(bool: Boolean!) on FIELD
             scalar CustomScalar
@@ -529,7 +548,8 @@ mod fragments {
             union PostOrTag = Post | Tag
             union UserOrSchedule = User | Schedule
         ",
-        )
+        );
+        ast_to_type_system(&doc)
     }
 
     #[test]

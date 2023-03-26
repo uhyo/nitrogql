@@ -1330,7 +1330,7 @@ fn read_introspection() {
       ]
     }
 }"#;
-    let schema = schema_from_introspection_json(json).unwrap();
+    let schema = schema_from_introspection_json::<()>(json).unwrap();
 
     let mut buffer = String::new();
     let mut writer = JustWriter::new(&mut buffer);

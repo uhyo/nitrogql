@@ -3,6 +3,7 @@ use insta::assert_snapshot;
 use graphql_builtins::generate_builtins;
 use nitrogql_ast::{OperationDocument, TypeSystemDocument};
 use nitrogql_parser::{parse_operation_document, parse_type_system_document};
+use nitrogql_semantics::ast_to_type_system;
 use nitrogql_semantics::resolve_extensions;
 use sourcemap_writer::JustWriter;
 
@@ -151,6 +152,7 @@ fn print_document(document: &OperationDocument) -> String {
     let mut result = String::new();
     let mut writer = JustWriter::new(&mut result);
     let schema = type_system();
+    let schema = ast_to_type_system(&schema);
     print_types_for_operation_document(
         OperationTypePrinterOptions::default(),
         &schema,
