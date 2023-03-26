@@ -4,9 +4,8 @@ use graphql_type_system::{NamedType, Node, RootTypes, Schema, Text};
 use nitrogql_ast::{
     base::Pos,
     operation::{ExecutableDefinition, FragmentDefinition, OperationType},
-    OperationDocument, TypeSystemDocument,
+    OperationDocument,
 };
-use nitrogql_semantics::ast_to_type_system;
 use sourcemap_writer::SourceMapWriter;
 
 use crate::{

@@ -65,7 +65,7 @@ pub fn run_generate(mut context: CliContext) -> Result<CliContext> {
                 write_file_and_sourcemap(file_by_index, &schema_output, buffers)?;
             }
 
-            let schema = schema.ref_map(
+            let schema = schema.map_into(
                 |doc| Cow::Owned(ast_to_type_system(doc)),
                 |schema| Cow::Borrowed(schema),
             );

@@ -15,7 +15,7 @@ pub fn run_check(context: CliContext) -> Result<CliContext> {
     debug!("Checking");
     match context {
         CliContext::SchemaUnresolved {
-            mut schema,
+            schema,
             operations,
             file_by_index,
             config,
@@ -46,7 +46,7 @@ pub fn run_check(context: CliContext) -> Result<CliContext> {
                     LoadedSchema::Introspection(schema) => LoadedSchema::Introspection(schema),
                 }
             };
-            let schema = loaded_schema.ref_map(
+            let schema = loaded_schema.map_into(
                 |doc| Cow::Owned(ast_to_type_system(doc)),
                 |schema| Cow::Borrowed(schema),
             );

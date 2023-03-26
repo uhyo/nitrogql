@@ -7,13 +7,13 @@ use nitrogql_ast::{
             ExecutableDefinition, FragmentDefinition, OperationDefinition, OperationType, OperationDocument,
         },
         selection_set::{SelectionSet, Selection, Field as SelectionField, FragmentSpread, InlineFragment},
-        variable::VariablesDefinition, TypeSystemDocument,
+        variable::VariablesDefinition
 };
 
 use self::{fragment_map::{generate_fragment_map, FragmentMap}, count_selection_set_fields::selection_set_has_more_than_one_fields};
 
 use super::{error::{CheckError, CheckErrorMessage, TypeKind}, common::{check_directives, check_arguments}, types::inout_kind_of_type};
-use nitrogql_semantics::{direct_fields_of_output_type, ast_to_type_system};
+use nitrogql_semantics::{direct_fields_of_output_type};
 
 #[cfg(test)]
 mod tests;

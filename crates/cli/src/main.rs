@@ -1,5 +1,4 @@
 use std::{
-    borrow::Cow,
     fs,
     path::{Path, PathBuf},
     process,
@@ -11,11 +10,10 @@ use globmatch::wrappers::{build_matchers, match_paths};
 use graphql_type_system::Schema;
 use log::{debug, error, trace};
 use nitrogql_ast::{
-    base::Pos, operation::OperationDocument, set_current_file_of_pos,
-    type_system::TypeSystemOrExtensionDocument, TypeSystemDocument,
+    operation::OperationDocument, set_current_file_of_pos,
+    type_system::TypeSystemOrExtensionDocument,
 };
 use nitrogql_introspection::schema_from_introspection_json;
-use nitrogql_semantics::ast_to_type_system;
 use nitrogql_utils::get_cwd;
 use thiserror::Error;
 

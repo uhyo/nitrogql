@@ -17,20 +17,10 @@ pub enum LoadedSchema<'src, Gql> {
 }
 
 impl<'src, Gql> LoadedSchema<'src, Gql> {
-    pub fn into_map<F, G, R>(self, graphql: F, introspection: G) -> R
+    pub fn map_into<'a, F, G, R>(&'a self, graphql: F, introspection: G) -> R
     where
-        F: FnOnce(Gql) -> R,
-        G: FnOnce(Schema<Cow<'src, str>, Pos>) -> R,
-    {
-        match self {
-            LoadedSchema::GraphQL(gql) => graphql(gql),
-            LoadedSchema::Introspection(schema) => introspection(schema),
-        }
-    }
-    pub fn ref_map<F, G, R>(&self, graphql: F, introspection: G) -> R
-    where
-        F: FnOnce(&Gql) -> R,
-        G: FnOnce(&Schema<Cow<'src, str>, Pos>) -> R,
+        F: FnOnce(&'a Gql) -> R,
+        G: FnOnce(&'a Schema<Cow<'src, str>, Pos>) -> R,
     {
         match self {
             LoadedSchema::GraphQL(gql) => graphql(gql),
