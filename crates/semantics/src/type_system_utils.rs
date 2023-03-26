@@ -5,7 +5,7 @@ use nitrogql_ast::{
 };
 
 /// Convert AST type to Type System type.
-pub fn convert_type<'src>(ty: &AstType<'src>) -> Type<&'src str, Pos> {
+pub fn convert_type<'a, 'src, R: From<&'src str>>(ty: &'a AstType<'src>) -> Type<R, Pos> {
     match ty {
         AstType::Named(ty) => Type::Named(NamedType::from(ident_to_node(&ty.name))),
         AstType::List(ty) => Type::List(Box::new(ListType::from(convert_type(&ty.r#type)))),
@@ -15,6 +15,6 @@ pub fn convert_type<'src>(ty: &AstType<'src>) -> Type<&'src str, Pos> {
     }
 }
 
-pub fn ident_to_node<'src>(ident: &Ident<'src>) -> Node<&'src str, Pos> {
+pub fn ident_to_node<'src, T: From<&'src str>>(ident: &Ident<'src>) -> Node<T, Pos> {
     Node::from(ident.name, ident.position)
 }

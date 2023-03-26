@@ -10,12 +10,14 @@ nitrogql-ast = { path = "../ast" }
 nitrogql-checker = { path = "../checker" }
 nitrogql-config-file = { path = "../config-file", features = ["fs"] }
 nitrogql-error = { path = "../error" }
+nitrogql-introspection = { path = "../introspection" }
 nitrogql-parser = { path = "../parser" }
 nitrogql-printer = { path = "../printer" }
 nitrogql-semantics = { path = "../semantics" }
 nitrogql-utils = { path = "../utils" }
 sourcemap-writer = { path = "../sourcemap-writer" }
 graphql-builtins = { path = "../builtins" }
+graphql-type-system = { path = "../type-system" }
 json-writer = "0.2.1"
 lru = "0.9.0"
 glob = "0.3.1"

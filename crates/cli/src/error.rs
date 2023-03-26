@@ -12,6 +12,10 @@ pub enum CliError {
     InvalidCommand(String),
     #[error("Schema file not specified")]
     NoSchemaSpecified,
+    #[error("Introspection JSON can only be specified once")]
+    IntrospectionOnce,
+    #[error("Cannot mix GraphQL and Introspection JSON for schema")]
+    MixGraphQLAndIntrospection,
     #[error("Option '{option}' is required for the '{command}' command. ")]
     OptionRequired { option: String, command: String },
     #[error("Failed to calculate source map file name for '{path}'.")]

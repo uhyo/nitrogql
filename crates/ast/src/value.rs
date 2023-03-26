@@ -1,4 +1,4 @@
-use std::fmt::Display;
+use std::{fmt::Display, ops::Deref};
 
 use crate::variable::Variable;
 
@@ -99,6 +99,13 @@ pub struct StringValue {
     pub position: Pos,
     /// Parsed value of string literal
     pub value: String,
+}
+
+impl Deref for StringValue {
+    type Target = str;
+    fn deref(&self) -> &Self::Target {
+        &self.value
+    }
 }
 
 #[derive(Copy, Clone, Debug)]

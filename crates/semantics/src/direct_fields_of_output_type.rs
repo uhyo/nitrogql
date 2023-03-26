@@ -1,24 +1,39 @@
+use std::borrow::Cow;
+
 use graphql_type_system::{Field, NamedType, Node, NonNullType, Type, TypeDefinition};
 use nitrogql_ast::base::Pos;
-use once_cell::sync::Lazy;
 
-static TYPENAME_META_FIELD: Lazy<Field<&'static str, Pos>> = Lazy::new(|| Field {
-    description: None,
-    name: Node::from("__typename", Pos::builtin()),
-    arguments: vec![],
-    r#type: Type::NonNull(Box::new(NonNullType::from(Type::Named(NamedType::from(
-        Node::from("String", Pos::builtin()),
-    ))))),
-});
+fn get_typename_meta_field<'a, S: From<&'a str>, D: Default>() -> Field<S, D> {
+    Field {
+        description: None,
+        name: Node::from("__typename", D::default()),
+        arguments: vec![],
+        r#type: Type::NonNull(Box::new(NonNullType::from(Type::Named(NamedType::from(
+            Node::from("String", D::default()),
+        ))))),
+    }
+}
 
-pub fn direct_fields_of_output_type<'a, 'src>(
-    ty: &'a TypeDefinition<&'src str, Pos>,
-) -> Option<Vec<&'a Field<&'src str, Pos>>> {
-    let meta_field: &Field<&str, Pos> = &TYPENAME_META_FIELD;
+pub fn direct_fields_of_output_type<'a, 'b, S: From<&'a str> + Clone>(
+    ty: &'b TypeDefinition<S, Pos>,
+) -> Option<Vec<Cow<'b, Field<S, Pos>>>> {
+    let meta_field: Field<S, Pos> = get_typename_meta_field();
     match ty {
-        TypeDefinition::Object(obj) => Some(obj.fields.iter().chain(vec![meta_field]).collect()),
-        TypeDefinition::Interface(obj) => Some(obj.fields.iter().chain(vec![meta_field]).collect()),
-        TypeDefinition::Union(_) => Some(vec![meta_field]),
+        TypeDefinition::Object(obj) => Some(
+            obj.fields
+                .iter()
+                .map(Cow::Borrowed)
+                .chain(vec![Cow::Owned(meta_field)])
+                .collect(),
+        ),
+        TypeDefinition::Interface(obj) => Some(
+            obj.fields
+                .iter()
+                .map(Cow::Borrowed)
+                .chain(vec![Cow::Owned(meta_field)])
+                .collect(),
+        ),
+        TypeDefinition::Union(_) => Some(vec![Cow::Owned(meta_field)]),
         TypeDefinition::Scalar(_) | TypeDefinition::Enum(_) | TypeDefinition::InputObject(_) => {
             None
         }

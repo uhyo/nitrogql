@@ -1,4 +1,4 @@
-use graphql_type_system::{Schema, Type, TypeDefinition};
+use graphql_type_system::{Schema, Text, Type, TypeDefinition};
 use nitrogql_ast::base::Pos;
 
 #[derive(Copy, Clone, PartialEq, Eq)]
@@ -24,8 +24,8 @@ impl TypeInOutKind {
 }
 
 /// classifies given type into output, input or both.
-pub fn inout_kind_of_type(
-    definitions: &Schema<&str, Pos>,
+pub fn inout_kind_of_type<'src, S: Text<'src>>(
+    definitions: &Schema<S, Pos>,
     type_name: &str,
 ) -> Option<TypeInOutKind> {
     let ty_def = definitions.get_type(type_name);
@@ -41,10 +41,10 @@ pub fn inout_kind_of_type(
 
 /// Checks if target type is a subtype of other type.
 /// Returns None if unknown.
-pub fn is_subtype(
-    definitions: &Schema<&str, Pos>,
-    target: &Type<&str, Pos>,
-    other: &Type<&str, Pos>,
+pub fn is_subtype<'src, S: Text<'src>>(
+    definitions: &Schema<S, Pos>,
+    target: &Type<S, Pos>,
+    other: &Type<S, Pos>,
 ) -> Option<bool> {
     match target {
         Type::NonNull(target_inner) => {
@@ -64,7 +64,7 @@ pub fn is_subtype(
         }
         Type::Named(target_name) => {
             let other_name = if let Type::Named(other_name) = other {
-                if **target_name == **other_name {
+                if **target_name == ***other_name {
                     return Some(true);
                 }
                 Some(other_name)
@@ -86,7 +86,11 @@ pub fn is_subtype(
                 TypeDefinition::Interface(ref target_def) => {
                     // Interface type is considered a subtype of another when it explicitly implements the other
                     if let Some(other_name) = other_name {
-                        if target_def.interfaces.iter().any(|imp| imp == &**other_name) {
+                        if target_def
+                            .interfaces
+                            .iter()
+                            .any(|imp| imp == &***other_name)
+                        {
                             return Some(true);
                         } else {
                             if other_def.is_some() {
@@ -101,7 +105,11 @@ pub fn is_subtype(
                 }
                 TypeDefinition::Object(ref target_def) => {
                     if let Some(other_name) = other_name {
-                        if target_def.interfaces.iter().any(|imp| imp == &**other_name) {
+                        if target_def
+                            .interfaces
+                            .iter()
+                            .any(|imp| imp == &***other_name)
+                        {
                             return Some(true);
                         }
                     } else {
@@ -111,7 +119,7 @@ pub fn is_subtype(
                         if other_def
                             .possible_types
                             .iter()
-                            .any(|mem| mem == &**target_name)
+                            .any(|mem| mem == &***target_name)
                         {
                             return Some(true);
                         }

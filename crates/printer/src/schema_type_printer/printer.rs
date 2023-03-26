@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::{borrow::Cow, collections::HashMap};
 
 use graphql_type_system::Schema;
 use nitrogql_ast::{base::Pos, type_system::TypeSystemDocument};
@@ -29,7 +29,7 @@ impl Default for SchemaTypePrinterOptions {
 pub struct SchemaTypePrinterContext<'src> {
     pub options: &'src SchemaTypePrinterOptions,
     pub document: &'src TypeSystemDocument<'src>,
-    pub schema: &'src Schema<&'src str, Pos>,
+    pub schema: &'src Schema<Cow<'src, str>, Pos>,
 }
 
 pub struct SchemaTypePrinter<'a, Writer: SourceMapWriter> {

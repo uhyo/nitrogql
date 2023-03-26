@@ -1,6 +1,6 @@
-use std::collections::HashMap;
+use std::{borrow::Cow, collections::HashMap};
 
-use graphql_type_system::{NamedType, Node, RootTypes, Schema};
+use graphql_type_system::{NamedType, Node, RootTypes, Schema, Text};
 use nitrogql_ast::{
     base::Pos,
     operation::{ExecutableDefinition, FragmentDefinition, OperationType},
@@ -55,7 +55,7 @@ impl Default for OperationTypePrinterOptions {
 
 pub struct OperationTypePrinterVisitor<'a, 'src> {
     options: OperationTypePrinterOptions,
-    context: OperationTypePrinterContext<'a, 'src>,
+    context: OperationTypePrinterContext<'a, 'src, Cow<'src, str>>,
 }
 
 impl<'a, 'src> OperationTypePrinterVisitor<'a, 'src>
@@ -64,10 +64,9 @@ where
 {
     pub fn new(
         options: OperationTypePrinterOptions,
-        schema: &'a TypeSystemDocument<'src>,
+        schema: &'a Schema<Cow<'src, str>, Pos>,
         operation: &'a OperationDocument<'src>,
     ) -> Self {
-        let schema = ast_to_type_system(schema);
         let fragment_definitions = operation
             .definitions
             .iter()
@@ -87,8 +86,8 @@ where
     }
 }
 
-pub struct OperationTypePrinterContext<'a, 'src> {
-    pub schema: Schema<&'src str, Pos>,
+pub struct OperationTypePrinterContext<'a, 'src, S: Text<'src>> {
+    pub schema: &'a Schema<S, Pos>,
     pub operation: &'a OperationDocument<'src>,
     pub fragment_definitions: HashMap<&'src str, &'a FragmentDefinition<'src>>,
 }

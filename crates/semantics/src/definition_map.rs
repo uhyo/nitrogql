@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::{borrow::Cow, collections::HashMap};
 
 use graphql_type_system::Schema;
 use nitrogql_ast::{
@@ -14,7 +14,7 @@ use crate::ast_to_type_system;
 
 #[derive(Debug)]
 pub struct DefinitionMap<'a> {
-    pub type_system: Schema<&'a str, Pos>,
+    pub type_system: Schema<Cow<'a, str>, Pos>,
     pub schema: Option<&'a SchemaDefinition<'a>>,
     pub types: HashMap<&'a str, &'a TypeDefinition<'a>>,
     pub directives: HashMap<&'a str, &'a DirectiveDefinition<'a>>,

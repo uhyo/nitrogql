@@ -39,15 +39,15 @@ impl<'a, Str: Text<'a>, OriginalNode: Clone + Default> RootTypes<Option<Node<Str
             query_type: self
                 .query_type
                 .clone()
-                .unwrap_or(Node::from("Query".into(), OriginalNode::default())),
+                .unwrap_or(Node::from("Query", OriginalNode::default())),
             mutation_type: self
                 .mutation_type
                 .clone()
-                .unwrap_or(Node::from("Mutation".into(), OriginalNode::default())),
+                .unwrap_or(Node::from("Mutation", OriginalNode::default())),
             subscription_type: self
                 .subscription_type
                 .clone()
-                .unwrap_or(Node::from("Subscription".into(), OriginalNode::default())),
+                .unwrap_or(Node::from("Subscription", OriginalNode::default())),
         }
     }
 }

@@ -1,3 +1,5 @@
+use std::borrow::Borrow;
+
 use crate::{
     ts_types::{
         ts_types_util::ts_union, type_to_ts_type::get_ts_type_of_type, ObjectField, TSType,
@@ -209,8 +211,13 @@ impl TypePrinter for InterfaceTypeDefinition<'_> {
         writer: &mut impl SourceMapWriter,
     ) -> SchemaTypePrinterResult<()> {
         // In generated type definitions, an interface is expressed as a union of all possible concrete types.
-        let union_constituents = interface_implementers(context.schema, self.name.name)
-            .map(|obj| TSType::TypeVariable((*obj.name).into()));
+        let union_constituents =
+            interface_implementers(context.schema, self.name.name).map(|obj| {
+                TSType::TypeVariable({
+                    let s: &str = (obj.name).inner_ref().borrow();
+                    s.into()
+                })
+            });
         let intf_type = ts_union(union_constituents);
 
         print_description(&self.description, writer);

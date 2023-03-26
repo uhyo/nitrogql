@@ -12,9 +12,9 @@ pub struct Node<T, OriginalNode> {
 
 impl<T, OriginalNode> Node<T, OriginalNode> {
     /// Creates a new Node.
-    pub fn from(inner: T, original_node: OriginalNode) -> Self {
+    pub fn from(inner: impl Into<T>, original_node: OriginalNode) -> Self {
         Self {
-            inner,
+            inner: inner.into(),
             original_node,
         }
     }
@@ -26,12 +26,16 @@ impl<T, OriginalNode> Node<T, OriginalNode> {
     pub fn into_original_node(self) -> OriginalNode {
         self.original_node
     }
+    /// Returns a reference to the inner value.
+    pub fn inner_ref(&self) -> &T {
+        &self.inner
+    }
 }
 
 impl<T, OriginalNode> Deref for Node<T, OriginalNode> {
     type Target = T;
     fn deref(&self) -> &Self::Target {
-        &self.inner
+        self.inner_ref()
     }
 }
 
@@ -47,18 +51,10 @@ impl<T: Display, OriginalNode> Display for Node<T, OriginalNode> {
     }
 }
 
-impl<T: PartialEq, OriginalNode> PartialEq<T> for Node<T, OriginalNode> {
-    fn eq(&self, other: &T) -> bool {
-        self.inner == *other
-    }
-}
-
 // Note: equality between Node does not take OriginalNode in consideration.
-impl<T: PartialEq, OriginalNode, OriginalNode2> PartialEq<Node<T, OriginalNode2>>
-    for Node<T, OriginalNode>
-{
-    fn eq(&self, other: &Node<T, OriginalNode2>) -> bool {
-        self.inner == other.inner
+impl<Other, T: PartialEq<Other>, OriginalNode> PartialEq<Other> for Node<T, OriginalNode> {
+    fn eq(&self, other: &Other) -> bool {
+        self.inner == *other
     }
 }
 

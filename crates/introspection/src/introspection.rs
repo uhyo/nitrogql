@@ -59,8 +59,10 @@ struct IntrospectionField<'src> {
     #[serde(rename = "type")]
     ty: IntrospectionType<'src>,
     #[serde(rename = "isDeprecated")]
+    #[allow(dead_code)]
     is_deprecated: bool,
     #[serde(rename = "deprecationReason")]
+    #[allow(dead_code)]
     deprecation_reason: Option<Cow<'src, str>>,
 }
 
@@ -79,8 +81,10 @@ struct IntrospectionEnumValue<'src> {
     name: Cow<'src, str>,
     description: Option<Cow<'src, str>>,
     #[serde(rename = "isDeprecated")]
+    #[allow(dead_code)]
     is_deprecated: bool,
     #[serde(rename = "deprecationReason")]
+    #[allow(dead_code)]
     deprecation_reason: Option<Cow<'src, str>>,
 }
 

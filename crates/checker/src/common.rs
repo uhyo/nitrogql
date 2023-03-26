@@ -1,4 +1,4 @@
-use graphql_type_system::{InputValue, OriginalNodeRef, Schema, Type, TypeDefinition};
+use graphql_type_system::{InputValue, OriginalNodeRef, Schema, Text, Type, TypeDefinition};
 use log::warn;
 
 use nitrogql_ast::{
@@ -11,11 +11,11 @@ use nitrogql_semantics::type_system_utils::convert_type;
 
 use super::error::{CheckError, CheckErrorMessage};
 
-pub fn check_directives(
-    definitions: &Schema<&str, Pos>,
-    variables: Option<&VariablesDefinition>,
-    directives: &[Directive],
-    current_position: &str,
+pub fn check_directives<'src, S: Text<'src>>(
+    definitions: &Schema<S, Pos>,
+    variables: Option<&VariablesDefinition<'src>>,
+    directives: &[Directive<'src>],
+    current_position: &'static str,
     result: &mut Vec<CheckError>,
 ) {
     let mut seen_directives = vec![];
@@ -31,7 +31,7 @@ pub fn check_directives(
                 if def
                     .locations
                     .iter()
-                    .find(|loc| **loc == current_position)
+                    .find(|loc| ***loc == current_position)
                     .is_none()
                 {
                     result.push(
@@ -69,14 +69,14 @@ pub fn check_directives(
     }
 }
 
-pub fn check_arguments(
-    definitions: &Schema<&str, Pos>,
-    variables: Option<&VariablesDefinition>,
+pub fn check_arguments<'src, S: Text<'src>>(
+    definitions: &Schema<S, Pos>,
+    variables: Option<&VariablesDefinition<'src>>,
     parent_pos: Pos,
     parent_name: &str,
     parent_kind: &'static str,
-    arguments: Option<&Arguments>,
-    arguments_definition: &[InputValue<&str, Pos>],
+    arguments: Option<&Arguments<'src>>,
+    arguments_definition: &[InputValue<S, Pos>],
     result: &mut Vec<CheckError>,
 ) {
     match arguments {
@@ -95,10 +95,11 @@ pub fn check_arguments(
         }
         arguments => {
             let argument_pos = arguments.map_or(parent_pos, |args| args.position);
-            let arguments: Vec<_> = arguments
-                .into_iter()
-                .flat_map(|arg| arg.arguments.iter())
-                .collect();
+            let arguments: Vec<_> = match arguments {
+                None => vec![],
+                Some(arg) => arg.arguments.iter().collect(),
+            };
+
             let mut seen_args = 0;
             for arg_def in arguments_definition.iter() {
                 let arg = arguments
@@ -159,11 +160,11 @@ pub fn check_arguments(
     }
 }
 
-pub fn check_value(
-    definitions: &Schema<&str, Pos>,
-    variables: Option<&VariablesDefinition>,
-    value: &Value,
-    expected_type: &Type<&str, Pos>,
+pub fn check_value<'src, S: Text<'src>>(
+    definitions: &Schema<S, Pos>,
+    variables: Option<&VariablesDefinition<'src>>,
+    value: &Value<'src>,
+    expected_type: &Type<S, Pos>,
     result: &mut Vec<CheckError>,
 ) {
     let mut additional_info = vec![];
@@ -233,18 +234,18 @@ pub fn check_value(
 }
 
 // Note: this function does not consider Value::Variable
-fn is_value_compatible_type_def(
-    definitions: &Schema<&str, Pos>,
-    variables: Option<&VariablesDefinition>,
-    value: &Value,
-    expected_type: &TypeDefinition<&str, Pos>,
+fn is_value_compatible_type_def<'src, S: Text<'src>>(
+    definitions: &Schema<S, Pos>,
+    variables: Option<&VariablesDefinition<'src>>,
+    value: &Value<'src>,
+    expected_type: &TypeDefinition<S, Pos>,
     result: &mut Vec<CheckError>,
 ) -> (bool, Vec<(Pos, CheckErrorMessage)>) {
     match expected_type {
         TypeDefinition::Scalar(scalar_def) => {
             // TODO: better handling of scalar, including custom scalars
             (
-                match *scalar_def.name {
+                match scalar_def.name.as_ref() {
                     "Boolean" => matches!(value, Value::BooleanValue(_) | Value::NullValue(_)),
                     "Int" => matches!(value, Value::IntValue(_) | Value::NullValue(_)),
                     "Float" => matches!(value, Value::FloatValue(_) | Value::NullValue(_)),
@@ -268,15 +269,16 @@ fn is_value_compatible_type_def(
         TypeDefinition::Enum(enum_def) => match value {
             Value::NullValue(_) => (true, vec![]),
             Value::EnumValue(value) => {
+                let enum_name = value.value;
                 if enum_def
                     .members
                     .iter()
-                    .find(|v| v.name == value.value)
+                    .find(|v| v.name == enum_name)
                     .is_none()
                 {
                     result.push(
                         CheckErrorMessage::UnknownEnumMember {
-                            member: value.value.to_owned(),
+                            member: enum_name.to_owned(),
                             r#enum: enum_def.name.to_string(),
                         }
                         .with_pos(value.position)
@@ -357,10 +359,10 @@ fn is_value_compatible_type_def(
 }
 
 /// Returns true if `value_type` is assignable to `expected_type`.
-fn check_type_compatibility(
-    definitions: &Schema<&str, Pos>,
-    value_type: &Type<&str, Pos>,
-    expected_type: &Type<&str, Pos>,
+fn check_type_compatibility<'src, S: Text<'src>>(
+    definitions: &Schema<S, Pos>,
+    value_type: &Type<S, Pos>,
+    expected_type: &Type<S, Pos>,
 ) -> bool {
     // https://spec.graphql.org/draft/#AreTypesCompatible()
     match (expected_type, value_type) {
@@ -376,7 +378,7 @@ fn check_type_compatibility(
         }
         (Type::List(_), _) => false,
         (_, Type::List(_)) => false,
-        (Type::Named(expected_name), Type::Named(value_inner)) => **expected_name == **value_inner,
+        (Type::Named(expected_name), Type::Named(value_inner)) => **expected_name == ***value_inner,
     }
 }
 

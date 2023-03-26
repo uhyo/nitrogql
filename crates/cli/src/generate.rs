@@ -1,9 +1,12 @@
+use std::borrow::Cow;
 use std::fs::{self, File};
 use std::io::Write;
 use std::path::{Path, PathBuf};
 
 use log::debug;
+use nitrogql_semantics::ast_to_type_system;
 
+use crate::context::LoadedSchema;
 use crate::error::CliError;
 use nitrogql_config_file::GenerateMode;
 use nitrogql_error::Result;
@@ -49,11 +52,23 @@ pub fn run_generate(mut context: CliContext) -> Result<CliContext> {
                 let mut writer = SourceWriter::new();
                 let mut printer = SchemaTypePrinter::new(options, &mut writer);
 
-                printer.print_document(schema)?;
+                match schema {
+                    LoadedSchema::GraphQL(schema) => {
+                        printer.print_document(schema)?;
+                    }
+                    LoadedSchema::Introspection(_) => {
+                        todo!("Print introspected schema");
+                    }
+                }
 
                 let buffers = writer.into_buffers();
                 write_file_and_sourcemap(file_by_index, &schema_output, buffers)?;
             }
+
+            let schema = schema.ref_map(
+                |doc| Cow::Owned(ast_to_type_system(doc)),
+                |schema| Cow::Borrowed(schema),
+            );
 
             for (path, doc, file_by_index) in operations.iter() {
                 debug!("Processing {}", path.to_string_lossy());
@@ -77,7 +92,7 @@ pub fn run_generate(mut context: CliContext) -> Result<CliContext> {
                     path_to_ts(relative_path(&decl_file_path, &schema_output))
                         .to_string_lossy()
                         .to_string();
-                print_types_for_operation_document(printer_options, schema, &doc, &mut writer);
+                print_types_for_operation_document(printer_options, &schema, &doc, &mut writer);
 
                 let buffers = writer.into_buffers();
 

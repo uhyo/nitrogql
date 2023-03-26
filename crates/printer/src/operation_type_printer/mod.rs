@@ -1,4 +1,7 @@
-use nitrogql_ast::{OperationDocument, TypeSystemDocument};
+use std::borrow::Cow;
+
+use graphql_type_system::Schema;
+use nitrogql_ast::{base::Pos, OperationDocument, TypeSystemDocument};
 use sourcemap_writer::SourceMapWriter;
 
 use crate::operation_base_printer::OperationPrinter;
@@ -13,7 +16,7 @@ pub mod visitor;
 /// Print a TypeScript module for given operation document.
 pub fn print_types_for_operation_document(
     options: OperationTypePrinterOptions,
-    schema: &TypeSystemDocument,
+    schema: &Schema<Cow<str>, Pos>,
     operation: &OperationDocument,
     writer: &mut impl SourceMapWriter,
 ) {

@@ -1,10 +1,10 @@
-use std::collections::HashMap;
+use std::{borrow::Cow, collections::HashMap};
 
 use crate::{
     ts_types::{ts_types_util::ts_union, type_to_ts_type::get_ts_type_of_type},
     utils::interface_implementers,
 };
-use graphql_type_system::{NamedType, ObjectDefinition, Schema, Type, TypeDefinition};
+use graphql_type_system::{NamedType, ObjectDefinition, Schema, Text, Type, TypeDefinition};
 use nitrogql_ast::{
     base::Pos,
     operation::{FragmentDefinition, OperationDocument},
@@ -20,21 +20,25 @@ use super::{
     visitor::OperationTypePrinterOptions,
 };
 
-pub struct QueryTypePrinterContext<'a, 'src> {
+pub struct QueryTypePrinterContext<'a, 'src, S: Text<'src>> {
     pub options: &'a OperationTypePrinterOptions,
-    pub schema: &'a Schema<&'src str, Pos>,
+    pub schema: &'a Schema<S, Pos>,
     pub operation: &'a OperationDocument<'src>,
     pub fragment_definitions: &'a HashMap<&'src str, &'a FragmentDefinition<'src>>,
 }
 
-pub trait TypePrinter {
-    fn print_type(&self, options: &QueryTypePrinterContext, writer: &mut impl SourceMapWriter);
+pub trait TypePrinter<'src, S: Text<'src>> {
+    fn print_type(
+        &self,
+        options: &QueryTypePrinterContext<'_, 'src, S>,
+        writer: &mut impl SourceMapWriter,
+    );
 }
 
-pub fn get_type_for_selection_set(
-    context: &QueryTypePrinterContext,
+pub fn get_type_for_selection_set<'src, S: Text<'src>>(
+    context: &QueryTypePrinterContext<'_, 'src, S>,
     selection_set: &SelectionSet,
-    parent_type: &NamedType<&str, Pos>,
+    parent_type: &NamedType<S, Pos>,
 ) -> TSType {
     let parent_type_def = context
         .schema
@@ -72,10 +76,10 @@ pub fn get_type_for_selection_set(
     }
 }
 
-fn get_object_type_for_selection_set(
-    context: &QueryTypePrinterContext,
+fn get_object_type_for_selection_set<'src, S: Text<'src>>(
+    context: &QueryTypePrinterContext<'_, 'src, S>,
     selection_set: &SelectionSet,
-    parent_type: &ObjectDefinition<&str, Pos>,
+    parent_type: &ObjectDefinition<S, Pos>,
 ) -> TSType {
     let actual = TSType::object(get_fields_for_selection_set(
         context,
@@ -96,11 +100,11 @@ fn get_object_type_for_selection_set(
 }
 
 /// Returns an iterator of object fields.
-fn get_fields_for_selection_set<'a>(
-    context: &'a QueryTypePrinterContext,
-    selection_set: &'a SelectionSet,
-    parent_type: &'a ObjectDefinition<&str, Pos>,
-) -> impl Iterator<Item = (&'a str, TSType, Option<StringValue>)> + 'a {
+fn get_fields_for_selection_set<'a, 'src, S: Text<'src>>(
+    context: &'a QueryTypePrinterContext<'a, 'src, S>,
+    selection_set: &'a SelectionSet<'a>,
+    parent_type: &'a ObjectDefinition<S, Pos>,
+) -> Vec<(&'a str, TSType, Option<StringValue>)> {
     let parent_type_def = context
         .schema
         .get_type(&parent_type.name)
@@ -114,6 +118,7 @@ fn get_fields_for_selection_set<'a>(
             .iter()
             .filter_map(move |sel| match sel {
                 Selection::Field(ref field) => {
+                    let field_name = field.name.name;
                     let property_name = field.alias.unwrap_or_else(|| field.name.clone()).name;
                     if property_name == "__typename" {
                         // Special handling of reflection
@@ -126,7 +131,7 @@ fn get_fields_for_selection_set<'a>(
 
                     let field_def = parent_fields
                         .iter()
-                        .find(|parent_field| parent_field.name == field.name.name)
+                        .find(|parent_field| parent_field.name.inner_ref().borrow() == field_name)
                         .expect("Type system error");
 
                     let field_sel_type =
@@ -155,44 +160,44 @@ fn get_fields_for_selection_set<'a>(
                 if check_fragment_condition(context, parent_type, fragment_def.type_condition.name)
                 {
                     get_fields_for_selection_set(context, &fragment_def.selection_set, &parent_type)
-                        .collect()
                 } else {
                     vec![]
                 }
             }
             Selection::InlineFragment(ref fragment) => match fragment.type_condition {
-                None => get_fields_for_selection_set(context, &fragment.selection_set, parent_type)
-                    .collect(),
+                None => get_fields_for_selection_set(context, &fragment.selection_set, parent_type),
                 Some(ref cond) => {
                     if check_fragment_condition(context, parent_type, cond.name) {
                         get_fields_for_selection_set(context, &fragment.selection_set, &parent_type)
-                            .collect()
                     } else {
                         vec![]
                     }
                 }
             },
         });
-    types_for_simple_fields.chain(types_for_fragments)
+    let res = types_for_simple_fields
+        .chain(types_for_fragments)
+        .collect::<Vec<_>>();
+    res
 }
 
 /// Returns whether given object type implements given condition.
-fn check_fragment_condition(
-    context: &QueryTypePrinterContext,
-    object_def: &ObjectDefinition<&str, Pos>,
+fn check_fragment_condition<'src, S: Text<'src>>(
+    context: &QueryTypePrinterContext<'_, 'src, S>,
+    object_def: &ObjectDefinition<S, Pos>,
     cond: &str,
 ) -> bool {
     let cond_type = context.schema.get_type(cond).expect("Type system error");
     match **cond_type {
-        TypeDefinition::Object(ref obj) => object_def.name == obj.name,
+        TypeDefinition::Object(ref obj) => object_def.name.inner_ref() == &*obj.name,
         TypeDefinition::Interface(ref interface) => object_def
             .interfaces
             .iter()
-            .any(|imp| *imp == interface.name),
+            .any(|imp| imp.inner_ref() == &*interface.name),
         TypeDefinition::Union(ref union) => union
             .possible_types
             .iter()
-            .any(|mem| *mem == object_def.name),
+            .any(|mem| mem.inner_ref() == &*object_def.name),
         TypeDefinition::Scalar(_) | TypeDefinition::Enum(_) | TypeDefinition::InputObject(_) => {
             false
         }

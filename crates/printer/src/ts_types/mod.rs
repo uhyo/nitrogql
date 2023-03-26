@@ -152,7 +152,7 @@ impl TSType {
                 writer.indent();
                 for field in properties {
                     if let Some(ref description) = field.description {
-                        print_description(description, writer);
+                        print_description(&description.value, writer);
                     }
                     if field.readonly {
                         writer.write("readonly ");

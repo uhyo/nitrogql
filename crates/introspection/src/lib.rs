@@ -12,9 +12,9 @@ mod tests;
 
 use introspection::IntrospectionResult;
 
-pub fn schema_from_introspection_json(
+pub fn schema_from_introspection_json<D: Default>(
     source: &str,
-) -> Result<Schema<Cow<str>, ()>, IntrospectionError> {
+) -> Result<Schema<Cow<str>, D>, IntrospectionError> {
     let json: IntrospectionResult = serde_json::from_str(source)?;
     introspection::introspection(&json)
 }

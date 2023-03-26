@@ -1,4 +1,5 @@
 use std::{
+    borrow::Cow,
     fs,
     path::{Path, PathBuf},
     process,
@@ -7,15 +8,21 @@ use std::{
 use anyhow::Result;
 use clap::Parser;
 use globmatch::wrappers::{build_matchers, match_paths};
+use graphql_type_system::Schema;
 use log::{debug, error, trace};
 use nitrogql_ast::{
-    operation::OperationDocument, set_current_file_of_pos,
-    type_system::TypeSystemOrExtensionDocument,
+    base::Pos, operation::OperationDocument, set_current_file_of_pos,
+    type_system::TypeSystemOrExtensionDocument, TypeSystemDocument,
 };
+use nitrogql_introspection::schema_from_introspection_json;
+use nitrogql_semantics::ast_to_type_system;
 use nitrogql_utils::get_cwd;
 use thiserror::Error;
 
-use crate::{context::CliContext, error::CliError};
+use crate::{
+    context::{CliContext, LoadedSchema},
+    error::CliError,
+};
 use nitrogql_config_file::load_config;
 
 use nitrogql_error::print_positioned_error;
@@ -108,16 +115,24 @@ fn run_cli_impl(args: impl IntoIterator<Item = String>) -> Result<()> {
         .iter()
         .enumerate()
         .map(
-            |(file_idx, (path, buf))| -> Result<TypeSystemOrExtensionDocument> {
-                debug!("parsing(schema) {} {}", path.to_string_lossy(), file_idx);
-                set_current_file_of_pos(file_idx);
-                let doc = parse_type_system_document(&buf)?;
-                Ok(doc)
+            |(file_idx, (path, buf))| -> Result<LoadedSchema<TypeSystemOrExtensionDocument>> {
+                // Treat JSON file as introspection result schema.
+                let is_introspection = path.extension().map(|ext| ext == "json").unwrap_or(false);
+                if is_introspection {
+                    debug!("parsing(introspection) {}", path.to_string_lossy());
+                    let doc = schema_from_introspection_json(buf)?;
+                    Ok(LoadedSchema::Introspection(doc))
+                } else {
+                    debug!("parsing(schema) {} {}", path.to_string_lossy(), file_idx);
+                    set_current_file_of_pos(file_idx);
+                    let doc = parse_type_system_document(&buf)?;
+                    Ok(LoadedSchema::GraphQL(doc))
+                }
             },
         )
         .collect::<Result<Vec<_>>>();
     let schema_docs = schema_docs?;
-    let merged_schema_doc = TypeSystemOrExtensionDocument::merge(schema_docs);
+    let merged_schema_doc = resolve_loaded_schema(schema_docs)?;
 
     let operation_files = load_glob_files(&config.root_dir, &config.config.operations)?;
     let op_file_index = file_by_index.len();
@@ -206,4 +221,32 @@ fn load_glob_files<'a, S: AsRef<str> + 'a>(
         .collect::<std::io::Result<_>>();
 
     results.map_err(|err| err.into())
+}
+
+fn resolve_loaded_schema<'src>(
+    schema_docs: Vec<LoadedSchema<'src, TypeSystemOrExtensionDocument<'src>>>,
+) -> Result<LoadedSchema<TypeSystemOrExtensionDocument>, CliError> {
+    let mut introsection: Option<Schema<_, _>> = None;
+    let mut documents: Vec<TypeSystemOrExtensionDocument> = vec![];
+    for doc in schema_docs {
+        match doc {
+            LoadedSchema::Introspection(doc) => {
+                if introsection.is_some() {
+                    return Err(CliError::IntrospectionOnce);
+                }
+                introsection = Some(doc);
+            }
+            LoadedSchema::GraphQL(doc) => documents.push(doc),
+        }
+    }
+    if introsection.is_some() && !documents.is_empty() {
+        return Err(CliError::MixGraphQLAndIntrospection);
+    }
+    match introsection {
+        Some(doc) => Ok(LoadedSchema::Introspection(doc)),
+        None => {
+            let merged = TypeSystemOrExtensionDocument::merge(documents);
+            Ok(LoadedSchema::GraphQL(merged))
+        }
+    }
 }
