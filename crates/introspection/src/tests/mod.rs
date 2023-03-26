@@ -2,7 +2,7 @@ use insta::assert_display_snapshot;
 use nitrogql_printer::GraphQLPrinter;
 use sourcemap_writer::JustWriter;
 
-use crate::{introspection::introspection, json_to_value};
+use crate::schema_from_introspection_json;
 
 #[test]
 fn read_introspection() {
@@ -1330,8 +1330,7 @@ fn read_introspection() {
       ]
     }
 }"#;
-    let value = json_to_value(json).unwrap();
-    let schema = introspection::<()>(&value);
+    let schema = schema_from_introspection_json(json).unwrap();
 
     let mut buffer = String::new();
     let mut writer = JustWriter::new(&mut buffer);

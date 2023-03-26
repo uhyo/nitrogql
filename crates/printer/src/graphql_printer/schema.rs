@@ -46,9 +46,7 @@ impl<'a, Str: Text<'a>, OriginalNode> GraphQLPrinter for Schema<Str, OriginalNod
 
 impl<'a, Str: Text<'a>, OriginalNode> GraphQLPrinter for DirectiveDefinition<Str, OriginalNode> {
     fn print_graphql(&self, writer: &mut impl SourceMapWriter) {
-        if let Some(ref description) = self.description {
-            print_string(description, writer);
-        }
+        print_description(&self.description, writer);
         writer.write("directive @");
         writer.write(&self.name);
         print_arguments(&self.arguments, writer);
@@ -130,7 +128,7 @@ impl<'a, Str: Text<'a>, OriginalNode> GraphQLPrinter for TypeDefinition<Str, Ori
                 writer.write("\n\n");
             }
             TypeDefinition::Enum(e) => {
-                writer.write("e ");
+                writer.write("enum ");
                 writer.write(&e.name);
                 writer.write(" {");
                 writer.write("\n");
@@ -138,6 +136,7 @@ impl<'a, Str: Text<'a>, OriginalNode> GraphQLPrinter for TypeDefinition<Str, Ori
                 for mem in e.members.iter() {
                     print_description(&mem.description, writer);
                     writer.write(&mem.name);
+                    writer.write("\n");
                 }
                 writer.dedent();
                 writer.write("}\n\n");
@@ -218,5 +217,6 @@ fn print_description<Str: Borrow<str> + ?Sized, N: Deref<Target = Str>>(
 ) {
     if let Some(ref description) = description {
         print_string((**description).borrow(), writer);
+        writer.write("\n");
     }
 }

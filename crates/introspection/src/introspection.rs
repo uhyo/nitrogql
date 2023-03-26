@@ -1,84 +1,158 @@
-use std::ops::Deref;
+use std::borrow::Cow;
 
 use graphql_type_system::{
     DirectiveDefinition, EnumDefinition, EnumMember, Field, InputObjectDefinition, InputValue,
     InterfaceDefinition, ListType, NamedType, Node, NonNullType, ObjectDefinition,
     ScalarDefinition, Schema, SchemaBuilder, Type, TypeDefinition, UnionDefinition,
 };
+use serde::Deserialize;
 
-use crate::{
-    error::IntrospectionError,
-    json_to_value::{GraphQLValue, ObjectValue},
-};
+use crate::error::IntrospectionError;
+
+/// Struct that can be deserialized from results of the standard introspection query.
+#[derive(Deserialize)]
+pub struct IntrospectionResult<'src> {
+    #[serde(rename = "__schema", borrow)]
+    schema: IntrospectionSchema<'src>,
+}
+
+#[derive(Deserialize)]
+struct IntrospectionSchema<'src> {
+    description: Option<Cow<'src, str>>,
+    #[serde(rename = "queryType", borrow)]
+    query_type: NameObj<'src>,
+    #[serde(rename = "mutationType")]
+    mutation_type: Option<NameObj<'src>>,
+    #[serde(rename = "subscriptionType")]
+    subscription_type: Option<NameObj<'src>>,
+    types: Vec<IntrospectionType<'src>>,
+    directives: Vec<IntrospectionDirective<'src>>,
+}
+
+#[derive(Deserialize)]
+struct NameObj<'src> {
+    name: Cow<'src, str>,
+}
+
+#[derive(Deserialize)]
+struct IntrospectionType<'src> {
+    kind: Cow<'src, str>,
+    name: Option<Cow<'src, str>>,
+    description: Option<Cow<'src, str>>,
+    fields: Option<Vec<IntrospectionField<'src>>>,
+    interfaces: Option<Vec<IntrospectionType<'src>>>,
+    #[serde(rename = "possibleTypes")]
+    possible_types: Option<Vec<IntrospectionType<'src>>>,
+    #[serde(rename = "enumValues")]
+    enum_values: Option<Vec<IntrospectionEnumValue<'src>>>,
+    #[serde(rename = "inputFields")]
+    input_fields: Option<Vec<IntrospectionInputValue<'src>>>,
+    #[serde(rename = "ofType")]
+    of_type: Option<Box<IntrospectionType<'src>>>,
+}
+
+#[derive(Deserialize)]
+struct IntrospectionField<'src> {
+    name: Cow<'src, str>,
+    description: Option<Cow<'src, str>>,
+    args: Vec<IntrospectionInputValue<'src>>,
+    #[serde(rename = "type")]
+    ty: IntrospectionType<'src>,
+    #[serde(rename = "isDeprecated")]
+    is_deprecated: bool,
+    #[serde(rename = "deprecationReason")]
+    deprecation_reason: Option<Cow<'src, str>>,
+}
+
+#[derive(Deserialize)]
+struct IntrospectionInputValue<'src> {
+    name: Cow<'src, str>,
+    description: Option<Cow<'src, str>>,
+    #[serde(rename = "type")]
+    ty: IntrospectionType<'src>,
+    #[serde(rename = "defaultValue")]
+    default_value: Option<Cow<'src, str>>,
+}
+
+#[derive(Deserialize)]
+struct IntrospectionEnumValue<'src> {
+    name: Cow<'src, str>,
+    description: Option<Cow<'src, str>>,
+    #[serde(rename = "isDeprecated")]
+    is_deprecated: bool,
+    #[serde(rename = "deprecationReason")]
+    deprecation_reason: Option<Cow<'src, str>>,
+}
+
+#[derive(Deserialize)]
+struct IntrospectionDirective<'src> {
+    name: Cow<'src, str>,
+    description: Option<Cow<'src, str>>,
+    locations: Vec<Cow<'src, str>>,
+    args: Vec<IntrospectionInputValue<'src>>,
+    #[serde(rename = "isRepeatable")]
+    is_repeatable: Option<bool>,
+}
 
 /// Reads introspection json and generates schema.
-pub fn introspection<D: Default>(value: &GraphQLValue<String>) -> Schema<&str, D> {
+pub fn introspection<'src, D: Default>(
+    value: &IntrospectionResult<'src>,
+) -> Result<Schema<Cow<'src, str>, D>, IntrospectionError> {
     let mut builder = SchemaBuilder::new();
 
-    let Some(schema) = object_type_as("Schema", value) else {
-        return builder.into();
-    };
+    let schema = &value.schema;
 
-    if let Some(description) = schema.get("description").and_then(|v| v.as_string()) {
-        builder.set_description(node(description.as_str()));
+    if let Some(ref description) = schema.description {
+        builder.set_description(node(description.clone()));
     }
     let root_types = builder.set_root_types(D::default());
-    if let Some(Ok(Type::Named(query_type))) = schema.get("queryType").map(as_type::<_, ()>) {
-        root_types.set_query_type(node(&query_type));
+    root_types.set_query_type(node(schema.query_type.name.clone()));
+    if let Some(mutation_type) = &schema.mutation_type {
+        root_types.set_mutation_type(node(mutation_type.name.clone()));
     }
-    if let Some(Ok(Type::Named(mutation_type))) = schema.get("mutationType").map(as_type::<_, ()>) {
-        root_types.set_mutation_type(node(&mutation_type));
-    }
-    if let Some(Ok(Type::Named(subscription_type))) =
-        schema.get("subscriptionType").map(as_type::<_, ()>)
-    {
-        root_types.set_subscription_type(node(&subscription_type));
+    if let Some(subscription_type) = &schema.subscription_type {
+        root_types.set_subscription_type(node(subscription_type.name.clone()));
     }
 
-    if let Some(types) = schema.get("types").and_then(|v| v.as_list()) {
-        let types = types
-            .values
-            .iter()
-            .map(as_type_definition)
-            .filter_map(|v| v.ok())
-            .map(node);
+    let types = schema
+        .types
+        .iter()
+        .map(as_type_definition)
+        .map(|r| r.map(node))
+        .collect::<Result<Vec<_>, _>>()?;
 
-        builder.extend(types.map(|ty| (*ty.name(), ty)));
-    }
+    builder.extend(types.into_iter().map(|ty| (ty.name().clone(), ty)));
 
-    if let Some(directives) = schema.get("directives").and_then(|v| v.as_list()) {
-        let directives = directives
-            .values
-            .iter()
-            .map(as_directive_definition)
-            .filter_map(|v| v.ok())
-            .map(node);
+    let directives = schema
+        .directives
+        .iter()
+        .map(as_directive_definition)
+        .map(|r| r.map(node))
+        .collect::<Result<Vec<_>, _>>()?;
 
-        builder.extend(directives.map(|ty| (*ty.name(), ty)));
-    }
+    builder.extend(directives.into_iter().map(|ty| (ty.name().clone(), ty)));
 
-    builder.into()
+    Ok(builder.into())
 }
 
 /// Converts given object to Type if possible.
-fn as_type<'a, Str: PartialEq<&'a str> + Deref, D: Default>(
-    value: &GraphQLValue<Str>,
-) -> Result<Type<&Str::Target, D>, IntrospectionError> {
-    let obj = object_type_as("__Type", value)
-        .ok_or_else(|| IntrospectionError::Introspection("__Type expected".into()))?;
-    let Some(kind) = obj.get("kind").and_then(|v| v.as_enum()) else {
-        return Err(IntrospectionError::Introspection("__Type does not have the 'kind' field".into()));
-    };
-    if *kind == "OBJECT" {
-        if let Some(name) = obj.get_str("name") {
-            Ok(Type::Named(NamedType::from(node(&*name))))
+fn as_type<'src, D: Default>(
+    value: &IntrospectionType<'src>,
+) -> Result<Type<Cow<'src, str>, D>, IntrospectionError> {
+    let kind = &value.kind;
+    if matches!(
+        kind.as_ref(),
+        "SCALAR" | "OBJECT" | "INTERFACE" | "UNION" | "ENUM" | "INPUT_OBJECT"
+    ) {
+        if let Some(ref name) = value.name {
+            Ok(Type::Named(NamedType::from(node_clone(name))))
         } else {
             Err(IntrospectionError::Introspection(
                 "field 'name' of __Type must be a String".into(),
             ))
         }
-    } else if *kind == "LIST" {
-        if let Some(type_v) = obj.get("ofType") {
+    } else if kind == "LIST" {
+        if let Some(ref type_v) = value.of_type {
             let ty = as_type(type_v)?;
             Ok(Type::List(Box::new(ListType::from(ty))))
         } else {
@@ -86,8 +160,8 @@ fn as_type<'a, Str: PartialEq<&'a str> + Deref, D: Default>(
                 "'ofType' of __Type must exist".into(),
             ))
         }
-    } else if *kind == "NON_NULL" {
-        if let Some(type_v) = obj.get("ofType") {
+    } else if kind == "NON_NULL" {
+        if let Some(ref type_v) = value.of_type {
             let ty = as_type(type_v)?;
             Ok(Type::NonNull(Box::new(NonNullType::from(ty))))
         } else {
@@ -96,50 +170,41 @@ fn as_type<'a, Str: PartialEq<&'a str> + Deref, D: Default>(
             ))
         }
     } else {
-        Err(IntrospectionError::Introspection(
-            "Invalid kind of __Type".into(),
-        ))
+        Err(IntrospectionError::Introspection(format!(
+            "Invalid kind '{kind}' of __Type"
+        )))
     }
 }
 
-fn as_type_definition<'a, Str: PartialEq<&'a str> + Deref, D: Default>(
-    value: &GraphQLValue<Str>,
-) -> Result<TypeDefinition<&Str::Target, D>, IntrospectionError> {
-    let obj = object_type_as("__Type", value)
-        .ok_or_else(|| IntrospectionError::Introspection("__Type expected".into()))?;
-    let Some(kind) = obj.get("kind").and_then(|v| v.as_enum()) else {
-        return Err(IntrospectionError::Introspection("__Type does not have the 'kind' field".into()));
+fn as_type_definition<'src, D: Default>(
+    value: &IntrospectionType<'src>,
+) -> Result<TypeDefinition<Cow<'src, str>, D>, IntrospectionError> {
+    let kind = &value.kind;
+    let Some(name) = value.name.as_ref().map(node_clone) else {
+        return Err(IntrospectionError::Introspection(
+            "field 'name' of __Type must be a String".into(),
+        ));
     };
-    let Some(name) = obj.get("name").and_then(|v| v.as_string()).map(deref_node) else {
-        return Err(IntrospectionError::Introspection("__Type must have a string 'name' field".into()));
-    };
-    let description = obj
-        .get("description")
-        .and_then(|v| v.as_string())
-        .map(deref_node);
+    let description = value.description.as_ref().map(node_clone);
 
-    if *kind == "SCALAR" {
+    if kind == "SCALAR" {
         return Ok(TypeDefinition::Scalar(ScalarDefinition {
             name,
             description,
         }));
-    } else if *kind == "OBJECT" {
-        let Some(fields) = obj.get("fields").and_then(|v| v.as_list()) else {
-            return Err(IntrospectionError::Introspection("__Type of kind OBJECT must have a list 'fields' field".into()));
-        };
-        let Some(interfaces) = obj.get("interfaces").and_then(|v| v.as_list()) else {
-            return Err(IntrospectionError::Introspection("__Type of kind OBJECT must have a list 'interfaces' field".into()));
-        };
-        let fields = fields
-            .values
+    } else if kind == "OBJECT" {
+        let fields = value
+            .fields
             .iter()
+            .flatten()
             .map(as_field)
             .collect::<Result<Vec<_>, _>>()?;
-        let interfaces = interfaces
-            .values
+        let interfaces = value
+            .interfaces
             .iter()
-            .map(as_type::<_, D>)
-            .map(|ty| ty.map(|ty| ***ty.unwrapped()).map(node))
+            .flatten()
+            .map(as_type::<D>)
+            .map(|ty| ty.map(|ty| (***ty.unwrapped()).clone()).map(node))
             .collect::<Result<Vec<_>, _>>()?;
 
         return Ok(TypeDefinition::Object(ObjectDefinition {
@@ -148,23 +213,19 @@ fn as_type_definition<'a, Str: PartialEq<&'a str> + Deref, D: Default>(
             fields,
             interfaces,
         }));
-    } else if *kind == "INTERFACE" {
-        let Some(fields) = obj.get("fields").and_then(|v| v.as_list()) else {
-            return Err(IntrospectionError::Introspection("__Type of kind INTERFACE must have a list 'fields' field".into()));
-        };
-        let Some(interfaces) = obj.get("interfaces").and_then(|v| v.as_list()) else {
-            return Err(IntrospectionError::Introspection("__Type of kind INTERFACE must have a list 'interfaces' field".into()));
-        };
-        let fields = fields
-            .values
+    } else if kind == "INTERFACE" {
+        let fields = value
+            .fields
             .iter()
+            .flatten()
             .map(as_field)
             .collect::<Result<Vec<_>, _>>()?;
-        let interfaces = interfaces
-            .values
+        let interfaces = value
+            .interfaces
             .iter()
-            .map(as_type::<_, D>)
-            .map(|ty| ty.map(|ty| ***ty.unwrapped()).map(node))
+            .flatten()
+            .map(as_type::<D>)
+            .map(|ty| ty.map(|ty| (***ty.unwrapped()).clone()).map(node))
             .collect::<Result<Vec<_>, _>>()?;
 
         return Ok(TypeDefinition::Interface(InterfaceDefinition {
@@ -173,15 +234,14 @@ fn as_type_definition<'a, Str: PartialEq<&'a str> + Deref, D: Default>(
             fields,
             interfaces,
         }));
-    } else if *kind == "UNION" {
-        let Some(possible_types) = obj.get("possibleTypes").and_then(|v| v.as_list()) else {
+    } else if kind == "UNION" {
+        let Some(ref possible_types) = value.possible_types else {
             return Err(IntrospectionError::Introspection("__Type of kind UNION must have a list 'possibleTypes' field".into()));
         };
         let possible_types = possible_types
-            .values
             .iter()
-            .map(as_type::<_, D>)
-            .map(|ty| ty.map(|ty| ***ty.unwrapped()).map(node))
+            .map(as_type::<D>)
+            .map(|ty| ty.map(|ty| (***ty.unwrapped()).clone()).map(node))
             .collect::<Result<Vec<_>, _>>()?;
 
         return Ok(TypeDefinition::Union(UnionDefinition {
@@ -189,41 +249,30 @@ fn as_type_definition<'a, Str: PartialEq<&'a str> + Deref, D: Default>(
             description,
             possible_types,
         }));
-    } else if *kind == "ENUM" {
-        let Some(enum_values) = obj.get("enumValues").and_then(|v| v.as_list()) else {
+    } else if kind == "ENUM" {
+        let Some(ref enum_values) = value.enum_values else {
             return Err(IntrospectionError::Introspection("__Type of kind ENUM must have a list 'enumValues' field".into()));
         };
         let members = enum_values
-            .values
             .iter()
             .map(|ev| {
-                let ev =
-                    object_type_as("__EnumValue", ev).ok_or(IntrospectionError::Introspection(
-                        "Value of 'eunmValues' must be an __EnumValue".into(),
-                    ))?;
-                let Some(name) = ev.get("name").and_then(|v| v.as_string()).map(deref_node) else {
-                    return Err(IntrospectionError::Introspection("__EnumValue must have a string 'name' field".into()));
-                };
-                let description = ev.get("description").and_then(|v| v.as_string()).map(deref_node);
+                let name = node_clone(&ev.name);
+                let description = ev.description.as_ref().map(node_clone);
 
-                Ok(EnumMember {
-                    name,
-                    description,
-                })
+                EnumMember { name, description }
             })
-            .collect::<Result<Vec<_>, _>>()?;
+            .collect();
 
         return Ok(TypeDefinition::Enum(EnumDefinition {
             name,
             description,
             members,
         }));
-    } else if *kind == "INPUT_OBJECT" {
-        let Some(fields) = obj.get("inputFields").and_then(|v| v.as_list()) else {
+    } else if kind == "INPUT_OBJECT" {
+        let Some(ref fields) = value.input_fields else {
             return Err(IntrospectionError::Introspection("__Type of kind INPUT_OBJECT must have a list 'inputFields' field".into()));
         };
         let fields = fields
-            .values
             .iter()
             .map(as_input_value)
             .collect::<Result<Vec<_>, _>>()?;
@@ -234,38 +283,23 @@ fn as_type_definition<'a, Str: PartialEq<&'a str> + Deref, D: Default>(
             fields,
         }));
     } else {
-        Err(IntrospectionError::Introspection(
-            "Unknown kind of __Type".into(),
-        ))
+        Err(IntrospectionError::Introspection(format!(
+            "Unknown kind '{kind}' of __Type"
+        )))
     }
 }
 
-fn as_field<'a, Str: PartialEq<&'a str> + Deref, D: Default>(
-    value: &GraphQLValue<Str>,
-) -> Result<Field<&Str::Target, D>, IntrospectionError> {
-    let obj = object_type_as("__Field", value)
-        .ok_or_else(|| IntrospectionError::Introspection("__Field expected".into()))?;
-    let Some(name) = obj.get("name").and_then(|v| v.as_string()).map(deref_node) else {
-        return Err(IntrospectionError::Introspection("__Field must have a string 'name' field".into()));
-    };
-    let description = obj
-        .get("description")
-        .and_then(|v| v.as_string())
-        .map(deref_node);
-    let Some(ty) = obj.get("type") else {
-        return Err(IntrospectionError::Introspection("'type' of __Field must be a type".into()));
-    };
-    let ty = as_type(ty)?;
-    let arguments = obj
-        .get("args")
-        .and_then(|v| v.as_list())
-        .map(|args| {
-            args.values
-                .iter()
-                .map(as_input_value)
-                .collect::<Result<Vec<_>, _>>()
-        })
-        .transpose()?
+fn as_field<'src, D: Default>(
+    value: &IntrospectionField<'src>,
+) -> Result<Field<Cow<'src, str>, D>, IntrospectionError> {
+    let name = node_clone(&value.name);
+    let description = value.description.as_ref().map(node_clone);
+    let ty = as_type(&value.ty)?;
+    let arguments = value
+        .args
+        .iter()
+        .map(as_input_value)
+        .collect::<Result<_, _>>()
         .unwrap_or(vec![]);
 
     Ok(Field {
@@ -276,72 +310,33 @@ fn as_field<'a, Str: PartialEq<&'a str> + Deref, D: Default>(
     })
 }
 
-fn as_input_value<'a, Str: PartialEq<&'a str> + Deref, D: Default>(
-    value: &GraphQLValue<Str>,
-) -> Result<InputValue<&Str::Target, D>, IntrospectionError> {
-    let obj = object_type_as("__InputValue", value)
-        .ok_or_else(|| IntrospectionError::Introspection("__InputValue expected".into()))?;
-    let Some(name) = obj.get("name").and_then(|v| v.as_string()).map(deref_node) else {
-        return Err(IntrospectionError::Introspection("__InputValue must have a string 'name' field".into()));
-    };
-    let description = obj
-        .get("description")
-        .and_then(|v| v.as_string())
-        .map(deref_node);
-    let Some(ty) = obj.get("type") else {
-        return Err(IntrospectionError::Introspection("'type' of __InputValue must be a type".into()));
-    };
-    let ty = as_type(ty)?;
-    let default_value = obj.get("default_value").and_then(|v| v.as_string());
+fn as_input_value<'src, D: Default>(
+    value: &IntrospectionInputValue<'src>,
+) -> Result<InputValue<Cow<'src, str>, D>, IntrospectionError> {
+    let name = node_clone(&value.name);
+    let description = value.description.as_ref().map(node_clone);
+    let ty = as_type(&value.ty)?;
+    let default_value = value.default_value.as_ref().map(node_clone);
 
     Ok(InputValue {
         name,
         description,
         r#type: ty,
-        default_value: default_value.map(deref_node),
+        default_value,
     })
 }
 
-fn as_directive_definition<'a, Str: PartialEq<&'a str> + Deref, D: Default>(
-    value: &GraphQLValue<Str>,
-) -> Result<DirectiveDefinition<&Str::Target, D>, IntrospectionError> {
-    let obj = object_type_as("__Directive", value)
-        .ok_or_else(|| IntrospectionError::Introspection("__Directive expected".into()))?;
-    let Some(name) = obj.get("name").and_then(|v| v.as_string()).map(deref_node) else {
-        return Err(IntrospectionError::Introspection("__Directive must have a string 'name' field".into()));
-    };
-    let is_repeatable = obj
-        .get("isRepeatable")
-        .and_then(|v| v.as_boolean())
-        .unwrap_or(false);
-    let description = obj
-        .get("description")
-        .and_then(|v| v.as_string())
-        .map(deref_node);
-    let Some(locations) = obj.get("locations").and_then(|v| v.as_list()) else {
-        return Err(IntrospectionError::Introspection("__Directive must have a list 'locations' field".into()));
-    };
-    let locations = locations
-        .values
+fn as_directive_definition<'src, D: Default>(
+    value: &IntrospectionDirective<'src>,
+) -> Result<DirectiveDefinition<Cow<'src, str>, D>, IntrospectionError> {
+    let name = node_clone(&value.name);
+    let description = value.description.as_ref().map(node_clone);
+    let locations = value.locations.iter().map(node_clone).collect();
+    let arguments = value
+        .args
         .iter()
-        .map(|loc| {
-            loc.as_enum()
-                .ok_or(IntrospectionError::Introspection(
-                    "Value of 'locations' must be an __EnumValue".into(),
-                ))
-                .map(deref_node)
-        })
-        .collect::<Result<Vec<_>, _>>()?;
-    let arguments = obj
-        .get("args")
-        .and_then(|v| v.as_list())
-        .map(|args| {
-            args.values
-                .iter()
-                .map(as_input_value)
-                .collect::<Result<Vec<_>, _>>()
-        })
-        .transpose()?
+        .map(as_input_value)
+        .collect::<Result<Vec<_>, _>>()
         .unwrap_or(vec![]);
 
     Ok(DirectiveDefinition {
@@ -349,7 +344,7 @@ fn as_directive_definition<'a, Str: PartialEq<&'a str> + Deref, D: Default>(
         description,
         arguments,
         locations,
-        repeatable: is_repeatable.then(|| node(())),
+        repeatable: value.is_repeatable.and_then(|b| b.then(|| node(()))),
     })
 }
 
@@ -357,32 +352,6 @@ fn node<T, D: Default>(value: T) -> Node<T, D> {
     Node::from(value, D::default())
 }
 
-fn deref_node<'a, T: ?Sized, D: Default>(value: &'a impl Deref<Target = T>) -> Node<&'a T, D> {
-    node(&**value)
-}
-
-/// Returns Some if given value is an object with given `__typename`.
-fn object_type_as<'a, 'b, Str: PartialEq<&'a str>>(
-    expected_name: &'a str,
-    value: &'b GraphQLValue<Str>,
-) -> Option<&'b ObjectValue<Str>> {
-    let (typename, obj) = object_typename(value)?;
-    if *typename == expected_name {
-        Some(obj)
-    } else {
-        None
-    }
-}
-
-fn object_typename<'a, Str: PartialEq<&'a str>>(
-    value: &GraphQLValue<Str>,
-) -> Option<(&Str, &ObjectValue<Str>)> {
-    match value {
-        GraphQLValue::Object(obj) => {
-            let (_, typename) = obj.fields.iter().find(|(key, _)| *key == "__typename")?;
-            let typename = typename.as_string()?;
-            Some((typename, obj))
-        }
-        _ => None,
-    }
+fn node_clone<T: Clone, D: Default>(value: &T) -> Node<T, D> {
+    Node::from(value.clone(), D::default())
 }
