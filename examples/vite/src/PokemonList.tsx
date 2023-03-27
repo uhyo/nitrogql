@@ -13,18 +13,18 @@ export const PokemonList: React.FC = () => {
     },
   });
 
-  if (loading) {
-    return <div>Loading...</div>;
-  }
-
   if (error) {
     return <div>Error: {error.message}</div>;
+  }
+
+  if (!data) {
+    return <div>Loading...</div>;
   }
 
   return (
     <div>
       <ul>
-        {data.map((pokemon) => (
+        {data.pokemon_v2_pokemonspecies.map((pokemon) => (
           <li key={pokemon.id}>{pokemon.name}</li>
         ))}
       </ul>
@@ -32,7 +32,7 @@ export const PokemonList: React.FC = () => {
         Previous
       </button>
       <button
-        disabled={data.pokemons.results.length < pageSize}
+        disabled={data.pokemon_v2_pokemonspecies.length < pageSize}
         onClick={() => setPage((page) => page + 1)}
       >
         Next

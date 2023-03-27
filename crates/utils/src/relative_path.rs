@@ -28,7 +28,11 @@ pub fn relative_path(from: &Path, to: &Path) -> PathBuf {
         .chain(to.into_iter().skip(common_prefix_num));
 
     let mut result = PathBuf::new();
-    for component in result_components {
+    for (idx, component) in result_components.enumerate() {
+        if idx == 0 && !matches!(component, Component::CurDir | Component::ParentDir) {
+            // To align with the custom that relative paths start with `./` or `../`
+            result.push(Component::CurDir);
+        }
         result.push(component.as_os_str());
     }
     result
