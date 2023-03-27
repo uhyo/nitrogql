@@ -188,7 +188,9 @@ impl TypePrinter for ObjectTypeDefinition<'_> {
             .chain(self.fields.iter().map(|field| {
                 (
                     &field.name,
-                    get_ts_type_of_type(&field.r#type),
+                    get_ts_type_of_type(&field.r#type, |name| {
+                        TSType::TypeVariable((&name.name).into())
+                    }),
                     field.description.clone(),
                 )
             })),
@@ -285,7 +287,10 @@ impl TypePrinter for InputObjectTypeDefinition<'_> {
             self.fields
                 .iter()
                 .map(|field| {
-                    let ts_type = get_ts_type_of_type(&field.r#type).to_readonly();
+                    let ts_type = get_ts_type_of_type(&field.r#type, |name| {
+                        TSType::TypeVariable((&name.name).into())
+                    })
+                    .to_readonly();
                     ObjectField {
                         key: (&field.name).into(),
                         r#type: ts_type,

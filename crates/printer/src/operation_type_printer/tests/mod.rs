@@ -148,6 +148,22 @@ fn fragment_inline_spread() {
     assert_snapshot!(printed);
 }
 
+#[test]
+fn query_variables() {
+    let doc = parse_operation_document(
+        "
+        query($foo: Int!, $bar: String) {
+            me(foo: $foo, bar: $bar) {
+                id name type age
+            }
+        }
+        ",
+    )
+    .unwrap();
+    let printed = print_document(&doc);
+    assert_snapshot!(printed);
+}
+
 fn print_document(document: &OperationDocument) -> String {
     let mut result = String::new();
     let mut writer = JustWriter::new(&mut result);

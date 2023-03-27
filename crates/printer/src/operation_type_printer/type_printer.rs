@@ -204,13 +204,21 @@ fn check_fragment_condition<'src, S: Text<'src>>(
     }
 }
 
-pub fn get_type_for_variable_definitions(definitions: &VariablesDefinition) -> TSType {
+pub fn get_type_for_variable_definitions<'src, S: Text<'src>>(
+    context: &QueryTypePrinterContext<'_, 'src, S>,
+    definitions: &VariablesDefinition,
+) -> TSType {
     let types_for_each_field: Vec<_> = definitions
         .definitions
         .iter()
         .map(|def| {
             let property_name = def.name.name;
-            let field_type = get_ts_type_of_type(&def.r#type);
+            let field_type = get_ts_type_of_type(&def.r#type, |name| {
+                TSType::NamespaceMember(
+                    context.options.schema_root_namespace.clone(),
+                    name.name.to_string(),
+                )
+            });
             TSType::object(vec![(property_name, field_type, None)])
         })
         .collect();

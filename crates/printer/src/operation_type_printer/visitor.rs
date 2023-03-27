@@ -138,7 +138,9 @@ impl<'a, 'src> OperationPrinterVisitor for OperationTypePrinterVisitor<'a, 'src>
         let input_variable_type = operation
             .variables_definition
             .as_ref()
-            .map_or(TSType::empty_object(), get_type_for_variable_definitions);
+            .map_or(TSType::empty_object(), |v| {
+                get_type_for_variable_definitions(&type_printer_context, v)
+            });
         let input_variable_name =
             format!("{}{}", context.var_name, self.options.variable_type_suffix);
 
