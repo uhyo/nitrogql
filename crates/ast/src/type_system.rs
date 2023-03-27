@@ -430,3 +430,11 @@ impl TypeSystemOrExtensionDocument<'_> {
 pub struct TypeSystemDocument<'a> {
     pub definitions: Vec<TypeSystemDefinition<'a>>,
 }
+
+impl TypeSystemDocument<'_> {
+    pub fn new() -> Self {
+        TypeSystemDocument {
+            definitions: Vec::new(),
+        }
+    }
+}

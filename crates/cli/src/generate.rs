@@ -4,7 +4,7 @@ use std::io::Write;
 use std::path::{Path, PathBuf};
 
 use log::debug;
-use nitrogql_semantics::ast_to_type_system;
+use nitrogql_semantics::{ast_to_type_system, type_system_to_ast};
 
 use crate::context::LoadedSchema;
 use crate::error::CliError;
@@ -56,8 +56,9 @@ pub fn run_generate(mut context: CliContext) -> Result<CliContext> {
                     LoadedSchema::GraphQL(schema) => {
                         printer.print_document(schema)?;
                     }
-                    LoadedSchema::Introspection(_) => {
-                        todo!("Print introspected schema");
+                    LoadedSchema::Introspection(schema) => {
+                        let ast = type_system_to_ast(schema);
+                        printer.print_document(&ast)?;
                     }
                 }
 
