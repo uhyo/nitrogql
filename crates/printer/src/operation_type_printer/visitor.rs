@@ -150,6 +150,8 @@ impl<'a, 'src> OperationPrinterVisitor for OperationTypePrinterVisitor<'a, 'src>
 
         if context.exported {
             writer.write("export ");
+        } else {
+            writer.write("declare ");
         }
         writer.write("const ");
         writer.write_for(&context.var_name, &operation.name_pos());

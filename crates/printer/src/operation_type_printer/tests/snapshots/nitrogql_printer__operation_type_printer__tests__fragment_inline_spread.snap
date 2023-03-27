@@ -23,7 +23,7 @@ type QueryResult = Schema.__SelectionSet<Schema.Query, {
 
 type QueryVariables = {};
 
-const Query: TypedDocumentNode<QueryResult, QueryVariables>;
+declare const Query: TypedDocumentNode<QueryResult, QueryVariables>;
 
 export { Query as default };
 
