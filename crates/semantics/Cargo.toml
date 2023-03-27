@@ -16,4 +16,5 @@ thiserror = "1.0.40"
 insta = "1.28.0"
 nitrogql-printer = { path = "../printer" }
 nitrogql-parser = { path = "../parser" }
+nitrogql-introspection = { path = "../introspection" }
 sourcemap-writer = { path = "../sourcemap-writer" }

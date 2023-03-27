@@ -1,0 +1,54 @@
+---
+source: crates/semantics/src/tests/mod.rs
+expression: print_ast(&ast)
+---
+schema {
+  query: Query
+  mutation: Mutation
+}
+
+"One todo item."
+type Todo {
+  "ID of this todo item."
+  id: ID!
+  "Contents of this todo item."
+  body: String!
+  "When not null, date when this item was marked done."
+  finishedAt: Date
+  "Date when this item was created."
+  createdAt: Date!
+  "Tags associated to this item."
+  tags: [Tag!]!
+}
+
+"The `ID` scalar type represents a unique identifier, often used to refetch an object or as key for a cache. The ID type appears in a JSON response as a String; however, it is not intended to be human-readable. When expected as an input type, any string (such as `"4"`) or integer (such as `4`) input value will be accepted as an ID."
+scalar ID
+
+"The `String` scalar type represents textual data, represented as UTF-8 character sequences. The String type is most often used by GraphQL to represent free-form human-readable text."
+scalar String
+
+type Tag {
+  id: ID!
+  label: String!
+  color: String!
+}
+
+scalar Date
+
+type Query {
+  todos(filter: TodoFilter): [Todo!]!
+}
+
+input TodoFilter {
+  "Whether to return only unfinished TODOs."
+  unfinishedOnly: Boolean
+}
+
+"The `Boolean` scalar type represents `true` or `false`."
+scalar Boolean
+
+type Mutation {
+  toggleTodo(id: ID!, finished: Boolean!): Todo!
+}
+
+

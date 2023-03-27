@@ -2,6 +2,8 @@ mod ast_to_type_system;
 mod definition_map;
 mod direct_fields_of_output_type;
 mod extension_resolver;
+#[cfg(test)]
+mod tests;
 mod type_system_to_ast;
 pub mod type_system_utils;
 
