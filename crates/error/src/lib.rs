@@ -57,6 +57,9 @@ pub fn print_positioned_error(error: &PositionedError, files: &[(PathBuf, &str)]
     let Some(position) = error.position else {
         return format!("{inner}");
     };
+    if position.builtin {
+        return format!("{inner}");
+    }
 
     let source = files.get(position.file);
     let Some((file_path, source)) = source else {
@@ -70,6 +73,9 @@ pub fn print_positioned_error(error: &PositionedError, files: &[(PathBuf, &str)]
         let Some((file_path, source)) = source else {
             continue;
         };
+        if pos.builtin {
+            continue;
+        }
 
         write!(
             message,
