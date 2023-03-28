@@ -11,6 +11,9 @@ cp target/wasm32-wasi/release/nitrogql-cli.opt.wasm packages/cli/wasm/nitrogql-c
 mkdir -p packages/graphql-loader/wasm
 cp target/wasm32-unknown-unknown/release/graphql-loader.opt.wasm packages/graphql-loader/wasm/graphql-loader.wasm
 
+mkdir -p packages/rollup-plugin/wasm
+cp target/wasm32-unknown-unknown/release/graphql-loader.opt.wasm packages/rollup-plugin/wasm/graphql-loader.wasm
+
 current_version=$(npm pkg get version --json)
 npm pkg set version=${current_version} --json --workspaces
 npx prettier --write "./**/package.json"
