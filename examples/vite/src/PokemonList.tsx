@@ -6,7 +6,7 @@ const pageSize = 50;
 
 export const PokemonList: React.FC = () => {
   const [page, setPage] = useState(0);
-  const { data, error, loading } = useQuery(Query, {
+  const { data, error } = useQuery(Query, {
     variables: {
       limit: pageSize,
       offset: page * pageSize,
@@ -24,7 +24,7 @@ export const PokemonList: React.FC = () => {
   return (
     <div>
       <ul>
-        {data.pokemon_v2_pokemonspecies.map((pokemon) => (
+        {data.species.map((pokemon) => (
           <li key={pokemon.id}>{pokemon.name}</li>
         ))}
       </ul>
@@ -32,7 +32,7 @@ export const PokemonList: React.FC = () => {
         Previous
       </button>
       <button
-        disabled={data.pokemon_v2_pokemonspecies.length < pageSize}
+        disabled={data.species.length < pageSize}
         onClick={() => setPage((page) => page + 1)}
       >
         Next

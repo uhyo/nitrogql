@@ -1,10 +1,11 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, convert::identity};
 
 use crate::{
     ts_types::{ts_types_util::ts_union, type_to_ts_type::get_ts_type_of_type},
     utils::interface_implementers,
 };
 use graphql_type_system::{NamedType, ObjectDefinition, Schema, Text, Type, TypeDefinition};
+use itertools::{Either, Itertools};
 use nitrogql_ast::{
     base::Pos,
     operation::{FragmentDefinition, OperationDocument},
@@ -81,11 +82,12 @@ fn get_object_type_for_selection_set<'src, S: Text<'src>>(
     selection_set: &SelectionSet,
     parent_type: &ObjectDefinition<S, Pos>,
 ) -> TSType {
-    let actual = TSType::object(get_fields_for_selection_set(
-        context,
-        selection_set,
-        parent_type,
-    ));
+    let (unaliased, aliased): (Vec<_>, Vec<_>) =
+        get_fields_for_selection_set(context, selection_set, parent_type)
+            .into_iter()
+            .partition_map(identity);
+    let unaliased = TSType::object(unaliased);
+    let aliased = TSType::object(aliased);
     let schema_type = TSType::NamespaceMember(
         context.options.schema_root_namespace.clone(),
         parent_type.name.to_string(),
@@ -95,16 +97,18 @@ fn get_object_type_for_selection_set<'src, S: Text<'src>>(
             context.options.schema_root_namespace.clone(),
             "__SelectionSet".into(),
         )),
-        vec![schema_type, actual],
+        vec![schema_type, unaliased, aliased],
     )
 }
 
 /// Returns an iterator of object fields.
+/// First element of returned tuple is type definitions for non-aliased fields.
+/// Second element is for aliased fields.
 fn get_fields_for_selection_set<'a, 'src, S: Text<'src>>(
     context: &'a QueryTypePrinterContext<'a, 'src, S>,
     selection_set: &'a SelectionSet<'a>,
     parent_type: &'a ObjectDefinition<S, Pos>,
-) -> Vec<(&'a str, TSType, Option<StringValue>)> {
+) -> Vec<Either<(&'a str, TSType, Option<StringValue>), (&'a str, TSType, Option<StringValue>)>> {
     let parent_type_def = context
         .schema
         .get_type(&parent_type.name)
@@ -119,30 +123,30 @@ fn get_fields_for_selection_set<'a, 'src, S: Text<'src>>(
             .filter_map(move |sel| match sel {
                 Selection::Field(ref field) => {
                     let field_name = field.name.name;
-                    let property_name = field.alias.unwrap_or_else(|| field.name.clone()).name;
-                    if property_name == "__typename" {
+                    let field_type = if field_name == "__typename" {
                         // Special handling of reflection
-                        return Some((
-                            property_name,
-                            TSType::StringLiteral(parent_type.name.to_string()),
-                            None,
-                        ));
-                    }
+                        TSType::StringLiteral(parent_type.name.to_string())
+                    } else {
+                        let field_def = parent_fields
+                            .iter()
+                            .find(|parent_field| {
+                                parent_field.name.inner_ref().borrow() == field_name
+                            })
+                            .expect("Type system error");
 
-                    let field_def = parent_fields
-                        .iter()
-                        .find(|parent_field| parent_field.name.inner_ref().borrow() == field_name)
-                        .expect("Type system error");
-
-                    let field_sel_type =
                         map_to_tstype(&field_def.r#type, |ty| match field.selection_set {
                             None => TSType::NamespaceMember(
                                 context.options.schema_root_namespace.clone(),
                                 ty.to_string(),
                             ),
                             Some(ref set) => get_type_for_selection_set(context, set, ty),
-                        });
-                    Some((property_name, field_sel_type, None))
+                        })
+                    };
+
+                    match field.alias {
+                        None => Some(Either::Left((field_name, field_type, None))),
+                        Some(aliased) => Some(Either::Right((aliased.name, field_type, None))),
+                    }
                 }
                 _ => None,
             });

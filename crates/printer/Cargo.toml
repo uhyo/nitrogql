@@ -7,6 +7,7 @@ edition = "2021"
 
 [dependencies]
 graphql-type-system = { path = "../type-system" }
+itertools = "0.10.5"
 json-writer = "0.2.1"
 nitrogql-ast = { path = "../ast" }
 nitrogql-checker = { path = "../checker" }

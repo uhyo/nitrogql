@@ -1,5 +1,5 @@
 query ($offset: Int!, $limit: Int!) {
-  pokemon_v2_pokemonspecies(offset: $offset, limit: $limit) {
+  species: pokemon_v2_pokemonspecies(offset: $offset, limit: $limit) {
     id
     name
   }

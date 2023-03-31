@@ -13,13 +13,13 @@ type QueryResult = Schema.__SelectionSet<Schema.Query, {
     age: Schema.Int | null;
     posts: (Schema.__SelectionSet<Schema.User, {
       id: Schema.ID;
-    }> | Schema.__SelectionSet<Schema.Bot, {
+    }, {}> | Schema.__SelectionSet<Schema.Bot, {
       id: Schema.ID;
-    }> | Schema.__SelectionSet<Schema.Post, {
+    }, {}> | Schema.__SelectionSet<Schema.Post, {
       id: Schema.ID;
-    }>)[];
-  }>;
-}>;
+    }, {}>)[];
+  }, {}>;
+}, {}>;
 
 type QueryVariables = {};
 

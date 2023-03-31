@@ -14,17 +14,17 @@ type QueryResult = Schema.__SelectionSet<Schema.Query, {
     posts: (Schema.__SelectionSet<Schema.User, {
       id: Schema.ID;
       id: Schema.ID;
-    }> | Schema.__SelectionSet<Schema.Bot, {
+    }, {}> | Schema.__SelectionSet<Schema.Bot, {
       id: Schema.ID;
       id: Schema.ID;
-    }> | Schema.__SelectionSet<Schema.Post, {
+    }, {}> | Schema.__SelectionSet<Schema.Post, {
       id: Schema.ID;
       id: Schema.ID;
       title: Schema.String;
       body: Schema.String;
-    }>)[];
-  }>;
-}>;
+    }, {}>)[];
+  }, {}>;
+}, {}>;
 
 type QueryVariables = {};
 
@@ -34,15 +34,15 @@ export { Query as default };
 
 export type F = Schema.__SelectionSet<Schema.User, {
   id: Schema.ID;
-}> | Schema.__SelectionSet<Schema.Bot, {
+}, {}> | Schema.__SelectionSet<Schema.Bot, {
   id: Schema.ID;
-}> | Schema.__SelectionSet<Schema.Post, {
+}, {}> | Schema.__SelectionSet<Schema.Post, {
   id: Schema.ID;
-}>;
+}, {}>;
 
 export type P = Schema.__SelectionSet<Schema.Post, {
   title: Schema.String;
   body: Schema.String;
-}>;
+}, {}>;
 
 
