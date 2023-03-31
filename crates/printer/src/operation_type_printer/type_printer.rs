@@ -18,6 +18,7 @@ use sourcemap_writer::SourceMapWriter;
 
 use super::{
     super::ts_types::{ts_types_util::ts_intersection, TSType},
+    branching::BranchingCondition,
     visitor::OperationTypePrinterOptions,
 };
 
@@ -45,20 +46,22 @@ pub fn get_type_for_selection_set<'src, S: Text<'src>>(
         .schema
         .get_type(&parent_type)
         .expect("Type system error");
-    match **parent_type_def {
+    let branches = match **parent_type_def {
         TypeDefinition::Scalar(_) | TypeDefinition::Enum(_) | TypeDefinition::InputObject(_) => {
             panic!("Type system error")
         }
         TypeDefinition::Object(ref obj_def) => {
-            get_object_type_for_selection_set(context, selection_set, obj_def)
+            let branch = BranchingCondition {
+                parent_obj: obj_def,
+            };
+            Either::Left(std::iter::once(branch))
         }
         TypeDefinition::Interface(ref interface_def) => {
             let object_defs = interface_implementers(context.schema, &interface_def.name);
-            ts_union(
-                object_defs.map(|obj_def| {
-                    get_object_type_for_selection_set(context, selection_set, obj_def)
-                }),
-            )
+            let branches = object_defs.map(|obj_def| BranchingCondition {
+                parent_obj: obj_def,
+            });
+            Either::Right(Either::Left(branches))
         }
         TypeDefinition::Union(ref union_def) => {
             let object_defs = union_def.possible_types.iter().map(|member| {
@@ -68,29 +71,31 @@ pub fn get_type_for_selection_set<'src, S: Text<'src>>(
                     .and_then(|def| def.as_object())
                     .expect("Type system error")
             });
-            ts_union(
-                object_defs.map(|obj_def| {
-                    get_object_type_for_selection_set(context, selection_set, obj_def)
-                }),
-            )
+            let branches = object_defs.map(|obj_def| BranchingCondition {
+                parent_obj: obj_def,
+            });
+            Either::Right(Either::Right(branches))
         }
-    }
+    };
+    ts_union(
+        branches.map(|branch| get_object_type_for_selection_set(context, selection_set, &branch)),
+    )
 }
 
 fn get_object_type_for_selection_set<'src, S: Text<'src>>(
     context: &QueryTypePrinterContext<'_, 'src, S>,
     selection_set: &SelectionSet,
-    parent_type: &ObjectDefinition<S, Pos>,
+    branch: &BranchingCondition<S>,
 ) -> TSType {
     let (unaliased, aliased): (Vec<_>, Vec<_>) =
-        get_fields_for_selection_set(context, selection_set, parent_type)
+        get_fields_for_selection_set(context, selection_set, branch.parent_obj)
             .into_iter()
             .partition_map(identity);
     let unaliased = TSType::object(unaliased);
     let aliased = TSType::object(aliased);
     let schema_type = TSType::NamespaceMember(
         context.options.schema_root_namespace.clone(),
-        parent_type.name.to_string(),
+        branch.parent_obj.name.to_string(),
     );
     TSType::TypeFunc(
         Box::new(TSType::NamespaceMember(

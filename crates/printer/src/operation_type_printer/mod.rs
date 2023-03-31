@@ -8,6 +8,7 @@ use crate::operation_base_printer::OperationPrinter;
 
 use self::visitor::{OperationTypePrinterOptions, OperationTypePrinterVisitor};
 
+mod branching;
 #[cfg(test)]
 mod tests;
 pub mod type_printer;
