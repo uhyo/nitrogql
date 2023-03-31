@@ -23,20 +23,31 @@ export const PokemonList: React.FC = () => {
 
   return (
     <div>
-      <ul>
-        {data.species.map((pokemon) => (
-          <li key={pokemon.id}>{pokemon.name}</li>
-        ))}
+      <div>
+        <button
+          disabled={page === 0}
+          onClick={() => setPage((page) => page - 1)}
+        >
+          Previous
+        </button>
+        <button
+          disabled={data.species.length < pageSize}
+          onClick={() => setPage((page) => page + 1)}
+        >
+          Next
+        </button>
+      </div>
+      <ul className="pokemonList">
+        {data.species.map((pokemon) => {
+          const ja = pokemon.names.find((name) => name.language_id === 1);
+          const en = pokemon.names.find((name) => name.language_id === 9);
+          return (
+            <li key={pokemon.id}>
+              #{pokemon.id} <b>{ja?.name}</b> {en?.name}
+            </li>
+          );
+        })}
       </ul>
-      <button disabled={page === 0} onClick={() => setPage((page) => page - 1)}>
-        Previous
-      </button>
-      <button
-        disabled={data.species.length < pageSize}
-        onClick={() => setPage((page) => page + 1)}
-      >
-        Next
-      </button>
     </div>
   );
 };

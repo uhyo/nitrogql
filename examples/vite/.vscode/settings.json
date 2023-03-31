@@ -1,0 +1,10 @@
+{
+  "emeraldwalk.runonsave": {
+    "commands": [
+      {
+        "match": "\\.graphql$",
+        "cmd": "npm run generate"
+      }
+    ]
+  }
+}

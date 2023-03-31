@@ -1,6 +1,15 @@
 query ($offset: Int!, $limit: Int!) {
-  species: pokemon_v2_pokemonspecies(offset: $offset, limit: $limit) {
+  species: pokemon_v2_pokemonspecies(
+    offset: $offset
+    limit: $limit
+    order_by: { id: asc }
+  ) {
     id
-    name
+    names: pokemon_v2_pokemonspeciesnames(
+      where: { language_id: { _in: [1, 9] } }
+    ) {
+      language_id
+      name
+    }
   }
 }
