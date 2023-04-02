@@ -1,15 +1,15 @@
+name: CI
 on:
-  events:
-    push:
-      branches:
-        - master
-    pull_request:
-      types:
-        - opened
-        - synchronize
-        - reopened
-      branches:
-        - master
+  push:
+    branches:
+      - master
+  pull_request:
+    types:
+      - opened
+      - synchronize
+      - reopened
+    branches:
+      - master
 
 jobs:
   test:
