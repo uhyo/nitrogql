@@ -304,6 +304,224 @@ mod skip_include {
         let printed = print_document(&doc);
         assert_snapshot!(printed);
     }
+
+    #[test]
+    fn skip_fragment_spread() {
+        let doc = parse_operation_document(
+            "
+            query {
+                me {
+                    id name type
+                    ...F @skip(if: true)
+                }
+            }
+            fragment F on User {
+                age
+            }
+            ",
+        )
+        .unwrap();
+        let printed = print_document(&doc);
+        assert_snapshot!(printed);
+    }
+
+    #[test]
+    fn include_fragment_spread() {
+        let doc = parse_operation_document(
+            "
+            query {
+                me {
+                    id name type
+                    ...F @include(if: true)
+                }
+            }
+            fragment F on User {
+                age
+            }
+            ",
+        )
+        .unwrap();
+        let printed = print_document(&doc);
+        assert_snapshot!(printed);
+    }
+
+    #[test]
+    fn skip_inline_fragment() {
+        let doc = parse_operation_document(
+            "
+            query {
+                me {
+                    id name type
+                    ... @skip(if: true) {
+                        age
+                    }
+                }
+            }
+            ",
+        )
+        .unwrap();
+        let printed = print_document(&doc);
+        assert_snapshot!(printed);
+    }
+
+    #[test]
+    fn include_inline_fragment() {
+        let doc = parse_operation_document(
+            "
+            query {
+                me {
+                    id name type
+                    ... @include(if: true) {
+                        age
+                    }
+                }
+            }
+            ",
+        )
+        .unwrap();
+        let printed = print_document(&doc);
+        assert_snapshot!(printed);
+    }
+
+    #[test]
+    fn skip_and_include_fragment_spread() {
+        let doc = parse_operation_document(
+            "
+            query {
+                me {
+                    id name type
+                    ...F @skip(if: true) @include(if: true)
+                }
+            }
+            fragment F on User {
+                age
+            }
+            ",
+        )
+        .unwrap();
+        let printed = print_document(&doc);
+        assert_snapshot!(printed);
+    }
+
+    #[test]
+    fn skip_and_include_inline_fragment() {
+        let doc = parse_operation_document(
+            "
+            query {
+                me {
+                    id name type
+                    ... @skip(if: true) @include(if: true) {
+                        age
+                    }
+                }
+            }
+            ",
+        )
+        .unwrap();
+        let printed = print_document(&doc);
+        assert_snapshot!(printed);
+    }
+
+    #[test]
+    fn skip_fragment_spread_variable() {
+        let doc = parse_operation_document(
+            "
+            query($skip: Boolean!) {
+                me {
+                    id name type
+                    ...F @skip(if: $skip)
+                }
+            }
+            fragment F on User {
+                age
+            }
+            ",
+        )
+        .unwrap();
+        let printed = print_document(&doc);
+        assert_snapshot!(printed);
+    }
+
+    #[test]
+    fn include_fragment_spread_variable() {
+        let doc = parse_operation_document(
+            "
+            query($include: Boolean!) {
+                me {
+                    id name type
+                    ...F @include(if: $include)
+                }
+            }
+            fragment F on User {
+                age
+            }
+            ",
+        )
+        .unwrap();
+        let printed = print_document(&doc);
+        assert_snapshot!(printed);
+    }
+
+    #[test]
+    fn skip_inline_fragment_variable() {
+        let doc = parse_operation_document(
+            "
+            query($skip: Boolean!) {
+                me {
+                    id name type
+                    ... @skip(if: $skip) {
+                        age
+                    }
+                }
+            }
+            ",
+        )
+        .unwrap();
+        let printed = print_document(&doc);
+        assert_snapshot!(printed);
+    }
+
+    #[test]
+    fn include_inline_fragment_variable() {
+        let doc = parse_operation_document(
+            "
+            query($include: Boolean!) {
+                me {
+                    id name type
+                    ... @include(if: $include) {
+                        age
+                    }
+                }
+            }
+            ",
+        )
+        .unwrap();
+        let printed = print_document(&doc);
+        assert_snapshot!(printed);
+    }
+
+    #[test]
+    fn skip_and_include_fragment_spread_variable() {
+        let doc = parse_operation_document(
+            "
+            query($flag: Boolean!) {
+                me {
+                    id name
+                    ...F @skip(if: $flag)
+                    ... @include(if: $flag) {
+                        age
+                    }
+                }
+            }
+            fragment F on User {
+                type
+            }
+            ",
+        )
+        .unwrap();
+        let printed = print_document(&doc);
+        assert_snapshot!(printed);
+    }
 }
 
 fn print_document(document: &OperationDocument) -> String {

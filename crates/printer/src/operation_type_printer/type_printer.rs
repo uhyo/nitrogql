@@ -236,9 +236,6 @@ fn get_fields_for_selection_set<'a, 'src, S: Text<'src>>(
         .flat_map(move |sel| match sel {
             Selection::Field(_) => vec![],
             Selection::FragmentSpread(ref fragment) => {
-                if check_skip_directive(branch, &fragment.directives) {
-                    return vec![];
-                }
                 let fragment_def = context
                     .fragment_definitions
                     .get(fragment.fragment_name.name)
@@ -248,19 +245,63 @@ fn get_fields_for_selection_set<'a, 'src, S: Text<'src>>(
                     branch.parent_obj,
                     fragment_def.type_condition.name,
                 ) {
-                    get_fields_for_selection_set(context, &fragment_def.selection_set, &branch)
+                    let fields =
+                        get_fields_for_selection_set(context, &fragment_def.selection_set, &branch);
+                    if check_skip_directive(branch, &fragment.directives) {
+                        fields
+                            .into_iter()
+                            .map(|field| {
+                                field.map(|field| ObjectField {
+                                    optional: true,
+                                    r#type: TSType::Never,
+                                    ..field
+                                })
+                            })
+                            .collect()
+                    } else {
+                        fields
+                    }
                 } else {
                     vec![]
                 }
             }
             Selection::InlineFragment(ref fragment) => match fragment.type_condition {
-                None => get_fields_for_selection_set(context, &fragment.selection_set, branch),
-                Some(ref cond) => {
+                None => {
+                    let fields =
+                        get_fields_for_selection_set(context, &fragment.selection_set, branch);
                     if check_skip_directive(branch, &fragment.directives) {
-                        return vec![];
+                        fields
+                            .into_iter()
+                            .map(|field| {
+                                field.map(|field| ObjectField {
+                                    optional: true,
+                                    r#type: TSType::Never,
+                                    ..field
+                                })
+                            })
+                            .collect()
+                    } else {
+                        fields
                     }
+                }
+                Some(ref cond) => {
                     if check_fragment_condition(context, branch.parent_obj, cond.name) {
-                        get_fields_for_selection_set(context, &fragment.selection_set, &branch)
+                        let fields =
+                            get_fields_for_selection_set(context, &fragment.selection_set, &branch);
+                        if check_skip_directive(branch, &fragment.directives) {
+                            fields
+                                .into_iter()
+                                .map(|field| {
+                                    field.map(|field| ObjectField {
+                                        optional: true,
+                                        r#type: TSType::Never,
+                                        ..field
+                                    })
+                                })
+                                .collect()
+                        } else {
+                            fields
+                        }
                     } else {
                         vec![]
                     }
