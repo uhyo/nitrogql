@@ -20,7 +20,7 @@ nitrogql can check your GraphQL code statically and guard you from any runtime e
 
 ## And more planned...
 
-Type generation currently only supports client side code (usage with GraphQL clients like Apollo). Support for writing server side code (resolvers) is planned.
+Type generation currently only supports client side code (usage with GraphQL clients like Apollo Client). Support for writing server side code (resolvers) is planned.
 
 ### build
 
