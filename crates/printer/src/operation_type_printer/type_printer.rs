@@ -11,7 +11,7 @@ use nitrogql_ast::{
     directive::Directive,
     operation::{FragmentDefinition, OperationDocument},
     selection_set::{Selection, SelectionSet},
-    value::{StringValue, Value},
+    value::Value,
     variable::VariablesDefinition,
 };
 use nitrogql_semantics::direct_fields_of_output_type;

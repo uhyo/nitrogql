@@ -5,7 +5,7 @@ set -eux
 # Requirements: cargo (nightly), wasm-opt (from binaryen)
 (
   cd crates/cli
-  cargo +nightly rustc --target wasm32-wasi --release
+  cargo rustc --target wasm32-wasi --release
 )
 (
   cd target/wasm32-wasi/release
@@ -14,7 +14,7 @@ set -eux
 
 (
   cd crates/graphql-loader
-  cargo +nightly rustc --target wasm32-unknown-unknown --release
+  cargo rustc --target wasm32-unknown-unknown --release
 )
 (
   cd target/wasm32-unknown-unknown/release

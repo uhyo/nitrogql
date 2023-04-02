@@ -9,18 +9,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - uses: actions-rs/toolchain@v1
-        with:
-          toolchain: stable
-          target: wasm32-wasi
-          override: true
-      - uses: actions/setup-node@v2
-        with:
-          node-version: 18
-      - name: test
-        uses: actions-rs/cargo@v1
-        with:
-          command: test
+      - name: install rustup
+        run: curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+      - name: install additional targets
+        run: rustup target add wasm32-wasi wasm32-unknown-unknown
       - name: build rust
         run: ./build/build-rust.sh
       - name: build node

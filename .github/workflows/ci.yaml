@@ -16,18 +16,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - uses: actions-rs/toolchain@v1
-        with:
-          toolchain: stable
-          target: wasm32-wasi
-          override: true
+      - name: install rustup
+        run: curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
       - name: test
-        uses: actions-rs/cargo@v1
-        with:
-          command: test
+        run: cargo test
       # currently `cargo wasi test` doesn't run, so ensure at least that it builds
       - name: build (wasi)
-        uses: actions-rs/cargo@v1
-        with:
-          command: build
-          args: --target wasm32-wasi
+        run: cargo run build --target wasm32-wasi
