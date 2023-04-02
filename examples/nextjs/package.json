@@ -25,6 +25,7 @@
   },
   "devDependencies": {
     "@graphql-typed-document-node/core": "^3.2.0",
-    "@nitrogql/cli": "file:../../packages/cli"
+    "@nitrogql/cli": "^0.0.1-alpha.1",
+    "@nitrogql/graphql-loader": "^0.0.1-alpha.1"
   }
 }
