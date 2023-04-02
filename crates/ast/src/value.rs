@@ -144,3 +144,19 @@ pub struct Arguments<'a> {
     pub position: Pos,
     pub arguments: Vec<(Ident<'a>, Value<'a>)>,
 }
+
+impl<'a> IntoIterator for Arguments<'a> {
+    type Item = (Ident<'a>, Value<'a>);
+    type IntoIter = std::vec::IntoIter<Self::Item>;
+    fn into_iter(self) -> Self::IntoIter {
+        self.arguments.into_iter()
+    }
+}
+
+impl<'a, 'b> IntoIterator for &'b Arguments<'a> {
+    type Item = &'b (Ident<'a>, Value<'a>);
+    type IntoIter = std::slice::Iter<'b, (Ident<'a>, Value<'a>)>;
+    fn into_iter(self) -> Self::IntoIter {
+        self.arguments.iter()
+    }
+}

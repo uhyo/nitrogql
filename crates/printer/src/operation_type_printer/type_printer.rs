@@ -1,8 +1,4 @@
-use std::{
-    collections::HashMap,
-    convert::identity,
-    iter::{empty, once},
-};
+use std::{collections::HashMap, convert::identity, iter::once};
 
 use crate::{
     ts_types::{ts_types_util::ts_union, type_to_ts_type::get_ts_type_of_type},
@@ -12,6 +8,7 @@ use graphql_type_system::{NamedType, ObjectDefinition, Schema, Text, Type, TypeD
 use itertools::{Either, Itertools};
 use nitrogql_ast::{
     base::Pos,
+    directive::Directive,
     operation::{FragmentDefinition, OperationDocument},
     selection_set::{Selection, SelectionSet},
     value::{StringValue, Value},
@@ -125,7 +122,7 @@ fn get_boolean_variables<'src, S: Text<'src>>(
                 let variable = directive
                     .arguments
                     .iter()
-                    .flat_map(|a| a.arguments.iter())
+                    .flatten()
                     .find_map(|(arg, value)| {
                         if arg.name != "if" {
                             return None;
@@ -151,7 +148,7 @@ fn get_object_type_for_selection_set<'src, S: Text<'src>>(
     branch: &BranchingCondition<S>,
 ) -> TSType {
     let (unaliased, aliased): (Vec<_>, Vec<_>) =
-        get_fields_for_selection_set(context, selection_set, branch.parent_obj)
+        get_fields_for_selection_set(context, selection_set, branch)
             .into_iter()
             .partition_map(identity);
     let unaliased = TSType::object(unaliased);
@@ -170,16 +167,16 @@ fn get_object_type_for_selection_set<'src, S: Text<'src>>(
 }
 
 /// Returns an iterator of object fields.
-/// First element of returned tuple is type definitions for non-aliased fields.
-/// Second element is for aliased fields.
+/// Left is for non-aliased fields.
+/// Right is for aliased fields.
 fn get_fields_for_selection_set<'a, 'src, S: Text<'src>>(
     context: &'a QueryTypePrinterContext<'a, 'src, S>,
     selection_set: &'a SelectionSet<'src>,
-    parent_type: &'a ObjectDefinition<S, Pos>,
+    branch: &'a BranchingCondition<'a, S>,
 ) -> Vec<Either<(&'a str, TSType, Option<StringValue>), (&'a str, TSType, Option<StringValue>)>> {
     let parent_type_def = context
         .schema
-        .get_type(&parent_type.name)
+        .get_type(&branch.parent_obj.name)
         .expect("Type system error");
 
     let parent_fields = direct_fields_of_output_type(parent_type_def).expect("Type system error");
@@ -190,10 +187,13 @@ fn get_fields_for_selection_set<'a, 'src, S: Text<'src>>(
             .iter()
             .filter_map(move |sel| match sel {
                 Selection::Field(ref field) => {
+                    if check_skip_directive(branch, &field.directives) {
+                        return None;
+                    }
                     let field_name = field.name.name;
                     let field_type = if field_name == "__typename" {
                         // Special handling of reflection
-                        TSType::StringLiteral(parent_type.name.to_string())
+                        TSType::StringLiteral(branch.parent_obj.name.to_string())
                     } else {
                         let field_def = parent_fields
                             .iter()
@@ -225,22 +225,31 @@ fn get_fields_for_selection_set<'a, 'src, S: Text<'src>>(
         .flat_map(move |sel| match sel {
             Selection::Field(_) => vec![],
             Selection::FragmentSpread(ref fragment) => {
+                if check_skip_directive(branch, &fragment.directives) {
+                    return vec![];
+                }
                 let fragment_def = context
                     .fragment_definitions
                     .get(fragment.fragment_name.name)
                     .expect("Type system error");
-                if check_fragment_condition(context, parent_type, fragment_def.type_condition.name)
-                {
-                    get_fields_for_selection_set(context, &fragment_def.selection_set, &parent_type)
+                if check_fragment_condition(
+                    context,
+                    branch.parent_obj,
+                    fragment_def.type_condition.name,
+                ) {
+                    get_fields_for_selection_set(context, &fragment_def.selection_set, &branch)
                 } else {
                     vec![]
                 }
             }
             Selection::InlineFragment(ref fragment) => match fragment.type_condition {
-                None => get_fields_for_selection_set(context, &fragment.selection_set, parent_type),
+                None => get_fields_for_selection_set(context, &fragment.selection_set, branch),
                 Some(ref cond) => {
-                    if check_fragment_condition(context, parent_type, cond.name) {
-                        get_fields_for_selection_set(context, &fragment.selection_set, &parent_type)
+                    if check_skip_directive(branch, &fragment.directives) {
+                        return vec![];
+                    }
+                    if check_fragment_condition(context, branch.parent_obj, cond.name) {
+                        get_fields_for_selection_set(context, &fragment.selection_set, &branch)
                     } else {
                         vec![]
                     }
@@ -251,6 +260,71 @@ fn get_fields_for_selection_set<'a, 'src, S: Text<'src>>(
         .chain(types_for_fragments)
         .collect::<Vec<_>>();
     res
+}
+
+/// Examine directives and returns whether field should be skipped.
+fn check_skip_directive<'src, S: Text<'src>>(
+    branch: &BranchingCondition<S>,
+    directives: &[Directive<'src>],
+) -> bool {
+    for directive in directives {
+        match directive.name.name {
+            "skip" => {
+                let (_, skip) = directive
+                    .arguments
+                    .iter()
+                    .flatten()
+                    .find(|(arg, _)| arg.name == "if")
+                    .expect("Type system error");
+                match skip {
+                    Value::Variable(var) => {
+                        let (_, var_value) = branch
+                            .boolean_variables
+                            .iter()
+                            .find(|(name, _)| *name == var.name)
+                            .expect("Type system error");
+                        if *var_value {
+                            return true;
+                        }
+                    }
+                    Value::BooleanValue(b) => {
+                        if b.value {
+                            return true;
+                        }
+                    }
+                    _ => {}
+                }
+            }
+            "include" => {
+                let (_, include) = directive
+                    .arguments
+                    .iter()
+                    .flatten()
+                    .find(|(arg, _)| arg.name == "if")
+                    .expect("Type system error");
+                match include {
+                    Value::Variable(var) => {
+                        let (_, var_value) = branch
+                            .boolean_variables
+                            .iter()
+                            .find(|(name, _)| *name == var.name)
+                            .expect("Type system error");
+                        if !var_value {
+                            return true;
+                        }
+                    }
+                    Value::BooleanValue(b) => {
+                        if !b.value {
+                            return true;
+                        }
+                    }
+                    _ => {}
+                }
+            }
+            _ => {}
+        }
+    }
+    false
 }
 
 /// Returns whether given object type implements given condition.
