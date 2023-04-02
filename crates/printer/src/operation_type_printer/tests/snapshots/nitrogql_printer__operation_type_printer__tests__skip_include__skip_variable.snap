@@ -15,6 +15,7 @@ type QueryResult = Schema.__SelectionSet<Schema.Query, {
     id: Schema.ID;
     name: Schema.String;
     type: Schema.UserType;
+    age?: never;
   }, {}>;
 }, {}>;
 

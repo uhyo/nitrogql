@@ -39,6 +39,12 @@ pub enum TSType {
     Unknown,
 }
 
+impl TSType {
+    pub fn is_never(&self) -> bool {
+        matches!(self, TSType::Never)
+    }
+}
+
 #[derive(Clone, Debug)]
 pub struct TypeVariable {
     name: String,

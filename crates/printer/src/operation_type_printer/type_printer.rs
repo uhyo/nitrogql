@@ -1,7 +1,7 @@
 use std::{collections::HashMap, convert::identity, iter::once};
 
 use crate::{
-    ts_types::{ts_types_util::ts_union, type_to_ts_type::get_ts_type_of_type},
+    ts_types::{ts_types_util::ts_union, type_to_ts_type::get_ts_type_of_type, ObjectField},
     utils::interface_implementers,
 };
 use graphql_type_system::{NamedType, ObjectDefinition, Schema, Text, Type, TypeDefinition};
@@ -151,8 +151,8 @@ fn get_object_type_for_selection_set<'src, S: Text<'src>>(
         get_fields_for_selection_set(context, selection_set, branch)
             .into_iter()
             .partition_map(identity);
-    let unaliased = TSType::object(unaliased);
-    let aliased = TSType::object(aliased);
+    let unaliased = TSType::Object(unaliased);
+    let aliased = TSType::Object(aliased);
     let schema_type = TSType::NamespaceMember(
         context.options.schema_root_namespace.clone(),
         branch.parent_obj.name.to_string(),
@@ -173,7 +173,7 @@ fn get_fields_for_selection_set<'a, 'src, S: Text<'src>>(
     context: &'a QueryTypePrinterContext<'a, 'src, S>,
     selection_set: &'a SelectionSet<'src>,
     branch: &'a BranchingCondition<'a, S>,
-) -> Vec<Either<(&'a str, TSType, Option<StringValue>), (&'a str, TSType, Option<StringValue>)>> {
+) -> Vec<Either<ObjectField, ObjectField>> {
     let parent_type_def = context
         .schema
         .get_type(&branch.parent_obj.name)
@@ -187,11 +187,10 @@ fn get_fields_for_selection_set<'a, 'src, S: Text<'src>>(
             .iter()
             .filter_map(move |sel| match sel {
                 Selection::Field(ref field) => {
-                    if check_skip_directive(branch, &field.directives) {
-                        return None;
-                    }
                     let field_name = field.name.name;
-                    let field_type = if field_name == "__typename" {
+                    let field_type = if check_skip_directive(branch, &field.directives) {
+                        TSType::Never
+                    } else if field_name == "__typename" {
                         // Special handling of reflection
                         TSType::StringLiteral(branch.parent_obj.name.to_string())
                     } else {
@@ -212,8 +211,20 @@ fn get_fields_for_selection_set<'a, 'src, S: Text<'src>>(
                     };
 
                     match field.alias {
-                        None => Some(Either::Left((field_name, field_type, None))),
-                        Some(aliased) => Some(Either::Right((aliased.name, field_type, None))),
+                        None => Some(Either::Left(ObjectField {
+                            key: field_name.into(),
+                            optional: field_type.is_never(),
+                            r#type: field_type,
+                            readonly: false,
+                            description: None,
+                        })),
+                        Some(aliased) => Some(Either::Right(ObjectField {
+                            key: aliased.name.into(),
+                            optional: field_type.is_never(),
+                            r#type: field_type,
+                            readonly: false,
+                            description: None,
+                        })),
                     }
                 }
                 _ => None,

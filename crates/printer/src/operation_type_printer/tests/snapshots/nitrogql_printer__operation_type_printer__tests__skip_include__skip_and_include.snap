@@ -7,7 +7,10 @@ import type * as Schema from "";
 
 type QueryResult = Schema.__SelectionSet<Schema.Query, {
   me: Schema.__SelectionSet<Schema.User, {
+    id?: never;
+    name?: never;
     type: Schema.UserType;
+    age?: never;
   }, {}>;
 }, {}>;
 
