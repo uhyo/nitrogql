@@ -1,7 +1,7 @@
 query ($unfinishedOnly: Boolean) {
   todos(filter: { unfinishedOnly: $unfinishedOnly }) {
     id
-    body
+    text
     createdAt
     finishedAt
     tags {
