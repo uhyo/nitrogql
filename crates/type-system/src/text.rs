@@ -1,6 +1,6 @@
 use std::{
     borrow::{Borrow, Cow},
-    fmt::Display,
+    fmt::{Debug, Display},
     hash::Hash,
     ops::Deref,
 };
@@ -16,6 +16,7 @@ pub trait Text<'a>:
     + Borrow<str>
     + From<&'a str>
     + Deref<Target = str>
+    + Debug
     + Display
 {
 }

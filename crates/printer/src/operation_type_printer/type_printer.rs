@@ -1,4 +1,8 @@
-use std::{collections::HashMap, convert::identity};
+use std::{
+    collections::HashMap,
+    convert::identity,
+    iter::{empty, once},
+};
 
 use crate::{
     ts_types::{ts_types_util::ts_union, type_to_ts_type::get_ts_type_of_type},
@@ -10,7 +14,7 @@ use nitrogql_ast::{
     base::Pos,
     operation::{FragmentDefinition, OperationDocument},
     selection_set::{Selection, SelectionSet},
-    value::StringValue,
+    value::{StringValue, Value},
     variable::VariablesDefinition,
 };
 use nitrogql_semantics::direct_fields_of_output_type;
@@ -19,6 +23,7 @@ use sourcemap_writer::SourceMapWriter;
 use super::{
     super::ts_types::{ts_types_util::ts_intersection, TSType},
     branching::BranchingCondition,
+    selection_set_visitor::visit_fields_in_selection_set,
     visitor::OperationTypePrinterOptions,
 };
 
@@ -39,29 +44,37 @@ pub trait TypePrinter<'src, S: Text<'src>> {
 
 pub fn get_type_for_selection_set<'src, S: Text<'src>>(
     context: &QueryTypePrinterContext<'_, 'src, S>,
-    selection_set: &SelectionSet,
+    selection_set: &SelectionSet<'src>,
     parent_type: &NamedType<S, Pos>,
 ) -> TSType {
+    let branches = generate_branching_conditions(context, selection_set, parent_type);
+    ts_union(
+        branches
+            .into_iter()
+            .map(|branch| get_object_type_for_selection_set(context, selection_set, &branch)),
+    )
+}
+
+/// Generates a set of branching conditions for a given selection set.
+fn generate_branching_conditions<'a, 'src, S: Text<'src>>(
+    context: &'a QueryTypePrinterContext<'a, 'src, S>,
+    selection_set: &'a SelectionSet<'src>,
+    parent_type: &'a NamedType<S, Pos>,
+) -> Vec<BranchingCondition<'a, S>> {
     let parent_type_def = context
         .schema
         .get_type(&parent_type)
         .expect("Type system error");
-    let branches = match **parent_type_def {
+    let parent_objects = match **parent_type_def {
         TypeDefinition::Scalar(_) | TypeDefinition::Enum(_) | TypeDefinition::InputObject(_) => {
             panic!("Type system error")
         }
         TypeDefinition::Object(ref obj_def) => {
-            let branch = BranchingCondition {
-                parent_obj: obj_def,
-            };
-            Either::Left(std::iter::once(branch))
+            vec![obj_def]
         }
         TypeDefinition::Interface(ref interface_def) => {
             let object_defs = interface_implementers(context.schema, &interface_def.name);
-            let branches = object_defs.map(|obj_def| BranchingCondition {
-                parent_obj: obj_def,
-            });
-            Either::Right(Either::Left(branches))
+            object_defs.collect()
         }
         TypeDefinition::Union(ref union_def) => {
             let object_defs = union_def.possible_types.iter().map(|member| {
@@ -71,20 +84,70 @@ pub fn get_type_for_selection_set<'src, S: Text<'src>>(
                     .and_then(|def| def.as_object())
                     .expect("Type system error")
             });
-            let branches = object_defs.map(|obj_def| BranchingCondition {
-                parent_obj: obj_def,
-            });
-            Either::Right(Either::Right(branches))
+            object_defs.collect()
         }
     };
-    ts_union(
-        branches.map(|branch| get_object_type_for_selection_set(context, selection_set, &branch)),
-    )
+    // multi_cartesian_product cannot handle the case where there are no variables.
+    // See: https://github.com/rust-itertools/itertools/issues/337
+    let boolean_variables = get_boolean_variables(context, selection_set);
+    let boolean_variables = if boolean_variables.is_empty() {
+        Either::Left(once(vec![]))
+    } else {
+        Either::Right(
+            boolean_variables
+                .into_iter()
+                .unique()
+                .map(|v| vec![(v, false), (v, true)])
+                .multi_cartesian_product(),
+        )
+    };
+    let branches = parent_objects
+        .into_iter()
+        .cartesian_product(boolean_variables)
+        .map(|(obj, vars)| BranchingCondition {
+            parent_obj: obj,
+            boolean_variables: vars,
+        })
+        .collect();
+    branches
+}
+
+/// Get boolean variables involved in a selection set.
+fn get_boolean_variables<'src, S: Text<'src>>(
+    context: &QueryTypePrinterContext<'_, 'src, S>,
+    selection_set: &SelectionSet<'src>,
+) -> Vec<&'src str> {
+    let mut variables = Vec::new();
+    visit_fields_in_selection_set(context, selection_set, |selection| {
+        let directives = selection.directives();
+        for directive in directives {
+            if directive.name.name == "skip" || directive.name.name == "include" {
+                let variable = directive
+                    .arguments
+                    .iter()
+                    .flat_map(|a| a.arguments.iter())
+                    .find_map(|(arg, value)| {
+                        if arg.name != "if" {
+                            return None;
+                        }
+                        if let Value::Variable(ref v) = value {
+                            Some(v.name)
+                        } else {
+                            None
+                        }
+                    });
+                if let Some(variable) = variable {
+                    variables.push(variable);
+                }
+            }
+        }
+    });
+    variables
 }
 
 fn get_object_type_for_selection_set<'src, S: Text<'src>>(
     context: &QueryTypePrinterContext<'_, 'src, S>,
-    selection_set: &SelectionSet,
+    selection_set: &SelectionSet<'src>,
     branch: &BranchingCondition<S>,
 ) -> TSType {
     let (unaliased, aliased): (Vec<_>, Vec<_>) =
@@ -111,7 +174,7 @@ fn get_object_type_for_selection_set<'src, S: Text<'src>>(
 /// Second element is for aliased fields.
 fn get_fields_for_selection_set<'a, 'src, S: Text<'src>>(
     context: &'a QueryTypePrinterContext<'a, 'src, S>,
-    selection_set: &'a SelectionSet<'a>,
+    selection_set: &'a SelectionSet<'src>,
     parent_type: &'a ObjectDefinition<S, Pos>,
 ) -> Vec<Either<(&'a str, TSType, Option<StringValue>), (&'a str, TSType, Option<StringValue>)>> {
     let parent_type_def = context

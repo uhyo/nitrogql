@@ -26,6 +26,16 @@ pub enum Selection<'a> {
     InlineFragment(InlineFragment<'a>),
 }
 
+impl<'a> Selection<'a> {
+    pub fn directives(&self) -> &[Directive<'a>] {
+        match self {
+            Selection::Field(field) => &field.directives,
+            Selection::FragmentSpread(fragment_spread) => &fragment_spread.directives,
+            Selection::InlineFragment(inline_fragment) => &inline_fragment.directives,
+        }
+    }
+}
+
 #[derive(Clone, Debug)]
 pub struct Field<'a> {
     pub alias: Option<Ident<'a>>,
