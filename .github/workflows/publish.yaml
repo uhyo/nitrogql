@@ -13,15 +13,15 @@ jobs:
         run: curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
       - name: install additional targets
         run: rustup target add wasm32-wasi wasm32-unknown-unknown
-      - name: install wasm-opt
-        run: cargo install wasm-opt
       - uses: actions/setup-node@v3
         with:
           node-version: 18
+      - name: install wasm-opt
+        run: npm install wasm-opt -g
       - name: build rust
         run: ./build/build-rust.sh
       - name: build node
-        run: ./build/build-rust.sh
+        run: ./build/build-node.sh
       - name: publish to npm (cli)
         uses: JS-DevTools/npm-publish@v1
         with:

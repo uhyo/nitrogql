@@ -2,7 +2,7 @@
 set -eux
 
 # Script to build rust code.
-# Requirements: cargo (nightly), wasm-opt (from binaryen)
+# Requirements: cargo, wasm-opt (from binaryen)
 (
   cd crates/cli
   cargo rustc --target wasm32-wasi --release
