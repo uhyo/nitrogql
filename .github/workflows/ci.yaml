@@ -22,4 +22,4 @@ jobs:
         run: cargo test
       # currently `cargo wasi test` doesn't run, so ensure at least that it builds
       - name: build (wasi)
-        run: cargo run build --target wasm32-wasi
+        run: cargo build --target wasm32-wasi
