@@ -19,6 +19,7 @@ jobs:
       - uses: actions-rs/toolchain@v1
         with:
           toolchain: stable
+          target: wasm32-wasi
           override: true
       - name: test
         uses: actions-rs/cargo@v1
