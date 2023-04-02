@@ -1,0 +1,49 @@
+name: Publish
+on:
+  workflow_dispatch:
+  release:
+    types: [published]
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          target: wasm32-wasi
+          override: true
+      - uses: actions/setup-node@v2
+        with:
+          node-version: 18
+      - name: test
+        uses: actions-rs/cargo@v1
+        with:
+          command: test
+      - name: build rust
+        run: ./build/build-rust.sh
+      - name: build node
+        run: ./build/build-rust.sh
+      - name: publish to npm (cli)
+        uses: JS-DevTools/npm-publish@v1
+        with:
+          token: ${{ secrets.NPM_TOKEN }}
+          package: "./packages/cli/package.json"
+          access: public
+          greater-version-only: true
+      - name: publish to npm (graphql-loader)
+        uses: JS-DevTools/npm-publish@v1
+        with:
+          token: ${{ secrets.NPM_TOKEN }}
+          package: "./packages/graphql-loader/package.json"
+          access: public
+          greater-version-only: true
+      - name: publish to npm (rollup-plugin)
+        uses: JS-DevTools/npm-publish@v1
+        with:
+          token: ${{ secrets.NPM_TOKEN }}
+          package: "./packages/rollup-plugin/package.json"
+          access: public
+          greater-version-only: true
+          
