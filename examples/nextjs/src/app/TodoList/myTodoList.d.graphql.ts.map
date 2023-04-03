@@ -1,1 +1,0 @@
-{"version":3,"file":"myTodoList.d.graphql.ts","sourceRoot":"","sources":["..\/..\/schema\/mutation.graphql","..\/..\/schema\/query.graphql","..\/..\/schema\/scalar.graphql","..\/..\/schema\/tag.graphql","..\/..\/schema\/todo.graphql","myTodoList.graphql"],"names":["Boolean"],"mappings":";;;KKAA,WAAiC;;;;;;;;;;;;;;KAAjC;kBAAwBA,OAAO;;;MAA\/B,KAAiC"}

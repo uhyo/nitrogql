@@ -38,3 +38,4 @@ next-env.d.ts
 # nitrogql
 src/generated
 *.d.graphql.ts
+*.d.graphql.ts.map

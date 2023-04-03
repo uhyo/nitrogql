@@ -1,1 +1,0 @@
-{"version":3,"file":"toggleTodo.d.graphql.ts","sourceRoot":"","sources":["..\/..\/schema\/mutation.graphql","..\/..\/schema\/query.graphql","..\/..\/schema\/scalar.graphql","..\/..\/schema\/tag.graphql","..\/..\/schema\/todo.graphql","toggleTodo.graphql"],"names":["ID","Boolean"],"mappings":";;;KKAA,cAAyC;;;;;;KAAzC;MAAeA,EAAE;YAAcC,OAAO;;;MAAtC,QAAyC"}

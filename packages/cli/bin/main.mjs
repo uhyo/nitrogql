@@ -2,8 +2,12 @@ import { WASI } from "node:wasi";
 import { argv, env, cwd, stdout } from "node:process";
 import { readFile } from "node:fs/promises";
 import { shim } from "./shim.mjs";
+import { resolve } from "node:path";
 
 const CWD = cwd();
+const NITROGQL_FS_SCOPE = env.NITROGQL_FS_SCOPE
+  ? resolve(CWD, env.NITROGQL_FS_SCOPE)
+  : CWD;
 const isTTY = stdout.isTTY;
 
 const wasi = new WASI({
@@ -17,7 +21,7 @@ const wasi = new WASI({
     CWD,
   },
   preopens: {
-    [CWD]: CWD,
+    [NITROGQL_FS_SCOPE]: NITROGQL_FS_SCOPE,
   },
 });
 
@@ -25,7 +29,7 @@ let memoryRef = { memory: null };
 const importObject = {
   wasi_snapshot_preview1: {
     ...wasi.wasiImport,
-    ...shim(wasi.wasiImport, memoryRef, CWD),
+    ...shim(wasi.wasiImport, memoryRef, NITROGQL_FS_SCOPE),
   },
 };
 

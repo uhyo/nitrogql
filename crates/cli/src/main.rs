@@ -8,13 +8,13 @@ use anyhow::Result;
 use clap::Parser;
 use globmatch::wrappers::{build_matchers, match_paths};
 use graphql_type_system::Schema;
-use log::{debug, error, trace};
+use log::{error, info, trace};
 use nitrogql_ast::{
     operation::OperationDocument, set_current_file_of_pos,
     type_system::TypeSystemOrExtensionDocument,
 };
 use nitrogql_introspection::schema_from_introspection_json;
-use nitrogql_utils::get_cwd;
+use nitrogql_utils::{get_cwd, normalize_path};
 use thiserror::Error;
 
 use crate::{
@@ -75,12 +75,9 @@ fn run_cli_impl(args: impl IntoIterator<Item = String>) -> Result<()> {
     let cwd = get_cwd()?;
     let config_file = load_config(&cwd, args.config_file.as_ref().map(|p| p.as_path()))?;
     let (root_dir, mut config) = if let Some((config_path, config_file)) = config_file {
-        debug!("Loaded config file from {}", config_path.display());
+        info!("Loaded config file from {}", config_path.display());
         (
-            config_path
-                .parent()
-                .map(|path| path.to_owned())
-                .unwrap_or(PathBuf::new()),
+            normalize_path(config_path.parent().unwrap_or(Path::new(""))),
             config_file,
         )
     } else {
@@ -96,7 +93,8 @@ fn run_cli_impl(args: impl IntoIterator<Item = String>) -> Result<()> {
     if let Some(path) = args.schema_output {
         config.generate.schema_output = Some(path);
     }
-    debug!("Loaded config {config:?}");
+    info!("Loaded config {config:?}");
+    info!("root_dir {}", root_dir.display());
 
     let config = CliConfig { root_dir, config };
 
@@ -117,11 +115,11 @@ fn run_cli_impl(args: impl IntoIterator<Item = String>) -> Result<()> {
                 // Treat JSON file as introspection result schema.
                 let is_introspection = path.extension().map(|ext| ext == "json").unwrap_or(false);
                 if is_introspection {
-                    debug!("parsing(introspection) {}", path.to_string_lossy());
+                    info!("parsing(introspection) {}", path.to_string_lossy());
                     let doc = schema_from_introspection_json(buf)?;
                     Ok(LoadedSchema::Introspection(doc))
                 } else {
-                    debug!("parsing(schema) {} {}", path.to_string_lossy(), file_idx);
+                    info!("parsing(schema) {} {}", path.to_string_lossy(), file_idx);
                     set_current_file_of_pos(file_idx);
                     let doc = parse_type_system_document(&buf)?;
                     Ok(LoadedSchema::GraphQL(doc))
@@ -139,7 +137,7 @@ fn run_cli_impl(args: impl IntoIterator<Item = String>) -> Result<()> {
         .iter()
         .map(
             |(path, buf)| -> Result<(PathBuf, OperationDocument, Vec<(PathBuf, &str)>)> {
-                debug!("parsing(operation) {}", path.to_string_lossy());
+                info!("parsing(operation) {}", path.to_string_lossy());
                 set_current_file_of_pos(op_file_index);
 
                 let doc = parse_operation_document(&buf)?;
@@ -205,7 +203,7 @@ fn load_glob_files<'a, S: AsRef<str> + 'a>(
         return Ok(vec![]);
     }
 
-    trace!("load_glob_files");
+    trace!("load_glob_files {} {}", root.display(), path_strs.join(" "));
     let schema_matchers =
         build_matchers(&path_strs, &root).map_err(|err| CliError::GlobError(err))?;
     let (paths, _) = match_paths(schema_matchers, None, None);
@@ -213,7 +211,7 @@ fn load_glob_files<'a, S: AsRef<str> + 'a>(
     let results = paths
         .into_iter()
         .map(|path| {
-            debug!("loading {}", path.to_string_lossy());
+            info!("loading {}", path.to_string_lossy());
             fs::read_to_string(&path).map(|res| (path, res))
         })
         .collect::<std::io::Result<_>>();

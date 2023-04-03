@@ -45,7 +45,11 @@ pub fn load_config(
     config_file: Option<&Path>,
 ) -> Result<Option<(PathBuf, Config)>, ConfigFileError> {
     let config_source = match config_file {
-        Some(path) => fs::read_to_string(path).map(|source| Some((path.to_owned(), source))),
+        Some(path) => {
+            let mut path_to_read = cwd.to_owned();
+            path_to_read.push(path);
+            fs::read_to_string(&path_to_read).map(|source| Some((path_to_read, source)))
+        }
         None => search_graphql_config(cwd),
     }?;
 

@@ -2,8 +2,8 @@ use std::path::{Component, Path, PathBuf};
 
 /// Calculates relative path between two.
 pub fn relative_path(from: &Path, to: &Path) -> PathBuf {
-    let mut from = normalize(from);
-    let to = normalize(to);
+    let mut from = normalize_path(from);
+    let to = normalize_path(to);
     // from should be file (not directory), so move to parent dir
     from.pop();
 
@@ -38,7 +38,7 @@ pub fn relative_path(from: &Path, to: &Path) -> PathBuf {
     result
 }
 
-fn normalize(path: &Path) -> PathBuf {
+pub fn normalize_path(path: &Path) -> PathBuf {
     let mut stack = vec![];
     for component in path.components() {
         match component {
