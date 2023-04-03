@@ -1,40 +1,30 @@
-#! /usr/bin/env node --no-warnings --experimental-wasi-unstable-preview1
+#! /usr/bin/env node
 
-import { WASI } from "node:wasi";
-import { argv, env, cwd, stdout } from "node:process";
-import { readFile } from "node:fs/promises";
-import { shim } from "./shim.mjs";
+import { argv, exit } from "node:process";
+import { spawn } from "node:child_process";
+import { join } from "node:path";
+import { fileURLToPath } from "node:url";
 
-const CWD = cwd();
-const isTTY = stdout.isTTY;
+const args = argv.slice(2);
 
-const wasi = new WASI({
-  args: argv.slice(1),
-  env: {
-    // env_logger
-    RUST_LOG_STYLE: isTTY ? "always" : "auto",
-    // colored
-    CLICOLOR_FORCE: isTTY ? "1" : "0",
-    ...env,
-    CWD,
-  },
-  preopens: {
-    [CWD]: CWD,
-  },
+const child = spawn(
+  "node",
+  [
+    "--no-warnings",
+    "--experimental-wasi-unstable-preview1",
+    join(fileURLToPath(import.meta.url), "../main.mjs"),
+    ...args,
+  ],
+  {
+    stdio: "inherit",
+  }
+);
+
+child.on("error", (error) => {
+  console.error(`Failed to start subprocess:\n${error}`);
+  exit(1);
 });
 
-let memoryRef = { memory: null };
-const importObject = {
-  wasi_snapshot_preview1: {
-    ...wasi.wasiImport,
-    ...shim(wasi.wasiImport, memoryRef, CWD),
-  },
-};
-
-const wasm = await WebAssembly.compile(
-  await readFile(new URL("../wasm/nitrogql-cli.wasm", import.meta.url))
-);
-const instance = await WebAssembly.instantiate(wasm, importObject);
-memoryRef.memory = instance.exports.memory;
-
-wasi.start(instance);
+child.on("close", (code) => {
+  process.exit(code ?? 1);
+});
