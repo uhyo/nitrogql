@@ -63,6 +63,10 @@ section.features > h3 {
   border-bottom: 2px solid rgb(var(--nitrogql-red));
 }
 
+section.features p + p {
+  margin-top: 0.75em;
+}
+
 section.features figure {
   width: 320px;
   border-radius: 1em;

@@ -41,9 +41,12 @@ body {
   background: rgb(var(--background-rgb));
 }
 
-a {
-  color: inherit;
-  text-decoration: none;
+a:link {
+  color: rgb(var(--nitrogql-red));
+}
+
+a:visited {
+  color: rgb(var(--nitrogql-dark-red));
 }
 
 @media (prefers-color-scheme: dark) {
