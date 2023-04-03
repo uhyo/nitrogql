@@ -1,0 +1,14 @@
+.figures {
+  display: flex;
+  flex-flow: row nowrap;
+  justify-content: flex-start;
+  padding: 1rem 0;
+  gap: 2rem;
+  overflow-x: auto;
+  scroll-snap-type: x proximity;
+}
+
+.figures > figure {
+  flex: 0 0 auto;
+  scroll-snap-align: start;
+}

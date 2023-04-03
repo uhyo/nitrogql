@@ -1,3 +1,4 @@
+import { Outfit } from "next/font/google";
 import "./globals.css";
 
 const title = "nitrogql documentation";
@@ -19,6 +20,8 @@ export const metadata = {
   icons: [{ rel: "icon", url: "/nitrogql-logo.png" }],
 };
 
+const font = Outfit({ subsets: ["latin"], variable: "--font-outfit" });
+
 export default function RootLayout({
   children,
 }: {
@@ -26,7 +29,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body className={font.variable}>{children}</body>
     </html>
   );
 }

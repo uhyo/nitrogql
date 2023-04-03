@@ -7,6 +7,14 @@
 
   --foreground-rgb: 0, 0, 0;
   --background-rgb: 255, 255, 255;
+
+  --nitrogql-dark-red: 125, 20, 29;
+  --nitrogql-red: 255, 30, 39;
+  --nitrogql-gradient: linear-gradient(
+    to right,
+    rgb(var(--nitrogql-dark-red)),
+    rgb(var(--nitrogql-red))
+  );
 }
 
 @media (prefers-color-scheme: dark) {
