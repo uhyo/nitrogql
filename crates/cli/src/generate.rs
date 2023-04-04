@@ -8,6 +8,7 @@ use nitrogql_semantics::{ast_to_type_system, type_system_to_ast};
 
 use crate::context::LoadedSchema;
 use crate::error::CliError;
+use crate::file_store::{FileKind, FileStore};
 use nitrogql_config_file::GenerateMode;
 use nitrogql_error::Result;
 use nitrogql_printer::{
@@ -17,7 +18,6 @@ use nitrogql_printer::{
 use nitrogql_utils::relative_path;
 use sourcemap_writer::{print_source_map_json, SourceWriter, SourceWriterBuffers};
 
-use super::context::FileByIndex;
 use super::{check::run_check, context::CliContext};
 
 pub fn run_generate(mut context: CliContext) -> Result<CliContext> {
@@ -31,7 +31,7 @@ pub fn run_generate(mut context: CliContext) -> Result<CliContext> {
             ref schema,
             ref operations,
             ref config,
-            ref file_by_index,
+            file_store,
             ..
         } => {
             let Some(ref schema_output) = config.config.generate.schema_output else {
@@ -40,6 +40,20 @@ pub fn run_generate(mut context: CliContext) -> Result<CliContext> {
             let schema_output = config.root_dir.join(schema_output);
             {
                 debug!("Processing schema");
+                let file_map = FileMap {
+                    file_store,
+                    file_indices: file_store
+                        .iter()
+                        .map(|(idx, (_, _, kind))| {
+                            if kind == FileKind::Schema {
+                                idx
+                            } else {
+                                usize::MAX
+                            }
+                        })
+                        .collect(),
+                };
+
                 let mut options = SchemaTypePrinterOptions::default();
                 options.scalar_types.extend(
                     config
@@ -50,6 +64,7 @@ pub fn run_generate(mut context: CliContext) -> Result<CliContext> {
                         .map(|(key, value)| (key.to_owned(), value.to_owned())),
                 );
                 let mut writer = SourceWriter::new();
+                writer.set_file_index_mapper(file_map.file_indices.clone());
                 let mut printer = SchemaTypePrinter::new(options, &mut writer);
 
                 match schema {
@@ -63,7 +78,7 @@ pub fn run_generate(mut context: CliContext) -> Result<CliContext> {
                 }
 
                 let buffers = writer.into_buffers();
-                write_file_and_sourcemap(file_by_index, &schema_output, buffers)?;
+                write_file_and_sourcemap(&file_map, &schema_output, buffers)?;
             }
 
             let schema = schema.map_into(
@@ -71,8 +86,24 @@ pub fn run_generate(mut context: CliContext) -> Result<CliContext> {
                 |schema| Cow::Borrowed(schema),
             );
 
-            for (path, doc, file_by_index) in operations.iter() {
+            for (path, doc, file_index) in operations.iter() {
                 debug!("Processing {}", path.to_string_lossy());
+                let file_map = FileMap {
+                    file_store,
+                    file_indices: file_store
+                        .iter()
+                        .map(|(idx, (_, _, kind))| {
+                            if kind == FileKind::Schema {
+                                idx
+                            } else if idx == *file_index {
+                                file_store.schema_len()
+                            } else {
+                                usize::MAX
+                            }
+                        })
+                        .collect(),
+                };
+
                 let decl_file_path = {
                     let mut path = path.clone();
                     path.set_extension(match config.config.generate.mode {
@@ -97,7 +128,7 @@ pub fn run_generate(mut context: CliContext) -> Result<CliContext> {
 
                 let buffers = writer.into_buffers();
 
-                write_file_and_sourcemap(file_by_index, &decl_file_path, buffers)?;
+                write_file_and_sourcemap(&file_map, &decl_file_path, buffers)?;
             }
             eprintln!("'generate' finished");
             Ok(context)
@@ -105,14 +136,26 @@ pub fn run_generate(mut context: CliContext) -> Result<CliContext> {
     }
 }
 
+struct FileMap<'src> {
+    pub file_store: &'src FileStore,
+    /// Mapping from file index in file_store to source map index.
+    pub file_indices: Vec<usize>,
+}
+
 fn write_file_and_sourcemap(
-    file_by_index: &FileByIndex,
+    file_map: &FileMap,
     output_file_path: &Path,
     buffers: SourceWriterBuffers,
 ) -> Result<()> {
-    let source_files = file_by_index
+    let source_files = file_map
+        .file_indices
         .iter()
-        .map(|(path, _)| path.as_path())
+        .filter_map(|idx| {
+            file_map
+                .file_store
+                .get_file(*idx)
+                .map(|(path, _, _)| path.as_path())
+        })
         .collect::<Vec<_>>();
     let source_map_file_path = {
         let mut path = output_file_path.to_owned();

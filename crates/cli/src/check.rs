@@ -17,7 +17,7 @@ pub fn run_check(context: CliContext) -> Result<CliContext> {
         CliContext::SchemaUnresolved {
             schema,
             operations,
-            file_by_index,
+            file_store,
             config,
         } => {
             let loaded_schema = {
@@ -33,10 +33,7 @@ pub fn run_check(context: CliContext) -> Result<CliContext> {
                                 if errors.len() > 1 { "s" } else { "" }
                             );
                             for err in errors {
-                                eprintln!(
-                                    "{}",
-                                    print_positioned_error(&err.into(), &file_by_index)
-                                );
+                                eprintln!("{}", print_positioned_error(&err.into(), file_store));
                             }
                             eprintln!("");
                             return Err(CliError::CommandNotSuccessful("check".into()).into());
@@ -67,8 +64,8 @@ pub fn run_check(context: CliContext) -> Result<CliContext> {
                     errors.len(),
                     if errors.len() > 1 { "s" } else { "" }
                 );
-                for (err, file_by_index) in errors {
-                    eprintln!("{}", print_positioned_error(&err.into(), file_by_index));
+                for (err, _) in errors {
+                    eprintln!("{}", print_positioned_error(&err.into(), file_store));
                 }
                 eprintln!("");
                 return Err(CliError::CommandNotSuccessful("check".into()).into());
@@ -77,7 +74,7 @@ pub fn run_check(context: CliContext) -> Result<CliContext> {
             Ok(CliContext::SchemaResolved {
                 schema: loaded_schema,
                 operations,
-                file_by_index,
+                file_store,
                 config,
             })
         }

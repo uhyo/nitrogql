@@ -6,6 +6,7 @@ use std::{
 
 use anyhow::Result;
 use clap::Parser;
+use file_store::FileStore;
 use globmatch::wrappers::{build_matchers, match_paths};
 use graphql_type_system::Schema;
 use log::{error, info, trace};
@@ -15,15 +16,15 @@ use nitrogql_ast::{
 };
 use nitrogql_introspection::schema_from_introspection_json;
 use nitrogql_utils::{get_cwd, normalize_path};
-use thiserror::Error;
 
 use crate::{
     context::{CliContext, LoadedSchema},
     error::CliError,
+    file_store::FileKind,
 };
 use nitrogql_config_file::load_config;
 
-use nitrogql_error::print_positioned_error;
+use nitrogql_error::{print_positioned_error, PositionedError};
 use nitrogql_parser::{parse_operation_document, parse_type_system_document};
 
 use self::{check::run_check, context::CliConfig, generate::run_generate};
@@ -31,6 +32,7 @@ use self::{check::run_check, context::CliConfig, generate::run_generate};
 mod check;
 mod context;
 mod error;
+mod file_store;
 mod generate;
 
 #[derive(Parser, Debug)]
@@ -58,16 +60,29 @@ fn main() {
 /// Run as CLI. Returns 0 if successful
 pub fn run_cli(args: impl IntoIterator<Item = String>) -> usize {
     pretty_env_logger::init();
-    match run_cli_impl(args) {
+    let file_store = Box::leak(Box::new(FileStore::new()));
+    let res = run_cli_impl(args, file_store);
+    match res {
         Ok(()) => 0,
         Err(err) => {
-            error!("{err}");
+            let message = if err.inner.has_position() {
+                print_positioned_error(&err.inner, file_store)
+            } else {
+                format!("{}", err.inner.into_inner())
+            };
+            match err.command {
+                Some(command) => error!("Error in command '{}':\n{message}", command),
+                None => error!("Error:\n{message}"),
+            }
             1
         }
     }
 }
 
-fn run_cli_impl(args: impl IntoIterator<Item = String>) -> Result<()> {
+fn run_cli_impl(
+    args: impl IntoIterator<Item = String>,
+    file_store: &mut FileStore,
+) -> Result<(), CommandError> {
     let args = Args::parse_from(args);
     if args.commands.is_empty() {
         return Err(CliError::NoCommandSpecified.into());
@@ -103,84 +118,82 @@ fn run_cli_impl(args: impl IntoIterator<Item = String>) -> Result<()> {
     }
 
     let schema_files = load_glob_files(&config.root_dir, &config.config.schema)?;
-    let file_by_index = schema_files
-        .iter()
-        .map(|(path, src)| (path.clone(), src.as_str()))
-        .collect::<Vec<_>>();
     let schema_docs = schema_files
-        .iter()
-        .enumerate()
-        .map(
-            |(file_idx, (path, buf))| -> Result<LoadedSchema<TypeSystemOrExtensionDocument>> {
-                // Treat JSON file as introspection result schema.
-                let is_introspection = path.extension().map(|ext| ext == "json").unwrap_or(false);
-                if is_introspection {
-                    info!("parsing(introspection) {}", path.to_string_lossy());
-                    let doc = schema_from_introspection_json(buf)?;
-                    Ok(LoadedSchema::Introspection(doc))
-                } else {
-                    info!("parsing(schema) {} {}", path.to_string_lossy(), file_idx);
-                    set_current_file_of_pos(file_idx);
-                    let doc = parse_type_system_document(&buf)?;
-                    Ok(LoadedSchema::GraphQL(doc))
-                }
-            },
-        )
-        .collect::<Result<Vec<_>>>();
+        .into_iter()
+        .map(|(path, buf)| -> Result<_, CommandError> {
+            let file_idx = file_store.add_file(path, buf, FileKind::Schema);
+            let (ref path, ref buf, _) = file_store.get_file(file_idx).unwrap();
+            // Treat JSON file as introspection result schema.
+            let is_introspection = path.extension().map(|ext| ext == "json").unwrap_or(false);
+            if is_introspection {
+                info!("parsing(introspection) {}", path.to_string_lossy());
+                let doc = schema_from_introspection_json(&buf)?;
+                Ok(LoadedSchema::Introspection(doc))
+            } else {
+                info!("parsing(schema) {} {}", path.to_string_lossy(), file_idx);
+                set_current_file_of_pos(file_idx);
+                let doc = parse_type_system_document(&buf)?;
+                Ok(LoadedSchema::GraphQL(doc))
+            }
+        })
+        .collect::<Result<Vec<_>, _>>();
     let schema_docs = schema_docs?;
     let merged_schema_doc = resolve_loaded_schema(schema_docs)?;
 
     let operation_files = load_glob_files(&config.root_dir, &config.config.operations)?;
-    let op_file_index = file_by_index.len();
 
     let operation_docs = operation_files
-        .iter()
+        .into_iter()
         .map(
-            |(path, buf)| -> Result<(PathBuf, OperationDocument, Vec<(PathBuf, &str)>)> {
+            |(path, buf)| -> Result<(PathBuf, OperationDocument, usize), CommandError> {
                 info!("parsing(operation) {}", path.to_string_lossy());
-                set_current_file_of_pos(op_file_index);
+                let file_idx = file_store.add_file(path.clone(), buf, FileKind::Operation);
+                let (_, buf, _) = file_store.get_file(file_idx).unwrap();
+                set_current_file_of_pos(file_idx);
 
                 let doc = parse_operation_document(&buf)?;
-                let file_by_idx_op = file_by_index
-                    .iter()
-                    .map(|(path, buf)| (path.clone(), *buf))
-                    .chain(vec![(path.clone(), buf.as_str())])
-                    .collect::<Vec<_>>();
-                Ok((path.clone(), doc, file_by_idx_op))
+                Ok((path, doc, file_idx))
             },
         )
-        .collect::<Result<Vec<_>>>();
+        .collect::<Result<Vec<_>, _>>();
     let operation_docs = operation_docs?;
 
     let mut context = CliContext::SchemaUnresolved {
         config,
         schema: merged_schema_doc,
         operations: operation_docs,
-        file_by_index,
+        file_store,
     };
 
     for command in args.commands.iter() {
-        let file_source_by_index = context.file_by_index();
-        context = run_command(command, context).map_err(|err| {
-            if err.has_position() {
-                CommandError::Message {
-                    message: print_positioned_error(&err, &file_source_by_index),
-                }
-            } else {
-                CommandError::Other(err.into_inner())
-            }
-        })?;
+        context =
+            run_command(command, context).map_err(|err| CommandError::new(err, command.clone()))?;
     }
 
     Ok(())
 }
 
-#[derive(Error, Debug)]
-enum CommandError {
-    #[error("Error running command:\n{message}")]
-    Message { message: String },
-    #[error("Error running command:\n{0}")]
-    Other(#[from] anyhow::Error),
+struct CommandError {
+    pub inner: PositionedError,
+    pub command: Option<String>,
+}
+
+impl CommandError {
+    pub fn new(inner: PositionedError, command: String) -> Self {
+        CommandError {
+            inner,
+            command: Some(command),
+        }
+    }
+}
+
+impl<E: Into<PositionedError>> From<E> for CommandError {
+    fn from(err: E) -> Self {
+        CommandError {
+            inner: err.into(),
+            command: None,
+        }
+    }
 }
 
 fn run_command<'a>(

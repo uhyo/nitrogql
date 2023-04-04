@@ -18,6 +18,8 @@ pub struct SourceWriter {
     buffer: String,
     mapping: MappingWriter,
     name_mapper: NameMapper,
+    file_index_mapper: Option<Vec<usize>>,
+
     indent: usize,
     indent_str: String,
     has_indent_flag: bool,
@@ -34,12 +36,17 @@ impl SourceWriter {
             buffer: String::new(),
             mapping: MappingWriter::new(),
             name_mapper: NameMapper::new(),
+            file_index_mapper: None,
             indent: 0,
             indent_str: String::new(),
             has_indent_flag: false,
             current_line: 0,
             current_column: 0,
         }
+    }
+
+    pub fn set_file_index_mapper(&mut self, file_index_mapper: Vec<usize>) {
+        self.file_index_mapper = Some(file_index_mapper);
     }
 
     pub fn into_buffers(self) -> SourceWriterBuffers {
@@ -88,6 +95,10 @@ impl SourceMapWriter for SourceWriter {
             self.write(chunk);
             return;
         }
+        let file_index = self
+            .file_index_mapper
+            .as_ref()
+            .map_or(original_pos.file, |map| map[original_pos.file]);
         let original_name = node.name();
         if let Some(original_name) = original_name {
             let original_name_idx = self.name_mapper.map_name(original_name);
@@ -97,7 +108,7 @@ impl SourceMapWriter for SourceWriter {
                 self.current_column,
                 original_pos.line,
                 original_pos.column,
-                original_pos.file,
+                file_index,
                 Some(original_name_idx),
             );
             self.write(chunk);
@@ -106,7 +117,7 @@ impl SourceMapWriter for SourceWriter {
                 self.current_column,
                 original_pos.line,
                 original_pos.column + utf16_len(original_name),
-                original_pos.file,
+                file_index,
                 None,
             );
         } else {
@@ -115,7 +126,7 @@ impl SourceMapWriter for SourceWriter {
                 self.current_column,
                 original_pos.line,
                 original_pos.column,
-                original_pos.file,
+                file_index,
                 None,
             );
             self.write(chunk);

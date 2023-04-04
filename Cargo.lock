@@ -489,10 +489,12 @@ version = "0.1.0"
 dependencies = [
  "insta",
  "nitrogql-ast",
+ "nitrogql-error",
  "nitrogql-printer",
  "pest",
  "pest_derive",
  "sourcemap-writer",
+ "thiserror",
 ]
 
 [[package]]

@@ -1,5 +1,6 @@
 use colored::Colorize;
 use std::fmt::{Display, Write};
+use std::ops::Index;
 use std::path::PathBuf;
 use std::result::Result as StdResult;
 
@@ -52,7 +53,10 @@ where
 
 static INDENT: &str = "    ";
 
-pub fn print_positioned_error(error: &PositionedError, files: &[(PathBuf, &str)]) -> String {
+pub fn print_positioned_error<'src, S: AsRef<str>, T>(
+    error: &PositionedError,
+    files: &impl Index<usize, Output = (PathBuf, S, T)>,
+) -> String {
     let inner = &error.inner;
     let Some(position) = error.position else {
         return format!("{inner}");
@@ -61,26 +65,20 @@ pub fn print_positioned_error(error: &PositionedError, files: &[(PathBuf, &str)]
         return format!("{inner}");
     }
 
-    let source = files.get(position.file);
-    let Some((file_path, source)) = source else {
-        return format!("{inner}");
-    };
+    let (ref file_path, ref source, _) = files[position.file];
 
-    let mut message = message_for_line(file_path, source, position, inner, false);
+    let mut message = message_for_line(file_path, source.as_ref(), position, inner, false);
 
     for (pos, mes) in error.additional_info.iter() {
-        let source = files.get(pos.file);
-        let Some((file_path, source)) = source else {
-            continue;
-        };
         if pos.builtin {
             continue;
         }
+        let (ref file_path, ref source, _) = files[pos.file];
 
         write!(
             message,
             "\n\n{}",
-            message_for_line(file_path, source, *pos, mes, true)
+            message_for_line(file_path, source.as_ref(), *pos, mes, true)
         )
         .unwrap();
     }

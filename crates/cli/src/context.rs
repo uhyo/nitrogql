@@ -8,8 +8,7 @@ use nitrogql_ast::{
 };
 use nitrogql_config_file::Config;
 
-/// List of (path, source)
-pub type FileByIndex<'src> = Vec<(PathBuf, &'src str)>;
+use crate::file_store::FileStore;
 
 pub enum LoadedSchema<'src, Gql> {
     GraphQL(Gql),
@@ -33,25 +32,15 @@ pub enum CliContext<'src> {
     SchemaUnresolved {
         config: CliConfig,
         schema: LoadedSchema<'src, TypeSystemOrExtensionDocument<'src>>,
-        operations: Vec<(PathBuf, OperationDocument<'src>, FileByIndex<'src>)>,
-        /// List of (path, source)
-        file_by_index: Vec<(PathBuf, &'src str)>,
+        operations: Vec<(PathBuf, OperationDocument<'src>, usize)>,
+        file_store: &'src FileStore,
     },
     SchemaResolved {
         config: CliConfig,
         schema: LoadedSchema<'src, TypeSystemDocument<'src>>,
-        operations: Vec<(PathBuf, OperationDocument<'src>, FileByIndex<'src>)>,
-        file_by_index: FileByIndex<'src>,
+        operations: Vec<(PathBuf, OperationDocument<'src>, usize)>,
+        file_store: &'src FileStore,
     },
-}
-
-impl<'src> CliContext<'src> {
-    pub fn file_by_index(&self) -> Vec<(PathBuf, &'src str)> {
-        match self {
-            CliContext::SchemaUnresolved { file_by_index, .. }
-            | CliContext::SchemaResolved { file_by_index, .. } => file_by_index.clone(),
-        }
-    }
 }
 
 #[derive(Debug)]
