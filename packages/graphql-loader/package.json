@@ -1,6 +1,6 @@
 {
   "name": "@nitrogql/graphql-loader",
-  "version": "0.0.1-alpha.3",
+  "version": "0.0.1-alpha.4",
   "description": "GraphQL + TypeScript toolchain",
   "repository": {
     "type": "git",
