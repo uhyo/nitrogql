@@ -9,6 +9,7 @@ use clap::Parser;
 use file_store::FileStore;
 use globmatch::wrappers::{build_matchers, match_paths};
 use graphql_type_system::Schema;
+use itertools::Itertools;
 use log::{error, info, trace};
 use nitrogql_ast::{
     operation::OperationDocument, set_current_file_of_pos,
@@ -65,11 +66,17 @@ pub fn run_cli(args: impl IntoIterator<Item = String>) -> usize {
     match res {
         Ok(()) => 0,
         Err(err) => {
-            let message = if err.inner.has_position() {
-                print_positioned_error(&err.inner, file_store)
-            } else {
-                format!("{}", err.inner.into_inner())
-            };
+            let message = err
+                .inner
+                .into_iter()
+                .map(|e| {
+                    if e.has_position() {
+                        print_positioned_error(&e, file_store)
+                    } else {
+                        format!("{}", e.into_inner())
+                    }
+                })
+                .join("\n");
             match err.command {
                 Some(command) => error!("Error in command '{}':\n{message}", command),
                 None => error!("Error:\n{message}"),
@@ -118,7 +125,7 @@ fn run_cli_impl(
     }
 
     let schema_files = load_glob_files(&config.root_dir, &config.config.schema)?;
-    let schema_docs = schema_files
+    let (schema_docs, schema_errors): (Vec<_>, Vec<_>) = schema_files
         .into_iter()
         .map(|(path, buf)| -> Result<_, CommandError> {
             let file_idx = file_store.add_file(path, buf, FileKind::Schema);
@@ -136,13 +143,15 @@ fn run_cli_impl(
                 Ok(LoadedSchema::GraphQL(doc))
             }
         })
-        .collect::<Result<Vec<_>, _>>();
-    let schema_docs = schema_docs?;
+        .partition_result();
+    if !schema_errors.is_empty() {
+        return Err(CommandError::merge(schema_errors));
+    }
     let merged_schema_doc = resolve_loaded_schema(schema_docs)?;
 
     let operation_files = load_glob_files(&config.root_dir, &config.config.operations)?;
 
-    let operation_docs = operation_files
+    let (operation_docs, operation_errors): (Vec<_>, Vec<_>) = operation_files
         .into_iter()
         .map(
             |(path, buf)| -> Result<(PathBuf, OperationDocument, usize), CommandError> {
@@ -155,8 +164,10 @@ fn run_cli_impl(
                 Ok((path, doc, file_idx))
             },
         )
-        .collect::<Result<Vec<_>, _>>();
-    let operation_docs = operation_docs?;
+        .partition_result();
+    if !operation_errors.is_empty() {
+        return Err(CommandError::merge(operation_errors));
+    }
 
     let mut context = CliContext::SchemaUnresolved {
         config,
@@ -166,31 +177,41 @@ fn run_cli_impl(
     };
 
     for command in args.commands.iter() {
-        context =
-            run_command(command, context).map_err(|err| CommandError::new(err, command.clone()))?;
+        context = run_command(command, context)
+            .map_err(|err| CommandError::new(vec![err], command.clone()))?;
     }
 
     Ok(())
 }
 
 struct CommandError {
-    pub inner: PositionedError,
+    pub inner: Vec<PositionedError>,
     pub command: Option<String>,
 }
 
 impl CommandError {
-    pub fn new(inner: PositionedError, command: String) -> Self {
+    pub fn new(inner: Vec<PositionedError>, command: String) -> Self {
         CommandError {
             inner,
             command: Some(command),
         }
+    }
+    pub fn merge(errors: impl IntoIterator<Item = Self>) -> Self {
+        let (inner, command) =
+            errors
+                .into_iter()
+                .fold((vec![], None), |(mut inner, command), err| {
+                    inner.extend(err.inner);
+                    (inner, command.or(err.command))
+                });
+        CommandError { inner, command }
     }
 }
 
 impl<E: Into<PositionedError>> From<E> for CommandError {
     fn from(err: E) -> Self {
         CommandError {
-            inner: err.into(),
+            inner: vec![err.into()],
             command: None,
         }
     }

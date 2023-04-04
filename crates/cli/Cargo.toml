@@ -33,6 +33,7 @@ colored = "2.0.0"
 once_cell = "1.17.1"
 serde = "1.0.156"
 serde_yaml = "0.9.19"
+itertools = "0.10.5"
 
 [dev-dependencies]
 insta = "1.28.0"
