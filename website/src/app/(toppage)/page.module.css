@@ -71,7 +71,7 @@ section.features figure {
   width: 320px;
   border-radius: 1em;
   overflow: clip;
-  background-color: rgba(var(--nitrogql-red), 0.04);
+  background-color: rgba(var(--nitrogql-red), 0.08);
 }
 
 section.features figure img {

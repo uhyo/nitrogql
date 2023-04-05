@@ -4,12 +4,13 @@ use std::{
 };
 
 /// Struct that holds files loaded by CLI.
+#[derive(Debug)]
 pub struct FileStore {
     schema_files: Vec<(PathBuf, &'static str, FileKind)>,
     operation_files: Vec<(PathBuf, &'static str, FileKind)>,
 }
 
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq, Eq, Debug)]
 pub enum FileKind {
     Schema,
     Operation,
