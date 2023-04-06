@@ -16,6 +16,20 @@ export default function GettingStarted() {
         source maps support.
       </p>
 
+      <h3>Does nitrogql work with any UI library or framework?</h3>
+      <p>
+        Yes. Thanks to TypedDocumentNode, generated types are independent of UI
+        libraries or frameworks. For the same reason, you can use nitrogql with
+        any GraphQL client.
+      </p>
+
+      <h3>Is nitrogql fast?</h3>
+      <p>
+        Yes. nitrogql is written in Rust and is compiled to WebAssembly, running
+        on Node.js&apos; WASM runtime. Often Node.js startup time is longer than
+        the time it takes to generate types.
+      </p>
+
       <h3>Does nitrogql support GraphQL code embedded in TypeScript?</h3>
       <p>
         No. I like to keep my GraphQL code separate from TypeScript code. I
