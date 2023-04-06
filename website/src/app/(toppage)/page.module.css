@@ -37,7 +37,7 @@
 }
 
 .main main {
-  max-width: min(90vw, 1200px);
+  max-width: var(--contents-width);
   margin-inline: auto;
 }
 

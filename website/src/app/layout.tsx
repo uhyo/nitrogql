@@ -1,5 +1,6 @@
 import { Outfit } from "next/font/google";
 import "./globals.css";
+import { Footer } from "./(utils)/Footer";
 
 const title = "nitrogql documentation";
 const description =
@@ -29,7 +30,10 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className={font.variable}>{children}</body>
+      <body className={font.variable}>
+        {children}
+        <Footer />
+      </body>
     </html>
   );
 }
