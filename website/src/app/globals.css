@@ -49,6 +49,14 @@ a:visited {
   color: rgb(var(--nitrogql-dark-red));
 }
 
+pre {
+  margin-block: 0.5em;
+}
+
+code {
+  font-family: var(--font-mono);
+}
+
 @media (prefers-color-scheme: dark) {
   html {
     color-scheme: dark;
