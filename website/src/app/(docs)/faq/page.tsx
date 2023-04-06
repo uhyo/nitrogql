@@ -1,0 +1,67 @@
+import Image from "next/image";
+import Link from "next/link";
+import { Hint } from "@/app/(utils)/Hint";
+import { Highlight } from "@/app/(utils)/Highlight";
+import { Figures } from "@/components/Figures";
+import ScreenshotFileNesting from "./figures/screenshot-file-nesting.png";
+
+export default function GettingStarted() {
+  return (
+    <main>
+      <h2>Frequently Asked Questions</h2>
+
+      <h3>Why did you create nitrogql?</h3>
+      <p>
+        I needed a GraphQL + TypeScript tool for schema-based approach with
+        source maps support.
+      </p>
+
+      <h3>Does nitrogql support GraphQL code embedded in TypeScript?</h3>
+      <p>
+        No. I like to keep my GraphQL code separate from TypeScript code. I
+        think this is the most straightforward approach to generating types from
+        GraphQL code.
+      </p>
+      <p>
+        Also, from a tool author perspective, supporting embedded GraphQL code
+        complicates the parser.
+      </p>
+
+      <h3>
+        I don&apos;t like generated files scattered among my source files.
+      </h3>
+      <p>
+        If you use VS Code, you can use the <b>file nesting</b> feature to
+        collapse generated files. Here is an example setting:
+      </p>
+      <Highlight language="json">
+        {`{
+  "explorer.fileNesting.enabled": true,
+  "explorer.fileNesting.patterns": {
+    "*.graphql": "\${capture}.d.graphql.ts,\${capture}.d.graphql.ts.map"
+  }
+}`}
+      </Highlight>
+      <Figures>
+        <figure>
+          <Image
+            src={ScreenshotFileNesting}
+            width="640"
+            alt="Screenshot of VSCode file nesting feature"
+          />
+          <figcaption>
+            Generated files can be collapsed under the original GraphQL file.
+          </figcaption>
+        </figure>
+      </Figures>
+      <p>
+        As another option, nitrogql could implement a mode that generates all
+        types in a dedicated directory. Please let us know if you would like to
+        see this feature.
+      </p>
+
+      <h3>Why is the nitrogql logo so crooked?</h3>
+      <p>It&apos; drawn by an AI.</p>
+    </main>
+  );
+}

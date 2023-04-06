@@ -28,6 +28,7 @@ body > footer nav ul {
   flex-flow: row wrap;
   list-style-type: none;
   margin-block-end: 1.5em;
+  row-gap: 1em;
 }
 
 body > footer nav ul li {
