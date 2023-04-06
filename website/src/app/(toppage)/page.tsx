@@ -8,6 +8,7 @@ import figurePeekOperationDefinition from "./figures/screenshot-peek-operation-d
 import figurePeekSchema from "./figures/screenshot-peek-schema.png";
 import figurePeekDescription from "./figures/screenshot-peek-description.png";
 import { Highlight } from "../(utils)/Highlight";
+import { Footer } from "../(utils)/Footer";
 
 export default function Home() {
   return (
@@ -136,7 +137,7 @@ export default function Home() {
               nitrogql recommends importing <code>.graphql</code> files directly
               from <code>.ts</code> files:
             </p>
-            <Highlight>
+            <Highlight language="typescript">
               import MyQuery from &quot;./query.graphql&quot;;
             </Highlight>
             <p>
@@ -208,6 +209,7 @@ export default function Home() {
           </section>
         </main>
       </div>
+      <Footer />
     </>
   );
 }

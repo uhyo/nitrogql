@@ -30,10 +30,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className={font.variable}>
-        {children}
-        <Footer />
-      </body>
+      <body className={font.variable}>{children}</body>
     </html>
   );
 }

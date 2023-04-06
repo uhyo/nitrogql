@@ -17,6 +17,9 @@ export const Footer = () => {
             <Link href="/configuration">Configuration</Link>
           </li>
           <li>
+            <Link href="/cli">CLI</Link>
+          </li>
+          <li>
             <Link href="/recipes">Recipes</Link>
           </li>
         </ul>

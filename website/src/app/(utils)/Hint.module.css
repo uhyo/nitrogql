@@ -1,0 +1,4 @@
+p.hint {
+  background-color: rgba(var(--nitrogql-red), 0.08);
+  padding: 0.5em;
+}

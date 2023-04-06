@@ -4,12 +4,17 @@ import "highlight.js/styles/a11y-dark.css";
 /**
  * Highlights given code.
  */
-export const Highlight: React.FC<{ children: string }> = ({ children }) => {
-  const highlighted = hl.highlightAuto(children);
+export const Highlight: React.FC<{ children: string; language: string }> = ({
+  language,
+  children,
+}) => {
+  const highlighted = hl.highlight(children, {
+    language,
+  });
   return (
     <pre>
       <code
-        className="hljs"
+        className={`hljs language-${highlighted.language}`}
         dangerouslySetInnerHTML={{ __html: highlighted.value }}
       />
     </pre>

@@ -43,6 +43,11 @@ body {
   background: rgb(var(--background-rgb));
 }
 
+main {
+  max-width: var(--contents-width);
+  margin-inline: auto;
+}
+
 a:link {
   color: rgb(var(--nitrogql-red));
 }
@@ -57,6 +62,28 @@ pre {
 
 code {
   font-family: var(--font-mono);
+}
+
+h2 {
+  font-family: var(--font-outfit);
+  font-size: 1.8em;
+  font-weight: bold;
+  border-image: var(--nitrogql-gradient) 8;
+  border-bottom: 8px solid;
+  margin: 0.5em 0 1em;
+}
+
+h3 {
+  width: fit-content;
+  margin: 1em 0 0.5em;
+  font-family: var(--font-outfit);
+  font-size: 1.4em;
+  font-weight: 600;
+  border-bottom: 2px solid rgb(var(--nitrogql-red));
+}
+
+p + p {
+  margin-block-start: 0.75em;
 }
 
 @media (prefers-color-scheme: dark) {

@@ -36,50 +36,10 @@
   font-weight: bold;
 }
 
-.main main {
-  max-width: var(--contents-width);
-  margin-inline: auto;
-}
-
 .main main > p:first-of-type {
   font-size: 1.2em;
 }
 
-section.features > h2 {
-  font-family: var(--font-outfit);
-  font-size: 1.8em;
-  font-weight: bold;
-  border-image: var(--nitrogql-gradient) 8;
-  border-bottom: 8px solid;
-  margin: 0.5em 0 1em;
-}
-
-section.features > h3 {
-  width: fit-content;
-  margin: 0.5em 0;
-  font-family: var(--font-outfit);
-  font-size: 1.4em;
-  font-weight: 600;
-  border-bottom: 2px solid rgb(var(--nitrogql-red));
-}
-
 section.features p + p {
   margin-top: 0.75em;
-}
-
-section.features figure {
-  width: min(640px, 90vw);
-  border-radius: 1em;
-  overflow: clip;
-  background-color: rgba(var(--nitrogql-red), 0.08);
-}
-
-section.features figure img {
-  width: min(640px, 90vw);
-  height: auto;
-}
-
-section.features figure figcaption {
-  padding: 0.25em 1em 1em;
-  font-size: 0.9em;
 }
