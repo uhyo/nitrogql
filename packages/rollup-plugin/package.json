@@ -1,6 +1,6 @@
 {
   "name": "@nitrogql/rollup-plugin",
-  "version": "0.0.1-alpha.5",
+  "version": "1.0.0-beta.0",
   "description": "GraphQL + TypeScript toolchain",
   "repository": {
     "type": "git",
