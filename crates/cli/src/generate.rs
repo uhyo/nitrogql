@@ -115,6 +115,7 @@ pub fn run_generate(mut context: CliContext) -> Result<CliContext> {
                 };
 
                 let mut writer = SourceWriter::new();
+                writer.set_file_index_mapper(file_map.file_indices.clone());
                 let mut printer_options = OperationTypePrinterOptions::default();
                 if config.config.generate.mode == GenerateMode::StandaloneTS4_0 {
                     printer_options.print_values = true;
@@ -136,6 +137,7 @@ pub fn run_generate(mut context: CliContext) -> Result<CliContext> {
     }
 }
 
+#[derive(Debug)]
 struct FileMap<'src> {
     pub file_store: &'src FileStore,
     /// Mapping from file index in file_store to source map index.
@@ -150,13 +152,16 @@ fn write_file_and_sourcemap(
     let source_files = file_map
         .file_indices
         .iter()
-        .filter_map(|idx| {
-            file_map
-                .file_store
-                .get_file(*idx)
-                .map(|(path, _, _)| path.as_path())
+        .zip(file_map.file_store.iter())
+        .filter_map(|(idx, (_, (path, _, _)))| {
+            if *idx == usize::MAX {
+                return None;
+            }
+
+            Some(path)
         })
         .collect::<Vec<_>>();
+
     let source_map_file_path = {
         let mut path = output_file_path.to_owned();
         match path.file_name() {

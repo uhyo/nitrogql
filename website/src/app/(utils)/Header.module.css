@@ -1,0 +1,63 @@
+.header h1 {
+  display: flex;
+  flex-flow: row nowrap;
+  align-items: center;
+
+  font-weight: bold;
+  font-size: 2.5em;
+  font-family: var(--font-outfit);
+}
+
+.header h1 > span {
+  text-decoration: none;
+  background: var(--nitrogql-gradient);
+  color: transparent;
+  background-clip: text;
+  -webkit-background-clip: text;
+}
+
+.header a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.logo {
+  width: 2em;
+  height: auto;
+}
+
+.nav ul {
+  width: var(--contents-width);
+  margin-block: 0 1em;
+  margin-inline: auto;
+  display: flex;
+  flex-flow: row wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 2em;
+  list-style: none;
+  padding: 0;
+  padding-block-end: 9px;
+  background-image: linear-gradient(
+    to bottom,
+    rgb(var(--nitrogql-red), 0.1) 0%,
+    rgb(var(--nitrogql-red), 0.0) 100%
+  );
+  background-position: 0 100%;
+  background-size: 100% 8px;
+  background-repeat: no-repeat;
+}
+
+.nav ul::after {
+  content: "";
+  flex: 1 1 auto;
+}
+
+.nav ul li a {
+  font-size: 1.4em;
+  font-weight: 500;
+  font-family: var(--font-outfit);
+  color: inherit;
+  text-decoration: none;
+  border-block-end: 1px solid rgb(var(--nitrogql-red));
+}

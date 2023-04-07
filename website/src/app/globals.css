@@ -1,0 +1,108 @@
+:root {
+  --max-width: 1100px;
+  --border-radius: 12px;
+  --font-mono: ui-monospace, Menlo, Monaco, 'Cascadia Mono', 'Segoe UI Mono',
+    'Roboto Mono', 'Oxygen Mono', 'Ubuntu Monospace', 'Source Code Pro',
+    'Fira Mono', 'Droid Sans Mono', 'Courier New', monospace;
+
+  --foreground-rgb: 0, 0, 0;
+  --background-rgb: 255, 255, 255;
+
+  --nitrogql-dark-red: 125, 20, 29;
+  --nitrogql-red: 255, 30, 39;
+  --nitrogql-light-red: 255, 120, 129;
+  --nitrogql-gradient: linear-gradient(
+    to right,
+    rgb(var(--nitrogql-dark-red)),
+    rgb(var(--nitrogql-red))
+  );
+
+  --contents-width: min(90vw, 1200px);
+
+  color-scheme: light dark;
+}
+
+a:link {
+  color: rgb(var(--nitrogql-red));
+}
+
+a:visited {
+  color: rgb(var(--nitrogql-dark-red));
+}
+
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --foreground-rgb: 255, 255, 255;
+    --background-rgb: 48, 16, 4;
+  }
+
+  a:visited {
+    color: rgb(var(--nitrogql-light-red));
+  }
+}
+
+* {
+  box-sizing: border-box;
+  padding: 0;
+  margin: 0;
+}
+
+html,
+body {
+  max-width: 100vw;
+  overflow-x: hidden;
+}
+
+body {
+  height: 100dvh;
+  display: flex;
+  flex-flow: column nowrap;
+  color: rgb(var(--foreground-rgb));
+  background: rgb(var(--background-rgb));
+}
+
+main {
+  flex: 1 0 auto;
+  max-width: var(--contents-width);
+  margin-inline: auto;
+}
+
+pre {
+  margin-block: 0.75em;
+}
+
+code {
+  font-family: var(--font-mono);
+}
+
+h2 {
+  font-family: var(--font-outfit);
+  font-size: 1.8em;
+  font-weight: bold;
+  border-image: var(--nitrogql-gradient) 8;
+  border-bottom: 8px solid;
+  margin: 0.5em 0 1em;
+}
+
+h3 {
+  width: fit-content;
+  margin: 1em 0 0.5em;
+  font-family: var(--font-outfit);
+  font-size: 1.4em;
+  font-weight: 600;
+  border-bottom: 2px solid rgb(var(--nitrogql-red));
+}
+
+h4 {
+  margin-block: 0.5em;
+}
+
+ul {
+  margin-block: 1em;
+  list-style-position: inside;
+}
+
+p + p {
+  margin-block-start: 0.75em;
+}

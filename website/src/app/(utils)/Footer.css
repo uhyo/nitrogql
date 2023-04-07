@@ -1,0 +1,36 @@
+body > footer {
+  background-color: rgb(var(--nitrogql-dark-red));
+  color: white;
+  margin-block-start: 3em;
+  padding: 1.5em;
+}
+
+body > footer a:any-link {
+  color: white;
+  text-decoration: none;
+}
+
+body > footer > nav {
+  max-width: var(--contents-width);
+  margin-inline: auto;
+}
+
+body > footer h2 {
+  border: none;
+  margin-block-end: 1.5em;
+  font-size: 1.5em;
+  font-family: var(--font-outfit);
+  font-weight: bold;
+}
+
+body > footer nav ul {
+  display: flex;
+  flex-flow: row wrap;
+  list-style-type: none;
+  margin-block-end: 1.5em;
+  row-gap: 1em;
+}
+
+body > footer nav ul li {
+  min-width: 10em;
+}

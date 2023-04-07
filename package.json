@@ -10,7 +10,8 @@
   "license": "MIT",
   "workspaces": [
     "packages/*",
-    "examples/*"
+    "examples/*",
+    "website"
   ],
   "devDependencies": {
     "prettier": "^2.8.4"

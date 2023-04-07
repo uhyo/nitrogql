@@ -1,0 +1,29 @@
+.figures {
+  display: flex;
+  flex-flow: row nowrap;
+  justify-content: flex-start;
+  padding: 1rem 0;
+  gap: 2rem;
+  overflow-x: auto;
+  scroll-snap-type: x proximity;
+}
+
+.figures > figure {
+  flex: 0 0 auto;
+  scroll-snap-align: start;
+
+  width: min(640px, 90vw);
+  border-radius: 1em;
+  overflow: clip;
+  background-color: rgba(var(--nitrogql-red), 0.1);
+}
+
+.figures > figure img {
+  width: min(640px, 90vw);
+  height: auto;
+}
+
+.figures > figure figcaption {
+  padding: 0.25em 1em 1em;
+  font-size: 0.9em;
+}
