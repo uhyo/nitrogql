@@ -60,6 +60,7 @@ body {
   flex-flow: column nowrap;
   color: rgb(var(--foreground-rgb));
   background: rgb(var(--background-rgb));
+  font-family: sans-serif;
 }
 
 main {
