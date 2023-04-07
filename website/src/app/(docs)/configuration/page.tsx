@@ -2,7 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { Hint } from "@/app/(utils)/Hint";
 import { Highlight } from "@/app/(utils)/Highlight";
-import { Figures } from "@/components/Figures";
+import { Figures } from "@/app/(utils)/Figures";
 
 export default function GettingStarted() {
   return (

@@ -1,7 +1,7 @@
 import Image from "next/image";
 import LogoImage from "../../../public/nitrogql-logo.png";
 import styles from "./page.module.css";
-import { Figures } from "@/components/Figures";
+import { Figures } from "@/app/(utils)/Figures";
 import figureCheckSchema from "./figures/screenshot-check-schema.png";
 import figureCheckOperation from "./figures/screenshot-check-operation.png";
 import figurePeekOperationDefinition from "./figures/screenshot-peek-operation-definition.png";

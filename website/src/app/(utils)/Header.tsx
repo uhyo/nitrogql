@@ -9,9 +9,28 @@ export const Header: React.FC = () => {
       <Link href="/">
         <h1>
           <Image className={styles.logo} src={Logo} alt="nitrogql logo" />
-          nitrogql
+          <span>nitrogql</span>
         </h1>
       </Link>
+      <nav>
+        <ul>
+          <li>
+            <Link href="/getting-started">Getting Started</Link>
+          </li>
+          <li>
+            <Link href="/configuration">Configuration</Link>
+          </li>
+          <li>
+            <Link href="/cli">CLI</Link>
+          </li>
+          <li>
+            <Link href="/recipes">Recipes</Link>
+          </li>
+          <li>
+            <Link href="/faq">FAQ</Link>
+          </li>
+        </ul>
+      </nav>
     </header>
   );
 };
