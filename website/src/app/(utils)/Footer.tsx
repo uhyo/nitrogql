@@ -28,7 +28,7 @@ export const Footer = () => {
         </ul>
         <ul>
           <li>
-            <a href="https:/github.com/uhyo/nitrogql" target="_blank">
+            <a href="https://github.com/uhyo/nitrogql" target="_blank">
               GitHub
             </a>
           </li>
