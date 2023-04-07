@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "lint-graphql": "nitrogql check"
+    "lint-graphql": "nitrogql check",
+    "generate": "nitrogql generate"
   },
   "dependencies": {
     "@apollo/server": "^4.5.0",
@@ -25,7 +26,7 @@
   },
   "devDependencies": {
     "@graphql-typed-document-node/core": "^3.2.0",
-    "@nitrogql/cli": "^0.0.1-alpha.1",
-    "@nitrogql/graphql-loader": "^0.0.1-alpha.1"
+    "@nitrogql/cli": "^1.0.0-beta.0",
+    "@nitrogql/graphql-loader": "^1.0.0-beta.0"
   }
 }
