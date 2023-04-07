@@ -11,7 +11,7 @@ export default function GettingStarted() {
       <p>
         nitrogql uses a configuration file to specify the location of your
         schema and operations, and to configure how types are generated. The
-        configuration file is named <code>graphql.config.ts</code>. The
+        configuration file is named <code>graphql.config.yaml</code>. The
         configuration file should be placed in the root of your project.
       </p>
       <Hint>
