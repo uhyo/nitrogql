@@ -1,6 +1,5 @@
 import { Outfit } from "next/font/google";
 import "./globals.css";
-import { Footer } from "./(utils)/Footer";
 
 const title = "nitrogql documentation";
 const description =
@@ -16,7 +15,14 @@ export const metadata = {
     type: "website",
     title,
     description,
-    images: "/nitrogql-logo-and-text.png",
+    images: "/nitrogql-logo-and-text-2x1.png",
+  },
+  twitter: {
+    card: "summary_large_image",
+    creator: "@uhyo_",
+    title,
+    description,
+    images: "/nitrogql-logo-and-text-2x1.png",
   },
   icons: [{ rel: "icon", url: "/nitrogql-logo.png" }],
 };
