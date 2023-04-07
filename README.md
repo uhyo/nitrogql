@@ -2,7 +2,7 @@
 
 **GraphQL + TypeScript. Done right.**
 
-*[Documentation](https://nitrogql.vercel.app/)
+**[Documentation](https://nitrogql.vercel.app/)**
 
 # nitrogql
 
@@ -24,14 +24,26 @@ nitrogql can check your GraphQL code statically and guard you from any runtime e
 
 Type generation currently only supports client side code (usage with GraphQL clients like Apollo Client). Support for writing server side code (resolvers) is planned.
 
-### build
+## Installation
+
+Install the nitrogql CLI with npm:
 
 ```sh
-cargo rustc --target wasm32-wasi --release -- -Z wasi-exec-model=reactor
+npm install --save-dev @nitrogql/cli
 ```
 
-### Example command
+The CLI will enable you to check GraphQL files and generate types. Read more about the CLI in the [CLI documentation](https://nitrogql.vercel.app/cli).
+
+To use GraphQL in your front-end project, you will also need to install appropriate loader.
+
+For webpack-based projects:
 
 ```sh
-cargo run --bin nitrogql-cli -- generate -c sample_gql/graphql.config.yaml
+npm install --save-dev @nitrogql/graphql-loader
+```
+
+For Rollup-based projects:
+
+```sh
+npm install --save-dev @nitrogql/rollup-plugin
 ```
