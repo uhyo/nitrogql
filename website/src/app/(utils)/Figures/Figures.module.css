@@ -15,7 +15,7 @@
   width: min(640px, 90vw);
   border-radius: 1em;
   overflow: clip;
-  background-color: rgba(var(--nitrogql-red), 0.08);
+  background-color: rgba(var(--nitrogql-red), 0.1);
 }
 
 .figures > figure img {

@@ -10,6 +10,7 @@
 
   --nitrogql-dark-red: 125, 20, 29;
   --nitrogql-red: 255, 30, 39;
+  --nitrogql-light-red: 255, 120, 129;
   --nitrogql-gradient: linear-gradient(
     to right,
     rgb(var(--nitrogql-dark-red)),
@@ -17,12 +18,27 @@
   );
 
   --contents-width: min(90vw, 1200px);
+
+  color-scheme: light dark;
 }
+
+a:link {
+  color: rgb(var(--nitrogql-red));
+}
+
+a:visited {
+  color: rgb(var(--nitrogql-dark-red));
+}
+
 
 @media (prefers-color-scheme: dark) {
   :root {
     --foreground-rgb: 255, 255, 255;
-    --background-rgb: 0, 0, 0;
+    --background-rgb: 48, 16, 4;
+  }
+
+  a:visited {
+    color: rgb(var(--nitrogql-light-red));
   }
 }
 
@@ -48,16 +64,8 @@ main {
   margin-inline: auto;
 }
 
-a:link {
-  color: rgb(var(--nitrogql-red));
-}
-
-a:visited {
-  color: rgb(var(--nitrogql-dark-red));
-}
-
 pre {
-  margin-block: 0.5em;
+  margin-block: 0.75em;
 }
 
 code {
@@ -93,10 +101,4 @@ ul {
 
 p + p {
   margin-block-start: 0.75em;
-}
-
-@media (prefers-color-scheme: dark) {
-  html {
-    color-scheme: dark;
-  }
 }

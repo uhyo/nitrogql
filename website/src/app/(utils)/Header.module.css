@@ -26,7 +26,7 @@
   height: auto;
 }
 
-.header nav ul {
+.nav ul {
   width: var(--contents-width);
   margin-block: 0 1em;
   margin-inline: auto;
@@ -48,12 +48,12 @@
   background-repeat: no-repeat;
 }
 
-.header nav ul::after {
+.nav ul::after {
   content: "";
   flex: 1 1 auto;
 }
 
-.header nav ul li a {
+.nav ul li a {
   font-size: 1.4em;
   font-weight: 500;
   font-family: var(--font-outfit);

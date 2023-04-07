@@ -1,4 +1,7 @@
 .main hgroup {
+  max-width: 90vw;
+  min-height: 12em;
+  margin-inline: auto;
   display: grid;
   justify-content: center;
   grid-template-columns: auto auto;
@@ -21,7 +24,7 @@
   display: flex;
   flex-flow: row nowrap;
   align-items: center;
-  font-size: min(5em, 20vw);
+  font-size: min(5em, 15vw);
 }
 
 .main hgroup h1 > span {
@@ -36,7 +39,7 @@
   font-weight: bold;
 }
 
-.main main > p:first-of-type {
+.main main > p {
   font-size: 1.2em;
 }
 
