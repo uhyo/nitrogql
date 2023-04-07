@@ -55,11 +55,15 @@ body {
 }
 
 body {
+  height: 100dvh;
+  display: flex;
+  flex-flow: column nowrap;
   color: rgb(var(--foreground-rgb));
   background: rgb(var(--background-rgb));
 }
 
 main {
+  flex: 1 0 auto;
   max-width: var(--contents-width);
   margin-inline: auto;
 }
