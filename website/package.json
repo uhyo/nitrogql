@@ -10,5 +10,8 @@
   },
   "dependencies": {
     "highlight.js": "^11.7.0"
+  },
+  "devDependencies": {
+    "next": "^13.3.0"
   }
 }

@@ -2,6 +2,8 @@
 
 **GraphQL + TypeScript. Done right.**
 
+*[Documentation](https://nitrogql.vercel.app/)
+
 # nitrogql
 
 **nitrogql** is a toolchain for using GraphQL in TypeScript projects. Main features include:
