@@ -13,5 +13,5 @@ nitrogql-config-file = { path = "../config-file" }
 nitrogql-parser = { path = "../parser" }
 nitrogql-printer = { path = "../printer" }
 nitrogql-utils = { path = "../utils" }
-pretty_env_logger = "0.4.0"
+simple_logger = "4.1.0"
 sourcemap-writer = { path = "../sourcemap-writer" }
