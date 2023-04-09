@@ -14,7 +14,7 @@ When you want to update snapshot tests, [cargo-insta](https://crates.io/crates/c
 
 ## Building the Node.js integration
 
-We have a small set of scripts for building the Node.js integration. You need [cargo-wasi](https://github.com/bytecodealliance/cargo-wasi).
+We have a small set of scripts for building the Node.js integration. You need to have `wasm-opt` and `wasm-snip` installed.
 
 1. `./build/build-rust.sh` to build Rust code into WASM.
 2. `./build/build-node.sh` to copy the WASM file into the Node.js packages.

@@ -21,7 +21,11 @@ fn main() {}
 /// Initialize this reactor
 #[no_mangle]
 pub extern "C" fn init() {
-    pretty_env_logger::init();
+    simple_logger::SimpleLogger::new()
+        .with_level(log::LevelFilter::Error)
+        .env()
+        .init()
+        .unwrap();
 }
 
 /// Allocate a string buffer of given size.

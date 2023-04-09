@@ -60,7 +60,11 @@ fn main() {
 
 /// Run as CLI. Returns 0 if successful
 pub fn run_cli(args: impl IntoIterator<Item = String>) -> usize {
-    pretty_env_logger::init();
+    simple_logger::SimpleLogger::new()
+        .with_level(log::LevelFilter::Error)
+        .env()
+        .init()
+        .unwrap();
     let file_store = Box::leak(Box::new(FileStore::new()));
     let res = run_cli_impl(args, file_store);
     match res {
