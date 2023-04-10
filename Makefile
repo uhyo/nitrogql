@@ -7,5 +7,8 @@ test-coverage-profraw:
 coverage/lcov.info: $(wildcard **/coverage/*.profraw)
 	grcov . --binary-path ./target/debug/deps/ -s . -t lcov --branch --ignore-not-existing -o coverage/lcov.info
 
-coverage: coverage/lcov.info
+coverage/html/index.html: $(wildcard **/coverage/*.profraw)
+	grcov . --binary-path ./target/debug/deps/ -s . -t html --branch --ignore-not-existing -o coverage/html
+
+coverage: coverage/lcov.info coverage/html/index.html
 
