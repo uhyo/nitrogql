@@ -39,7 +39,6 @@ impl<'a> PairExt<'a> for Pair<'a, Rule> {
     /// Validates that all inner Pairs are of given rule and returns them.
     fn all_children(self, rule: Rule) -> Vec<Pair<'a, Rule>> {
         self.into_inner()
-            .into_iter()
             .filter(|pair| {
                 if !pair.is_rule(rule) {
                     panic!(

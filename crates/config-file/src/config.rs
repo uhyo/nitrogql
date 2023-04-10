@@ -36,9 +36,10 @@ impl Default for GenerateConfig {
 }
 
 /// Mode of code generation.
-#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Default)]
 pub enum GenerateMode {
     /// To be used with a webpack loader for .graphql files, emits .d.graphql.ts files that are supported by TS 5.0 and later
+    #[default]
     WithLoaderTS5_0,
     /// To be used with a webpack loader for .graphql files, emits .d.graphql.ts files that are supported by TS 4.0
     WithLoaderTS4_0,
@@ -57,11 +58,5 @@ impl FromStr for GenerateMode {
             "standalone-ts-4.0" => Ok(GenerateMode::StandaloneTS4_0),
             _ => Err(FromStrError),
         }
-    }
-}
-
-impl Default for GenerateMode {
-    fn default() -> Self {
-        GenerateMode::WithLoaderTS5_0
     }
 }

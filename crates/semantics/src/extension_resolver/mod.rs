@@ -122,7 +122,6 @@ pub fn resolve_extensions(
         .chain(union_definitions)
         .chain(enum_definitions)
         .chain(input_object_definitions)
-        .into_iter()
         .collect();
     Ok(TypeSystemDocument {
         definitions: new_definitions,
