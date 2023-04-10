@@ -10,7 +10,18 @@ Also, this project maintains Node.js integrations. You will need to install Node
 
 Usual commands like `cargo build`, `cargo test` or `cargo watch` (you need [cargo-watch](https://crates.io/crates/cargo-watch) for this) should work.
 
+### Snapshot testing
+
 When you want to update snapshot tests, [cargo-insta](https://crates.io/crates/cargo-insta) is required. Instead of `cargo test`, run `cargo insta test` for snapshot-testing-aware results. When snapshots are to be added or updated, run `cargo insta review` to review and apply the changes.
+
+### Coverage
+
+To generate coverage file, run `make coverage`. This will generate a `coverage/lcov.info` file which can be loaded by the [Coverage Gutters](https://marketplace.visualstudio.com/items?itemName=ryanluker.vscode-coverage-gutters) extension.
+
+Note that this requires below dependencies to be installed:
+
+- `rustup component add llvm-tools-preview`
+- `cargo install grcov`
 
 ## Building the Node.js integration
 
