@@ -494,7 +494,7 @@ mod fragments {
     use nitrogql_semantics::ast_to_type_system;
 
     use crate::operation_checker::check_operation_document;
-    use nitrogql_ast::{base::Pos, TypeSystemDocument};
+    use nitrogql_ast::base::Pos;
     use nitrogql_parser::parse_operation_document;
 
     use super::parse_to_type_system_document;
