@@ -82,11 +82,11 @@ pub fn generate_builtins() -> Vec<TypeSystemDefinitionOrExtension<'static>> {
 
     type_definitions
         .into_iter()
-        .map(|def| TypeSystemDefinitionOrExtension::TypeDefinition(def))
+        .map(TypeSystemDefinitionOrExtension::TypeDefinition)
         .chain(
             directive_definitions
                 .into_iter()
-                .map(|def| TypeSystemDefinitionOrExtension::DirectiveDefinition(def)),
+                .map(TypeSystemDefinitionOrExtension::DirectiveDefinition),
         )
         .collect()
 }

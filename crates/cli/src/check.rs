@@ -35,7 +35,7 @@ pub fn run_check(context: CliContext) -> Result<CliContext> {
                             for err in errors {
                                 eprintln!("{}", print_positioned_error(&err.into(), file_store));
                             }
-                            eprintln!("");
+                            eprintln!();
                             return Err(CliError::CommandNotSuccessful("check".into()).into());
                         }
                         LoadedSchema::GraphQL(resolved)
@@ -43,10 +43,8 @@ pub fn run_check(context: CliContext) -> Result<CliContext> {
                     LoadedSchema::Introspection(schema) => LoadedSchema::Introspection(schema),
                 }
             };
-            let schema = loaded_schema.map_into(
-                |doc| Cow::Owned(ast_to_type_system(doc)),
-                |schema| Cow::Borrowed(schema),
-            );
+            let schema =
+                loaded_schema.map_into(|doc| Cow::Owned(ast_to_type_system(doc)), Cow::Borrowed);
             let errors = operations
                 .iter()
                 .flat_map(|(_, doc, file_by_index)| {
@@ -67,7 +65,7 @@ pub fn run_check(context: CliContext) -> Result<CliContext> {
                 for (err, _) in errors {
                     eprintln!("{}", print_positioned_error(&err.into(), file_store));
                 }
-                eprintln!("");
+                eprintln!();
                 return Err(CliError::CommandNotSuccessful("check".into()).into());
             }
 

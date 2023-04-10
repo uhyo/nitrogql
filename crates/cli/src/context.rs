@@ -10,6 +10,7 @@ use nitrogql_config_file::Config;
 
 use crate::file_store::FileStore;
 
+#[allow(clippy::large_enum_variant)]
 pub enum LoadedSchema<'src, Gql> {
     GraphQL(Gql),
     Introspection(Schema<Cow<'src, str>, Pos>),

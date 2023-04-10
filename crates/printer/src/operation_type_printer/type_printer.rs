@@ -60,7 +60,7 @@ fn generate_branching_conditions<'a, 'src, S: Text<'src>>(
 ) -> Vec<BranchingCondition<'a, S>> {
     let parent_type_def = context
         .schema
-        .get_type(&parent_type)
+        .get_type(parent_type)
         .expect("Type system error");
     let parent_objects = match **parent_type_def {
         TypeDefinition::Scalar(_) | TypeDefinition::Enum(_) | TypeDefinition::InputObject(_) => {
@@ -98,15 +98,14 @@ fn generate_branching_conditions<'a, 'src, S: Text<'src>>(
                 .multi_cartesian_product(),
         )
     };
-    let branches = parent_objects
+    parent_objects
         .into_iter()
         .cartesian_product(boolean_variables)
         .map(|(obj, vars)| BranchingCondition {
             parent_obj: obj,
             boolean_variables: vars,
         })
-        .collect();
-    branches
+        .collect()
 }
 
 /// Get boolean variables involved in a selection set.
@@ -246,7 +245,7 @@ fn get_fields_for_selection_set<'a, 'src, S: Text<'src>>(
                     fragment_def.type_condition.name,
                 ) {
                     let fields =
-                        get_fields_for_selection_set(context, &fragment_def.selection_set, &branch);
+                        get_fields_for_selection_set(context, &fragment_def.selection_set, branch);
                     if check_skip_directive(branch, &fragment.directives) {
                         fields
                             .into_iter()
@@ -287,7 +286,7 @@ fn get_fields_for_selection_set<'a, 'src, S: Text<'src>>(
                 Some(ref cond) => {
                     if check_fragment_condition(context, branch.parent_obj, cond.name) {
                         let fields =
-                            get_fields_for_selection_set(context, &fragment.selection_set, &branch);
+                            get_fields_for_selection_set(context, &fragment.selection_set, branch);
                         if check_skip_directive(branch, &fragment.directives) {
                             fields
                                 .into_iter()
@@ -308,10 +307,9 @@ fn get_fields_for_selection_set<'a, 'src, S: Text<'src>>(
                 }
             },
         });
-    let res = types_for_simple_fields
+    types_for_simple_fields
         .chain(types_for_fragments)
-        .collect::<Vec<_>>();
-    res
+        .collect::<Vec<_>>()
 }
 
 /// Examine directives and returns whether field should be skipped.
@@ -447,9 +445,9 @@ fn map_to_tstype_impl<Str, OriginalNode>(
 ) -> (TSType, bool) {
     match ty {
         Type::Named(name) => (mapper(name), true),
-        Type::List(inner) => (TSType::Array(Box::new(map_to_tstype(&inner, mapper))), true),
+        Type::List(inner) => (TSType::Array(Box::new(map_to_tstype(inner, mapper))), true),
         Type::NonNull(inner) => {
-            let (inner_ty, _) = map_to_tstype_impl(&inner, mapper);
+            let (inner_ty, _) = map_to_tstype_impl(inner, mapper);
             (inner_ty, false)
         }
     }

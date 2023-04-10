@@ -28,12 +28,7 @@ pub fn check_directives<'src, S: Text<'src>>(
                 .with_pos(d.name.position),
             ),
             Some(def) => {
-                if def
-                    .locations
-                    .iter()
-                    .find(|loc| ***loc == current_position)
-                    .is_none()
-                {
+                if def.locations.iter().all(|loc| **loc != current_position) {
                     result.push(
                         CheckErrorMessage::DirectiveLocationNotAllowed {
                             name: d.name.to_string(),
@@ -69,6 +64,7 @@ pub fn check_directives<'src, S: Text<'src>>(
     }
 }
 
+#[allow(clippy::too_many_arguments)]
 pub fn check_arguments<'src, S: Text<'src>>(
     definitions: &Schema<S, Pos>,
     variables: Option<&VariablesDefinition<'src>>,
@@ -111,12 +107,8 @@ pub fn check_arguments<'src, S: Text<'src>>(
                             if !arg_def.r#type.is_nonnull() {
                                 break 'b true;
                             }
-                            match arg_def.default_value {
-                                None => false,
-                                // TODO: maybe check for null default value
-                                // Some(ref v) if matches!(v, Value::NullValue(_)) => false,
-                                Some(_) => true,
-                            }
+                            // TODO: maybe check for null default value
+                            arg_def.default_value.is_some()
                         };
                         if !null_is_allowed {
                             result.push(
@@ -144,8 +136,7 @@ pub fn check_arguments<'src, S: Text<'src>>(
                 for (arg_name, _) in arguments {
                     if arguments_definition
                         .iter()
-                        .find(|arg_def| arg_def.name == arg_name.name)
-                        .is_none()
+                        .all(|arg_def| arg_def.name != arg_name.name)
                     {
                         result.push(
                             CheckErrorMessage::UnknownArgument {
@@ -177,11 +168,7 @@ pub fn check_value<'src, S: Text<'src>>(
                 );
                 return;
             };
-            break 'b !check_type_compatibility(
-                definitions,
-                &convert_type(&v_def.r#type),
-                expected_type,
-            );
+            break 'b !check_type_compatibility(&convert_type(&v_def.r#type), expected_type);
         }
         match expected_type {
             Type::NonNull(inner) => match value {
@@ -270,12 +257,7 @@ fn is_value_compatible_type_def<'src, S: Text<'src>>(
             Value::NullValue(_) => (true, vec![]),
             Value::EnumValue(value) => {
                 let enum_name = value.value;
-                if enum_def
-                    .members
-                    .iter()
-                    .find(|v| v.name == enum_name)
-                    .is_none()
-                {
+                if enum_def.members.iter().all(|v| v.name != enum_name) {
                     result.push(
                         CheckErrorMessage::UnknownEnumMember {
                             member: enum_name.to_owned(),
@@ -360,21 +342,18 @@ fn is_value_compatible_type_def<'src, S: Text<'src>>(
 
 /// Returns true if `value_type` is assignable to `expected_type`.
 fn check_type_compatibility<'src, S: Text<'src>>(
-    definitions: &Schema<S, Pos>,
     value_type: &Type<S, Pos>,
     expected_type: &Type<S, Pos>,
 ) -> bool {
     // https://spec.graphql.org/draft/#AreTypesCompatible()
     match (expected_type, value_type) {
         (Type::NonNull(expected_inner), Type::NonNull(value_inner)) => {
-            check_type_compatibility(definitions, value_inner, expected_inner)
+            check_type_compatibility(value_inner, expected_inner)
         }
-        (_, Type::NonNull(value_inner)) => {
-            check_type_compatibility(definitions, value_inner, expected_type)
-        }
+        (_, Type::NonNull(value_inner)) => check_type_compatibility(value_inner, expected_type),
         (Type::NonNull(_), _) => false,
         (Type::List(expected_inner), Type::List(value_inner)) => {
-            check_type_compatibility(definitions, value_inner, expected_inner)
+            check_type_compatibility(value_inner, expected_inner)
         }
         (Type::List(_), _) => false,
         (_, Type::List(_)) => false,

@@ -107,7 +107,7 @@ pub struct ScalarTypeDefinition<'a> {
 
 impl HasPos for ScalarTypeDefinition<'_> {
     fn name(&self) -> Option<&str> {
-        Some(&self.name.name)
+        Some(self.name.name)
     }
     fn position(&self) -> &Pos {
         &self.position
@@ -128,7 +128,7 @@ pub struct ObjectTypeDefinition<'a> {
 
 impl HasPos for ObjectTypeDefinition<'_> {
     fn name(&self) -> Option<&str> {
-        Some(&self.name.name)
+        Some(self.name.name)
     }
     fn position(&self) -> &Pos {
         &self.position
@@ -158,7 +158,7 @@ pub struct InterfaceTypeDefinition<'a> {
 
 impl HasPos for InterfaceTypeDefinition<'_> {
     fn name(&self) -> Option<&str> {
-        Some(&self.name.name)
+        Some(self.name.name)
     }
     fn position(&self) -> &Pos {
         &self.position
@@ -178,7 +178,7 @@ pub struct UnionTypeDefinition<'a> {
 
 impl HasPos for UnionTypeDefinition<'_> {
     fn name(&self) -> Option<&str> {
-        Some(&self.name.name)
+        Some(self.name.name)
     }
     fn position(&self) -> &Pos {
         &self.position
@@ -199,7 +199,7 @@ pub struct DirectiveDefinition<'a> {
 
 impl HasPos for DirectiveDefinition<'_> {
     fn name(&self) -> Option<&str> {
-        Some(&self.name.name)
+        Some(self.name.name)
     }
     fn position(&self) -> &Pos {
         &self.position
@@ -243,7 +243,7 @@ pub struct EnumTypeDefinition<'a> {
 
 impl HasPos for EnumTypeDefinition<'_> {
     fn name(&self) -> Option<&str> {
-        Some(&self.name.name)
+        Some(self.name.name)
     }
     fn position(&self) -> &Pos {
         &self.position
@@ -270,7 +270,7 @@ pub struct InputObjectTypeDefinition<'a> {
 
 impl HasPos for InputObjectTypeDefinition<'_> {
     fn name(&self) -> Option<&str> {
-        Some(&self.name.name)
+        Some(self.name.name)
     }
     fn position(&self) -> &Pos {
         &self.position
@@ -312,7 +312,7 @@ pub struct ScalarTypeExtension<'a> {
 
 impl HasPos for ScalarTypeExtension<'_> {
     fn name(&self) -> Option<&str> {
-        Some(&self.name.name)
+        Some(self.name.name)
     }
     fn position(&self) -> &Pos {
         &self.position
@@ -330,7 +330,7 @@ pub struct ObjectTypeExtension<'a> {
 
 impl HasPos for ObjectTypeExtension<'_> {
     fn name(&self) -> Option<&str> {
-        Some(&self.name.name)
+        Some(self.name.name)
     }
     fn position(&self) -> &Pos {
         &self.position
@@ -348,7 +348,7 @@ pub struct InterfaceTypeExtension<'a> {
 
 impl HasPos for InterfaceTypeExtension<'_> {
     fn name(&self) -> Option<&str> {
-        Some(&self.name.name)
+        Some(self.name.name)
     }
     fn position(&self) -> &Pos {
         &self.position
@@ -365,7 +365,7 @@ pub struct UnionTypeExtension<'a> {
 
 impl HasPos for UnionTypeExtension<'_> {
     fn name(&self) -> Option<&str> {
-        Some(&self.name.name)
+        Some(self.name.name)
     }
     fn position(&self) -> &Pos {
         &self.position
@@ -382,7 +382,7 @@ pub struct EnumTypeExtension<'a> {
 
 impl HasPos for EnumTypeExtension<'_> {
     fn name(&self) -> Option<&str> {
-        Some(&self.name.name)
+        Some(self.name.name)
     }
     fn position(&self) -> &Pos {
         &self.position
@@ -399,7 +399,7 @@ pub struct InputObjectTypeExtension<'a> {
 
 impl HasPos for InputObjectTypeExtension<'_> {
     fn name(&self) -> Option<&str> {
-        Some(&self.name.name)
+        Some(self.name.name)
     }
     fn position(&self) -> &Pos {
         &self.position
@@ -426,15 +426,13 @@ impl TypeSystemOrExtensionDocument<'_> {
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Default)]
 pub struct TypeSystemDocument<'a> {
     pub definitions: Vec<TypeSystemDefinition<'a>>,
 }
 
 impl TypeSystemDocument<'_> {
     pub fn new() -> Self {
-        TypeSystemDocument {
-            definitions: Vec::new(),
-        }
+        Self::default()
     }
 }

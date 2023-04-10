@@ -57,6 +57,6 @@ pub fn load_config(
         None => Ok(None),
         Some((path, source)) => parse_config(&source)
             .map(|config| Some((path.clone(), config)))
-            .ok_or_else(|| ConfigFileError::ValidationError(path)),
+            .ok_or_else(|| ConfigFileError::Validation(path)),
     }
 }

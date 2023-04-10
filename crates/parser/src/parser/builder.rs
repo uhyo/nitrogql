@@ -25,7 +25,7 @@ pub fn build_operation_document(pairs: Pairs<Rule>) -> OperationDocument {
                 let definitions: Vec<_> = pair
                     .into_inner()
                     .filter(|pair| pair.is_rule(Rule::ExecutableDefinition))
-                    .map(|pair| build_executable_definition(pair))
+                    .map(build_executable_definition)
                     .collect();
                 return OperationDocument { definitions };
             }
@@ -44,7 +44,7 @@ pub fn build_type_system_or_extension_document(
                 let definitions: Vec<_> = pair
                     .into_inner()
                     .filter(|pair| pair.is_rule(Rule::TypeSystemDefinitionOrExtension))
-                    .map(|pair| build_type_system_definition_or_extension(pair))
+                    .map(build_type_system_definition_or_extension)
                     .collect();
                 return TypeSystemOrExtensionDocument { definitions };
             }

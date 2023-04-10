@@ -62,7 +62,7 @@ where
                 }
                 ExecutableDefinition::FragmentDefinition(ref def) => {
                     let context = PrintFragmentContext {
-                        var_name: &def.name.name,
+                        var_name: def.name.name,
                         exported: true,
                         fragment: def,
                     };
@@ -82,7 +82,7 @@ pub fn operation_variable_name(
 ) -> String {
     let capitalized_name = operation
         .name
-        .map(|name| capitalize(&name.name))
+        .map(|name| capitalize(name.name))
         .unwrap_or(String::new());
     format!(
         "{}{}",

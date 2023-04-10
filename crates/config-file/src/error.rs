@@ -5,9 +5,9 @@ use thiserror::Error;
 #[derive(Error, Debug)]
 pub enum ConfigFileError {
     #[error(transparent)]
-    IOError(#[from] io::Error),
+    IO(#[from] io::Error),
     #[error("Error loading config file: {0}")]
-    YAMLError(#[from] serde_yaml::Error),
+    Yaml(#[from] serde_yaml::Error),
     #[error("Cannot load config file '{0}': validation error")]
-    ValidationError(PathBuf),
+    Validation(PathBuf),
 }

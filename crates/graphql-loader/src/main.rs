@@ -44,7 +44,7 @@ pub extern "C" fn alloc_string(len_bytes: usize) -> *mut u8 {
 /// # Safety
 /// `free_string` should only be called with a pointer returned by `alloc_string` with the same value of `len_bytes` argument.
 #[no_mangle]
-pub extern "C" fn free_string(ptr: *mut u8, len_bytes: usize) {
+pub unsafe extern "C" fn free_string(ptr: *mut u8, len_bytes: usize) {
     let _ = unsafe { String::from_raw_parts(ptr, 0, len_bytes) };
 }
 

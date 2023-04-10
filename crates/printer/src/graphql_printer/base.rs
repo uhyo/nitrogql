@@ -12,7 +12,7 @@ impl GraphQLPrinter for Type<'_> {
     fn print_graphql(&self, writer: &mut impl SourceMapWriter) {
         match self {
             Type::Named(name) => {
-                writer.write_for(&name.name.name, self);
+                writer.write_for(name.name.name, self);
             }
             Type::NonNull(non_null) => {
                 non_null.r#type.print_graphql(writer);

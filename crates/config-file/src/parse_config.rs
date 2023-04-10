@@ -1,4 +1,4 @@
-use std::path::PathBuf;
+use std::{path::PathBuf, str::FromStr};
 
 use serde_yaml::{Mapping, Value};
 
@@ -7,7 +7,7 @@ use crate::{Config, GenerateConfig, GenerateMode};
 /// Parse config file from given string.
 /// Returns None if there is a validation error.
 pub fn parse_config(source: &str) -> Option<Config> {
-    let parsed: Value = serde_yaml::from_str(&source).ok()?;
+    let parsed: Value = serde_yaml::from_str(source).ok()?;
 
     read_config(parsed)
 }
@@ -78,7 +78,7 @@ fn generate_config(extensions: &Mapping) -> GenerateConfig {
     if let Some(mode) = generate
         .get("mode")
         .and_then(|v| v.as_str())
-        .and_then(GenerateMode::from_str)
+        .and_then(|v| GenerateMode::from_str(v).ok())
     {
         config.mode = mode;
     }

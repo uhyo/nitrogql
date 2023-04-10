@@ -192,10 +192,10 @@ fn as_type_definition<'src, D: Default>(
     let description = value.description.as_ref().map(node_clone);
 
     if kind == "SCALAR" {
-        return Ok(TypeDefinition::Scalar(ScalarDefinition {
+        Ok(TypeDefinition::Scalar(ScalarDefinition {
             name,
             description,
-        }));
+        }))
     } else if kind == "OBJECT" {
         let fields = value
             .fields
@@ -211,12 +211,12 @@ fn as_type_definition<'src, D: Default>(
             .map(|ty| ty.map(|ty| (***ty.unwrapped()).clone()).map(node))
             .collect::<Result<Vec<_>, _>>()?;
 
-        return Ok(TypeDefinition::Object(ObjectDefinition {
+        Ok(TypeDefinition::Object(ObjectDefinition {
             name,
             description,
             fields,
             interfaces,
-        }));
+        }))
     } else if kind == "INTERFACE" {
         let fields = value
             .fields
@@ -232,12 +232,12 @@ fn as_type_definition<'src, D: Default>(
             .map(|ty| ty.map(|ty| (***ty.unwrapped()).clone()).map(node))
             .collect::<Result<Vec<_>, _>>()?;
 
-        return Ok(TypeDefinition::Interface(InterfaceDefinition {
+        Ok(TypeDefinition::Interface(InterfaceDefinition {
             name,
             description,
             fields,
             interfaces,
-        }));
+        }))
     } else if kind == "UNION" {
         let Some(ref possible_types) = value.possible_types else {
             return Err(IntrospectionError::Introspection("__Type of kind UNION must have a list 'possibleTypes' field".into()));
@@ -248,11 +248,11 @@ fn as_type_definition<'src, D: Default>(
             .map(|ty| ty.map(|ty| (***ty.unwrapped()).clone()).map(node))
             .collect::<Result<Vec<_>, _>>()?;
 
-        return Ok(TypeDefinition::Union(UnionDefinition {
+        Ok(TypeDefinition::Union(UnionDefinition {
             name,
             description,
             possible_types,
-        }));
+        }))
     } else if kind == "ENUM" {
         let Some(ref enum_values) = value.enum_values else {
             return Err(IntrospectionError::Introspection("__Type of kind ENUM must have a list 'enumValues' field".into()));
@@ -267,11 +267,11 @@ fn as_type_definition<'src, D: Default>(
             })
             .collect();
 
-        return Ok(TypeDefinition::Enum(EnumDefinition {
+        Ok(TypeDefinition::Enum(EnumDefinition {
             name,
             description,
             members,
-        }));
+        }))
     } else if kind == "INPUT_OBJECT" {
         let Some(ref fields) = value.input_fields else {
             return Err(IntrospectionError::Introspection("__Type of kind INPUT_OBJECT must have a list 'inputFields' field".into()));
@@ -281,11 +281,11 @@ fn as_type_definition<'src, D: Default>(
             .map(as_input_value)
             .collect::<Result<Vec<_>, _>>()?;
 
-        return Ok(TypeDefinition::InputObject(InputObjectDefinition {
+        Ok(TypeDefinition::InputObject(InputObjectDefinition {
             name,
             description,
             fields,
-        }));
+        }))
     } else {
         Err(IntrospectionError::Introspection(format!(
             "Unknown kind '{kind}' of __Type"

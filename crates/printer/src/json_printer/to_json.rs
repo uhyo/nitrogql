@@ -63,9 +63,9 @@ impl JsonPrintable for ExecutableDefinition<'_> {
             }
             ExecutableDefinition::FragmentDefinition(fragment) => {
                 writer.value("kind", "FragmentDefinition");
-                writer.value("name", JSONValue(&Name(&fragment.name.name)));
+                writer.value("name", JSONValue(&Name(fragment.name.name)));
                 Type::Named(NamedType {
-                    name: fragment.type_condition.clone(),
+                    name: fragment.type_condition,
                 })
                 .print_json(&mut writer.object("typeCondition"));
                 let mut directives_writer = writer.array("directives");
@@ -139,7 +139,7 @@ impl JsonPrintable for Value<'_> {
             }
             Value::FloatValue(f) => {
                 writer.value("kind", "FloatValue");
-                writer.value("value", &f.value);
+                writer.value("value", f.value);
             }
             Value::StringValue(s) => {
                 writer.value("kind", "StringValue");
@@ -161,7 +161,7 @@ impl JsonPrintable for Value<'_> {
                 for (key, value) in obj.fields.iter() {
                     let mut field_writer = fields_writer.object();
                     field_writer.value("kind", "ObjectField");
-                    field_writer.value("name", JSONValue(&Name(&key.name)));
+                    field_writer.value("name", JSONValue(&Name(key.name)));
                     value.print_json(&mut field_writer.object("value"));
                 }
             }
@@ -228,7 +228,7 @@ impl JsonPrintable for Field<'_> {
 impl JsonPrintable for FragmentSpread<'_> {
     fn print_json(&self, writer: &mut JSONObjectWriter) {
         writer.value("kind", "FragmentSpread");
-        writer.value("name", JSONValue(&Name(&self.fragment_name.name)));
+        writer.value("name", JSONValue(&Name(self.fragment_name.name)));
         let mut directives_writer = writer.array("directives");
         for d in self.directives.iter() {
             d.print_json(&mut directives_writer.object());
@@ -241,7 +241,7 @@ impl JsonPrintable for InlineFragment<'_> {
         writer.value("kind", "InlineFragment");
         if let Some(ref cond) = self.type_condition {
             let mut type_condition_writer = writer.object("typeCondition");
-            Type::Named(NamedType { name: cond.clone() }).print_json(&mut type_condition_writer);
+            Type::Named(NamedType { name: *cond }).print_json(&mut type_condition_writer);
         }
         let mut directives_writer = writer.array("directives");
         for d in self.directives.iter() {

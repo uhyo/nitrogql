@@ -81,10 +81,7 @@ pub fn run_generate(mut context: CliContext) -> Result<CliContext> {
                 write_file_and_sourcemap(&file_map, &schema_output, buffers)?;
             }
 
-            let schema = schema.map_into(
-                |doc| Cow::Owned(ast_to_type_system(doc)),
-                |schema| Cow::Borrowed(schema),
-            );
+            let schema = schema.map_into(|doc| Cow::Owned(ast_to_type_system(doc)), Cow::Borrowed);
 
             for (path, doc, file_index) in operations.iter() {
                 debug!("Processing {}", path.to_string_lossy());
@@ -125,7 +122,7 @@ pub fn run_generate(mut context: CliContext) -> Result<CliContext> {
                     path_to_ts(relative_path(&decl_file_path, &schema_output))
                         .to_string_lossy()
                         .to_string();
-                print_types_for_operation_document(printer_options, &schema, &doc, &mut writer);
+                print_types_for_operation_document(printer_options, &schema, doc, &mut writer);
 
                 let buffers = writer.into_buffers();
 

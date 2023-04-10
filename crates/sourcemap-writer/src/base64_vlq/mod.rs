@@ -7,7 +7,7 @@ const BASE64_CHARS: [char; 64] = [
 
 pub fn base64_vlq(input: isize) -> String {
     let sign_bit = input < 0;
-    let mut value = input.abs() as usize;
+    let mut value = input.unsigned_abs();
 
     if value < 16 {
         // one char exception (first character has 4 bit value space)

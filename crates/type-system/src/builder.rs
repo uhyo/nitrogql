@@ -2,6 +2,8 @@ use std::collections::{hash_map::Entry, HashMap};
 
 use crate::{root_types::RootTypes, text::Text, DirectiveDefinition, Node, Schema, TypeDefinition};
 
+type SchemaRootTypes<Str, OriginalNode> = RootTypes<Option<Node<Str, OriginalNode>>>;
+
 /// Struct for building Schema.
 pub struct SchemaBuilder<Str, OriginalNode> {
     description: Option<Node<Str, OriginalNode>>,
@@ -9,7 +11,7 @@ pub struct SchemaBuilder<Str, OriginalNode> {
     directive_definitions: HashMap<Str, Node<DirectiveDefinition<Str, OriginalNode>, OriginalNode>>,
     type_names: Vec<Str>,
     directive_names: Vec<Str>,
-    root_types: Option<Node<RootTypes<Option<Node<Str, OriginalNode>>>, OriginalNode>>,
+    root_types: Option<Node<SchemaRootTypes<Str, OriginalNode>, OriginalNode>>,
 }
 
 impl<Str, OriginalNode: Default> SchemaBuilder<Str, OriginalNode> {
@@ -93,17 +95,17 @@ impl<'a, Str: Text<'a>, OriginalNode>
     }
 }
 
-impl<Str, OriginalNode: Default> Into<Schema<Str, OriginalNode>>
-    for SchemaBuilder<Str, OriginalNode>
+impl<Str, OriginalNode: Default> From<SchemaBuilder<Str, OriginalNode>>
+    for Schema<Str, OriginalNode>
 {
-    fn into(self) -> Schema<Str, OriginalNode> {
+    fn from(value: SchemaBuilder<Str, OriginalNode>) -> Self {
         Schema {
-            description: self.description,
-            type_definitions: self.type_definitions,
-            directive_definitions: self.directive_definitions,
-            type_names: self.type_names,
-            directive_names: self.directive_names,
-            root_types: self
+            description: value.description,
+            type_definitions: value.type_definitions,
+            directive_definitions: value.directive_definitions,
+            type_names: value.type_names,
+            directive_names: value.directive_names,
+            root_types: value
                 .root_types
                 .unwrap_or(Node::from(RootTypes::default(), OriginalNode::default())),
         }

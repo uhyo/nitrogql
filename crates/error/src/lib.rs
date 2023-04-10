@@ -1,7 +1,7 @@
 use colored::Colorize;
 use std::fmt::{Display, Write};
 use std::ops::Index;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::result::Result as StdResult;
 
 use nitrogql_ast::base::Pos;
@@ -53,7 +53,7 @@ where
 
 static INDENT: &str = "    ";
 
-pub fn print_positioned_error<'src, S: AsRef<str>, T>(
+pub fn print_positioned_error<S: AsRef<str>, T>(
     error: &PositionedError,
     files: &impl Index<usize, Output = (PathBuf, S, T)>,
 ) -> String {
@@ -87,7 +87,7 @@ pub fn print_positioned_error<'src, S: AsRef<str>, T>(
 }
 
 fn message_for_line(
-    file_path: &PathBuf,
+    file_path: &Path,
     source: &str,
     pos: Pos,
     error: &impl Display,
@@ -143,16 +143,14 @@ fn message_for_line(
             } else {
                 result.push_str(&format!("{printed_line}\n"));
             }
+        } else if is_additional {
+            let error_str = format!("{error}").bright_green().underline();
+            result.push_str(&format!(
+                "{INDENT}{trimmed_line}\n{INDENT}{spaces}^\n{INDENT}{spaces}{error_str}\n"
+            ));
         } else {
-            if is_additional {
-                let error_str = format!("{error}").bright_green().underline();
-                result.push_str(&format!(
-                    "{INDENT}{trimmed_line}\n{INDENT}{spaces}^\n{INDENT}{spaces}{error_str}\n"
-                ));
-            } else {
-                let error_str = format!("{error}").bright_yellow().underline();
-                result.push_str(&format!("{trimmed_line}\n{spaces}^\n{spaces}{error_str}\n"));
-            }
+            let error_str = format!("{error}").bright_yellow().underline();
+            result.push_str(&format!("{trimmed_line}\n{spaces}^\n{spaces}{error_str}\n"));
         }
     }
     result

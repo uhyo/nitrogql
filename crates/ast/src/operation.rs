@@ -73,7 +73,7 @@ impl OperationDefinition<'_> {
             },
             Some(ref name) => NamePos {
                 pos: *name.position(),
-                name: Some(&name.name),
+                name: Some(name.name),
             },
         }
     }

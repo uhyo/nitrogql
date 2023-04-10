@@ -24,7 +24,7 @@ impl DefinitionMap<'_> {
     /// Returns a TypeDefinition for the root type of given OperationType.
     pub fn root_type(&self, op: OperationType) -> Option<&TypeDefinition> {
         let op_type_name = match self.schema {
-            Some(ref schema) => schema
+            Some(schema) => schema
                 .definitions
                 .iter()
                 .find(|(o, _)| *o == op)

@@ -78,7 +78,7 @@ fn check_schema(d: &SchemaDefinition, definitions: &DefinitionMap, result: &mut 
     );
 }
 
-fn check_directive<'a>(
+fn check_directive(
     d: &DirectiveDefinition,
     definitions: &DefinitionMap,
     result: &mut Vec<CheckError>,
@@ -143,7 +143,7 @@ fn check_object(
         }
         match inout_kind_of_type(
             &definitions.type_system,
-            &f.r#type.unwrapped_type().name.name,
+            f.r#type.unwrapped_type().name.name,
         )
         .map(|k| k.is_output_type())
         {
@@ -222,7 +222,7 @@ fn check_interface(
         }
         if inout_kind_of_type(
             &definitions.type_system,
-            &f.r#type.unwrapped_type().name.name,
+            f.r#type.unwrapped_type().name.name,
         )
         .map_or(false, |k| !k.is_output_type())
         {
@@ -394,7 +394,7 @@ fn check_input_object(
 
         let type_is_not_input_type = inout_kind_of_type(
             &definitions.type_system,
-            &f.r#type.unwrapped_type().name.name,
+            f.r#type.unwrapped_type().name.name,
         )
         .map(|k| !k.is_input_type());
         match type_is_not_input_type {
@@ -442,7 +442,7 @@ fn check_arguments_definition(
 
         match inout_kind_of_type(
             &definitions.type_system,
-            &v.r#type.unwrapped_type().name.name,
+            v.r#type.unwrapped_type().name.name,
         ) {
             None => {
                 result.push(

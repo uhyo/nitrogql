@@ -49,7 +49,7 @@ pub fn check_directive_recursion(
                             .get(directive.name.name)
                             .into_iter()
                     })
-                    .map(|ptr| *ptr),
+                    .copied(),
             );
         }
         if next_directives.is_empty() {

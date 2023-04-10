@@ -9,17 +9,9 @@ use crate::{
     },
 };
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Default)]
 pub struct OperationJSPrinterOptions {
     pub base_options: OperationBasePrinterOptions,
-}
-
-impl Default for OperationJSPrinterOptions {
-    fn default() -> Self {
-        Self {
-            base_options: OperationBasePrinterOptions::default(),
-        }
-    }
 }
 
 pub struct OperationJSPrinterVisitor<'a, 'src> {
@@ -50,7 +42,7 @@ impl<'a, 'src> OperationPrinterVisitor for OperationJSPrinterVisitor<'a, 'src> {
             writer.write("export ");
         }
         writer.write("const ");
-        writer.write_for(&context.var_name, &operation.name_pos());
+        writer.write_for(context.var_name, &operation.name_pos());
         writer.write(" = ");
         // To follow the community conventions, generated JSON has only one operation in it
         let this_document = self

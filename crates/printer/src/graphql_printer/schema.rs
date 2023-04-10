@@ -12,7 +12,7 @@ impl<'a, Str: Text<'a>, OriginalNode> GraphQLPrinter for Schema<Str, OriginalNod
         {
             let root_types = self.root_types();
             if let Some(description) = self.description() {
-                print_string(&description, writer);
+                print_string(description, writer);
             }
             writer.write("schema {\n");
             writer.indent();

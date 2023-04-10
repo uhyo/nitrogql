@@ -1,6 +1,6 @@
-use std::{collections::HashMap, path::PathBuf};
+use std::{collections::HashMap, path::PathBuf, str::FromStr};
 
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct Config {
     /// Path(s) to schema definition files.
     pub schema: Vec<String>,
@@ -8,16 +8,6 @@ pub struct Config {
     pub operations: Vec<String>,
     // extensions
     pub generate: GenerateConfig,
-}
-
-impl Default for Config {
-    fn default() -> Self {
-        Self {
-            schema: vec![],
-            operations: vec![],
-            generate: Default::default(),
-        }
-    }
 }
 
 /// Config related to the 'generate' command.
@@ -56,13 +46,16 @@ pub enum GenerateMode {
     StandaloneTS4_0,
 }
 
-impl GenerateMode {
-    pub fn from_str(value: &str) -> Option<Self> {
+pub struct FromStrError;
+
+impl FromStr for GenerateMode {
+    type Err = FromStrError;
+    fn from_str(value: &str) -> Result<Self, Self::Err> {
         match value {
-            "with-loader-ts-5.0" => Some(GenerateMode::WithLoaderTS5_0),
-            "with-loader-ts-4.0" => Some(GenerateMode::WithLoaderTS4_0),
-            "standalone-ts-4.0" => Some(GenerateMode::StandaloneTS4_0),
-            _ => None,
+            "with-loader-ts-5.0" => Ok(GenerateMode::WithLoaderTS5_0),
+            "with-loader-ts-4.0" => Ok(GenerateMode::WithLoaderTS4_0),
+            "standalone-ts-4.0" => Ok(GenerateMode::StandaloneTS4_0),
+            _ => Err(FromStrError),
         }
     }
 }

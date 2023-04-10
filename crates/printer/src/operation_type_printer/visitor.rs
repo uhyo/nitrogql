@@ -122,7 +122,7 @@ impl<'a, 'src> OperationPrinterVisitor for OperationTypePrinterVisitor<'a, 'src>
         let parent_type = NamedType::from(parent_type.clone());
         let type_printer_context = QueryTypePrinterContext {
             options: &self.options,
-            schema: &self.context.schema,
+            schema: self.context.schema,
             operation: self.context.operation,
             fragment_definitions: &self.context.fragment_definitions,
         };
@@ -156,7 +156,7 @@ impl<'a, 'src> OperationPrinterVisitor for OperationTypePrinterVisitor<'a, 'src>
             writer.write("declare ");
         }
         writer.write("const ");
-        writer.write_for(&context.var_name, &operation.name_pos());
+        writer.write_for(context.var_name, &operation.name_pos());
         writer.write_for(": ", &operation.selection_set);
         writer.write("TypedDocumentNode<");
         writer.write(&result_type_name);
@@ -194,7 +194,7 @@ impl<'a, 'src> OperationPrinterVisitor for OperationTypePrinterVisitor<'a, 'src>
             writer.write("export ");
         }
         writer.write("type ");
-        writer.write_for(&fragment.name.name, fragment);
+        writer.write_for(fragment.name.name, fragment);
         writer.write(" = ");
 
         let parent_type = NamedType::from(Node::from(
@@ -204,7 +204,7 @@ impl<'a, 'src> OperationPrinterVisitor for OperationTypePrinterVisitor<'a, 'src>
 
         let type_printer_context = QueryTypePrinterContext {
             options: &self.options,
-            schema: &self.context.schema,
+            schema: self.context.schema,
             operation: self.context.operation,
             fragment_definitions: &self.context.fragment_definitions,
         };

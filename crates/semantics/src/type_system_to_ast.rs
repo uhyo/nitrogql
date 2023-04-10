@@ -165,14 +165,14 @@ fn convert_field<S: Deref<Target = str>, D>(
 fn convert_type<S: Deref<Target = str>, D>(ty: &graphql_type_system::Type<S, D>) -> Type {
     match ty {
         graphql_type_system::Type::Named(named) => Type::Named(NamedType {
-            name: convert_node_to_ident(&named),
+            name: convert_node_to_ident(named),
         }),
         graphql_type_system::Type::List(list) => Type::List(Box::new(ListType {
             position: Pos::default(),
-            r#type: convert_type(&list),
+            r#type: convert_type(list),
         })),
         graphql_type_system::Type::NonNull(non_null) => Type::NonNull(Box::new(NonNullType {
-            r#type: convert_type(&non_null),
+            r#type: convert_type(non_null),
         })),
     }
 }

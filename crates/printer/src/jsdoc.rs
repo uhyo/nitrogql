@@ -2,7 +2,7 @@ use nitrogql_utils::{first_non_space_byte_index, skip_chars};
 use sourcemap_writer::SourceMapWriter;
 
 pub fn print_description(description: &str, writer: &mut impl SourceMapWriter) {
-    let desc = dedent(&description);
+    let desc = dedent(description);
     writer.write("/**\n");
     for line in desc.lines() {
         writer.write(" * ");

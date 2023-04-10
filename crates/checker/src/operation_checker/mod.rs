@@ -73,7 +73,7 @@ pub fn check_operation_document<'src>(
                     }
                 }
 
-                check_operation(&definitions, &fragment_map, op, &mut result);
+                check_operation(definitions, &fragment_map, op, &mut result);
             }
             ExecutableDefinition::FragmentDefinition(def) => {
                 // Find other one with same name
@@ -96,7 +96,7 @@ pub fn check_operation_document<'src>(
                     );
                 }
 
-                check_fragment_definition(&definitions, def, &mut result);
+                check_fragment_definition(definitions, def, &mut result);
             }
         }
     }
@@ -207,7 +207,6 @@ fn check_fragment_definition<'src, S: Text<'src>>(
                 (*target.original_node_ref(), CheckErrorMessage::DefinitionPos { name: (*target.name()).to_string() })
             ])
         );
-        return;
     }
 
 }
@@ -227,7 +226,7 @@ fn check_variables_definition<'src, S: Text<'src>>(
         } else {
             seen_variables.push(v.name.name);
         }
-        let type_kind = inout_kind_of_type(definitions, &v.r#type.unwrapped_type().name.name);
+        let type_kind = inout_kind_of_type(definitions, v.r#type.unwrapped_type().name.name);
         match type_kind {
             None => {
                 result.push(
@@ -298,6 +297,7 @@ fn check_selection_set<'src, S: Text<'src>>(
     }
 }
 
+#[allow(clippy::too_many_arguments)]
 fn check_selection_field<'src, S: Text<'src>, F: Borrow<Field<S, Pos>>>(
     definitions: &Schema<S, Pos>,
     fragment_map: &FragmentMap<'_, 'src>,
@@ -311,8 +311,8 @@ fn check_selection_field<'src, S: Text<'src>, F: Borrow<Field<S, Pos>>>(
 ) {
     let selection_name = field_selection.name.name;
     let target_field = root_fields.iter().find_map(|field| {
-        let f = <F as Borrow<Field<_, _>>>::borrow(&field);
-        (f.name == selection_name).then(|| f)
+        let f = <F as Borrow<Field<_, _>>>::borrow(field);
+        (f.name == selection_name).then_some(f)
     });
     let Some(target_field) = target_field else {
         result.push(
@@ -353,7 +353,6 @@ fn check_selection_field<'src, S: Text<'src>, F: Borrow<Field<S, Pos>>>(
         // No selection set
         if direct_fields_of_output_type(target_field_type).is_some() {
             result.push(CheckErrorMessage::MustSpecifySelectionSet { name: field_selection.name.to_string() }.with_pos(field_selection.name.position));
-            return;
         }
     }
 
@@ -376,7 +375,7 @@ fn check_fragment_spread<'src, S: Text<'src>>(
         );
         return;
     }
-    let seen_fragments: Vec<&str> = seen_fragments.iter().map(|s| *s).chain(vec![fragment_spread.fragment_name.name]).collect();
+    let seen_fragments: Vec<&str> = seen_fragments.iter().copied().chain(vec![fragment_spread.fragment_name.name]).collect();
     let seen_fragments = &seen_fragments;
     let Some(target) = fragment_map.get(fragment_spread.fragment_name.name) else {
         result.push(
@@ -438,6 +437,7 @@ fn check_inline_fragment<'src, S: Text<'src>>(
     }
 }
 
+#[allow(clippy::too_many_arguments)]
 fn check_fragment_spread_core<'src, S: Text<'src>>(
     definitions: &Schema<S, Pos>,
     fragment_map: &FragmentMap<'_, 'src>,
@@ -478,7 +478,7 @@ fn check_fragment_spread_core<'src, S: Text<'src>>(
         (TypeDefinition::Object(ref obj_definition), TypeDefinition::Interface(ref intf_definition)) |
         (TypeDefinition::Interface(ref intf_definition), TypeDefinition::Object(ref obj_definition)) => {
             let intf_name = intf_definition.name.inner_ref();
-            let obj_implements_intf = obj_definition.interfaces.iter().find(|im| im.inner_ref() == &*intf_name);
+            let obj_implements_intf = obj_definition.interfaces.iter().find(|im| im.inner_ref() == intf_name);
             if obj_implements_intf.is_none() {
                 result.push(
                     CheckErrorMessage::FragmentConditionNeverMatches { condition: intf_definition.name.to_string(), scope: 
@@ -501,7 +501,7 @@ fn check_fragment_spread_core<'src, S: Text<'src>>(
         (TypeDefinition::Object(ref obj_definition), TypeDefinition::Union(ref cond_union_definition)) |
         (TypeDefinition::Union(ref cond_union_definition), TypeDefinition::Object(ref obj_definition)) => {
             let obj_name = obj_definition.name.inner_ref();
-            let obj_in_union = cond_union_definition.possible_types.iter().find(|mem| mem.inner_ref() == &*obj_name);
+            let obj_in_union = cond_union_definition.possible_types.iter().find(|mem| mem.inner_ref() == obj_name);
             if obj_in_union.is_none() {
                 result.push(
                     CheckErrorMessage::FragmentConditionNeverMatches { condition: cond_union_definition.name.to_string(), scope: 
@@ -562,7 +562,7 @@ fn check_fragment_spread_core<'src, S: Text<'src>>(
         (TypeDefinition::Union(ref union_definition), TypeDefinition::Interface(ref interface_definition)) => {
             let intf_name = interface_definition.name.inner_ref();
             let some_member_implements_interface = union_definition.possible_types.iter().any(|mem| {
-                let mem_def = definitions.get_type(&mem).and_then(|ty| ty.as_object());
+                let mem_def = definitions.get_type(mem).and_then(|ty| ty.as_object());
                 match mem_def {
                     Some(mem_def) => {
                         mem_def.interfaces.iter().any(|imp| {

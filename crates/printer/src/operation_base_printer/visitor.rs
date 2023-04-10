@@ -3,9 +3,9 @@ use sourcemap_writer::SourceMapWriter;
 
 pub trait OperationPrinterVisitor {
     /// Prints header of a document.
-    fn print_header(&self, writer: &mut impl SourceMapWriter) -> ();
+    fn print_header(&self, writer: &mut impl SourceMapWriter);
     /// Prints trailer of a document.
-    fn print_trailer(&self, writer: &mut impl SourceMapWriter) -> ();
+    fn print_trailer(&self, writer: &mut impl SourceMapWriter);
     /// Prints one operation definition.
     fn print_operation_definition(
         &self,

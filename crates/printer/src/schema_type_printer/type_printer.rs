@@ -155,13 +155,13 @@ impl TypePrinter for ScalarTypeDefinition<'_> {
         // Special casing for reexport
         if self.name.name == scalar_type_str {
             writer.write_for("export type { ", &self.scalar_keyword);
-            writer.write_for(&scalar_type_str, &self.name);
+            writer.write_for(scalar_type_str, &self.name);
             writer.write(" };\n");
         } else {
             writer.write_for("export type ", &self.scalar_keyword);
             writer.write_for(self.name.name, &self.name);
             writer.write(" = ");
-            writer.write(&scalar_type_str);
+            writer.write(scalar_type_str);
             writer.write(";\n");
         }
         Ok(())
@@ -290,7 +290,7 @@ impl TypePrinter for InputObjectTypeDefinition<'_> {
                     let ts_type = get_ts_type_of_type(&field.r#type, |name| {
                         TSType::TypeVariable((&name.name).into())
                     })
-                    .to_readonly();
+                    .into_readonly();
                     ObjectField {
                         key: (&field.name).into(),
                         r#type: ts_type,

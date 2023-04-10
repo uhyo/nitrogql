@@ -80,7 +80,7 @@ pub fn resolve_extensions(
         .into_original_and_extensions()?
         .into_iter()
         .map(merge_schema_definition)
-        .map(|def| TypeSystemDefinition::SchemaDefinition(def));
+        .map(TypeSystemDefinition::SchemaDefinition);
     let scalar_definitions = scalar_list
         .into_original_and_extensions()?
         .into_iter()

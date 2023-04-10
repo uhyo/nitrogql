@@ -65,7 +65,7 @@ impl From<ExtensionError> for PositionedError {
 }
 
 impl<OriginalType: HasPos, ExtensionType: HasPos> ExtensionList<'_, OriginalType, ExtensionType> {
-    pub fn new<'a>(name_of_elem: &'a str) -> ExtensionList<'a, OriginalType, ExtensionType> {
+    pub fn new(name_of_elem: &str) -> ExtensionList<OriginalType, ExtensionType> {
         ExtensionList {
             name_of_elem,
             items: HashMap::new(),
@@ -79,7 +79,7 @@ impl<OriginalType: HasPos, ExtensionType: HasPos> ExtensionList<'_, OriginalType
             return Err(ExtensionError {
                 message: ExtensionErrorMessage::DuplicateOriginal {
                     name_of_elem: self.name_of_elem.to_owned(),
-                    name: name.unwrap_or_else(|| String::new()),
+                    name: name.unwrap_or_default(),
                     first: *first.position(),
                     second: *original.position(),
                 },

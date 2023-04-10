@@ -101,7 +101,7 @@ macro_rules! parts {
             $($ident:ident)?
         ),*
     ) => {{
-        use crate::parts_mod;
+        use $crate::parts_mod;
         let mut pairs = $pair.into_inner().into_iter().peekable();
         (
             $(

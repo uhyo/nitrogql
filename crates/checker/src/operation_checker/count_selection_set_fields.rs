@@ -33,8 +33,8 @@ fn selection_set_has_more_than_one_fields_impl(
                     }
                     Some(f) => {
                         let seen_fragments: Vec<_> = seen_fragments
-                            .into_iter()
-                            .map(|s| *s)
+                            .iter()
+                            .copied()
                             .chain(vec![fragment_spread.fragment_name.name])
                             .collect();
                         count += selection_set_has_more_than_one_fields_impl(

@@ -62,8 +62,7 @@ pub fn check_valid_implementation(
                     imp_field.arguments
                         .iter()
                         .flat_map(|imp_args| imp_args.input_values.iter())
-                        .find(|imp_arg| imp_arg.name.name == arg.name.name)
-                        .is_none()
+                        .all(|imp_arg| imp_arg.name.name != arg.name.name)
                 }) {
                 if field_arg.r#type.is_nonnull() {
                     result.push(CheckErrorMessage::ArgumentTypeNonNullAgainstInterface { interface_name: interface.name.to_string() }.with_pos(field_arg.name.position));

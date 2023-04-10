@@ -95,10 +95,10 @@ pub fn build_string_value(pair: Pair<Rule>) -> StringValue {
             let pair_str = pair.as_str();
             let (_, end) = pair_str.split_at(3);
             let (mid, _) = end.split_at(end.len() - 3);
-            return StringValue {
+            StringValue {
                 position,
                 value: mid.into(),
-            };
+            }
         }
         Rule::NormalStringValue => {
             let characters = pair.into_inner();

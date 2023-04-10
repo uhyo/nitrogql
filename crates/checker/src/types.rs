@@ -57,10 +57,10 @@ pub fn is_subtype<'src, S: Text<'src>>(
         }
         Type::List(target_inner) => {
             if let Type::List(other_inner) = other {
-                return is_subtype(definitions, target_inner.as_inner(), other_inner.as_inner());
+                is_subtype(definitions, target_inner.as_inner(), other_inner.as_inner())
             } else {
-                return Some(false);
-            };
+                Some(false)
+            }
         }
         Type::Named(target_name) => {
             let other_name = if let Type::Named(other_name) = other {
@@ -71,17 +71,17 @@ pub fn is_subtype<'src, S: Text<'src>>(
             } else {
                 None
             };
-            let Some(target_def) = definitions.get_type(&target_name) else {
+            let Some(target_def) = definitions.get_type(target_name) else {
                 return None;
             };
-            let other_def = other_name.and_then(|other_name| definitions.get_type(&other_name));
+            let other_def = other_name.and_then(|other_name| definitions.get_type(other_name));
             match **target_def {
                 TypeDefinition::Scalar(_)
                 | TypeDefinition::Enum(_)
                 | TypeDefinition::Union(_)
                 | TypeDefinition::InputObject(_) => {
                     // These types cannot be a union member, so it can only be subtype of itself
-                    return Some(false);
+                    Some(false)
                 }
                 TypeDefinition::Interface(ref target_def) => {
                     // Interface type is considered a subtype of another when it explicitly implements the other
@@ -91,16 +91,14 @@ pub fn is_subtype<'src, S: Text<'src>>(
                             .iter()
                             .any(|imp| imp == &***other_name)
                         {
-                            return Some(true);
+                            Some(true)
+                        } else if other_def.is_some() {
+                            Some(false)
                         } else {
-                            if other_def.is_some() {
-                                return Some(false);
-                            } else {
-                                return None;
-                            }
+                            None
                         }
                     } else {
-                        return Some(false);
+                        Some(false)
                     }
                 }
                 TypeDefinition::Object(ref target_def) => {
@@ -125,9 +123,9 @@ pub fn is_subtype<'src, S: Text<'src>>(
                         }
                     }
                     if other_def.is_some() {
-                        return Some(false);
+                        Some(false)
                     } else {
-                        return None;
+                        None
                     }
                 }
             }

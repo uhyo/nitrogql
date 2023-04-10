@@ -99,7 +99,7 @@ fn run_cli_impl(
         return Err(CliError::NoCommandSpecified.into());
     }
     let cwd = get_cwd()?;
-    let config_file = load_config(&cwd, args.config_file.as_ref().map(|p| p.as_path()))?;
+    let config_file = load_config(&cwd, args.config_file.as_deref())?;
     let (root_dir, mut config) = if let Some((config_path, config_file)) = config_file {
         info!("Loaded config file from {}", config_path.display());
         (
@@ -133,17 +133,17 @@ fn run_cli_impl(
         .into_iter()
         .map(|(path, buf)| -> Result<_, CommandError> {
             let file_idx = file_store.add_file(path, buf, FileKind::Schema);
-            let (ref path, ref buf, _) = file_store.get_file(file_idx).unwrap();
+            let (ref path, buf, _) = file_store.get_file(file_idx).unwrap();
             // Treat JSON file as introspection result schema.
             let is_introspection = path.extension().map(|ext| ext == "json").unwrap_or(false);
             if is_introspection {
                 info!("parsing(introspection) {}", path.to_string_lossy());
-                let doc = schema_from_introspection_json(&buf)?;
+                let doc = schema_from_introspection_json(buf)?;
                 Ok(LoadedSchema::Introspection(doc))
             } else {
                 info!("parsing(schema) {} {}", path.to_string_lossy(), file_idx);
                 set_current_file_of_pos(file_idx);
-                let doc = parse_type_system_document(&buf)?;
+                let doc = parse_type_system_document(buf)?;
                 Ok(LoadedSchema::GraphQL(doc))
             }
         })
@@ -164,7 +164,7 @@ fn run_cli_impl(
                 let (_, buf, _) = file_store.get_file(file_idx).unwrap();
                 set_current_file_of_pos(file_idx);
 
-                let doc = parse_operation_document(&buf)?;
+                let doc = parse_operation_document(buf)?;
                 Ok((path, doc, file_idx))
             },
         )
@@ -242,8 +242,7 @@ fn load_glob_files<'a, S: AsRef<str> + 'a>(
     }
 
     trace!("load_glob_files {} {}", root.display(), path_strs.join(" "));
-    let schema_matchers =
-        build_matchers(&path_strs, &root).map_err(|err| CliError::GlobError(err))?;
+    let schema_matchers = build_matchers(&path_strs, root).map_err(CliError::GlobError)?;
     let (paths, _) = match_paths(schema_matchers, None, None);
     trace!("match_paths {paths:?}");
     let results = paths

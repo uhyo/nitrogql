@@ -228,14 +228,14 @@ impl TSType {
 
     /// Converts self into a readonly type.
     /// All properties are turned into readonly properties and also array types are made readonly array types.
-    pub fn to_readonly(self) -> TSType {
+    pub fn into_readonly(self) -> TSType {
         match self {
             TSType::TypeFunc(func, args) => TSType::TypeFunc(
-                func.to_owned(),
-                args.into_iter().map(|ty| ty.to_readonly()).collect(),
+                func,
+                args.into_iter().map(|ty| ty.into_readonly()).collect(),
             ),
             TSType::Array(ty) | TSType::ReadonlyArray(ty) => {
-                TSType::ReadonlyArray(Box::new((*ty).to_readonly()))
+                TSType::ReadonlyArray(Box::new((*ty).into_readonly()))
             }
             TSType::Object(fields) => TSType::Object(
                 fields
@@ -247,10 +247,10 @@ impl TSType {
                     .collect(),
             ),
             TSType::Intersection(types) => {
-                TSType::Intersection(types.into_iter().map(|t| t.to_readonly()).collect())
+                TSType::Intersection(types.into_iter().map(|t| t.into_readonly()).collect())
             }
             TSType::Union(types) => {
-                TSType::Union(types.into_iter().map(|t| t.to_readonly()).collect())
+                TSType::Union(types.into_iter().map(|t| t.into_readonly()).collect())
             }
             t @ TSType::TypeVariable(_)
             | t @ TSType::StringLiteral(_)
@@ -267,7 +267,7 @@ impl TSType {
     }
 
     /// Creates an object type from given set of non-readonly, non-optional properties.
-    pub fn object<'a, S: Into<ObjectKey>>(
+    pub fn object<S: Into<ObjectKey>>(
         properties: impl IntoIterator<Item = (S, TSType, Option<StringValue>)>,
     ) -> TSType {
         TSType::Object(

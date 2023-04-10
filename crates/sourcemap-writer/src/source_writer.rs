@@ -31,7 +31,7 @@ pub struct SourceWriter {
 }
 
 impl SourceWriter {
-    pub fn new<'a>() -> Self {
+    pub fn new() -> Self {
         SourceWriter {
             buffer: String::new(),
             mapping: MappingWriter::new(),
@@ -63,6 +63,12 @@ impl SourceWriter {
             self.current_column += self.indent;
             self.has_indent_flag = false;
         }
+    }
+}
+
+impl Default for SourceWriter {
+    fn default() -> Self {
+        Self::new()
     }
 }
 
@@ -153,7 +159,7 @@ pub fn print_source_map_json(
     buffer: &mut String,
 ) -> io::Result<()> {
     let sources = source_files
-        .into_iter()
+        .iter()
         .map(|path| relative_path(file, path))
         .collect::<Vec<_>>();
     let sources = sources

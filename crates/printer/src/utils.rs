@@ -6,18 +6,11 @@ pub fn interface_implementers<'a, 'src, S: Text<'src>, OriginalNode>(
     interface_name: &'a str,
 ) -> impl Iterator<Item = &'a ObjectDefinition<S, OriginalNode>> + 'a {
     schema.iter_types().filter_map(move |(_, def)| {
-        if let Some(obj_def) = def.as_object() {
-            if obj_def
+        def.as_object().filter(|obj_def| {
+            obj_def
                 .interfaces
                 .iter()
                 .any(|imp| imp.inner_ref().borrow() == interface_name)
-            {
-                Some(obj_def)
-            } else {
-                None
-            }
-        } else {
-            None
-        }
+        })
     })
 }

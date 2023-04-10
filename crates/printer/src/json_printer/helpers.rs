@@ -33,7 +33,7 @@ pub struct Variable<'a> {
 }
 
 impl Variable<'_> {
-    pub fn new<'a>(name: Name<'a>) -> Variable<'a> {
+    pub fn new(name: Name) -> Variable {
         Variable { name }
     }
 }
@@ -59,7 +59,7 @@ impl<'a, 'b> Argument<'a, 'b> {
 impl JsonPrintable for Argument<'_, '_> {
     fn print_json(&self, writer: &mut JSONObjectWriter) {
         writer.value("kind", "Argument");
-        writer.value("name", JSONValue(&Name(&self.name)));
+        writer.value("name", JSONValue(&Name(self.name)));
         let mut value_writer = writer.object("value");
         self.value.print_json(&mut value_writer);
     }
