@@ -20,6 +20,10 @@ export default function GettingStarted() {
         from The Guild. This enables you to share the configuration file with
         other GraphQL tools, if you use any.
       </Hint>
+      <Hint>
+        💡 Relative paths are always resolved from the location of the
+        configuration file.
+      </Hint>
 
       <h3 id="schema-operations">schema and operations</h3>
       <p>
@@ -46,7 +50,7 @@ documents:
         still use nitrogql to check your schema.
       </p>
       <Hint>
-        💡 Other configuration options are placed under
+        💡 Other configuration options are placed under{" "}
         <code>extensions.nitrogql</code> in the configuration file.
       </Hint>
 
