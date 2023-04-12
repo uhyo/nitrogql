@@ -1,8 +1,6 @@
-import Image from "next/image";
 import Link from "next/link";
 import { Hint } from "@/app/(utils)/Hint";
 import { Highlight } from "@/app/(utils)/Highlight";
-import { Figures } from "@/app/(utils)/Figures";
 
 export default function GettingStarted() {
   return (
@@ -23,7 +21,7 @@ export default function GettingStarted() {
         other GraphQL tools, if you use any.
       </Hint>
 
-      <h3>schema and operations</h3>
+      <h3 id="schema-operations">schema and operations</h3>
       <p>
         To specify the location of your schema and operations, use{" "}
         <code>schema</code> and <code>documents</code> top-level fields. These
@@ -52,7 +50,7 @@ documents:
         <code>extensions.nitrogql</code> in the configuration file.
       </Hint>
 
-      <h3>generate.schemaOutput</h3>
+      <h3 id="generate.schemaOutput">generate.schemaOutput</h3>
       <p>
         Where to output the generated schema types. Generated file is depended
         by generated operations types.
@@ -75,7 +73,7 @@ extensions:
       schemaOutput: "./app/generated/schema.ts"`}
       </Highlight>
 
-      <h3>generate.mode</h3>
+      <h3 id="generate.mode">generate.mode</h3>
       <p>
         Configures how types for operations are generated. Possible values are:
       </p>
@@ -148,7 +146,43 @@ extensions:
         runtime code so you do not need to configure your bundler.
       </p>
 
-      <h3>generate.scalarTypes</h3>
+      <h3 id="generate.schemaModuleSpecifier">
+        generate.schemaModuleSpecifier
+      </h3>
+      <p>
+        Configures what module specifier to use when importing the generated
+        schema types from operations types. When set, all generated operations
+        types will import the schema types from this exact module name. If not
+        set, the generated operations types will import the schema types using
+        relative paths.
+      </p>
+      <p>
+        This option is especially useful in monorepo projects where you need to
+        import the schema types from a different package.
+      </p>
+      <p>Example:</p>
+      <Highlight language="yaml">
+        {`schema: "./schema/*.graphql"
+documents:
+  - "./app/**/*.graphql"
+  - "./common/**/*.graphql"
+extensions:
+  nitrogql:
+    generate:
+      schemaOutput: "./app/generated/schema.ts"
+      schemaModuleSpecifier: "@/generated/schema"`}
+      </Highlight>
+      <p>
+        With the above configuration, the generated operations types will import
+        the schema types from <code>@/generated/schema</code> so they will look
+        like:
+      </p>
+      <Highlight language="typescript">
+        {`import * as Schema from "@/generated/schema";
+// ...`}
+      </Highlight>
+
+      <h3 id="generate.scalarTypes">generate.scalarTypes</h3>
       <p>
         Configures how GraphQL scalar types are mapped to TypeScript types. The
         default mapping is:
