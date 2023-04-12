@@ -82,6 +82,12 @@ fn generate_config(extensions: &Mapping) -> GenerateConfig {
     {
         config.mode = mode;
     }
+    if let Some(schema_module_specifier) = generate
+        .get("schemaModuleSpecifier")
+        .and_then(|v| v.as_str())
+    {
+        config.schema_module_specifier = Some(schema_module_specifier.to_owned());
+    }
     if let Some(default_export_for_operation) = generate
         .get("defaultExportForOperation")
         .and_then(|v| v.as_bool())

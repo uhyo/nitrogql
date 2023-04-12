@@ -17,6 +17,9 @@ pub struct GenerateConfig {
     pub mode: GenerateMode,
     /// Output file path for schema.
     pub schema_output: Option<PathBuf>,
+    /// Module specifier for import schema types from operations.
+    /// Defaults to relative paths.
+    pub schema_module_specifier: Option<String>,
     /// Mapping from GraphQL scalar types to TypeScript types.
     pub scalar_types: HashMap<String, String>,
     /// Whether operation is exported as a default export.
@@ -29,6 +32,7 @@ impl Default for GenerateConfig {
         GenerateConfig {
             mode: Default::default(),
             schema_output: None,
+            schema_module_specifier: None,
             scalar_types: Default::default(),
             default_export_for_operation: true,
         }

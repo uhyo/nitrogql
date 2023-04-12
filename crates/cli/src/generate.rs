@@ -118,10 +118,16 @@ pub fn run_generate(mut context: CliContext) -> Result<CliContext> {
                     printer_options.print_values = true;
                 }
                 // Todo custom schema_root_types
-                printer_options.schema_source =
-                    path_to_ts(relative_path(&decl_file_path, &schema_output))
-                        .to_string_lossy()
-                        .to_string();
+                printer_options.schema_source = config
+                    .config
+                    .generate
+                    .schema_module_specifier
+                    .clone()
+                    .unwrap_or_else(|| {
+                        path_to_ts(relative_path(&decl_file_path, &schema_output))
+                            .to_string_lossy()
+                            .to_string()
+                    });
                 print_types_for_operation_document(printer_options, &schema, doc, &mut writer);
 
                 let buffers = writer.into_buffers();
