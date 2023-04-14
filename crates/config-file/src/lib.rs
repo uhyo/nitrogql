@@ -3,6 +3,8 @@ mod error;
 #[cfg(feature = "fs")]
 mod load_config;
 mod parse_config;
+#[cfg(test)]
+mod tests;
 
 pub use config::{Config, GenerateConfig, GenerateMode};
 #[cfg(feature = "fs")]

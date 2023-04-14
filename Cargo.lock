@@ -435,6 +435,7 @@ dependencies = [
 name = "nitrogql-config-file"
 version = "0.1.0"
 dependencies = [
+ "insta",
  "serde_yaml",
  "thiserror",
 ]

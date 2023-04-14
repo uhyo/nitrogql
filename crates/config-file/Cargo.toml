@@ -12,3 +12,6 @@ fs = []
 [dependencies]
 serde_yaml = "0.9.19"
 thiserror = "1.0.40"
+
+[dev-dependencies]
+insta = "1.29.0"
