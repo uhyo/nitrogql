@@ -1,5 +1,9 @@
 use std::{collections::HashMap, path::PathBuf, str::FromStr};
 
+use serde::Deserialize;
+
+use crate::parsing_utils::{default_true, deserialize_fromstr};
+
 #[derive(Debug, Default)]
 pub struct Config {
     /// Path(s) to schema definition files.
@@ -11,19 +15,24 @@ pub struct Config {
 }
 
 /// Config related to the 'generate' command.
-#[derive(Debug)]
+#[derive(Debug, Deserialize)]
 pub struct GenerateConfig {
     /// Mode of generation.
+    #[serde(deserialize_with = "deserialize_fromstr", default)]
     pub mode: GenerateMode,
     /// Output file path for schema.
+    #[serde(rename = "schemaOutput")]
     pub schema_output: Option<PathBuf>,
     /// Module specifier for import schema types from operations.
     /// Defaults to relative paths.
+    #[serde(rename = "schemaModuleSpecifier")]
     pub schema_module_specifier: Option<String>,
     /// Mapping from GraphQL scalar types to TypeScript types.
+    #[serde(rename = "scalarTypes", default)]
     pub scalar_types: HashMap<String, String>,
     /// Whether operation is exported as a default export.
     /// Effective only when a document contains only one operation.
+    #[serde(rename = "defaultExportForOperation", default = "default_true")]
     pub default_export_for_operation: bool,
 }
 

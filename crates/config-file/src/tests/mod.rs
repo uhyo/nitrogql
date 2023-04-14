@@ -38,7 +38,7 @@ documents: src/**/*.graphql
 extensions:
     nitrogql:
         generate:
-            mode: with-loader-ts5.0
+            mode: with-loader-ts-5.0
             schemaOutput: src/generated/schema.d.ts
             schemaModuleSpecifier: "@generated/schema"
 "#;
@@ -97,7 +97,7 @@ fn json_is_yaml() {
     "extensions": {
         "nitrogql": {
             "generate": {
-                "mode": "with-loader-ts5.0",
+                "mode": "with-loader-ts-5.0",
                 "schemaOutput": "src/generated/schema.d.ts",
                 "schemaModuleSpecifier": "@generated/schema"
             }
@@ -127,14 +127,14 @@ documents: src/**/*.graphql
 extensions:
     nitrogql:
         generate:
-            mode: with-loader-ts5.0
+            mode: standalone-ts-4.0
             schemaOutput: src/generated/schema.d.ts
             schemaModuleSpecifier: "@generated/schema"
             extra: "field"
 "#;
 
     let config = parse_config(config).unwrap();
-    assert_eq!(config.generate.mode, GenerateMode::WithLoaderTS5_0);
+    assert_eq!(config.generate.mode, GenerateMode::StandaloneTS4_0);
     assert_eq!(
         config.generate.schema_output,
         Some(PathBuf::from("src/generated/schema.d.ts"))

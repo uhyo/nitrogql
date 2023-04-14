@@ -3,6 +3,7 @@ mod error;
 #[cfg(feature = "fs")]
 mod load_config;
 mod parse_config;
+mod parsing_utils;
 #[cfg(test)]
 mod tests;
 
