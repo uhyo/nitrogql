@@ -15,7 +15,7 @@ use nitrogql_printer::{
     print_types_for_operation_document, OperationTypePrinterOptions, SchemaTypePrinter,
     SchemaTypePrinterOptions,
 };
-use nitrogql_utils::relative_path;
+use nitrogql_utils::{clone_into, relative_path};
 use sourcemap_writer::{print_source_map_json, SourceWriter, SourceWriterBuffers};
 
 use super::{check::run_check, context::CliContext};
@@ -117,7 +117,6 @@ pub fn run_generate(mut context: CliContext) -> Result<CliContext> {
                 if config.config.generate.mode == GenerateMode::StandaloneTS4_0 {
                     printer_options.print_values = true;
                 }
-                // Todo custom schema_root_types
                 printer_options.schema_source = config
                     .config
                     .generate
@@ -128,6 +127,31 @@ pub fn run_generate(mut context: CliContext) -> Result<CliContext> {
                             .to_string_lossy()
                             .to_string()
                     });
+                clone_into(
+                    &config.config.generate.name.operation_result_type_suffix,
+                    &mut printer_options.operation_result_type_suffix,
+                );
+                clone_into(
+                    &config.config.generate.name.variables_type_suffix,
+                    &mut printer_options.variables_type_suffix,
+                );
+                clone_into(
+                    &config.config.generate.name.capitalize_operation_names,
+                    &mut printer_options.base_options.capitalize_operation_names,
+                );
+                clone_into(
+                    &config.config.generate.name.query_variable_suffix,
+                    &mut printer_options.base_options.query_variable_suffix,
+                );
+                clone_into(
+                    &config.config.generate.name.mutation_variable_suffix,
+                    &mut printer_options.base_options.mutation_variable_suffix,
+                );
+                clone_into(
+                    &config.config.generate.name.subscription_variable_suffix,
+                    &mut printer_options.base_options.subscription_variable_suffix,
+                );
+
                 print_types_for_operation_document(printer_options, &schema, doc, &mut writer);
 
                 let buffers = writer.into_buffers();

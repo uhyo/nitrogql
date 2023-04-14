@@ -33,7 +33,7 @@ pub struct OperationTypePrinterOptions {
     /// Source of TypedDocumentNode to import from.
     pub typed_document_node_source: String,
     /// Suffix for type of variables for an operation.
-    pub variable_type_suffix: String,
+    pub variables_type_suffix: String,
     /// Suffix for type of operation result.
     pub operation_result_type_suffix: String,
 }
@@ -46,7 +46,7 @@ impl Default for OperationTypePrinterOptions {
             schema_root_namespace: "Schema".to_owned(),
             schema_source: "".to_owned(),
             typed_document_node_source: "@graphql-typed-document-node/core".to_owned(),
-            variable_type_suffix: "Variables".to_owned(),
+            variables_type_suffix: "Variables".to_owned(),
             operation_result_type_suffix: "Result".to_owned(),
         }
     }
@@ -142,7 +142,7 @@ impl<'a, 'src> OperationPrinterVisitor for OperationTypePrinterVisitor<'a, 'src>
                 get_type_for_variable_definitions(&type_printer_context, v)
             });
         let input_variable_name =
-            format!("{}{}", context.var_name, self.options.variable_type_suffix);
+            format!("{}{}", context.var_name, self.options.variables_type_suffix);
 
         writer.write("type ");
         writer.write_for(&input_variable_name, &operation.name_pos());

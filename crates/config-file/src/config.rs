@@ -34,6 +34,9 @@ pub struct GenerateConfig {
     /// Effective only when a document contains only one operation.
     #[serde(rename = "defaultExportForOperation", default = "default_true")]
     pub default_export_for_operation: bool,
+    /// Config related to generated names.
+    #[serde(default)]
+    pub name: GenerateNameConfig,
 }
 
 impl Default for GenerateConfig {
@@ -44,6 +47,7 @@ impl Default for GenerateConfig {
             schema_module_specifier: None,
             scalar_types: Default::default(),
             default_export_for_operation: true,
+            name: Default::default(),
         }
     }
 }
@@ -72,4 +76,27 @@ impl FromStr for GenerateMode {
             _ => Err(FromStrError),
         }
     }
+}
+
+/// Config related to names of generated variables and types.
+#[derive(Debug, Default, Deserialize)]
+pub struct GenerateNameConfig {
+    /// Suffix for type of operation result.
+    #[serde(rename = "operationResultTypeSuffix")]
+    pub operation_result_type_suffix: Option<String>,
+    /// Suffix for type of variables for an operation.
+    #[serde(rename = "variablesTypeSuffix")]
+    pub variables_type_suffix: Option<String>,
+    /// Whether operation name should be capitalized.
+    #[serde(rename = "capitalizeOperationNames")]
+    pub capitalize_operation_names: Option<bool>,
+    /// Suffix for variable of query.
+    #[serde(rename = "queryVariableSuffix")]
+    pub query_variable_suffix: Option<String>,
+    /// Suffix for variable of mutation.
+    #[serde(rename = "mutationVariableSuffix")]
+    pub mutation_variable_suffix: Option<String>,
+    /// Suffix for variable of subscription.
+    #[serde(rename = "subscriptionVariableSuffix")]
+    pub subscription_variable_suffix: Option<String>,
 }

@@ -80,10 +80,17 @@ pub fn operation_variable_name(
     options: &OperationBasePrinterOptions,
     operation: &OperationDefinition,
 ) -> String {
-    let capitalized_name = operation
-        .name
-        .map(|name| capitalize(name.name))
-        .unwrap_or(String::new());
+    let capitalized_name = if options.capitalize_operation_names {
+        operation
+            .name
+            .map(|name| capitalize(name.name))
+            .unwrap_or(String::new())
+    } else {
+        operation
+            .name
+            .map(|name| name.name.to_owned())
+            .unwrap_or(String::new())
+    };
     format!(
         "{}{}",
         capitalized_name,

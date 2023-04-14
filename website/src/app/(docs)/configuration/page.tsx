@@ -216,6 +216,117 @@ extensions:
       scalarTypes:
         Date: Date`}
       </Highlight>
+
+      <h3 id="generate.name">generate.name</h3>
+      <p>Set of configurations about names of generated variables and types.</p>
+      <p>Default settings are:</p>
+      <Highlight language="yaml">
+        {`extensions:
+  nitrogql:
+    generate:
+      name:
+        # default values
+        capitalizeOperationNames: true
+        operationResultTypeSuffix: Result
+        variablesTypeSuffix: Variables
+        queryVariableSuffix: Query
+        mutationVariableSuffix: Mutation
+        subscriptionVariableSuffix: Subscription`}
+      </Highlight>
+
+      <h4 id="generate.name.capitalizeOperationNames">
+        generate.name.capitalizeOperationNames
+      </h4>
+      <p>
+        If <code>true</code>, capitalize the first letter of operation names.
+        Default is <code>true</code>.
+      </p>
+      <p>
+        This option can control how generated operation document can be imported
+        via auto import feature of your editor. For example, if you have{" "}
+        <code>query getUser</code> in your schema, it can be auto-imported by
+        typing <code>GetUserQuery</code> in your code.
+      </p>
+      <Highlight language="typescript">
+        {`import GetUserQuery from "./app/graphql/queries/getUser.graphql";`}
+      </Highlight>
+      <p>
+        If you set <code>capitalizeOperationNames: false</code>, the generated
+        operation document can be imported by typing <code>getUserQuery</code>{" "}
+        instead.
+      </p>
+
+      <h4 id="generate.name.operationResultTypeSuffix">
+        generate.name.operationResultTypeSuffix
+      </h4>
+      <p>
+        Suffix of the operation result type. Default is{" "}
+        <code>&quot;Result&quot;</code>.
+      </p>
+      <p>
+        For example, if you have <code>query getUser</code> in your schema, the
+        generated operation result type will be <code>GetUserResult</code>.
+      </p>
+      <Hint>
+        💡 You can also use <code>ResultOf</code> from the{" "}
+        <code>@graphql-typed-document-node/core</code> package to extract the
+        result type from your operation document.
+      </Hint>
+
+      <h4 id="generate.name.variablesTypeSuffix">
+        generate.name.variablesTypeSuffix
+      </h4>
+      <p>
+        Suffix of the operation variables type. Default is{" "}
+        <code>&quot;Variables&quot;</code>.
+      </p>
+      <p>
+        For example, if you have <code>query getUser</code> in your schema, the
+        generated operation variables type will be <code>GetUserVariables</code>
+        .
+      </p>
+      <Hint>
+        💡 You can also use <code>VariablesOf</code> from the{" "}
+        <code>@graphql-typed-document-node/core</code> package to extract the
+        variables type from your operation document.
+      </Hint>
+
+      <h4 id="generate.name.queryVariableSuffix">
+        generate.name.queryVariableSuffix
+      </h4>
+      <p>
+        Suffix of the query variable. Default is <code>&quot;Query&quot;</code>.
+      </p>
+      <p>
+        For example, if you have <code>query getUser</code> in your schema, the
+        generated query variable will be <code>GetUserQuery</code>.
+      </p>
+
+      <h4 id="generate.name.mutationVariableSuffix">
+        generate.name.mutationVariableSuffix
+      </h4>
+      <p>
+        Suffix of the mutation variable. Default is{" "}
+        <code>&quot;Mutation&quot;</code>.
+      </p>
+      <p>
+        For example, if you have <code>mutation createUser</code> in your
+        schema, the generated mutation variable will be{" "}
+        <code>CreateUserMutation</code>.
+      </p>
+
+      <h4 id="generate.name.subscriptionVariableSuffix">
+        generate.name.subscriptionVariableSuffix
+      </h4>
+      <p>
+        Suffix of the subscription variable. Default is{" "}
+        <code>&quot;Subscription&quot;</code>.
+      </p>
+      <p>
+        For example, if you have <code>subscription onUserCreated</code> in your
+        schema, the generated subscription variable will be{" "}
+        <code>OnUserCreatedSubscription</code>.
+      </p>
     </main>
   );
 }
