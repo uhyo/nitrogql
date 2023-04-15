@@ -67,10 +67,23 @@ export default function GettingStarted() {
           <code>human</code> (default): prints human-readable output to stderr.
         </li>
         <li>
-          <code>json</code>: prints JSON to stdout.
+          <code>rdjson</code>: prints &apos;check&apos; results in{" "}
+          <a
+            href="https://github.com/reviewdog/reviewdog/tree/master/proto/rdf"
+            target="_blank"
+          >
+            rdjson
+          </a>{" "}
+          format to stdout. This is useful for integrating with reviewdog. Makes
+          sense only when the <code>check</code> command is run.
+        </li>
+        <li>
+          <code>json</code>: prints nitrogql specific JSON output to stdout.
         </li>
       </ul>
-      <p>The signature of the JSON output is:</p>
+      <p>
+        The signature of the <code>json</code> output is:
+      </p>
       <Highlight language="typescript">{`interface CLIOutput {
   /**
    * Exists when a command fails.
