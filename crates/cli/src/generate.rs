@@ -9,6 +9,7 @@ use nitrogql_semantics::{ast_to_type_system, type_system_to_ast};
 use crate::context::LoadedSchema;
 use crate::error::CliError;
 use crate::file_store::{FileKind, FileStore};
+use crate::output::{CliOutput, OutputFileKind};
 use nitrogql_config_file::GenerateMode;
 use nitrogql_error::Result;
 use nitrogql_printer::{
@@ -28,12 +29,13 @@ pub fn run_generate(mut context: CliContext) -> Result<CliContext> {
     match context {
         CliContext::SchemaUnresolved { .. } => panic!("Something went wrong"),
         CliContext::SchemaResolved {
-            ref schema,
-            ref operations,
-            ref config,
+            schema,
+            operations,
+            config,
             file_store,
-            ..
+            output,
         } => {
+            output.command_run("generate".to_owned());
             let Some(ref schema_output) = config.config.generate.schema_output else {
                 return Err(CliError::OptionRequired { option: String::from("schemaOutput"), command: String::from("generate") }.into())
             };
@@ -68,20 +70,27 @@ pub fn run_generate(mut context: CliContext) -> Result<CliContext> {
                 let mut printer = SchemaTypePrinter::new(options, &mut writer);
 
                 match schema {
-                    LoadedSchema::GraphQL(schema) => {
+                    LoadedSchema::GraphQL(ref schema) => {
                         printer.print_document(schema)?;
                     }
-                    LoadedSchema::Introspection(schema) => {
+                    LoadedSchema::Introspection(ref schema) => {
                         let ast = type_system_to_ast(schema);
                         printer.print_document(&ast)?;
                     }
                 }
 
                 let buffers = writer.into_buffers();
-                write_file_and_sourcemap(&file_map, &schema_output, buffers)?;
+                write_file_and_sourcemap(
+                    &file_map,
+                    output,
+                    OutputFileKind::SchemaTypeDefinition,
+                    &schema_output,
+                    buffers,
+                )?;
             }
 
-            let schema = schema.map_into(|doc| Cow::Owned(ast_to_type_system(doc)), Cow::Borrowed);
+            let mapped_schema =
+                schema.map_into(|doc| Cow::Owned(ast_to_type_system(doc)), Cow::Borrowed);
 
             for (path, doc, file_index) in operations.iter() {
                 debug!("Processing {}", path.to_string_lossy());
@@ -152,14 +161,31 @@ pub fn run_generate(mut context: CliContext) -> Result<CliContext> {
                     &mut printer_options.base_options.subscription_variable_suffix,
                 );
 
-                print_types_for_operation_document(printer_options, &schema, doc, &mut writer);
+                print_types_for_operation_document(
+                    printer_options,
+                    &mapped_schema,
+                    doc,
+                    &mut writer,
+                );
 
                 let buffers = writer.into_buffers();
 
-                write_file_and_sourcemap(&file_map, &decl_file_path, buffers)?;
+                write_file_and_sourcemap(
+                    &file_map,
+                    output,
+                    OutputFileKind::OperationTypeDefinition,
+                    &decl_file_path,
+                    buffers,
+                )?;
             }
             eprintln!("'generate' finished");
-            Ok(context)
+            Ok(CliContext::SchemaResolved {
+                config,
+                schema,
+                operations,
+                file_store,
+                output,
+            })
         }
     }
 }
@@ -173,6 +199,8 @@ struct FileMap<'src> {
 
 fn write_file_and_sourcemap(
     file_map: &FileMap,
+    cli_output: &mut CliOutput,
+    output_file_kind: OutputFileKind,
     output_file_path: &Path,
     buffers: SourceWriterBuffers,
 ) -> Result<()> {
@@ -222,6 +250,8 @@ fn write_file_and_sourcemap(
         source_map_file_path.file_name().unwrap().to_string_lossy()
     )?;
 
+    cli_output.generated_file(output_file_kind, output_file_path.to_owned());
+
     let mut source_map = String::new();
     print_source_map_json(
         output_file_path,
@@ -232,7 +262,12 @@ fn write_file_and_sourcemap(
     )?;
 
     debug!("Writing {}", source_map_file_path.to_string_lossy());
-    fs::write(source_map_file_path, &source_map)?;
+    fs::write(&source_map_file_path, &source_map)?;
+    cli_output.generated_file(
+        output_file_kind.to_source_map_kind(),
+        source_map_file_path.to_owned(),
+    );
+
     Ok(())
 }
 
