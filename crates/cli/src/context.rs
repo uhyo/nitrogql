@@ -1,4 +1,4 @@
-use std::{borrow::Cow, path::PathBuf};
+use std::{borrow::Cow, path::PathBuf, str::FromStr};
 
 use graphql_type_system::Schema;
 use nitrogql_ast::{
@@ -7,8 +7,9 @@ use nitrogql_ast::{
     type_system::{TypeSystemDocument, TypeSystemOrExtensionDocument},
 };
 use nitrogql_config_file::Config;
+use thiserror::Error;
 
-use crate::file_store::FileStore;
+use crate::{file_store::FileStore, output::CliOutput};
 
 #[allow(clippy::large_enum_variant)]
 pub enum LoadedSchema<'src, Gql> {
@@ -35,12 +36,14 @@ pub enum CliContext<'src> {
         schema: LoadedSchema<'src, TypeSystemOrExtensionDocument<'src>>,
         operations: Vec<(PathBuf, OperationDocument<'src>, usize)>,
         file_store: &'src FileStore,
+        output: &'src mut CliOutput,
     },
     SchemaResolved {
         config: CliConfig,
         schema: LoadedSchema<'src, TypeSystemDocument<'src>>,
         operations: Vec<(PathBuf, OperationDocument<'src>, usize)>,
         file_store: &'src FileStore,
+        output: &'src mut CliOutput,
     },
 }
 
@@ -49,4 +52,26 @@ pub struct CliConfig {
     /// Root directory for other paths.
     pub root_dir: PathBuf,
     pub config: Config,
+}
+
+#[derive(Copy, Clone, Debug)]
+pub enum OutputFormat {
+    Human,
+    Json,
+}
+
+#[derive(Debug, Error)]
+#[error("invalid output format {0}")]
+pub struct FromStrError(String);
+
+impl FromStr for OutputFormat {
+    type Err = FromStrError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "human" => Ok(OutputFormat::Human),
+            "json" => Ok(OutputFormat::Json),
+            s => Err(FromStrError(s.to_owned())),
+        }
+    }
 }

@@ -7,7 +7,7 @@ use nitrogql_checker::{check_operation_document, check_type_system_document};
 use nitrogql_error::{print_positioned_error, Result};
 use nitrogql_semantics::{ast_to_type_system, resolve_extensions};
 
-use crate::context::LoadedSchema;
+use crate::{context::LoadedSchema, output::InputFileKind};
 
 use super::{error::CliError, CliContext};
 
@@ -19,23 +19,19 @@ pub fn run_check(context: CliContext) -> Result<CliContext> {
             operations,
             file_store,
             config,
+            output,
         } => {
+            output.command_run("check".to_owned());
             let loaded_schema = {
                 match schema {
                     LoadedSchema::GraphQL(mut document) => {
                         document.extend(generate_builtins());
                         let resolved = resolve_extensions(document)?;
                         let errors = check_type_system_document(&resolved);
+
                         if !errors.is_empty() {
-                            eprintln!(
-                                "Found {} error{} in schema:\n",
-                                errors.len(),
-                                if errors.len() > 1 { "s" } else { "" }
-                            );
-                            for err in errors {
-                                eprintln!("{}", print_positioned_error(&err.into(), file_store));
-                            }
-                            eprintln!();
+                            output
+                                .extend(errors.into_iter().map(|err| (InputFileKind::Schema, err)));
                             return Err(CliError::CommandNotSuccessful("check".into()).into());
                         }
                         LoadedSchema::GraphQL(resolved)
@@ -57,15 +53,11 @@ pub fn run_check(context: CliContext) -> Result<CliContext> {
                 info!("Check succeeded");
                 eprintln!("'check' finished");
             } else {
-                eprintln!(
-                    "Found {} error{} in operations:\n",
-                    errors.len(),
-                    if errors.len() > 1 { "s" } else { "" }
+                output.extend(
+                    errors
+                        .into_iter()
+                        .map(|(err, _)| (InputFileKind::Operation, err)),
                 );
-                for (err, _) in errors {
-                    eprintln!("{}", print_positioned_error(&err.into(), file_store));
-                }
-                eprintln!();
                 return Err(CliError::CommandNotSuccessful("check".into()).into());
             }
 
@@ -74,6 +66,7 @@ pub fn run_check(context: CliContext) -> Result<CliContext> {
                 operations,
                 file_store,
                 config,
+                output,
             })
         }
         _ => Err(CliError::InvalidCommand(

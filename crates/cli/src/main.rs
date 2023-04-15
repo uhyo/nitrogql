@@ -6,17 +6,19 @@ use std::{
 
 use anyhow::Result;
 use clap::Parser;
+use context::OutputFormat;
 use file_store::FileStore;
 use globmatch::wrappers::{build_matchers, match_paths};
 use graphql_type_system::Schema;
 use itertools::Itertools;
-use log::{error, info, trace};
+use log::{info, trace};
 use nitrogql_ast::{
     operation::OperationDocument, set_current_file_of_pos,
     type_system::TypeSystemOrExtensionDocument,
 };
 use nitrogql_introspection::schema_from_introspection_json;
 use nitrogql_utils::{get_cwd, normalize_path};
+use output::CliOutput;
 
 use crate::{
     context::{CliContext, LoadedSchema},
@@ -35,6 +37,7 @@ mod context;
 mod error;
 mod file_store;
 mod generate;
+mod output;
 
 #[derive(Parser, Debug)]
 struct Args {
@@ -50,6 +53,9 @@ struct Args {
     #[arg(long)]
     /// Path to save schema type definition file.
     schema_output: Option<PathBuf>,
+    /// Output format of CLI.
+    #[arg(long, default_value = "human")]
+    output_format: OutputFormat,
     commands: Vec<String>,
 }
 
@@ -65,9 +71,12 @@ pub fn run_cli(args: impl IntoIterator<Item = String>) -> usize {
         .env()
         .init()
         .unwrap();
+    let mut output = CliOutput::new();
     let file_store = Box::leak(Box::new(FileStore::new()));
-    let res = run_cli_impl(args, file_store);
-    match res {
+    let args = Args::parse_from(args);
+    let output_format = args.output_format;
+    let res = run_cli_impl(args, file_store, &mut output);
+    let code = match res {
         Ok(()) => 0,
         Err(err) => {
             let message = err
@@ -81,20 +90,28 @@ pub fn run_cli(args: impl IntoIterator<Item = String>) -> usize {
                     }
                 })
                 .join("\n");
-            match err.command {
-                Some(command) => error!("Error in command '{}':\n{message}", command),
-                None => error!("Error:\n{message}"),
-            }
+            output.command_error(err.command, message);
             1
         }
+    };
+
+    match output_format {
+        OutputFormat::Human => {
+            output.human_output(file_store);
+        }
+        OutputFormat::Json => {
+            output.json_output(file_store);
+        }
     }
+
+    code
 }
 
 fn run_cli_impl(
-    args: impl IntoIterator<Item = String>,
+    args: Args,
     file_store: &mut FileStore,
+    output: &mut CliOutput,
 ) -> Result<(), CommandError> {
-    let args = Args::parse_from(args);
     if args.commands.is_empty() {
         return Err(CliError::NoCommandSpecified.into());
     }
@@ -178,6 +195,7 @@ fn run_cli_impl(
         schema: merged_schema_doc,
         operations: operation_docs,
         file_store,
+        output,
     };
 
     for command in args.commands.iter() {
