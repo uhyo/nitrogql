@@ -1,8 +1,5 @@
-import Image from "next/image";
-import Link from "next/link";
 import { Hint } from "@/app/(utils)/Hint";
 import { Highlight } from "@/app/(utils)/Highlight";
-import { Figures } from "@/app/(utils)/Figures";
 
 export default function GettingStarted() {
   return (
@@ -60,6 +57,70 @@ export default function GettingStarted() {
         Specify the path to the operation file(s). This overrides the operation
         path specified in the configuration file.
       </p>
+
+      <h4>
+        <code>--output-format</code>
+      </h4>
+      <p>Specify the output format of the CLI. Possible values are:</p>
+      <ul>
+        <li>
+          <code>human</code> (default): prints human-readable output to stderr.
+        </li>
+        <li>
+          <code>json</code>: prints JSON to stdout.
+        </li>
+      </ul>
+      <p>The signature of the JSON output is:</p>
+      <Highlight language="typescript">{`interface CLIOutput {
+  /**
+   * Exists when a command fails.
+   */
+  error?: {
+    /**
+     * Command name that had error.
+     */
+    command: string | null;
+    /**
+     * Error message.
+     */
+    message: string;
+  }
+  /**
+   * Exists when the 'check' command is run.
+   */
+  check?: {
+    /**
+     * List of errors.
+     * Empty when the check is successful.
+     */
+    errors: {
+      fileType: "schema" | "operation";
+      file?: {
+        path: string;
+        // line and column are 0-indexed
+        line: number;
+        column: number;
+      }
+      message: string;
+    }[]
+  }
+  /**
+   * Exists when the 'generate' command is run.
+   */
+  generate?: {
+    /**
+     * List of output files.
+     */
+    files: { 
+      fileType:
+        | "schemaTypeDefinition"
+        | "schemaTypeDefinitionSourceMap"
+        | "operationTypeDefinition"
+        | "operationTypeDefinitionSourceMap";
+      path: string;
+    }[];
+  }
+}`}</Highlight>
 
       <h3>Notes on file system access</h3>
       <p>
