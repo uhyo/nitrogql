@@ -103,9 +103,7 @@ impl CliOutput {
             let mut obj = writer.object("check");
             let mut errors = obj.array("errors");
             for (kind, error) in self.check_errors {
-                let file = error
-                    .position
-                    .builtin
+                let file = (!error.position.builtin)
                     .then(|| file_store.get_file(error.position.file))
                     .flatten();
                 let mut obj = errors.object();
@@ -129,6 +127,40 @@ impl CliOutput {
                 let mut obj = files.object();
                 obj.value("fileType", &kind.to_string());
                 obj.value("path", &path.to_string_lossy());
+            }
+        }
+        writer.end();
+        println!("{buffer}");
+    }
+
+    /// Output in rdjson format.
+    pub fn rdjson_output(self, file_store: &FileStore) {
+        let mut buffer = String::new();
+        let mut writer = JSONObjectWriter::new(&mut buffer);
+        {
+            let mut source = writer.object("source");
+            source.value("name", "nitrogql");
+            source.value("url", "https://nitrogql.vercel.app/");
+        }
+        writer.value("severity", "ERROR");
+        {
+            let mut diagnostics = writer.array("diagnostics");
+            for (_, error) in self.check_errors {
+                let mut obj = diagnostics.object();
+                obj.value("message", &error.message.to_string());
+                {
+                    let mut location = obj.object("location");
+                    let file = (!error.position.builtin)
+                        .then(|| file_store.get_file(error.position.file))
+                        .flatten();
+                    if let Some((path, _, _)) = file {
+                        location.value("path", &path.to_string_lossy());
+                        let mut range = location.object("range");
+                        let mut start = range.object("start");
+                        start.value("line", error.position.line as u32 + 1);
+                        start.value("column", error.position.column as u32 + 1);
+                    }
+                }
             }
         }
         writer.end();

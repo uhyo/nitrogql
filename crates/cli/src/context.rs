@@ -58,6 +58,7 @@ pub struct CliConfig {
 pub enum OutputFormat {
     Human,
     Json,
+    Rdjson,
 }
 
 #[derive(Debug, Error)]
@@ -71,6 +72,7 @@ impl FromStr for OutputFormat {
         match s {
             "human" => Ok(OutputFormat::Human),
             "json" => Ok(OutputFormat::Json),
+            "rdjson" => Ok(OutputFormat::Rdjson),
             s => Err(FromStrError(s.to_owned())),
         }
     }

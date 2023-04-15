@@ -102,6 +102,9 @@ pub fn run_cli(args: impl IntoIterator<Item = String>) -> usize {
         OutputFormat::Json => {
             output.json_output(file_store);
         }
+        OutputFormat::Rdjson => {
+            output.rdjson_output(file_store);
+        }
     }
 
     code
