@@ -228,18 +228,19 @@ fn convert_deprecation<'src>(directives: &[Directive<'src>]) -> Option<Cow<'src,
     directives
         .iter()
         .find(|dir| dir.name.name == "deprecated")
-        .and_then(|dir| {
+        .map(|dir| {
             dir.arguments
-                .as_ref()
-                .and_then(|args| {
-                    args.arguments
-                        .iter()
-                        .find(|(name, _)| name.name == "reason")
-                })
+                .iter()
+                .flat_map(|args| args.arguments.iter())
+                .find(|(name, _)| name.name == "reason")
                 .map(|(_, value)| value)
                 .and_then(|value| match value {
-                    Value::StringValue(string) => Some(string.value.clone().into()),
+                    Value::StringValue(string) => Some(Cow::Owned(string.value.clone())),
                     _ => None,
                 })
+                .unwrap_or(
+                    // Default value is from the spec
+                    Cow::Borrowed("No longer supported"),
+                )
         })
 }

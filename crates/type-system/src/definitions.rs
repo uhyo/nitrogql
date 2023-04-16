@@ -54,6 +54,14 @@ impl<'a, Str: Text<'a>, OriginalNode> TypeDefinition<Str, OriginalNode> {
             _ => None,
         }
     }
+
+    /// Returns Some if self is an input object type.
+    pub fn as_input_object(&self) -> Option<&InputObjectDefinition<Str, OriginalNode>> {
+        match self {
+            TypeDefinition::InputObject(ref def) => Some(def),
+            _ => None,
+        }
+    }
 }
 
 impl<Str, OriginalNode> OriginalNodeRef<OriginalNode> for TypeDefinition<Str, OriginalNode> {

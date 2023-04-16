@@ -134,6 +134,35 @@ fn scalar_printing() {
     assert_snapshot!(printed);
 }
 
+#[test]
+fn deprecated_items() {
+    let doc = parse_type_system_document(
+        r#"
+        type User {
+            id: ID!
+            name: String!
+            "Age of user."
+            age: Int @deprecated
+            gender: String @deprecated(reason: "Deprecated for political reasons")
+        }
+
+        input UserSearchQuery {
+            age: Int @deprecated
+            name: String
+        }
+
+        type Query {
+            me: User!
+        }
+        "#,
+    )
+    .unwrap();
+    let doc = resolve_extensions(doc).unwrap();
+    let options = SchemaTypePrinterOptions::default();
+    let printed = print_document(&doc, options).unwrap();
+    assert_snapshot!(printed);
+}
+
 fn print_document(
     document: &TypeSystemDocument,
     options: SchemaTypePrinterOptions,
