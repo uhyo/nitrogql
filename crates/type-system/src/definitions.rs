@@ -148,6 +148,8 @@ pub struct Field<Str, OriginalNode> {
     pub r#type: Type<Str, OriginalNode>,
     /// Arguments of this field. Empty list means no args.
     pub arguments: Vec<InputValue<Str, OriginalNode>>,
+    /// If deprecated, contains the reason.
+    pub deprecation: Option<Str>,
 }
 
 impl<Str, OriginalNode> OriginalNodeRef<OriginalNode> for Field<Str, OriginalNode> {
@@ -167,6 +169,8 @@ pub struct InputValue<Str, OriginalNode> {
     pub r#type: Type<Str, OriginalNode>,
     /// Default value of input value.
     pub default_value: Option<Node<Str, OriginalNode>>,
+    /// If deprecated, contains the reason.
+    pub deprecation: Option<Str>,
 }
 
 impl<Str, OriginalNode> OriginalNodeRef<OriginalNode> for InputValue<Str, OriginalNode> {
@@ -182,6 +186,8 @@ pub struct EnumMember<Str, OriginalNode> {
     pub name: Node<Str, OriginalNode>,
     /// Description of enum member.
     pub description: Option<Node<Str, OriginalNode>>,
+    /// If deprecated, contains the reason.
+    pub deprecation: Option<Str>,
 }
 
 /// Represents a directive definition.

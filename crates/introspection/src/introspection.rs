@@ -59,10 +59,8 @@ struct IntrospectionField<'src> {
     #[serde(rename = "type")]
     ty: IntrospectionType<'src>,
     #[serde(rename = "isDeprecated")]
-    #[allow(dead_code)]
-    is_deprecated: bool,
+    is_deprecated: Option<bool>,
     #[serde(rename = "deprecationReason")]
-    #[allow(dead_code)]
     deprecation_reason: Option<Cow<'src, str>>,
 }
 
@@ -74,6 +72,10 @@ struct IntrospectionInputValue<'src> {
     ty: IntrospectionType<'src>,
     #[serde(rename = "defaultValue")]
     default_value: Option<Cow<'src, str>>,
+    #[serde(rename = "isDeprecated")]
+    is_deprecated: Option<bool>,
+    #[serde(rename = "deprecationReason")]
+    deprecation_reason: Option<Cow<'src, str>>,
 }
 
 #[derive(Deserialize)]
@@ -81,10 +83,8 @@ struct IntrospectionEnumValue<'src> {
     name: Cow<'src, str>,
     description: Option<Cow<'src, str>>,
     #[serde(rename = "isDeprecated")]
-    #[allow(dead_code)]
-    is_deprecated: bool,
+    is_deprecated: Option<bool>,
     #[serde(rename = "deprecationReason")]
-    #[allow(dead_code)]
     deprecation_reason: Option<Cow<'src, str>>,
 }
 
@@ -262,8 +262,16 @@ fn as_type_definition<'src, D: Default>(
             .map(|ev| {
                 let name = node_clone(&ev.name);
                 let description = ev.description.as_ref().map(node_clone);
+                let deprecation = ev
+                    .is_deprecated
+                    .unwrap_or(false)
+                    .then(|| ev.deprecation_reason.as_ref().cloned().unwrap_or_default());
 
-                EnumMember { name, description }
+                EnumMember {
+                    name,
+                    description,
+                    deprecation,
+                }
             })
             .collect();
 
@@ -305,12 +313,20 @@ fn as_field<'src, D: Default>(
         .map(as_input_value)
         .collect::<Result<_, _>>()
         .unwrap_or(vec![]);
+    let deprecation = value.is_deprecated.unwrap_or(false).then(|| {
+        value
+            .deprecation_reason
+            .as_ref()
+            .cloned()
+            .unwrap_or_default()
+    });
 
     Ok(Field {
         name,
         description,
         r#type: ty,
         arguments,
+        deprecation,
     })
 }
 
@@ -321,12 +337,20 @@ fn as_input_value<'src, D: Default>(
     let description = value.description.as_ref().map(node_clone);
     let ty = as_type(&value.ty)?;
     let default_value = value.default_value.as_ref().map(node_clone);
+    let deprecation = value.is_deprecated.unwrap_or(false).then(|| {
+        value
+            .deprecation_reason
+            .as_ref()
+            .cloned()
+            .unwrap_or_default()
+    });
 
     Ok(InputValue {
         name,
         description,
         r#type: ty,
         default_value,
+        deprecation,
     })
 }
 

@@ -7,12 +7,13 @@ use graphql_type_system::{
 };
 use nitrogql_ast::{
     base::{HasPos, Pos},
+    directive::Directive,
     operation::OperationType,
     type_system::{
         ArgumentsDefinition, DirectiveDefinition as AstDirectiveDefinition, FieldDefinition,
         SchemaDefinition, TypeDefinition as AstTypeDefinition, TypeSystemDefinition,
     },
-    value::StringValue,
+    value::{StringValue, Value},
     TypeSystemDocument,
 };
 
@@ -124,6 +125,7 @@ fn convert_type_definition<'src>(
                             .map(|mem| EnumMember {
                                 name: ident_to_node(&mem.name),
                                 description: convert_description(&mem.description),
+                                deprecation: convert_deprecation(&mem.directives),
                             })
                             .collect(),
                     }),
@@ -150,6 +152,7 @@ fn convert_type_definition<'src>(
                                     let value_disp = Box::leak(value_disp);
                                     Node::from(&*value_disp, *value.position())
                                 }),
+                                deprecation: convert_deprecation(&input.directives),
                             })
                             .collect(),
                     }),
@@ -205,6 +208,7 @@ fn convert_arguments<'src>(
                     let value_disp = Box::leak(value_disp);
                     Node::from(&*value_disp, *value.position())
                 }),
+                deprecation: convert_deprecation(&input.directives),
             })
             .collect()
     })
@@ -216,5 +220,26 @@ fn convert_field<'src>(field: &FieldDefinition<'src>) -> Field<Cow<'src, str>, P
         description: convert_description(&field.description),
         r#type: convert_type(&field.r#type),
         arguments: convert_arguments(&field.arguments),
+        deprecation: convert_deprecation(&field.directives),
     }
+}
+
+fn convert_deprecation<'src>(directives: &[Directive<'src>]) -> Option<Cow<'src, str>> {
+    directives
+        .iter()
+        .find(|dir| dir.name.name == "deprecated")
+        .and_then(|dir| {
+            dir.arguments
+                .as_ref()
+                .and_then(|args| {
+                    args.arguments
+                        .iter()
+                        .find(|(name, _)| name.name == "reason")
+                })
+                .map(|(_, value)| value)
+                .and_then(|value| match value {
+                    Value::StringValue(string) => Some(string.value.clone().into()),
+                    _ => None,
+                })
+        })
 }
