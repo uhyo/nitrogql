@@ -2,6 +2,8 @@ mod config;
 mod error;
 #[cfg(feature = "fs")]
 mod load_config;
+#[cfg(feature = "fs")]
+mod node;
 mod parse_config;
 mod parsing_utils;
 #[cfg(test)]
