@@ -1,7 +1,4 @@
-use nitrogql_ast::{
-    base::{HasPos, Ident, Pos},
-    value::StringValue,
-};
+use nitrogql_ast::base::{HasPos, Ident, Pos};
 use sourcemap_writer::SourceMapWriter;
 
 use super::jsdoc::print_description;
@@ -84,7 +81,7 @@ pub struct ObjectField {
     pub r#type: TSType,
     pub readonly: bool,
     pub optional: bool,
-    pub description: Option<StringValue>,
+    pub description: Option<String>,
 }
 
 #[derive(Clone, Debug)]
@@ -158,7 +155,7 @@ impl TSType {
                 writer.indent();
                 for field in properties {
                     if let Some(ref description) = field.description {
-                        print_description(&description.value, writer);
+                        print_description(description, writer);
                     }
                     if field.readonly {
                         writer.write("readonly ");
@@ -268,7 +265,7 @@ impl TSType {
 
     /// Creates an object type from given set of non-readonly, non-optional properties.
     pub fn object<S: Into<ObjectKey>>(
-        properties: impl IntoIterator<Item = (S, TSType, Option<StringValue>)>,
+        properties: impl IntoIterator<Item = (S, TSType, Option<String>)>,
     ) -> TSType {
         TSType::Object(
             properties

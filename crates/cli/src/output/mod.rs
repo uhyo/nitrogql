@@ -39,11 +39,6 @@ impl CliOutput {
         self.command_error = Some((command_name, error));
     }
 
-    /// Add a check error.
-    pub fn check_error(&mut self, kind: InputFileKind, error: CheckError) {
-        self.check_errors.push((kind, error));
-    }
-
     /// Add a generated file.
     pub fn generated_file(&mut self, kind: OutputFileKind, path: PathBuf) {
         self.generated_files.push((kind, path));

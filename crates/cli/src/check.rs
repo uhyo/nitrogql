@@ -4,7 +4,7 @@ use log::{debug, info};
 
 use graphql_builtins::generate_builtins;
 use nitrogql_checker::{check_operation_document, check_type_system_document};
-use nitrogql_error::{print_positioned_error, Result};
+use nitrogql_error::Result;
 use nitrogql_semantics::{ast_to_type_system, resolve_extensions};
 
 use crate::{context::LoadedSchema, output::InputFileKind};

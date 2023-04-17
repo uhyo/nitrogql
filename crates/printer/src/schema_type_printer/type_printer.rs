@@ -1,4 +1,4 @@
-use std::borrow::Borrow;
+use std::{borrow::Borrow, fmt::Display};
 
 use crate::{
     ts_types::{
@@ -72,7 +72,7 @@ fn get_schema_metadata_type(document: &TypeSystemDocument) -> TSType {
             (
                 op.as_str(),
                 TSType::TypeVariable(ty.into()),
-                schema_def.description.clone(),
+                schema_def.description.as_ref().map(|d| d.value.clone()),
             )
         }));
     }
@@ -171,13 +171,14 @@ impl TypePrinter for ScalarTypeDefinition<'_> {
 impl TypePrinter for ObjectTypeDefinition<'_> {
     fn print_type(
         &self,
-        _context: &SchemaTypePrinterContext,
+        context: &SchemaTypePrinterContext,
         writer: &mut impl SourceMapWriter,
     ) -> SchemaTypePrinterResult<()> {
         let type_name_ident = Ident {
             name: "__typename",
             position: Pos::builtin(),
         };
+        let schema_type = context.schema.get_type(self.name.name);
         let obj_type = TSType::object(
             vec![(
                 &type_name_ident,
@@ -186,12 +187,18 @@ impl TypePrinter for ObjectTypeDefinition<'_> {
             )]
             .into_iter()
             .chain(self.fields.iter().map(|field| {
+                let schema_field = schema_type
+                    .and_then(|ty| ty.as_object())
+                    .and_then(|ty| ty.fields.iter().find(|f| f.name == field.name.name));
                 (
                     &field.name,
                     get_ts_type_of_type(&field.r#type, |name| {
                         TSType::TypeVariable((&name.name).into())
                     }),
-                    field.description.clone(),
+                    make_ts_description(
+                        &field.description,
+                        &schema_field.and_then(|f| f.deprecation.as_ref()),
+                    ),
                 )
             })),
         );
@@ -283,10 +290,16 @@ impl TypePrinter for InputObjectTypeDefinition<'_> {
         context: &SchemaTypePrinterContext,
         writer: &mut impl SourceMapWriter,
     ) -> SchemaTypePrinterResult<()> {
+        let schema_type = context.schema.get_type(self.name.name);
         let obj_type = TSType::Object(
             self.fields
                 .iter()
                 .map(|field| {
+                    let schema_field = schema_type
+                        .and_then(|t| t.as_input_object())
+                        .and_then(|t| t.fields.iter().find(|f| f.name == field.name.name))
+                        .expect("Type system error");
+
                     let ts_type = get_ts_type_of_type(&field.r#type, |name| {
                         TSType::TypeVariable((&name.name).into())
                     })
@@ -297,7 +310,10 @@ impl TypePrinter for InputObjectTypeDefinition<'_> {
                         readonly: true,
                         optional: context.options.input_nullable_field_is_optional
                             && !field.r#type.is_nonnull(),
-                        description: field.description.clone(),
+                        description: make_ts_description(
+                            &field.description,
+                            &schema_field.deprecation,
+                        ),
                     }
                 })
                 .collect(),
@@ -316,5 +332,21 @@ impl TypePrinter for InputObjectTypeDefinition<'_> {
 fn print_description(description: &Option<StringValue>, writer: &mut impl SourceMapWriter) {
     if let Some(description) = description {
         jsdoc_print_description(description, writer);
+    }
+}
+
+/// Combines description and deprecation reason into a single string.
+fn make_ts_description(
+    description: &Option<StringValue>,
+    deprecation: &Option<impl Display>,
+) -> Option<String> {
+    match (description, deprecation) {
+        (Some(description), Some(deprecation)) => Some(format!(
+            "{}\n\n@deprecated {}",
+            description.value, deprecation
+        )),
+        (Some(description), None) => Some(description.value.clone()),
+        (None, Some(deprecation)) => format!("@deprecated {}", deprecation).into(),
+        (None, None) => None,
     }
 }

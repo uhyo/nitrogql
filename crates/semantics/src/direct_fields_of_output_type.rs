@@ -11,6 +11,7 @@ fn get_typename_meta_field<'a, S: From<&'a str>, D: Default>() -> Field<S, D> {
         r#type: Type::NonNull(Box::new(NonNullType::from(Type::Named(NamedType::from(
             Node::from("String", D::default()),
         ))))),
+        deprecation: None,
     }
 }
 
