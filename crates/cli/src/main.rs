@@ -1,5 +1,6 @@
 use std::{
     fs,
+    mem::ManuallyDrop,
     path::{Path, PathBuf},
     process,
 };
@@ -303,4 +304,24 @@ fn resolve_loaded_schema<'src>(
             Ok(LoadedSchema::GraphQL(merged))
         }
     }
+}
+
+/// Allocate a string buffer of given size.
+///
+/// # Safety
+/// Caller should guarantee that the contents of returned buffer should be valid UTF-8 strings.
+#[no_mangle]
+pub extern "C" fn alloc_string(len_bytes: usize) -> *mut u8 {
+    let str = String::with_capacity(len_bytes);
+    let mut str = ManuallyDrop::new(str);
+    str.as_mut_ptr()
+}
+
+/// Frees a string buffer returned by `alloc_string`.
+///
+/// # Safety
+/// `free_string` should only be called with a pointer returned by `alloc_string` with the same value of `len_bytes` argument.
+#[no_mangle]
+pub unsafe extern "C" fn free_string(ptr: *mut u8, len_bytes: usize) {
+    let _ = unsafe { String::from_raw_parts(ptr, 0, len_bytes) };
 }
