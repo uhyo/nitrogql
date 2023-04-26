@@ -1,4 +1,5 @@
 import { config } from "./config.js";
+import { NitrogqlConfig } from "./configFormat.js";
 import { setMemory } from "./memory.js";
 
 export {
@@ -11,3 +12,5 @@ export {
    */
   config,
 };
+
+export type { NitrogqlConfig };

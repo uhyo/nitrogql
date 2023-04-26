@@ -1,4 +1,9 @@
-export default {
+// @ts-check
+
+/**
+ * @type {import('@nitrogql/cli').NitrogqlConfig}
+ */
+const config = {
   schema: "./src/schema/pokeapi.json",
   documents: "./src/**/*.graphql",
   extensions: {
@@ -10,3 +15,5 @@ export default {
     },
   },
 };
+
+export default config;
