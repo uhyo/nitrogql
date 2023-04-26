@@ -1,17 +1,22 @@
 {
-  "name": "@nitrogql/cli",
+  "name": "@nitrogql/core",
   "version": "1.0.0-beta.1",
   "description": "GraphQL + TypeScript toolchain",
-  "main": "bin/index.mjs",
   "repository": {
     "type": "git",
     "url": "https://github.com/uhyo/nitrogql.git",
-    "directory": "packages/cli"
+    "directory": "packages/graphql-loader"
   },
-  "bin": {
-    "nitrogql": "bin/index.mjs"
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
   },
   "scripts": {
+    "build": "tsc",
+    "watch": "tsc --watch",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [
@@ -22,7 +27,8 @@
   "volta": {
     "node": "18.15.0"
   },
-  "dependencies": {
-    "@nitrogql/core": "1.0.0-beta.1"
+  "devDependencies": {
+    "@types/node": "^18.16.0",
+    "webpack": "^5.76.2"
   }
 }
