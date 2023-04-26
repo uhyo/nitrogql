@@ -16,22 +16,22 @@ extern "C" {
 }
 
 #[cfg(not(target_os = "wasi"))]
-unsafe fn execute_config_file(config_file_path: *const u8, config_file_path_len: usize) -> u32 {
+unsafe fn execute_config_file(_config_file_path: *const u8, _config_file_path_len: usize) -> u32 {
     panic!("Not implemented")
 }
 
 #[cfg(not(target_os = "wasi"))]
-unsafe fn result_len(handle: u32) -> usize {
+unsafe fn result_len(_handle: u32) -> usize {
     panic!("Not implemented")
 }
 
 #[cfg(not(target_os = "wasi"))]
-unsafe fn write_result_to_buffer(handle: u32, buffer: *mut u8, buffer_len: usize) -> usize {
+unsafe fn write_result_to_buffer(_handle: u32, _buffer: *mut u8, _buffer_len: usize) -> usize {
     panic!("Not implemented")
 }
 
 #[cfg(not(target_os = "wasi"))]
-unsafe fn free_result(handle: u32) {
+unsafe fn free_result(_handle: u32) {
     panic!("Not implemented")
 }
 
