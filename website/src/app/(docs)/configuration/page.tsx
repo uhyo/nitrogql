@@ -9,7 +9,6 @@ export default function GettingStarted() {
       <p>
         nitrogql uses a configuration file to specify the location of your
         schema and operations, and to configure how types are generated. The
-        configuration file is named <code>graphql.config.yaml</code>. The
         configuration file should be placed in the root of your project.
       </p>
       <Hint>
@@ -24,6 +23,56 @@ export default function GettingStarted() {
         💡 Relative paths are always resolved from the location of the
         configuration file.
       </Hint>
+
+      <h3 id="config-file-name">Default config file name</h3>
+      <p>By default, configuration file is searched in the following order:</p>
+      <ol>
+        <li>
+          <code>graphql.config.json</code>
+        </li>
+        <li>
+          <code>graphql.config.yaml</code>
+        </li>
+        <li>
+          <code>graphql.config.yml</code>
+        </li>
+        <li>
+          <code>graphql.config.js</code>
+        </li>
+        <li>
+          <code>graphql.config.mjs</code>
+        </li>
+        <li>
+          <code>graphql.config.cjs</code>
+        </li>
+        <li>
+          <code>.graphqlrc</code>
+        </li>
+        <li>
+          <code>.graphqlrc.json</code>
+        </li>
+        <li>
+          <code>.graphqlrc.yaml</code>
+        </li>
+        <li>
+          <code>.graphqlrc.yml</code>
+        </li>
+        <li>
+          <code>.graphqlrc.js</code>
+        </li>
+        <li>
+          <code>.graphqlrc.mjs</code>
+        </li>
+        <li>
+          <code>.graphqlrc.cjs</code>
+        </li>
+      </ol>
+      <p>
+        When using JavaScript configuration files, a ES Module configuration
+        file should default-export the configuration object. A CommonJS
+        configuration file should assign the configuration object to{" "}
+        <code>module.exports</code>.
+      </p>
 
       <h3 id="schema-operations">schema and operations</h3>
       <p>

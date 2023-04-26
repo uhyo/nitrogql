@@ -2,7 +2,7 @@ query ($offset: Int!, $limit: Int!) {
   species: pokemon_v2_pokemonspecies(
     offset: $offset
     limit: $limit
-    order_by: { id: asc }
+    order_by: [{ id: asc }]
   ) {
     id
     names: pokemon_v2_pokemonspeciesnames(

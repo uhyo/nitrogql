@@ -46,7 +46,9 @@ export default function NitrogqlRollupPlugin(options) {
       }
 
       if (lastLoadedConfigPath !== configFilePath && configFilePath) {
-        const configFileSource = await readFile(configFilePath, "utf-8");
+        const configFileSource = configFileIsJS(configFilePath)
+          ? JSON.stringify(await import(configFilePath))
+          : await readFile(configFilePath, "utf-8");
         const configFilePathString = alloc.allocString(configFileSource);
         instance.exports.load_config(
           configFilePathString.ptr,
@@ -73,4 +75,8 @@ export default function NitrogqlRollupPlugin(options) {
       }
     },
   };
+}
+
+function configFileIsJS(configFile) {
+  return /\.[cm]?js$/.test(configFile);
 }

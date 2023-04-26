@@ -3,6 +3,7 @@ import { argv, env, cwd, stdout } from "node:process";
 import { readFile } from "node:fs/promises";
 import { shim } from "./shim.mjs";
 import { resolve } from "node:path";
+import * as core from "@nitrogql/core";
 
 const CWD = cwd();
 const NITROGQL_FS_SCOPE = env.NITROGQL_FS_SCOPE
@@ -31,6 +32,7 @@ const importObject = {
     ...wasi.wasiImport,
     ...shim(wasi.wasiImport, memoryRef, NITROGQL_FS_SCOPE),
   },
+  "nitrogql_helper/config": core.config,
 };
 
 const wasm = await WebAssembly.compile(
@@ -38,5 +40,6 @@ const wasm = await WebAssembly.compile(
 );
 const instance = await WebAssembly.instantiate(wasm, importObject);
 memoryRef.memory = instance.exports.memory;
+core.setMemory(instance.exports.memory);
 
 wasi.start(instance);

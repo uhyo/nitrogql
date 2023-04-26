@@ -1,0 +1,1 @@
+This package is used internally by [the nitrogql toolchain](https://nitrogql.vercel.app/).
