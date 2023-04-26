@@ -30,7 +30,9 @@ export default function graphQLLoader(source) {
     }
 
     if (lastLoadedConfigPath !== configFilePath && configFilePath) {
-      const configFileSource = await readFile(configFilePath, "utf-8");
+      const configFileSource = configFileIsJS(configFilePath)
+        ? JSON.stringify(await import(configFilePath))
+        : await readFile(configFilePath, "utf-8");
       const configFilePathString = alloc.allocString(configFileSource);
       instance.exports.load_config(
         configFilePathString.ptr,
@@ -59,4 +61,8 @@ export default function graphQLLoader(source) {
     (res) => callback(null, res),
     (err) => callback(err)
   );
+}
+
+function configFileIsJS(configFile) {
+  return /\.[cm]?js$/.test(configFile);
 }
