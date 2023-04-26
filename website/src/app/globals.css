@@ -99,7 +99,7 @@ h4 {
   margin-block: 0.5em;
 }
 
-ul {
+ul, ol {
   margin-block: 1em;
   list-style-position: inside;
 }
