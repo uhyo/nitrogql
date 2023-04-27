@@ -73,11 +73,12 @@ export function shim(original, memoryRef, rootDir) {
       }
       cookie = Number(cookie);
       const allEntries =
-        fdData.entries ??
-        fs.readdirSync(fdData.path, {
-          withFileTypes: true,
-          encoding: "buffer",
-        });
+        fdData.entries && cookie !== 0
+          ? fdData.entries
+          : fs.readdirSync(fdData.path, {
+              withFileTypes: true,
+              encoding: "buffer",
+            });
       fdData.entries = allEntries;
       const entries = allEntries.slice(cookie);
       const bufView = new DataView(memoryRef.memory.buffer, buf, buf_len);
