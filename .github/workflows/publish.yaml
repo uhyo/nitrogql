@@ -24,6 +24,7 @@ jobs:
       - uses: actions/setup-node@v3
         with:
           node-version: 18
+      - run: npm install
       - name: install wasm-opt
         run: npm install wasm-opt -g
       - name: install wasm-snip
