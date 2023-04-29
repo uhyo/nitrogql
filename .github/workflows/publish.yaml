@@ -32,6 +32,13 @@ jobs:
         run: ./build/build-rust.sh
       - name: build node
         run: ./build/build-node.sh
+      - name: publish to npm (core)
+        uses: JS-DevTools/npm-publish@v1
+        with:
+          token: ${{ secrets.NPM_TOKEN }}
+          package: "./packages/core/package.json"
+          access: public
+          greater-version-only: true
       - name: publish to npm (cli)
         uses: JS-DevTools/npm-publish@v1
         with:
