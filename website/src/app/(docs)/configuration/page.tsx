@@ -67,12 +67,27 @@ export default function GettingStarted() {
           <code>.graphqlrc.cjs</code>
         </li>
       </ol>
+
+      <h4>Using JavaScript configuration files</h4>
       <p>
         When using JavaScript configuration files, a ES Module configuration
         file should default-export the configuration object. A CommonJS
         configuration file should assign the configuration object to{" "}
         <code>module.exports</code>.
       </p>
+      <p>Also you can use JSDoc for type checking and auto-completion.</p>
+      <Highlight language="js">
+        {`/**
+  * @type {import("@nitrogql/cli").NitrogqlConfig}
+  */
+const config = {
+  schema: "./schema/*.graphql",
+  documents: ["./app/**/*.graphql", "./common/**/*.graphql"],
+  // ...
+};
+
+export default config;`}
+      </Highlight>
 
       <h3 id="schema-operations">schema and operations</h3>
       <p>
