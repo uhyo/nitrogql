@@ -221,8 +221,6 @@ checksum = "d2fabcfbdc87f4758337ca535fb41a6d701b65693ce38287d856d1674551ec9b"
 [[package]]
 name = "globmatch"
 version = "0.2.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e0e82f77d5e36ce0c3941a39a6d8fff8ed9553ae13586b31640d6885f7376097"
 dependencies = [
  "globset",
  "log",

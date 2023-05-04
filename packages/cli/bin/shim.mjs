@@ -84,12 +84,10 @@ export function shim(original, memoryRef, rootDir) {
       const bufView = new DataView(memoryRef.memory.buffer, buf, buf_len);
       let offset = 0;
       for (let index = 0; offset < buf_len && index < entries.length; index++) {
-        if (offset + 24 >= buf_len) {
+        if (offset + 24 > buf_len) {
           // no space to write dirent
-          offset = buf_len;
           break;
         }
-        // write dirents until it buffer is full
         const entry = entries[index];
         // d_next
         bufView.setBigUint64(offset, BigInt(cookie + index + 1), true);

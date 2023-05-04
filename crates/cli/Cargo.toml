@@ -26,7 +26,7 @@ pest = "2.5.5"
 pest_derive = "2.5.5"
 thiserror = "1.0.38"
 clap = { version ="4.1.7", default-features = false, features = ["std", "help", "usage", "error-context", "suggestions", "derive"] }
-globmatch = "0.2.3"
+globmatch = "0.2.4"
 log = "0.4.17"
 colored = "2.0.0"
 once_cell = "1.17.1"
