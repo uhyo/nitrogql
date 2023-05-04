@@ -1,6 +1,6 @@
 {
   "name": "@nitrogql/cli",
-  "version": "1.0.0-beta.2",
+  "version": "1.0.0-beta.3",
   "description": "GraphQL + TypeScript toolchain",
   "main": "bin/index.mjs",
   "types": "./types.d.ts",
@@ -30,6 +30,6 @@
     "node": "18.15.0"
   },
   "dependencies": {
-    "@nitrogql/core": "1.0.0-beta.2"
+    "@nitrogql/core": "1.0.0-beta.3"
   }
 }
