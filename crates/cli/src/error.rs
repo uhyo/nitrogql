@@ -18,6 +18,8 @@ pub enum CliError {
     MixGraphQLAndIntrospection,
     #[error("Option '{option}' is required for the '{command}' command. ")]
     OptionRequired { option: String, command: String },
+    #[error("Cannot emit code including runtime to a .d.ts file.")]
+    CannotEmitRuntimeToDts,
     #[error("Failed to calculate source map file name for '{path}'.")]
     FailedToCalculateSourceMapFileName { path: PathBuf },
     #[error("{0}")]

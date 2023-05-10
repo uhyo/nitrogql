@@ -37,6 +37,9 @@ pub struct GenerateConfig {
     /// Config related to generated names.
     #[serde(default)]
     pub name: GenerateNameConfig,
+    /// Whether to emit runtime for generated schema types.
+    #[serde(rename = "emitSchemaRuntime", default)]
+    pub emit_schema_runtime: bool,
 }
 
 impl Default for GenerateConfig {
@@ -48,6 +51,7 @@ impl Default for GenerateConfig {
             scalar_types: Default::default(),
             default_export_for_operation: true,
             name: Default::default(),
+            emit_schema_runtime: false,
         }
     }
 }

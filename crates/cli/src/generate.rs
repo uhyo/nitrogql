@@ -40,6 +40,14 @@ pub fn run_generate(mut context: CliContext) -> Result<CliContext> {
                 return Err(CliError::OptionRequired { option: String::from("schemaOutput"), command: String::from("generate") }.into())
             };
             let schema_output = config.root_dir.join(schema_output);
+            // If output contains runtime, prevent .d.ts from being generated
+            if config.config.generate.emit_schema_runtime
+                && schema_output
+                    .file_name()
+                    .map_or(false, |name| name.to_string_lossy().ends_with(".d.ts"))
+            {
+                return Err(CliError::CannotEmitRuntimeToDts.into());
+            }
             {
                 debug!("Processing schema");
                 let file_map = FileMap {
