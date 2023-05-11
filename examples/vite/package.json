@@ -1,7 +1,7 @@
 {
   "name": "vite",
   "private": true,
-  "version": "1.0.0-beta.3",
+  "version": "1.0.0-beta.4",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -16,8 +16,8 @@
     "react-dom": "^18.2.0"
   },
   "devDependencies": {
-    "@nitrogql/cli": "1.0.0-beta.3",
-    "@nitrogql/rollup-plugin": "1.0.0-beta.3",
+    "@nitrogql/cli": "1.0.0-beta.4",
+    "@nitrogql/rollup-plugin": "1.0.0-beta.4",
     "@types/react": "^18.0.28",
     "@types/react-dom": "^18.0.11",
     "@vitejs/plugin-react-swc": "^3.0.0",
