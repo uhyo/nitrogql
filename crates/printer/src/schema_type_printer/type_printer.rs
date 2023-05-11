@@ -154,9 +154,16 @@ impl TypePrinter for ScalarTypeDefinition<'_> {
         print_description(&self.description, writer);
         // Special casing for reexport
         if self.name.name == scalar_type_str {
-            writer.write_for("export type { ", &self.scalar_keyword);
-            writer.write_for(scalar_type_str, &self.name);
-            writer.write(" };\n");
+            let tmp_type_name = format!("__tmp_{}", self.name);
+            writer.write_for("type ", &self.scalar_keyword);
+            writer.write_for(&tmp_type_name, &self.name);
+            writer.write(" = ");
+            writer.write(scalar_type_str);
+            writer.write(";\nexport type { ");
+            writer.write(&tmp_type_name);
+            writer.write(" as ");
+            writer.write(self.name.name);
+            writer.write("};\n");
         } else {
             writer.write_for("export type ", &self.scalar_keyword);
             writer.write_for(self.name.name, &self.name);
