@@ -81,6 +81,12 @@ export type NitrogqlConfig = {
                           subscriptionVariableSuffix?: string | undefined;
                         }
                       | undefined;
+                    /**
+                     * Whether to generate runtime code for schema types.
+                     * If true, an object is emitted for each enum.
+                     * @default false
+                     */
+                    emitSchemaRuntime?: boolean | undefined;
                   }
                 | undefined;
             }
