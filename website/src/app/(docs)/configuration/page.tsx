@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Hint } from "@/app/(utils)/Hint";
 import { Highlight } from "@/app/(utils)/Highlight";
+import { Noto_Emoji } from "next/font/google";
 
 export default function GettingStarted() {
   return (
@@ -279,6 +280,38 @@ extensions:
     generate:
       scalarTypes:
         Date: Date`}
+      </Highlight>
+
+      <h3 id="generate.emitSchemaRuntime">generate.emitSchemaRuntime</h3>
+      <p>
+        If <code>true</code>, emit runtime code for generated schema types (one
+        specified by <code>generate.schemaOutput</code>). Default is{" "}
+        <code>false</code>.
+      </p>
+      <p>Currently, runtime code is emitted only for enums.</p>
+      <Hint>
+        ⚠️ If you set this option to <code>true</code>, the{" "}
+        <code>schemaOutput</code> file cannot be a <code>.d.ts</code> file.
+      </Hint>
+      <p>Example:</p>
+      <Highlight language="yaml">
+        {`extensions:
+  nitrogql:
+    generate:
+      schemaOutput: "./app/generated/schema.ts"
+      emitSchemaRuntime: true`}
+      </Highlight>
+      <p>
+        With the above configuration, the generated schema code will look like:
+      </p>
+      <Highlight language="typescript">
+        {`// Always emitted for enums
+export type UserType = "NormalUser" | "PremiumUser";
+// Emitted only if emitSchemaRuntime is true
+export const UserType = {
+  NormalUser: "NormalUser",
+  PremiumUser: "PremiumUser",
+} as const;`}
       </Highlight>
 
       <h3 id="generate.name">generate.name</h3>
