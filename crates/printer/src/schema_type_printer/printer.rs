@@ -14,6 +14,8 @@ pub struct SchemaTypePrinterOptions {
     pub schema_metadata_type: String,
     /// Whether to make input nullable fields optional.
     pub input_nullable_field_is_optional: bool,
+    /// Whether to emit runtime for generated schema types.
+    pub emit_schema_runtime: bool,
 }
 
 impl Default for SchemaTypePrinterOptions {
@@ -22,6 +24,7 @@ impl Default for SchemaTypePrinterOptions {
             scalar_types: get_builtin_scalar_types(),
             schema_metadata_type: "__nitrogql_schema".into(),
             input_nullable_field_is_optional: true,
+            emit_schema_runtime: false,
         }
     }
 }
