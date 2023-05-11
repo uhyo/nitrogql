@@ -264,7 +264,7 @@ impl TypePrinter for UnionTypeDefinition<'_> {
 impl TypePrinter for EnumTypeDefinition<'_> {
     fn print_type(
         &self,
-        _context: &SchemaTypePrinterContext,
+        context: &SchemaTypePrinterContext,
         writer: &mut impl SourceMapWriter,
     ) -> SchemaTypePrinterResult<()> {
         let enum_type = TSType::Union(
@@ -280,6 +280,19 @@ impl TypePrinter for EnumTypeDefinition<'_> {
         writer.write(" = ");
         enum_type.print_type(writer);
         writer.write(";\n");
+
+        if context.options.emit_schema_runtime {
+            writer.write_for("export const ", &self.enum_keyword);
+            writer.write_for(self.name.name, &self.name);
+            writer.write(" = {\n");
+            for value in &self.values {
+                writer.write_for(value.name.name, &value.name);
+                writer.write(": \"");
+                writer.write_for(value.name.name, &value.name);
+                writer.write("\",\n");
+            }
+            writer.write("} as const;\n")
+        }
         Ok(())
     }
 }

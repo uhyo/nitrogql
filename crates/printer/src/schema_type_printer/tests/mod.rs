@@ -163,6 +163,27 @@ fn deprecated_items() {
     assert_snapshot!(printed);
 }
 
+#[test]
+fn enum_runtime() {
+    let doc = parse_type_system_document(
+        r#"
+        enum UserType {
+            NormalUser
+            PremiumUser
+            AdminUser
+        }
+        "#,
+    )
+    .unwrap();
+    let doc = resolve_extensions(doc).unwrap();
+    let options = SchemaTypePrinterOptions {
+        emit_schema_runtime: true,
+        ..SchemaTypePrinterOptions::default()
+    };
+    let printed = print_document(&doc, options).unwrap();
+    assert_snapshot!(printed);
+}
+
 fn print_document(
     document: &TypeSystemDocument,
     options: SchemaTypePrinterOptions,
