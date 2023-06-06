@@ -181,7 +181,14 @@ impl<'a, 'src> OperationPrinterVisitor for OperationTypePrinterVisitor<'a, 'src>
             })
             .collect::<Vec<_>>();
         writer.write(&print_to_json_string(&this_document[..]));
-        writer.write(";\n\n");
+        // Use the `as unknown as` technique to avoid the type system complaining about
+        // the type of the JSON object not matching the type of the TypedDocumentNode
+        // (because of the use of enums in the TypedDocumentNode type)
+        writer.write(" as unknown as TypedDocumentNode<");
+        writer.write(&result_type_name);
+        writer.write(", ");
+        writer.write(&input_variable_name);
+        writer.write(">;\n\n");
     }
 
     fn print_fragment_definition(
