@@ -1,0 +1,21 @@
+---
+source: crates/printer/src/operation_type_printer/tests/mod.rs
+expression: result
+---
+import type { TypedDocumentNode } from "@graphql-typed-document-node/core";
+import type * as Schema from "";
+
+type QueryResult = Schema.__SelectionSet<Schema.Query, {
+  me: Schema.__SelectionSet<Schema.User, {
+    id: Schema.ID;
+    name: Schema.String;
+  }, {}>;
+}, {}>;
+
+type QueryVariables = {};
+
+const Query: TypedDocumentNode<QueryResult, QueryVariables> = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","variableDefinitions":[],"directives":[],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"me"},"arguments":[],"directives":[],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"},"arguments":[],"directives":[]},{"kind":"Field","name":{"kind":"Name","value":"name"},"arguments":[],"directives":[]}]}}]}}]};
+
+export { Query as default };
+
+

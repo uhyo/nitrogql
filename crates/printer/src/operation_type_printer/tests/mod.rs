@@ -164,6 +164,30 @@ fn query_variables() {
     assert_snapshot!(printed);
 }
 
+#[test]
+fn print_values() {
+    let doc = parse_operation_document(
+        "
+        query {
+            me {
+                id name
+            }
+        }
+        ",
+    )
+    .unwrap();
+    let mut result = String::new();
+    let mut writer = JustWriter::new(&mut result);
+    let schema = type_system();
+    let schema = ast_to_type_system(&schema);
+    let options = OperationTypePrinterOptions {
+        print_values: true,
+        ..Default::default()
+    };
+    print_types_for_operation_document(options, &schema, &doc, &mut writer);
+    assert_snapshot!(result);
+}
+
 mod skip_include {
     use super::*;
 

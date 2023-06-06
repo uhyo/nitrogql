@@ -152,7 +152,7 @@ impl<'a, 'src> OperationPrinterVisitor for OperationTypePrinterVisitor<'a, 'src>
 
         if context.exported {
             writer.write("export ");
-        } else {
+        } else if !self.options.print_values {
             writer.write("declare ");
         }
         writer.write("const ");
