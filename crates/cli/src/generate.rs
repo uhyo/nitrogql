@@ -36,19 +36,31 @@ pub fn run_generate(mut context: CliContext) -> Result<CliContext> {
             output,
         } => {
             output.command_run("generate".to_owned());
-            let Some(ref schema_output) = config.config.generate.schema_output else {
-                return Err(CliError::OptionRequired { option: String::from("schemaOutput"), command: String::from("generate") }.into())
-            };
-            let schema_output = config.root_dir.join(schema_output);
+            if config.config.generate.schema_output.is_none()
+                && config.config.generate.schema_module_specifier.is_none()
+            {
+                return Err(CliError::OptionRequired {
+                    option: String::from("schemaOutput"),
+                    command: String::from("generate"),
+                }
+                .into());
+            }
+            let schema_output = config
+                .config
+                .generate
+                .schema_output
+                .as_ref()
+                .map(|schema_output| config.root_dir.join(schema_output));
             // If output contains runtime, prevent .d.ts from being generated
             if config.config.generate.emit_schema_runtime
                 && schema_output
-                    .file_name()
+                    .as_ref()
+                    .and_then(|schema_output| schema_output.file_name())
                     .map_or(false, |name| name.to_string_lossy().ends_with(".d.ts"))
             {
                 return Err(CliError::CannotEmitRuntimeToDts.into());
             }
-            {
+            if let Some(schema_output) = schema_output.as_ref() {
                 debug!("Processing schema");
                 let file_map = FileMap {
                     file_store,
@@ -144,9 +156,14 @@ pub fn run_generate(mut context: CliContext) -> Result<CliContext> {
                     .schema_module_specifier
                     .clone()
                     .unwrap_or_else(|| {
-                        path_to_ts(relative_path(&decl_file_path, &schema_output))
-                            .to_string_lossy()
-                            .to_string()
+                        path_to_ts(relative_path(
+                            &decl_file_path,
+                            schema_output
+                                .as_ref()
+                                .expect("This should be prevented by config validation"),
+                        ))
+                        .to_string_lossy()
+                        .to_string()
                     });
                 clone_into(
                     &config.config.generate.name.operation_result_type_suffix,
