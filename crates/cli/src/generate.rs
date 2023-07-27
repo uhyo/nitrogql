@@ -10,7 +10,7 @@ use crate::context::LoadedSchema;
 use crate::error::CliError;
 use crate::file_store::{FileKind, FileStore};
 use crate::output::{CliOutput, OutputFileKind};
-use nitrogql_config_file::GenerateMode;
+use nitrogql_config_file::{Config, GenerateMode};
 use nitrogql_error::Result;
 use nitrogql_printer::{
     print_types_for_operation_document, OperationTypePrinterOptions, SchemaTypePrinter,
@@ -108,7 +108,7 @@ pub fn run_generate(mut context: CliContext) -> Result<CliContext> {
                     &file_map,
                     output,
                     OutputFileKind::SchemaTypeDefinition,
-                    &schema_output,
+                    schema_output,
                     buffers,
                 )?;
             }
@@ -146,48 +146,10 @@ pub fn run_generate(mut context: CliContext) -> Result<CliContext> {
 
                 let mut writer = SourceWriter::new();
                 writer.set_file_index_mapper(file_map.file_indices.clone());
-                let mut printer_options = OperationTypePrinterOptions::default();
-                if config.config.generate.mode == GenerateMode::StandaloneTS4_0 {
-                    printer_options.print_values = true;
-                }
-                printer_options.schema_source = config
-                    .config
-                    .generate
-                    .schema_module_specifier
-                    .clone()
-                    .unwrap_or_else(|| {
-                        path_to_ts(relative_path(
-                            &decl_file_path,
-                            schema_output
-                                .as_ref()
-                                .expect("This should be prevented by config validation"),
-                        ))
-                        .to_string_lossy()
-                        .to_string()
-                    });
-                clone_into(
-                    &config.config.generate.name.operation_result_type_suffix,
-                    &mut printer_options.operation_result_type_suffix,
-                );
-                clone_into(
-                    &config.config.generate.name.variables_type_suffix,
-                    &mut printer_options.variables_type_suffix,
-                );
-                clone_into(
-                    &config.config.generate.name.capitalize_operation_names,
-                    &mut printer_options.base_options.capitalize_operation_names,
-                );
-                clone_into(
-                    &config.config.generate.name.query_variable_suffix,
-                    &mut printer_options.base_options.query_variable_suffix,
-                );
-                clone_into(
-                    &config.config.generate.name.mutation_variable_suffix,
-                    &mut printer_options.base_options.mutation_variable_suffix,
-                );
-                clone_into(
-                    &config.config.generate.name.subscription_variable_suffix,
-                    &mut printer_options.base_options.subscription_variable_suffix,
+                let printer_options = generate_operation_type_printer_options(
+                    &config.config,
+                    &decl_file_path,
+                    schema_output.as_deref(),
                 );
 
                 print_types_for_operation_document(
@@ -217,6 +179,58 @@ pub fn run_generate(mut context: CliContext) -> Result<CliContext> {
             })
         }
     }
+}
+
+fn generate_operation_type_printer_options(
+    config: &Config,
+    decl_file_path: &Path,
+    schema_output: Option<&Path>,
+) -> OperationTypePrinterOptions {
+    let mut printer_options = OperationTypePrinterOptions::default();
+    if config.generate.mode == GenerateMode::StandaloneTS4_0 {
+        printer_options.print_values = true;
+    }
+    printer_options.schema_source = config
+        .generate
+        .schema_module_specifier
+        .clone()
+        .unwrap_or_else(|| {
+            path_to_ts(relative_path(
+                decl_file_path,
+                schema_output
+                    .as_ref()
+                    .expect("This should be prevented by config validation"),
+            ))
+            .to_string_lossy()
+            .to_string()
+        });
+    clone_into(
+        &config.generate.name.operation_result_type_suffix,
+        &mut printer_options.operation_result_type_suffix,
+    );
+    clone_into(
+        &config.generate.name.variables_type_suffix,
+        &mut printer_options.variables_type_suffix,
+    );
+    clone_into(
+        &config.generate.name.capitalize_operation_names,
+        &mut printer_options.base_options.capitalize_operation_names,
+    );
+    clone_into(
+        &config.generate.name.query_variable_suffix,
+        &mut printer_options.base_options.query_variable_suffix,
+    );
+    clone_into(
+        &config.generate.name.mutation_variable_suffix,
+        &mut printer_options.base_options.mutation_variable_suffix,
+    );
+    clone_into(
+        &config.generate.name.subscription_variable_suffix,
+        &mut printer_options.base_options.subscription_variable_suffix,
+    );
+    printer_options.base_options.default_export_for_operation =
+        config.generate.export.default_export_for_operation;
+    printer_options
 }
 
 #[derive(Debug)]

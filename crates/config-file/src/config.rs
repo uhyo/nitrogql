@@ -15,7 +15,7 @@ pub struct Config {
 }
 
 /// Config related to the 'generate' command.
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Default, Deserialize)]
 pub struct GenerateConfig {
     /// Mode of generation.
     #[serde(deserialize_with = "deserialize_fromstr", default)]
@@ -30,30 +30,15 @@ pub struct GenerateConfig {
     /// Mapping from GraphQL scalar types to TypeScript types.
     #[serde(rename = "scalarTypes", default)]
     pub scalar_types: HashMap<String, String>,
-    /// Whether operation is exported as a default export.
-    /// Effective only when a document contains only one operation.
-    #[serde(rename = "defaultExportForOperation", default = "default_true")]
-    pub default_export_for_operation: bool,
     /// Config related to generated names.
     #[serde(default)]
     pub name: GenerateNameConfig,
+    /// Config related to exporting generated names.
+    #[serde(default)]
+    pub export: GenerateExportConfig,
     /// Whether to emit runtime for generated schema types.
     #[serde(rename = "emitSchemaRuntime", default)]
     pub emit_schema_runtime: bool,
-}
-
-impl Default for GenerateConfig {
-    fn default() -> Self {
-        GenerateConfig {
-            mode: Default::default(),
-            schema_output: None,
-            schema_module_specifier: None,
-            scalar_types: Default::default(),
-            default_export_for_operation: true,
-            name: Default::default(),
-            emit_schema_runtime: false,
-        }
-    }
 }
 
 /// Mode of code generation.
@@ -103,4 +88,13 @@ pub struct GenerateNameConfig {
     /// Suffix for variable of subscription.
     #[serde(rename = "subscriptionVariableSuffix")]
     pub subscription_variable_suffix: Option<String>,
+}
+
+/// Config related to exported names.
+#[derive(Debug, Default, Deserialize)]
+pub struct GenerateExportConfig {
+    /// Whether operation is exported as a default export.
+    /// Effective only when a document contains only one operation.
+    #[serde(rename = "defaultExportForOperation", default = "default_true")]
+    pub default_export_for_operation: bool,
 }
