@@ -94,7 +94,7 @@ h2 {
 
 h3 {
   width: fit-content;
-  margin: 1em 0 0.5em;
+  margin: 2em 0 0.5em;
   font-family: var(--font-outfit);
   font-size: 1.4em;
   font-weight: 600;
@@ -108,7 +108,11 @@ h4 {
 
 ul, ol {
   margin-block: 1em;
-  list-style-position: inside;
+  margin-inline-start: 1em;
+  list-style-position: outside;
+}
+ul li, ol li {
+  margin-block: 0.5em;
 }
 
 p + p {

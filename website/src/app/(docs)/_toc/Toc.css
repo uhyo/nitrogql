@@ -28,6 +28,10 @@ div.toc nav ul {
   word-break: break-all;
 }
 
+div.toc nav ul li {
+  margin-block: 0.25rem;
+}
+
 div.toc nav ul a {
   display: block;
   padding: 0.25rem 0.5rem;

@@ -128,11 +128,25 @@ documents:
           by generated operations types.
         </p>
         <p>
-          <strong>
-            <code>generate.schemaOutput</code> is required{" "}
-          </strong>
-          when you use the <code>generate</code> command.
+          If you do not specify <code>generate.schemaOutput</code>:
         </p>
+        <ul>
+          <li>
+            You can still use the <code>check</code> command to check your
+            schema.
+          </li>
+          <li>
+            The <code>generate</code> command will not generate the schema
+            types. To use the <code>generate</code> command without specifying{" "}
+            <code>generate.schemaOutput</code>, you need to specify{" "}
+            <a href="#generate.schemaModuleSpecifier">
+              generate.schemaModuleSpecifier
+            </a>{" "}
+            so that generated operations types know where to import the schema
+            types from.
+          </li>
+        </ul>
+
         <p>Example:</p>
         <Highlight language="yaml">
           {`schema: "./schema/*.graphql"
@@ -199,8 +213,7 @@ extensions:
         <p>
           This mode generates <code>foo.graphql.d.ts</code> next to{" "}
           <code>foo.graphql</code> which allows importing{" "}
-          <code>foo.graphql</code>
-          as a module.
+          <code>foo.graphql</code> as a module.
         </p>
         <p>
           In order to import <code>.graphql</code> files as modules, you also
@@ -255,6 +268,11 @@ extensions:
           {`import * as Schema from "@/generated/schema";
 // ...`}
         </Highlight>
+        <p>
+          Note that you also need to configure your bundler to resolve{" "}
+          <code>@/generated/schema</code> correctly (to{" "}
+          <code>app/generated/schema.ts</code>).
+        </p>
 
         <h3 id="generate.scalarTypes">generate.scalarTypes</h3>
         <p>
@@ -374,9 +392,8 @@ export const UserType = {
           .
         </p>
         <Hint>
-          💡 You can also use <code>ResultOf</code> from the{" "}
-          <code>@graphql-typed-document-node/core</code> package to extract the
-          result type from your operation document.
+          💡 Operation result type is not visible unless you set
+          <code>export.operationResultType</code> to <code>true</code>.
         </Hint>
 
         <h4 id="generate.name.variablesTypeSuffix">variablesTypeSuffix</h4>
@@ -390,9 +407,8 @@ export const UserType = {
           <code>GetUserVariables</code>.
         </p>
         <Hint>
-          💡 You can also use <code>VariablesOf</code> from the{" "}
-          <code>@graphql-typed-document-node/core</code> package to extract the
-          variables type from your operation document.
+          💡 Operation variables type is not visible unless you set
+          <code>export.operationResultType</code> to <code>true</code>.
         </Hint>
 
         <h4 id="generate.name.queryVariableSuffix">queryVariableSuffix</h4>
