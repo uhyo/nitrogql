@@ -230,6 +230,8 @@ fn generate_operation_type_printer_options(
     );
     printer_options.base_options.default_export_for_operation =
         config.generate.export.default_export_for_operation;
+    printer_options.base_options.export_input_type = config.generate.export.variables_type;
+    printer_options.base_options.export_result_type = config.generate.export.operation_result_type;
     printer_options
 }
 

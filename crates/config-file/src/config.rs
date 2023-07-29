@@ -97,4 +97,10 @@ pub struct GenerateExportConfig {
     /// Effective only when a document contains only one operation.
     #[serde(rename = "defaultExportForOperation", default = "default_true")]
     pub default_export_for_operation: bool,
+    /// Whether operation result type is exported.
+    #[serde(rename = "operationResultType")]
+    pub operation_result_type: bool,
+    /// Whether variables type is exported.
+    #[serde(rename = "variablesType")]
+    pub variables_type: bool,
 }

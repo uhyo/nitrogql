@@ -86,6 +86,16 @@ export type NitrogqlConfig = {
                            * @default true
                            */
                           defaultExportForOperation?: boolean | undefined;
+                          /**
+                           * Whether operation result type is exported.
+                           * @default false
+                           */
+                          operationResultType?: boolean | undefined;
+                          /**
+                           * Whether operation variables type is exported.
+                           * @default false
+                           */
+                          variablesType?: boolean | undefined;
                         }
                       | undefined;
                     /**
