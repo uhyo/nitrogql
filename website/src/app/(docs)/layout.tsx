@@ -1,5 +1,5 @@
-import { Footer } from "../(utils)/Footer";
-import { Header } from "../(utils)/Header";
+import { Footer } from "../_utils/Footer";
+import { Header } from "../_utils/Header";
 
 export default function DocsLayout({
   children,

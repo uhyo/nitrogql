@@ -1,15 +1,15 @@
 import Image from "next/image";
 import LogoImage from "../../../public/nitrogql-logo.png";
 import styles from "./page.module.css";
-import { Figures } from "@/app/(utils)/Figures";
+import { Figures } from "@/app/_utils/Figures";
 import figureCheckSchema from "./figures/screenshot-check-schema.png";
 import figureCheckOperation from "./figures/screenshot-check-operation.png";
 import figurePeekOperationDefinition from "./figures/screenshot-peek-operation-definition.png";
 import figurePeekSchema from "./figures/screenshot-peek-schema.png";
 import figurePeekDescription from "./figures/screenshot-peek-description.png";
-import { Highlight } from "../(utils)/Highlight";
-import { HeadNav } from "../(utils)/Header";
-import { Footer } from "../(utils)/Footer";
+import { Highlight } from "../_utils/Highlight";
+import { HeadNav } from "../_utils/Header";
+import { Footer } from "../_utils/Footer";
 
 export default function Home() {
   return (

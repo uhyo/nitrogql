@@ -1,5 +1,5 @@
-import { Hint } from "@/app/(utils)/Hint";
-import { Highlight } from "@/app/(utils)/Highlight";
+import { Hint } from "@/app/_utils/Hint";
+import { Highlight } from "@/app/_utils/Highlight";
 
 export default function GettingStarted() {
   return (

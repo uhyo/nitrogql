@@ -1,6 +1,6 @@
 import Link from "next/link";
-import { Hint } from "@/app/(utils)/Hint";
-import { Highlight } from "@/app/(utils)/Highlight";
+import { Hint } from "@/app/_utils/Hint";
+import { Highlight } from "@/app/_utils/Highlight";
 import { Noto_Emoji } from "next/font/google";
 
 export default function GettingStarted() {

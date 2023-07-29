@@ -1,8 +1,8 @@
 import Image from "next/image";
 import Link from "next/link";
-import { Hint } from "@/app/(utils)/Hint";
-import { Highlight } from "@/app/(utils)/Highlight";
-import { Figures } from "@/app/(utils)/Figures";
+import { Hint } from "@/app/_utils/Hint";
+import { Highlight } from "@/app/_utils/Highlight";
+import { Figures } from "@/app/_utils/Figures";
 import ScreenshotFileNesting from "./figures/screenshot-file-nesting.png";
 
 export default function GettingStarted() {
