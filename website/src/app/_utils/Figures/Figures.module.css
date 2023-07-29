@@ -12,14 +12,14 @@
   flex: 0 0 auto;
   scroll-snap-align: start;
 
-  width: min(640px, 90vw);
+  width: min(640px, 80vw);
   border-radius: 1em;
   overflow: clip;
   background-color: rgba(var(--nitrogql-red), 0.1);
 }
 
 .figures > figure img {
-  width: min(640px, 90vw);
+  width: min(640px, 80vw);
   height: auto;
 }
 
