@@ -340,7 +340,7 @@ export const UserType = {
         </Highlight>
 
         <h4 id="generate.name.capitalizeOperationNames">
-          generate.name.capitalizeOperationNames
+          capitalizeOperationNames
         </h4>
         <p>
           If <code>true</code>, capitalize the first letter of operation names.
@@ -362,7 +362,7 @@ export const UserType = {
         </p>
 
         <h4 id="generate.name.operationResultTypeSuffix">
-          generate.name.operationResultTypeSuffix
+          operationResultTypeSuffix
         </h4>
         <p>
           Suffix of the operation result type. Default is{" "}
@@ -379,9 +379,7 @@ export const UserType = {
           result type from your operation document.
         </Hint>
 
-        <h4 id="generate.name.variablesTypeSuffix">
-          generate.name.variablesTypeSuffix
-        </h4>
+        <h4 id="generate.name.variablesTypeSuffix">variablesTypeSuffix</h4>
         <p>
           Suffix of the operation variables type. Default is{" "}
           <code>&quot;Variables&quot;</code>.
@@ -397,9 +395,7 @@ export const UserType = {
           variables type from your operation document.
         </Hint>
 
-        <h4 id="generate.name.queryVariableSuffix">
-          generate.name.queryVariableSuffix
-        </h4>
+        <h4 id="generate.name.queryVariableSuffix">queryVariableSuffix</h4>
         <p>
           Suffix of the query variable. Default is{" "}
           <code>&quot;Query&quot;</code>.
@@ -410,7 +406,7 @@ export const UserType = {
         </p>
 
         <h4 id="generate.name.mutationVariableSuffix">
-          generate.name.mutationVariableSuffix
+          mutationVariableSuffix
         </h4>
         <p>
           Suffix of the mutation variable. Default is{" "}
@@ -423,7 +419,7 @@ export const UserType = {
         </p>
 
         <h4 id="generate.name.subscriptionVariableSuffix">
-          generate.name.subscriptionVariableSuffix
+          subscriptionVariableSuffix
         </h4>
         <p>
           Suffix of the subscription variable. Default is{" "}
@@ -434,6 +430,88 @@ export const UserType = {
           your schema, the generated subscription variable will be{" "}
           <code>OnUserCreatedSubscription</code>.
         </p>
+
+        <h3 id="generate.export">generate.export</h3>
+        <p>
+          Set of configurations about how generated code is exported. Default
+          settings are:
+        </p>
+        <Highlight language="yaml">
+          {`extensions:
+  nitrogql:
+    generate:
+      export:
+        defaultExportForOperations: true
+        operationResultType: false
+        variablesType: false
+`}
+        </Highlight>
+
+        <h4 id="generate.export.defaultExportForOperations">
+          defaultExportForOperations
+        </h4>
+        <p>
+          If <code>true</code>, a generated operation document will be exported
+          as a default export. Default is <code>true</code>.
+        </p>
+        <p>
+          For example, if you have <code>query getUser</code> in your schema,
+          the generated operation document will be exported as a default export
+          so that you can import it like:
+        </p>
+        <Highlight language="typescript">
+          {`// defaultExportForOperations: true
+import GetUserQuery from "./app/graphql/queries/getUser.graphql";`}
+        </Highlight>
+        <p>
+          If you set <code>defaultExportForOperations: false</code>, the
+          generated operation document will be exported as a named export so
+          that you can import it like:
+        </p>
+        <Highlight language="typescript">
+          {`// defaultExportForOperations: false
+import { GetUserQuery } from "./app/graphql/queries/getUser.graphql";`}
+        </Highlight>
+
+        <h4 id="generate.export.operationResultType">operationResultType</h4>
+        <p>
+          If <code>true</code>, a generated operation result type will be
+          exported. Default is <code>false</code>.
+        </p>
+        <p>
+          For example, if you have <code>query getUser</code> in your schema,
+          the generated operation result type will be exported so that you can
+          import it like:
+        </p>
+        <Highlight language="typescript">
+          {`// operationResultType: true
+import { GetUserResult } from "./app/graphql/queries/getUser.graphql";`}
+        </Highlight>
+        <Hint>
+          💡 You can also use <code>ResultOf</code> from the{" "}
+          <code>@graphql-typed-document-node/core</code> package to extract the
+          result type from your operation document.
+        </Hint>
+
+        <h4 id="generate.export.variablesType">variablesType</h4>
+        <p>
+          If <code>true</code>, a generated operation variables type will be
+          exported. Default is <code>false</code>.
+        </p>
+        <p>
+          For example, if you have <code>query getUser</code> in your schema,
+          the generated operation variables type will be exported so that you
+          can import it like:
+        </p>
+        <Highlight language="typescript">
+          {`// variablesType: true
+import { GetUserVariables } from "./app/graphql/queries/getUser.graphql";`}
+        </Highlight>
+        <Hint>
+          💡 You can also use <code>VariablesOf</code> from the{" "}
+          <code>@graphql-typed-document-node/core</code> package to extract the
+          variables type from your operation document.
+        </Hint>
       </main>
     </Toc>
   );
