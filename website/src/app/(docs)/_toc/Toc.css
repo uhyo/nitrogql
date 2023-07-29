@@ -1,0 +1,50 @@
+div.toc {
+  display: grid;
+  grid-template-columns: 1fr 16rem;
+}
+
+div.toc nav {
+  font-size: 0.9rem;
+}
+
+div.toc nav > div {
+  position: sticky;
+  left: 0;
+  top: 0;
+}
+
+div.toc nav h2 {
+  margin: 0 0 0.5rem 0;
+  padding: 0;
+  border: none;
+  font-size: inherit;
+  font-weight: bold;
+}
+
+div.toc nav ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  word-break: break-all;
+}
+
+div.toc nav ul a {
+  display: block;
+  padding: 0.25rem 0.5rem;
+  text-decoration: none;
+  color: rgba(var(--foreground-rgb), 0.9);
+}
+
+div.toc nav ul li[data-level="4"] a {
+  padding-left: 2rem;
+  color: rgba(var(--foreground-rgb), 0.75);
+}
+
+div.toc nav ul li[data-current="true"] a {
+  font-weight: bold;
+  color: rgb(var(--nitrogql-red)); 
+}
+
+div.toc nav ul a:hover {
+  background: rgba(var(--nitrogql-red), 0.1);
+}

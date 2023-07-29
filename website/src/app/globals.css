@@ -17,7 +17,7 @@
     rgb(var(--nitrogql-red))
   );
 
-  --contents-width: min(90vw, 1200px);
+  --contents-width: min(95vw - 16rem, 1200px);
 
   color-scheme: light dark;
 }
