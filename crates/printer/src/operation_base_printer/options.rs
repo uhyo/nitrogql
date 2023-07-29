@@ -5,6 +5,10 @@ pub struct OperationBasePrinterOptions {
     pub default_export_for_operation: bool,
     /// Whether an operation should be named exported.
     pub named_export_for_operation: bool,
+    /// Whether an operation input type should be exported.
+    pub export_input_type: bool,
+    /// Whether an operation result type should be exported.
+    pub export_result_type: bool,
     /// Whether operation name should be capitalize
     pub capitalize_operation_names: bool,
     /// Suffix for variable of query.
@@ -20,6 +24,8 @@ impl Default for OperationBasePrinterOptions {
         Self {
             default_export_for_operation: true,
             named_export_for_operation: false,
+            export_input_type: false,
+            export_result_type: false,
             capitalize_operation_names: true,
             query_variable_suffix: "Query".to_owned(),
             mutation_variable_suffix: "Mutation".to_owned(),

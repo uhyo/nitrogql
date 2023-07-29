@@ -113,6 +113,9 @@ impl<'a, 'src> OperationPrinterVisitor for OperationTypePrinterVisitor<'a, 'src>
             "{}{}",
             context.var_name, self.options.operation_result_type_suffix
         );
+        if context.export_result_type {
+            writer.write("export ");
+        }
         writer.write("type ");
         writer.write_for(&result_type_name, &operation.name_pos());
         writer.write_for(" = ", &operation.selection_set);
@@ -144,6 +147,9 @@ impl<'a, 'src> OperationPrinterVisitor for OperationTypePrinterVisitor<'a, 'src>
         let input_variable_name =
             format!("{}{}", context.var_name, self.options.variables_type_suffix);
 
+        if context.export_input_type {
+            writer.write("export ");
+        }
         writer.write("type ");
         writer.write_for(&input_variable_name, &operation.name_pos());
         writer.write(" = ");
