@@ -32,6 +32,10 @@ pub struct PrintOperationContext<'a> {
     pub var_name: &'a str,
     /// Whether this operation is exported.
     pub exported: bool,
+    /// Whether input type of this operation is exported.
+    pub export_input_type: bool,
+    /// Whether result type of this operation is exported.
+    pub export_result_type: bool,
     /// Operation definition.
     pub operation: &'a OperationDefinition<'a>,
 }

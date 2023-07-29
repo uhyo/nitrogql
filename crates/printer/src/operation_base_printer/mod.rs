@@ -50,6 +50,8 @@ where
                     let context = PrintOperationContext {
                         var_name: &var_name,
                         exported: self.options.named_export_for_operation,
+                        export_input_type: self.options.export_input_type,
+                        export_result_type: self.options.export_result_type,
                         operation: def,
                     };
                     self.visitor

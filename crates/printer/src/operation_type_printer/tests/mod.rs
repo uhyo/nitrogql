@@ -7,6 +7,7 @@ use nitrogql_semantics::ast_to_type_system;
 use nitrogql_semantics::resolve_extensions;
 use sourcemap_writer::JustWriter;
 
+use crate::operation_base_printer::options::OperationBasePrinterOptions;
 use crate::print_types_for_operation_document;
 use crate::OperationTypePrinterOptions;
 
@@ -72,7 +73,33 @@ fn basic_type_printing() {
         ",
     )
     .unwrap();
-    let printed = print_document(&doc);
+    let printed = print_document_default(&doc);
+    assert_snapshot!(printed);
+}
+
+#[test]
+fn export_input_and_result_type() {
+    let doc = parse_operation_document(
+        "
+        query {
+            me {
+                id name type age
+            }
+        }
+        ",
+    )
+    .unwrap();
+    let printed = print_document(
+        &doc,
+        OperationTypePrinterOptions {
+            base_options: OperationBasePrinterOptions {
+                export_input_type: true,
+                export_result_type: true,
+                ..Default::default()
+            },
+            ..Default::default()
+        },
+    );
     assert_snapshot!(printed);
 }
 
@@ -95,7 +122,7 @@ fn fragment_spread() {
         ",
     )
     .unwrap();
-    let printed = print_document(&doc);
+    let printed = print_document_default(&doc);
     assert_snapshot!(printed);
 }
 
@@ -123,7 +150,7 @@ fn fragment_spread_cond() {
         ",
     )
     .unwrap();
-    let printed = print_document(&doc);
+    let printed = print_document_default(&doc);
     assert_snapshot!(printed);
 }
 
@@ -144,7 +171,7 @@ fn fragment_inline_spread() {
         ",
     )
     .unwrap();
-    let printed = print_document(&doc);
+    let printed = print_document_default(&doc);
     assert_snapshot!(printed);
 }
 
@@ -160,7 +187,7 @@ fn query_variables() {
         ",
     )
     .unwrap();
-    let printed = print_document(&doc);
+    let printed = print_document_default(&doc);
     assert_snapshot!(printed);
 }
 
@@ -204,7 +231,7 @@ mod skip_include {
             ",
         )
         .unwrap();
-        let printed = print_document(&doc);
+        let printed = print_document_default(&doc);
         assert_snapshot!(printed);
     }
 
@@ -221,7 +248,7 @@ mod skip_include {
             ",
         )
         .unwrap();
-        let printed = print_document(&doc);
+        let printed = print_document_default(&doc);
         assert_snapshot!(printed);
     }
 
@@ -238,7 +265,7 @@ mod skip_include {
             ",
         )
         .unwrap();
-        let printed = print_document(&doc);
+        let printed = print_document_default(&doc);
         assert_snapshot!(printed);
     }
 
@@ -255,7 +282,7 @@ mod skip_include {
             ",
         )
         .unwrap();
-        let printed = print_document(&doc);
+        let printed = print_document_default(&doc);
         assert_snapshot!(printed);
     }
 
@@ -272,7 +299,7 @@ mod skip_include {
             ",
         )
         .unwrap();
-        let printed = print_document(&doc);
+        let printed = print_document_default(&doc);
         assert_snapshot!(printed);
     }
 
@@ -289,7 +316,7 @@ mod skip_include {
             ",
         )
         .unwrap();
-        let printed = print_document(&doc);
+        let printed = print_document_default(&doc);
         assert_snapshot!(printed);
     }
 
@@ -308,7 +335,7 @@ mod skip_include {
             ",
         )
         .unwrap();
-        let printed = print_document(&doc);
+        let printed = print_document_default(&doc);
         assert_snapshot!(printed);
     }
 
@@ -325,7 +352,7 @@ mod skip_include {
             ",
         )
         .unwrap();
-        let printed = print_document(&doc);
+        let printed = print_document_default(&doc);
         assert_snapshot!(printed);
     }
 
@@ -345,7 +372,7 @@ mod skip_include {
             ",
         )
         .unwrap();
-        let printed = print_document(&doc);
+        let printed = print_document_default(&doc);
         assert_snapshot!(printed);
     }
 
@@ -365,7 +392,7 @@ mod skip_include {
             ",
         )
         .unwrap();
-        let printed = print_document(&doc);
+        let printed = print_document_default(&doc);
         assert_snapshot!(printed);
     }
 
@@ -384,7 +411,7 @@ mod skip_include {
             ",
         )
         .unwrap();
-        let printed = print_document(&doc);
+        let printed = print_document_default(&doc);
         assert_snapshot!(printed);
     }
 
@@ -403,7 +430,7 @@ mod skip_include {
             ",
         )
         .unwrap();
-        let printed = print_document(&doc);
+        let printed = print_document_default(&doc);
         assert_snapshot!(printed);
     }
 
@@ -423,7 +450,7 @@ mod skip_include {
             ",
         )
         .unwrap();
-        let printed = print_document(&doc);
+        let printed = print_document_default(&doc);
         assert_snapshot!(printed);
     }
 
@@ -442,7 +469,7 @@ mod skip_include {
             ",
         )
         .unwrap();
-        let printed = print_document(&doc);
+        let printed = print_document_default(&doc);
         assert_snapshot!(printed);
     }
 
@@ -462,7 +489,7 @@ mod skip_include {
             ",
         )
         .unwrap();
-        let printed = print_document(&doc);
+        let printed = print_document_default(&doc);
         assert_snapshot!(printed);
     }
 
@@ -482,7 +509,7 @@ mod skip_include {
             ",
         )
         .unwrap();
-        let printed = print_document(&doc);
+        let printed = print_document_default(&doc);
         assert_snapshot!(printed);
     }
 
@@ -501,7 +528,7 @@ mod skip_include {
             ",
         )
         .unwrap();
-        let printed = print_document(&doc);
+        let printed = print_document_default(&doc);
         assert_snapshot!(printed);
     }
 
@@ -520,7 +547,7 @@ mod skip_include {
             ",
         )
         .unwrap();
-        let printed = print_document(&doc);
+        let printed = print_document_default(&doc);
         assert_snapshot!(printed);
     }
 
@@ -543,21 +570,20 @@ mod skip_include {
             ",
         )
         .unwrap();
-        let printed = print_document(&doc);
+        let printed = print_document_default(&doc);
         assert_snapshot!(printed);
     }
 }
 
-fn print_document(document: &OperationDocument) -> String {
+fn print_document_default(document: &OperationDocument) -> String {
+    print_document(document, OperationTypePrinterOptions::default())
+}
+
+fn print_document(document: &OperationDocument, options: OperationTypePrinterOptions) -> String {
     let mut result = String::new();
     let mut writer = JustWriter::new(&mut result);
     let schema = type_system();
     let schema = ast_to_type_system(&schema);
-    print_types_for_operation_document(
-        OperationTypePrinterOptions::default(),
-        &schema,
-        document,
-        &mut writer,
-    );
+    print_types_for_operation_document(options, &schema, document, &mut writer);
     result
 }

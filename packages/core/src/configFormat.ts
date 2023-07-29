@@ -40,12 +40,6 @@ export type NitrogqlConfig = {
                      */
                     scalarTypes?: Record<string, string> | undefined;
                     /**
-                     * Whether operation is exported as a default export.
-                     * Effective only when a document contains only one operation.
-                     * @default true
-                     */
-                    defaultExportForOperation?: boolean | undefined;
-                    /**
                      * Config related to generated names.
                      */
                     name?:
@@ -79,6 +73,29 @@ export type NitrogqlConfig = {
                            * @default "Subscription"
                            */
                           subscriptionVariableSuffix?: string | undefined;
+                        }
+                      | undefined;
+                    /**
+                     * Config related to exporting generated names.
+                     */
+                    export?:
+                      | {
+                          /**
+                           * Whether operation is exported as a default export.
+                           * Effective only when a document contains only one operation.
+                           * @default true
+                           */
+                          defaultExportForOperation?: boolean | undefined;
+                          /**
+                           * Whether operation result type is exported.
+                           * @default false
+                           */
+                          operationResultType?: boolean | undefined;
+                          /**
+                           * Whether operation variables type is exported.
+                           * @default false
+                           */
+                          variablesType?: boolean | undefined;
                         }
                       | undefined;
                     /**
