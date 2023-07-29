@@ -48,3 +48,12 @@ div.toc nav ul li[data-current="true"] a {
 div.toc nav ul a:hover {
   background: rgba(var(--nitrogql-red), 0.1);
 }
+
+@media (width <= 1024px) {
+  div.toc {
+    display: block;
+  }
+  div.toc nav {
+    display: none;
+  }
+}

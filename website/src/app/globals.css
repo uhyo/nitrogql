@@ -22,6 +22,12 @@
   color-scheme: light dark;
 }
 
+@media (width <= 1024px) {
+  :root {
+    --contents-width: 95vw;
+  }
+}
+
 a:link {
   color: rgb(var(--nitrogql-red));
 }
