@@ -1,6 +1,6 @@
 div.toc {
   display: grid;
-  grid-template-columns: 1fr 16rem;
+  grid-template-columns: 1fr var(--toc-width);
 }
 
 div.toc nav {
@@ -54,9 +54,6 @@ div.toc nav ul a:hover {
 }
 
 @media (width <= 1024px) {
-  div.toc {
-    display: block;
-  }
   div.toc nav {
     display: none;
   }

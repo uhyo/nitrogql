@@ -17,14 +17,15 @@
     rgb(var(--nitrogql-red))
   );
 
-  --contents-width: min(95vw - 16rem, 1200px);
+  --toc-width: 16rem;
+  --contents-width: min(95vw - var(--toc-width), 1200px);
 
   color-scheme: light dark;
 }
 
 @media (width <= 1024px) {
   :root {
-    --contents-width: 95vw;
+    --toc-width: 0em;
   }
 }
 
@@ -69,8 +70,11 @@ body {
   font-family: sans-serif;
 }
 
-main {
+.toc {
   flex: 1 0 auto;
+}
+
+main {
   max-width: var(--contents-width);
   margin-inline: auto;
 }

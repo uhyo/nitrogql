@@ -15,6 +15,11 @@ export default function GettingStarted() {
           This page guides you through the steps to get started with nitrogql.
         </p>
 
+        <Hint>
+          🧑‍🏫 Currently, this guide assumes that you are already familiar with
+          GraphQL.
+        </Hint>
+
         <h3 id="installation">Installation</h3>
         <p>
           The nitrogql CLI can be installed with npm. The CLI is required for
@@ -161,9 +166,8 @@ export default {
         <h3 id="generating-typescript-types">Generating TypeScript types</h3>
         <p>
           nitrogql generates one <code>.d.ts</code> file for schema, and one{" "}
-          <code>.d.graphql.ts</code>
-          for each operation file. <code>.d.graphql.ts</code> files are placed
-          next to operation files.
+          <code>.d.graphql.ts</code> for each operation file.{" "}
+          <code>.d.graphql.ts</code> files are placed next to operation files.
         </p>
         <Hint>
           💡 <b>Note</b>: <code>.d.graphql.ts</code> files are supported by
