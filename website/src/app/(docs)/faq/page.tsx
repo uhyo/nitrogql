@@ -78,32 +78,6 @@ export default function GettingStarted() {
           to see this feature.
         </p>
 
-        <h3 id="i-need-a-watch-mode">I need a watch mode!</h3>
-        <p>
-          Yes, watch mode is definitely a nice feature to have, although it is
-          given a lower priority than other features. For now, if you use VS
-          Code, you can use the{" "}
-          <b>
-            <a href="https://marketplace.visualstudio.com/items?itemName=emeraldwalk.RunOnSave">
-              Run on Save
-            </a>
-          </b>{" "}
-          extension to run nitrogql on save. It should be fast enough.
-        </p>
-        <p>Here is an example setting:</p>
-        <Highlight language="json">
-          {`{
-  "emeraldwalk.runonsave": {
-    "commands": [
-      {
-        "match": "\\\\.graphql$",
-        "cmd": "npx nitrogql generate"
-      }
-    ]
-  }
-}`}
-        </Highlight>
-
         <h3 id="contribution">Contribution?</h3>
         <p>
           <a href="https://github.com/uhyo/nitrogql">Welcome!</a>
