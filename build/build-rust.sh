@@ -26,4 +26,14 @@ if [ -n "${OPTIMIZE+x}" ]; then
     wasm-opt graphql-loader.wasm -Oz -o graphql-loader.opt.wasm.tmp
     wasm-snip graphql-loader.opt.wasm.tmp > graphql-loader.opt.wasm
   )
+else
+  (
+    cd target/wasm32-wasi/release
+    cp nitrogql-cli.wasm nitrogql-cli.opt.wasm
+  )
+
+  (
+    cd target/wasm32-unknown-unknown/release
+    cp graphql-loader.wasm graphql-loader.opt.wasm
+  )
 fi
