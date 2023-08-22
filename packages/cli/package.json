@@ -30,6 +30,7 @@
     "node": "18.15.0"
   },
   "dependencies": {
-    "@nitrogql/core": "1.0.0-beta.6"
+    "@nitrogql/core": "1.0.0-beta.6",
+    "@nitrogql/wasi-preview1": "1.0.0-beta.6"
   }
 }

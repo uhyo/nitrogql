@@ -1,9 +1,8 @@
-import { WASI } from "node:wasi";
 import { argv, env, cwd, stdout } from "node:process";
 import { readFile } from "node:fs/promises";
-import { shim } from "./shim.mjs";
 import { resolve } from "node:path";
 import * as core from "@nitrogql/core";
+import { initWASI } from "@nitrogql/wasi-preview1";
 
 const CWD = cwd();
 const NITROGQL_FS_SCOPE = env.NITROGQL_FS_SCOPE
@@ -11,7 +10,7 @@ const NITROGQL_FS_SCOPE = env.NITROGQL_FS_SCOPE
   : CWD;
 const isTTY = stdout.isTTY;
 
-const wasi = new WASI({
+const wasi = initWASI({
   args: argv.slice(1),
   env: {
     // env_logger
@@ -26,12 +25,8 @@ const wasi = new WASI({
   },
 });
 
-let memoryRef = { memory: null };
 const importObject = {
-  wasi_snapshot_preview1: {
-    ...wasi.wasiImport,
-    ...shim(wasi.wasiImport, memoryRef, NITROGQL_FS_SCOPE),
-  },
+  wasi_snapshot_preview1: wasi,
   "nitrogql_helper/config": core.config,
 };
 
@@ -39,7 +34,7 @@ const wasm = await WebAssembly.compile(
   await readFile(new URL("../wasm/nitrogql-cli.wasm", import.meta.url))
 );
 const instance = await WebAssembly.instantiate(wasm, importObject);
-memoryRef.memory = instance.exports.memory;
+wasi.setMemory(instance.exports.memory);
 core.setMemory(instance.exports.memory);
 
-wasi.start(instance);
+instance.exports._start();

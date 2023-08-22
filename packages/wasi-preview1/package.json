@@ -1,0 +1,27 @@
+{
+  "name": "@nitrogql/wasi-preview1",
+  "version": "1.0.0-beta.6",
+  "description": "WASI implementation for use by nitrogql",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/uhyo/nitrogql.git",
+    "directory": "packages/wasi-preview1"
+  },
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "watch": "tsc --watch",
+    "test": "vitest"
+  },
+  "keywords": [
+    "nitrogql"
+  ],
+  "author": "uhyo <uhyo@uhy.ooo>",
+  "license": "MIT",
+  "devDependencies": {
+    "memfs": "^4.2.1",
+    "vitest": "^0.34.2"
+  }
+}

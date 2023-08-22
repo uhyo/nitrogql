@@ -263,10 +263,10 @@ fn load_glob_files<'a, S: AsRef<str> + 'a>(
         return Ok(vec![]);
     }
 
-    trace!("load_glob_files {} {}", root.display(), path_strs.join(" "));
+    info!("load_glob_files {} {}", root.display(), path_strs.join(" "));
     let schema_matchers = build_matchers(&path_strs, root).map_err(CliError::GlobError)?;
     let (paths, _) = match_paths(schema_matchers, None, None);
-    trace!("match_paths {paths:?}");
+    info!("match_paths {paths:?}");
     let results = paths
         .into_iter()
         .map(|path| {
