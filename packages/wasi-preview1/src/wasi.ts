@@ -1,4 +1,4 @@
-import { BigIntStats } from "node:fs";
+import crypto from "node:crypto";
 import { WASIAPI } from "./api.js";
 import { FSError, FileSystem } from "./fs.js";
 import * as error from "./error.js";
@@ -304,7 +304,7 @@ export function initWASI(config: WASIConfig): WASIAPI & WASIMeta {
       }
     },
     random_get: (buf, buf_len): number => {
-      crypto.getRandomValues(new Uint8Array(memory(), buf, buf_len));
+      crypto.randomFillSync(new Uint8Array(memory(), buf, buf_len));
       return 0;
     },
     clock_time_get: (id, _precision, ret_buf): number => {
