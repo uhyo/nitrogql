@@ -18,7 +18,7 @@
   "scripts": {
     "build": "tsc",
     "watch": "tsc --watch",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "check": "tsc"
   },
   "keywords": [
     "graphql"

@@ -8,17 +8,10 @@ jobs:
   publish:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: install rustup
         run: curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
-      - name: cache cargo
-        uses: actions/cache@v3
-        with:
-          path: |
-            ~/.cargo/bin/
-            ~/.cargo/registry/index/
-            ~/.cargo/registry/cache/
-          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+      - uses: Swatinem/rust-cache@v2
       - name: install additional targets
         run: rustup target add wasm32-wasi wasm32-unknown-unknown
       - uses: actions/setup-node@v3
@@ -31,6 +24,8 @@ jobs:
         run: cargo install wasm-snip
       - name: build rust
         run: ./build/build-rust.sh
+        env:
+          OPTIMIZE: "1"
       - name: build node
         run: ./build/build-node.sh
       - name: publish to npm (core)

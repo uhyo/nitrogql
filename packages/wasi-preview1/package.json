@@ -13,7 +13,8 @@
   "scripts": {
     "build": "tsc",
     "watch": "tsc --watch",
-    "test": "vitest"
+    "test": "vitest",
+    "check": "tsc"
   },
   "keywords": [
     "nitrogql"

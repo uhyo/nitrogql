@@ -12,10 +12,10 @@ on:
       - master
 
 jobs:
-  test:
+  unit-test-rust:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: install rustup
         run: curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
       - uses: Swatinem/rust-cache@v2
@@ -28,3 +28,42 @@ jobs:
       # currently `cargo wasi test` doesn't run, so ensure at least that it builds
       - name: build (wasi)
         run: cargo build --target wasm32-wasi
+  unit-test-js:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 18
+      - run: npm ci
+      - run: npm run check --workspaces --if-present
+      - run: npm test --workspaces --if-present
+  e2e-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: install rustup
+        run: curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+      - uses: Swatinem/rust-cache@v2
+      - name: install additional targets
+        run: rustup target add wasm32-wasi wasm32-unknown-unknown
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 18
+      - run: npm install
+      - name: build rust
+        run: ./build/build-rust.sh
+      - name: build node
+        run: ./build/build-node.sh
+      - name: run nitrogql in nextjs example
+        run: |
+          npm run generate
+          npm run build
+        working-directory: examples/nextjs
+      - name: run nitrogql in vite example
+        run: |
+          npm run generate
+          npm run build
+        working-directory: examples/vite
+
+

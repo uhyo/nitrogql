@@ -13,9 +13,7 @@
       "default": "./lib/index.mjs"
     }
   },
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
+  "scripts": {},
   "keywords": [
     "graphql"
   ],
