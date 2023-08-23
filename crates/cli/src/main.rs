@@ -12,7 +12,7 @@ use file_store::FileStore;
 use globmatch::wrappers::{build_matchers, match_paths};
 use graphql_type_system::Schema;
 use itertools::Itertools;
-use log::{info, trace};
+use log::info;
 use nitrogql_ast::{
     operation::OperationDocument, set_current_file_of_pos,
     type_system::TypeSystemOrExtensionDocument,

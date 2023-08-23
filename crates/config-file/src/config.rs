@@ -2,7 +2,7 @@ use std::{collections::HashMap, path::PathBuf, str::FromStr};
 
 use serde::Deserialize;
 
-use crate::parsing_utils::{default_true, deserialize_fromstr};
+use crate::parsing_utils::deserialize_fromstr;
 
 #[derive(Debug, Default)]
 pub struct Config {
@@ -71,36 +71,46 @@ impl FromStr for GenerateMode {
 #[derive(Debug, Default, Deserialize)]
 pub struct GenerateNameConfig {
     /// Suffix for type of operation result.
-    #[serde(rename = "operationResultTypeSuffix")]
+    #[serde(rename = "operationResultTypeSuffix", default)]
     pub operation_result_type_suffix: Option<String>,
     /// Suffix for type of variables for an operation.
-    #[serde(rename = "variablesTypeSuffix")]
+    #[serde(rename = "variablesTypeSuffix", default)]
     pub variables_type_suffix: Option<String>,
     /// Whether operation name should be capitalized.
-    #[serde(rename = "capitalizeOperationNames")]
+    #[serde(rename = "capitalizeOperationNames", default)]
     pub capitalize_operation_names: Option<bool>,
     /// Suffix for variable of query.
-    #[serde(rename = "queryVariableSuffix")]
+    #[serde(rename = "queryVariableSuffix", default)]
     pub query_variable_suffix: Option<String>,
     /// Suffix for variable of mutation.
-    #[serde(rename = "mutationVariableSuffix")]
+    #[serde(rename = "mutationVariableSuffix", default)]
     pub mutation_variable_suffix: Option<String>,
     /// Suffix for variable of subscription.
-    #[serde(rename = "subscriptionVariableSuffix")]
+    #[serde(rename = "subscriptionVariableSuffix", default)]
     pub subscription_variable_suffix: Option<String>,
 }
 
 /// Config related to exported names.
-#[derive(Debug, Default, Deserialize)]
+#[derive(Debug, Deserialize)]
 pub struct GenerateExportConfig {
     /// Whether operation is exported as a default export.
     /// Effective only when a document contains only one operation.
-    #[serde(rename = "defaultExportForOperation", default = "default_true")]
+    #[serde(rename = "defaultExportForOperation", default)]
     pub default_export_for_operation: bool,
     /// Whether operation result type is exported.
-    #[serde(rename = "operationResultType")]
+    #[serde(rename = "operationResultType", default)]
     pub operation_result_type: bool,
     /// Whether variables type is exported.
-    #[serde(rename = "variablesType")]
+    #[serde(rename = "variablesType", default)]
     pub variables_type: bool,
+}
+
+impl Default for GenerateExportConfig {
+    fn default() -> Self {
+        Self {
+            default_export_for_operation: true,
+            operation_result_type: false,
+            variables_type: false,
+        }
+    }
 }

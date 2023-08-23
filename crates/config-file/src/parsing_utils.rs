@@ -88,7 +88,3 @@ where
         T::from_str(v).map_err(|_| E::custom(format!("invalid enum value: {v}")))
     }
 }
-
-pub fn default_true() -> bool {
-    true
-}
