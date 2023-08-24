@@ -70,7 +70,7 @@ body {
    "main toc"
    "footer footer";
   grid-template-columns: 1fr auto;
-  grid-template-rows: auto auto auto auto;
+  grid-template-rows: auto auto 1fr auto;
 
   flex-flow: column nowrap;
   color: rgb(var(--foreground-rgb));

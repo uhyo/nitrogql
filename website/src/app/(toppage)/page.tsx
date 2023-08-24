@@ -31,10 +31,10 @@ export default function Home() {
       <HeadNav />
       <main className={styles.main}>
         <p>
-          <b>nitrogql</b> is a toolchain for using GraphQL with TypeScript. It
-          can <strong>generate TypeScript types</strong> from your GraphQL
-          schema and queries, and also <strong>provides static checking</strong>{" "}
-          for your queries.
+          <b>nitrogql</b> is a toolchain for using GraphQL in TypeScript
+          projects. It can <strong>generate TypeScript types</strong> from your
+          GraphQL schema and queries, and also{" "}
+          <strong>provides static checking</strong> for your queries.
         </p>
         <p>
           nitrogql is currently in <strong>beta</strong>. We are internally
