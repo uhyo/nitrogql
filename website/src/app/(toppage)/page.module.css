@@ -1,4 +1,4 @@
-.main hgroup {
+.header hgroup {
   max-width: 90vw;
   min-height: 12em;
   margin-inline: auto;
@@ -9,37 +9,37 @@
   font-family: var(--font-outfit);
 }
 
-.main hgroup > p:first-of-type {
+.header hgroup > p:first-of-type {
   grid-column: 1;
   grid-row: 1 / span 2;
   align-self: center;
 }
 
-.main hgroup img {
+.header hgroup img {
   max-width: 30vw;
   height: auto;
 }
 
-.main hgroup h1 {
+.header hgroup h1 {
   display: flex;
   flex-flow: row nowrap;
   align-items: center;
   font-size: min(5em, 15vw);
 }
 
-.main hgroup h1 > span {
+.header hgroup h1 > span {
   background: var(--nitrogql-gradient);
   color: transparent;
   background-clip: text;
   -webkit-background-clip: text;
 }
 
-.main hgroup > p:last-of-type {
+.header hgroup > p:last-of-type {
   font-size: 1.5em;
   font-weight: bold;
 }
 
-.main main > p {
+main.main > p {
   font-size: 1.2em;
 }
 

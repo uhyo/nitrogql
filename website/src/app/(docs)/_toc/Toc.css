@@ -1,13 +1,13 @@
 div.toc {
-  display: grid;
-  grid-template-columns: 1fr var(--toc-width);
+  grid-area: toc;
+  width: var(--toc-width);
 }
 
 div.toc nav {
   font-size: 0.9rem;
 }
 
-div.toc nav > div {
+div.toc nav {
   position: sticky;
   left: 0;
   top: 0;

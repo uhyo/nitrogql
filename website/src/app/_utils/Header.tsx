@@ -5,15 +5,17 @@ import styles from "./Header.module.css";
 
 export const Header: React.FC = () => {
   return (
-    <header className={styles.header}>
-      <Link href="/">
-        <h1>
-          <Image className={styles.logo} src={Logo} alt="nitrogql logo" />
-          <span>nitrogql</span>
-        </h1>
-      </Link>
+    <>
+      <header className={styles.header}>
+        <Link href="/">
+          <h1>
+            <Image className={styles.logo} src={Logo} alt="nitrogql logo" />
+            <span>nitrogql</span>
+          </h1>
+        </Link>
+      </header>
       <HeadNav />
-    </header>
+    </>
   );
 };
 

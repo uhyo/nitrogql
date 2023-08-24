@@ -6,20 +6,18 @@ export const Outline: React.FC<{
 }> = ({ toc, currentHeading }) => {
   return (
     <nav>
-      <div>
-        <h2>On this page</h2>
-        <ul>
-          {toc.map((item) => (
-            <li
-              key={item.id}
-              data-level={item.level}
-              data-current={item.id === currentHeading ? "true" : undefined}
-            >
-              <a href={`#${item.id}`}>{item.text}</a>
-            </li>
-          ))}
-        </ul>
-      </div>
+      <h2>On this page</h2>
+      <ul>
+        {toc.map((item) => (
+          <li
+            key={item.id}
+            data-level={item.level}
+            data-current={item.id === currentHeading ? "true" : undefined}
+          >
+            <a href={`#${item.id}`}>{item.text}</a>
+          </li>
+        ))}
+      </ul>
     </nav>
   );
 };

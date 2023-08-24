@@ -63,11 +63,32 @@ body {
 
 body {
   height: 100dvh;
-  display: flex;
+  display: grid;
+  grid-template-areas:
+   "header header"
+   "menu ."
+   "main toc"
+   "footer footer";
+  grid-template-columns: 1fr auto;
+  grid-template-rows: auto auto auto auto;
+
   flex-flow: column nowrap;
   color: rgb(var(--foreground-rgb));
   background: rgb(var(--background-rgb));
   font-family: sans-serif;
+}
+
+body > header {
+  grid-area: header;
+}
+body > nav {
+  grid-area: menu;
+}
+main {
+  grid-area: main;
+}
+body > footer {
+  grid-area: footer;
 }
 
 .toc {

@@ -15,8 +15,8 @@ export const Toc: React.FC<React.PropsWithChildren> = ({ children }) => {
 
   return (
     <>
+      {children}
       <div className="toc">
-        {children}
         <Outline toc={toc} currentHeading={currentHeading} />
       </div>
     </>
