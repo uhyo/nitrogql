@@ -96,7 +96,7 @@ body > footer {
 }
 
 main {
-  max-width: var(--contents-width);
+  width: var(--contents-width);
   margin-inline: auto;
 }
 

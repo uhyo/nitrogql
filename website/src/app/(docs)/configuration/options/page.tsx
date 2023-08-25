@@ -143,7 +143,7 @@ extensions:
         <p>
           In order to import <code>.graphql</code> files as modules, you also
           need to configure your bundler to handle <code>.graphql</code> files.
-          See <Link href="/getting-started">Getting Started</Link>.
+          See <Link href="/guides/getting-started">Getting Started</Link>.
         </p>
 
         <h4>with-loader-ts-4.0</h4>
@@ -156,7 +156,7 @@ extensions:
         <p>
           In order to import <code>.graphql</code> files as modules, you also
           need to configure your bundler to handle <code>.graphql</code> files.
-          See <Link href="/getting-started">Getting Started</Link>.
+          See <Link href="/guides/getting-started">Getting Started</Link>.
         </p>
 
         <h4>standalone-ts-4.0</h4>
@@ -330,7 +330,7 @@ export const UserType = {
           .
         </p>
         <Hint>
-          💡 Operation result type is not visible unless you set
+          💡 Operation result type is not visible unless you set{" "}
           <code>export.operationResultType</code> to <code>true</code>.
         </Hint>
 
@@ -345,7 +345,7 @@ export const UserType = {
           <code>GetUserVariables</code>.
         </p>
         <Hint>
-          💡 Operation variables type is not visible unless you set
+          💡 Operation variables type is not visible unless you set{" "}
           <code>export.operationResultType</code> to <code>true</code>.
         </Hint>
 
@@ -387,8 +387,8 @@ export const UserType = {
 
         <h3 id="generate.export">generate.export</h3>
         <p>
-          Set of configurations about how generated code is exported. Default
-          settings are:
+          Set of configurations about how generated code should export generated
+          types and variables. Default settings are:
         </p>
         <Highlight language="yaml">
           {`extensions:

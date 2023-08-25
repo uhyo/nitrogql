@@ -4,12 +4,17 @@ import { Hint } from "@/app/_utils/Hint";
 import { Highlight } from "@/app/_utils/Highlight";
 import { Figures } from "@/app/_utils/Figures";
 import ScreenshotGeneratedTypes from "./figures/screenshot-generated-types.png";
-import { Toc } from "../_toc";
+import { Toc } from "../../_toc";
+import { Breadcrumb } from "@/app/_utils/Breadcrumb";
 
 export default function GettingStarted() {
   return (
     <Toc>
       <main>
+        <Breadcrumb
+          parents={[{ label: "Guides", href: "/guides" }]}
+          current="Getting Started"
+        />
         <h2>Getting Started</h2>
         <p>
           This page guides you through the steps to get started with nitrogql.

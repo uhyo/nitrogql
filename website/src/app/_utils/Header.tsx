@@ -24,7 +24,7 @@ export const HeadNav: React.FC = () => {
     <nav className={styles.nav}>
       <ul>
         <li>
-          <Link href="/getting-started">Getting Started</Link>
+          <Link href="/guides">Guides</Link>
         </li>
         <li>
           <Link href="/configuration">Configuration</Link>
