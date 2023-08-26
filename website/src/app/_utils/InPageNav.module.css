@@ -2,11 +2,14 @@
   margin-block: 1em;
   display: flex;
   flex-flow: row wrap;
+  justify-content: start;
   gap: 1em;
 }
 
 .nav > a {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  max-width: 20em;
   border: 1px solid rgb(var(--nitrogql-red), 0.4);
   border-radius: 0.5em;
   padding: 1em;

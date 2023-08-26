@@ -108,6 +108,12 @@ code {
   font-family: var(--font-mono);
 }
 
+hr {
+  margin-block: 1em;
+  border: none;
+  border-bottom: 1px solid rgb(var(--nitrogql-dark-red));
+}
+
 h2 {
   font-family: var(--font-outfit);
   font-size: 1.8em;
