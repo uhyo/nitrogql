@@ -2,6 +2,10 @@ use std::path::PathBuf;
 
 use crate::{parse_config, GenerateMode};
 
+mod export;
+mod name;
+mod r#type;
+
 #[test]
 fn parse_schema_and_documents() {
     let config = r#"

@@ -16,9 +16,10 @@ pub struct Config {
 
 /// Config related to the 'generate' command.
 #[derive(Debug, Default, Deserialize)]
+#[serde(default)]
 pub struct GenerateConfig {
     /// Mode of generation.
-    #[serde(deserialize_with = "deserialize_fromstr", default)]
+    #[serde(deserialize_with = "deserialize_fromstr")]
     pub mode: GenerateMode,
     /// Output file path for schema.
     #[serde(rename = "schemaOutput")]
@@ -28,16 +29,13 @@ pub struct GenerateConfig {
     #[serde(rename = "schemaModuleSpecifier")]
     pub schema_module_specifier: Option<String>,
     /// Config related to generated types.
-    #[serde(default)]
     pub r#type: GenerateTypeConfig,
     /// Config related to generated names.
-    #[serde(default)]
     pub name: GenerateNameConfig,
     /// Config related to exporting generated names.
-    #[serde(default)]
     pub export: GenerateExportConfig,
     /// Whether to emit runtime for generated schema types.
-    #[serde(rename = "emitSchemaRuntime", default)]
+    #[serde(rename = "emitSchemaRuntime")]
     pub emit_schema_runtime: bool,
 }
 
@@ -69,47 +67,50 @@ impl FromStr for GenerateMode {
 
 /// Config related to generated types.
 #[derive(Debug, Default, Deserialize)]
+#[serde(default)]
 pub struct GenerateTypeConfig {
     /// Type of scalars.
-    #[serde(rename = "scalarTypes", default)]
+    #[serde(rename = "scalarTypes")]
     pub scalar_types: HashMap<String, String>,
 }
 
 /// Config related to names of generated variables and types.
 #[derive(Debug, Default, Deserialize)]
+#[serde(default)]
 pub struct GenerateNameConfig {
     /// Suffix for type of operation result.
-    #[serde(rename = "operationResultTypeSuffix", default)]
+    #[serde(rename = "operationResultTypeSuffix")]
     pub operation_result_type_suffix: Option<String>,
     /// Suffix for type of variables for an operation.
-    #[serde(rename = "variablesTypeSuffix", default)]
+    #[serde(rename = "variablesTypeSuffix")]
     pub variables_type_suffix: Option<String>,
     /// Whether operation name should be capitalized.
-    #[serde(rename = "capitalizeOperationNames", default)]
+    #[serde(rename = "capitalizeOperationNames")]
     pub capitalize_operation_names: Option<bool>,
     /// Suffix for variable of query.
-    #[serde(rename = "queryVariableSuffix", default)]
+    #[serde(rename = "queryVariableSuffix")]
     pub query_variable_suffix: Option<String>,
     /// Suffix for variable of mutation.
-    #[serde(rename = "mutationVariableSuffix", default)]
+    #[serde(rename = "mutationVariableSuffix")]
     pub mutation_variable_suffix: Option<String>,
     /// Suffix for variable of subscription.
-    #[serde(rename = "subscriptionVariableSuffix", default)]
+    #[serde(rename = "subscriptionVariableSuffix")]
     pub subscription_variable_suffix: Option<String>,
 }
 
 /// Config related to exported names.
 #[derive(Debug, Deserialize)]
+#[serde(default)]
 pub struct GenerateExportConfig {
     /// Whether operation is exported as a default export.
     /// Effective only when a document contains only one operation.
-    #[serde(rename = "defaultExportForOperation", default)]
+    #[serde(rename = "defaultExportForOperation")]
     pub default_export_for_operation: bool,
     /// Whether operation result type is exported.
-    #[serde(rename = "operationResultType", default)]
+    #[serde(rename = "operationResultType")]
     pub operation_result_type: bool,
     /// Whether variables type is exported.
-    #[serde(rename = "variablesType", default)]
+    #[serde(rename = "variablesType")]
     pub variables_type: bool,
 }
 
