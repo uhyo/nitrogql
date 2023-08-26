@@ -12,6 +12,7 @@ export default function Guides() {
           <Link href="/guides/using-graphql">
             Using GraphQL in TypeScript projects
           </Link>
+          <Link href="/guides/monorepo">Monorepo Guide</Link>
         </InPageNav>
       </main>
     </Toc>
