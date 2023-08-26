@@ -6,6 +6,6 @@ extensions:
       mode: with-loader-ts-5.0
       schemaOutput: ./src/generated/schema.d.ts
       schemaModuleSpecifier: "@/generated/schema"
-      types:
+      type:
         scalarTypes:
           Date: string
