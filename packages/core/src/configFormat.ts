@@ -36,9 +36,16 @@ export type NitrogqlConfig = {
                      */
                     schemaModuleSpecifier?: string | undefined;
                     /**
-                     * Mapping from GraphQL scalar types to TypeScript types.
+                     * Config related to generated types.
                      */
-                    scalarTypes?: Record<string, string> | undefined;
+                    type?:
+                      | {
+                          /**
+                           * Mapping from GraphQL scalar types to TypeScript types.
+                           */
+                          scalarTypes?: Record<string, string> | undefined;
+                        }
+                      | undefined;
                     /**
                      * Config related to generated names.
                      */

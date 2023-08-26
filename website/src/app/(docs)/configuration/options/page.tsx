@@ -212,37 +212,6 @@ extensions:
           <code>app/generated/schema.ts</code>).
         </p>
 
-        <h3 id="generate.scalarTypes">generate.scalarTypes</h3>
-        <p>
-          Configures how GraphQL scalar types are mapped to TypeScript types.
-          The default mapping is:
-        </p>
-        <Highlight language="yaml">
-          {`extensions:
-  ID: string
-  String: string
-  Boolean: boolean
-  Int: number
-  Float: number`}
-        </Highlight>
-        <p>
-          If you declare a custom scalar type in your schema, you must specify
-          the mapping in the configuration file. Any TypeScript code is allowed
-          as long as it is valid as a type.
-        </p>
-        <p>
-          Mapping for built-in scalar types need not be specified unless you
-          want to override them.
-        </p>
-        <p>Example:</p>
-        <Highlight language="yaml">
-          {`extensions:
-  nitrogql:
-    generate:
-      scalarTypes:
-        Date: Date`}
-        </Highlight>
-
         <h3 id="generate.emitSchemaRuntime">generate.emitSchemaRuntime</h3>
         <p>
           If <code>true</code>, emit runtime code for generated schema types
@@ -274,6 +243,41 @@ export const UserType = {
   NormalUser: "NormalUser",
   PremiumUser: "PremiumUser",
 } as const;`}
+        </Highlight>
+
+        <h3 id="generate.type">generate.type</h3>
+        <p>Set of configurations about details of generated types.</p>
+
+        <h4 id="generate.name.scalarTypes">scalarTypes</h4>
+        <p>
+          Configures how GraphQL scalar types are mapped to TypeScript types.
+          The default mapping is:
+        </p>
+        <Highlight language="yaml">
+          {`scalarTypes:
+  ID: string
+  String: string
+  Boolean: boolean
+  Int: number
+  Float: number`}
+        </Highlight>
+        <p>
+          If you declare a custom scalar type in your schema, you must specify
+          the mapping in the configuration file. Any TypeScript code is allowed
+          as long as it is valid as a type.
+        </p>
+        <p>
+          Mapping for built-in scalar types need not be specified unless you
+          want to override them.
+        </p>
+        <p>Example:</p>
+        <Highlight language="yaml">
+          {`extensions:
+  nitrogql:
+    generate:
+      type:
+        scalarTypes:
+          Date: Date`}
         </Highlight>
 
         <h3 id="generate.name">generate.name</h3>

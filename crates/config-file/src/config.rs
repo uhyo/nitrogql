@@ -27,9 +27,9 @@ pub struct GenerateConfig {
     /// Defaults to relative paths.
     #[serde(rename = "schemaModuleSpecifier")]
     pub schema_module_specifier: Option<String>,
-    /// Mapping from GraphQL scalar types to TypeScript types.
-    #[serde(rename = "scalarTypes", default)]
-    pub scalar_types: HashMap<String, String>,
+    /// Config related to generated types.
+    #[serde(default)]
+    pub r#type: GenerateTypeConfig,
     /// Config related to generated names.
     #[serde(default)]
     pub name: GenerateNameConfig,
@@ -65,6 +65,14 @@ impl FromStr for GenerateMode {
             _ => Err(FromStrError),
         }
     }
+}
+
+/// Config related to generated types.
+#[derive(Debug, Default, Deserialize)]
+pub struct GenerateTypeConfig {
+    /// Type of scalars.
+    #[serde(rename = "scalarTypes", default)]
+    pub scalar_types: HashMap<String, String>,
 }
 
 /// Config related to names of generated variables and types.

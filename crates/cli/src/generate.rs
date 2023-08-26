@@ -84,6 +84,7 @@ pub fn run_generate(mut context: CliContext) -> Result<CliContext> {
                     config
                         .config
                         .generate
+                        .r#type
                         .scalar_types
                         .iter()
                         .map(|(key, value)| (key.to_owned(), value.to_owned())),

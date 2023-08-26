@@ -63,18 +63,19 @@ documents: src/**/*.graphql
 extensions:
     nitrogql:
         generate:
-            scalarTypes:
-                Date: Date
-                BigInt: bigint
-                Int: number
-                Float: number
-                ID: string
-                String: string
+            type:
+                scalarTypes:
+                    Date: Date
+                    BigInt: bigint
+                    Int: number
+                    Float: number
+                    ID: string
+                    String: string
 "#;
 
     let config = parse_config(config).unwrap();
     assert_eq!(
-        config.generate.scalar_types,
+        config.generate.r#type.scalar_types,
         vec![
             ("Date".to_owned(), "Date".to_owned()),
             ("BigInt".to_owned(), "bigint".to_owned()),
