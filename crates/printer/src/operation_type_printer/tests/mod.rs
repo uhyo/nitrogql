@@ -192,6 +192,29 @@ fn query_variables() {
 }
 
 #[test]
+fn variable_disallow_undefined() {
+    let doc = parse_operation_document(
+        "
+        query testQuery($foo: Int!, $bar: String) {
+            me(foo: $foo, bar: $bar) {
+                id name type age
+            }
+        }
+        ",
+    )
+    .unwrap();
+    let printed = print_document(
+        &doc,
+        OperationTypePrinterOptions {
+            base_options: Default::default(),
+            allow_undefined_as_optional_input: false,
+            ..Default::default()
+        },
+    );
+    assert_snapshot!(printed);
+}
+
+#[test]
 fn print_values() {
     let doc = parse_operation_document(
         "

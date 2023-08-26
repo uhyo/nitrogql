@@ -36,6 +36,8 @@ pub struct OperationTypePrinterOptions {
     pub variables_type_suffix: String,
     /// Suffix for type of operation result.
     pub operation_result_type_suffix: String,
+    /// Whether to allow undefined as input value.
+    pub allow_undefined_as_optional_input: bool,
 }
 
 impl Default for OperationTypePrinterOptions {
@@ -48,6 +50,7 @@ impl Default for OperationTypePrinterOptions {
             typed_document_node_source: "@graphql-typed-document-node/core".to_owned(),
             variables_type_suffix: "Variables".to_owned(),
             operation_result_type_suffix: "Result".to_owned(),
+            allow_undefined_as_optional_input: true,
         }
     }
 }

@@ -247,6 +247,16 @@ export const UserType = {
 
         <h3 id="generate.type">generate.type</h3>
         <p>Set of configurations about details of generated types.</p>
+        <p>Default settings are:</p>
+        <Highlight language="yaml">
+          {`extensions:
+  nitrogql:
+    generate:
+      type:
+        # default values
+        scalarTypes: {}
+        allowUndefinedAsOptionalInput: true`}
+        </Highlight>
 
         <h4 id="generate.name.scalarTypes">scalarTypes</h4>
         <p>
@@ -279,6 +289,28 @@ export const UserType = {
         scalarTypes:
           Date: Date`}
         </Highlight>
+
+        <h4 id="generate.type.allowUndefinedAsOptionalInput">
+          allowUndefinedAsOptionalInput
+        </h4>
+        <p>
+          In GraphQL, there is no explicit concept of optional fields. Instead,
+          you use fields of nullable types to represent optional fields.
+        </p>
+        <p>
+          If this option is set to <code>true</code>, <code>undefined</code> is
+          allowed as an input value for nullable fields. This also implies that
+          you can omit optional fields.
+        </p>
+        <p>
+          If this option is set to <code>false</code>, you must explicitly
+          provide <code>null</code> for optional fields.
+        </p>
+        <p>
+          This option affects input types (those defined with GraphQL&apos;s{" "}
+          <code>input</code> keyword) and operation variables. This option
+          defaults to <code>true</code>.
+        </p>
 
         <h3 id="generate.name">generate.name</h3>
         <p>

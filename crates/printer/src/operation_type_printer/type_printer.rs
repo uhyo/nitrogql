@@ -415,7 +415,20 @@ pub fn get_type_for_variable_definitions<'src, S: Text<'src>>(
                     name.name.to_string(),
                 )
             });
-            TSType::object(vec![(property_name, field_type, None)])
+            let is_optional =
+                !def.r#type.is_nonnull() && context.options.allow_undefined_as_optional_input;
+            let field_type = if is_optional {
+                ts_union(vec![field_type, TSType::Undefined])
+            } else {
+                field_type
+            };
+            TSType::Object(vec![ObjectField {
+                key: property_name.into(),
+                optional: is_optional,
+                r#type: field_type,
+                readonly: true,
+                description: None,
+            }])
         })
         .collect();
 

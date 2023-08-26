@@ -63,11 +63,23 @@ impl FromStr for GenerateMode {
 }
 
 /// Config related to generated types.
-#[derive(Debug, Default, Deserialize)]
+#[derive(Debug, Deserialize)]
 #[serde(default, rename_all = "camelCase")]
 pub struct GenerateTypeConfig {
     /// Type of scalars.
     pub scalar_types: HashMap<String, String>,
+    /// Whether to allow undefined as input value
+    /// for nullable input fields.
+    pub allow_undefined_as_optional_input: bool,
+}
+
+impl Default for GenerateTypeConfig {
+    fn default() -> Self {
+        Self {
+            scalar_types: HashMap::new(),
+            allow_undefined_as_optional_input: true,
+        }
+    }
 }
 
 /// Config related to names of generated variables and types.

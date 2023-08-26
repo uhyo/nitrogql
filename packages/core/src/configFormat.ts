@@ -44,6 +44,12 @@ export type NitrogqlConfig = {
                            * Mapping from GraphQL scalar types to TypeScript types.
                            */
                           scalarTypes?: Record<string, string> | undefined;
+                          /**
+                           * Whether to allow undefined as input value
+                           * for nullable fields.
+                           * @default true
+                           */
+                          allowUndefinedAsOptionalInput?: boolean | undefined;
                         }
                       | undefined;
                     /**

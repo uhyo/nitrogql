@@ -324,12 +324,18 @@ impl TypePrinter for InputObjectTypeDefinition<'_> {
                         TSType::TypeVariable((&name.name).into())
                     })
                     .into_readonly();
+                    let is_optional = context.options.input_nullable_field_is_optional
+                        && !field.r#type.is_nonnull();
+                    let ts_type = if is_optional {
+                        TSType::Union(vec![ts_type, TSType::Undefined])
+                    } else {
+                        ts_type
+                    };
                     ObjectField {
                         key: (&field.name).into(),
                         r#type: ts_type,
                         readonly: true,
-                        optional: context.options.input_nullable_field_is_optional
-                            && !field.r#type.is_nonnull(),
+                        optional: is_optional,
                         description: make_ts_description(
                             &field.description,
                             &schema_field.deprecation,

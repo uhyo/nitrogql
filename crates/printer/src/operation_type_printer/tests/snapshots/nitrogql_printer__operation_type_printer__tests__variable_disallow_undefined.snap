@@ -16,7 +16,7 @@ type TestQueryResult = Schema.__SelectionSet<Schema.Query, {
 
 type TestQueryVariables = {
   readonly foo: Schema.Int;
-  readonly bar?: Schema.String | null | undefined;
+  readonly bar: Schema.String | null;
 };
 
 declare const TestQueryQuery: TypedDocumentNode<TestQueryResult, TestQueryVariables>;

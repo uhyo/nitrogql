@@ -11,6 +11,7 @@ documents: []
     let config = parse_config(config).unwrap();
     let ty = config.generate.r#type;
     assert_eq!(ty.scalar_types, HashMap::new());
+    assert!(ty.allow_undefined_as_optional_input);
 }
 
 #[test]
@@ -26,6 +27,7 @@ extensions:
     let config = parse_config(config).unwrap();
     let ty = config.generate.r#type;
     assert_eq!(ty.scalar_types, HashMap::new());
+    assert!(ty.allow_undefined_as_optional_input);
 }
 
 #[test]
@@ -40,6 +42,7 @@ extensions:
                 scalarTypes:
                     DateTime: Date
                     JSON: any
+                allowUndefinedAsInput: false
 "#;
     let config = parse_config(config).unwrap();
     let ty = config.generate.r#type;
@@ -47,4 +50,5 @@ extensions:
     expected.insert("DateTime".to_string(), "Date".to_string());
     expected.insert("JSON".to_string(), "any".to_string());
     assert_eq!(ty.scalar_types, expected);
+    assert!(!ty.allow_undefined_as_optional_input);
 }

@@ -43,9 +43,9 @@ export type HasID = User | Bot;
 export type UserType = "NormalUser" | "PremiumUser";
 
 export type UserSearchQuery = {
-  readonly age?: Int | null;
-  readonly name?: String | null;
-  readonly keywords?: readonly (String)[] | null;
+  readonly age?: Int | null | undefined;
+  readonly name?: String | null | undefined;
+  readonly keywords?: readonly (String)[] | null | undefined;
 };
 
 

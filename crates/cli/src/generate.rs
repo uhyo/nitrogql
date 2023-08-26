@@ -78,6 +78,11 @@ pub fn run_generate(mut context: CliContext) -> Result<CliContext> {
 
                 let mut options = SchemaTypePrinterOptions {
                     emit_schema_runtime: config.config.generate.emit_schema_runtime,
+                    input_nullable_field_is_optional: config
+                        .config
+                        .generate
+                        .r#type
+                        .allow_undefined_as_optional_input,
                     ..SchemaTypePrinterOptions::default()
                 };
                 options.scalar_types.extend(

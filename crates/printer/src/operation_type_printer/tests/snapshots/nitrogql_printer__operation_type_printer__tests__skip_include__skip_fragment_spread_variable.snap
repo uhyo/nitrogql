@@ -20,7 +20,7 @@ type Result = Schema.__SelectionSet<Schema.Query, {
 }, {}>;
 
 type Variables = {
-  skip: Schema.Boolean;
+  readonly skip: Schema.Boolean;
 };
 
 declare const Query: TypedDocumentNode<Result, Variables>;

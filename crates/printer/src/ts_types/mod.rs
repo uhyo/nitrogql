@@ -27,7 +27,7 @@ pub enum TSType {
     /// Intersection type
     Intersection(Vec<TSType>),
     // /// Undefined
-    // Undefined,
+    Undefined,
     /// Null
     Null,
     /// Never
@@ -214,6 +214,9 @@ impl TSType {
             TSType::Null => {
                 writer.write("null");
             }
+            TSType::Undefined => {
+                writer.write("undefined");
+            }
             TSType::Never => {
                 writer.write("never");
             }
@@ -254,6 +257,7 @@ impl TSType {
             | t @ TSType::NamespaceMember(_, _)
             | t @ TSType::Never
             | t @ TSType::Null
+            | t @ TSType::Undefined
             | t @ TSType::Unknown => t,
         }
     }
