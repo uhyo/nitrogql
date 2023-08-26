@@ -42,7 +42,7 @@ extensions:
                 scalarTypes:
                     DateTime: Date
                     JSON: any
-                allowUndefinedAsInput: false
+                allowUndefinedAsOptionalInput: false
 "#;
     let config = parse_config(config).unwrap();
     let ty = config.generate.r#type;
