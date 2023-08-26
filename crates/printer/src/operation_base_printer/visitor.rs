@@ -1,6 +1,8 @@
 use nitrogql_ast::operation::{FragmentDefinition, OperationDefinition};
 use sourcemap_writer::SourceMapWriter;
 
+use super::OperationNames;
+
 pub trait OperationPrinterVisitor {
     /// Prints header of a document.
     fn print_header(&self, writer: &mut impl SourceMapWriter);
@@ -29,7 +31,7 @@ pub trait OperationPrinterVisitor {
 #[derive(Copy, Clone, Debug)]
 pub struct PrintOperationContext<'a> {
     /// Name of the variable for this operation.
-    pub var_name: &'a str,
+    pub operation_names: &'a OperationNames,
     /// Whether this operation is exported.
     pub exported: bool,
     /// Whether input type of this operation is exported.

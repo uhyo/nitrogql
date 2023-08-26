@@ -42,7 +42,10 @@ impl<'a, 'src> OperationPrinterVisitor for OperationJSPrinterVisitor<'a, 'src> {
             writer.write("export ");
         }
         writer.write("const ");
-        writer.write_for(context.var_name, &operation.name_pos());
+        writer.write_for(
+            &context.operation_names.operation_variable_name,
+            &operation.name_pos(),
+        );
         writer.write(" = ");
         // To follow the community conventions, generated JSON has only one operation in it
         let this_document = self
@@ -73,7 +76,7 @@ impl<'a, 'src> OperationPrinterVisitor for OperationJSPrinterVisitor<'a, 'src> {
         writer: &mut impl SourceMapWriter,
     ) {
         writer.write("export { ");
-        writer.write(context.var_name);
+        writer.write(&context.operation_names.operation_variable_name);
         writer.write(" as default };\n\n");
     }
 }

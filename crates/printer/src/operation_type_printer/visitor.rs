@@ -111,7 +111,7 @@ impl<'a, 'src> OperationPrinterVisitor for OperationTypePrinterVisitor<'a, 'src>
         let operation = &context.operation;
         let result_type_name = format!(
             "{}{}",
-            context.var_name, self.options.operation_result_type_suffix
+            context.operation_names.operation_name, self.options.operation_result_type_suffix
         );
         if context.export_result_type {
             writer.write("export ");
@@ -144,8 +144,10 @@ impl<'a, 'src> OperationPrinterVisitor for OperationTypePrinterVisitor<'a, 'src>
             .map_or(TSType::empty_object(), |v| {
                 get_type_for_variable_definitions(&type_printer_context, v)
             });
-        let input_variable_name =
-            format!("{}{}", context.var_name, self.options.variables_type_suffix);
+        let input_variable_name = format!(
+            "{}{}",
+            context.operation_names.operation_name, self.options.variables_type_suffix
+        );
 
         if context.export_input_type {
             writer.write("export ");
@@ -162,7 +164,10 @@ impl<'a, 'src> OperationPrinterVisitor for OperationTypePrinterVisitor<'a, 'src>
             writer.write("declare ");
         }
         writer.write("const ");
-        writer.write_for(context.var_name, &operation.name_pos());
+        writer.write_for(
+            &context.operation_names.operation_variable_name,
+            &operation.name_pos(),
+        );
         writer.write_for(": ", &operation.selection_set);
         writer.write("TypedDocumentNode<");
         writer.write(&result_type_name);
@@ -236,7 +241,7 @@ impl<'a, 'src> OperationPrinterVisitor for OperationTypePrinterVisitor<'a, 'src>
         writer: &mut impl SourceMapWriter,
     ) {
         writer.write("export { ");
-        writer.write(context.var_name);
+        writer.write(&context.operation_names.operation_variable_name);
         writer.write(" as default };\n\n");
     }
 }

@@ -5,7 +5,7 @@ expression: printed
 import type { TypedDocumentNode } from "@graphql-typed-document-node/core";
 import type * as Schema from "";
 
-type QueryResult = Schema.__SelectionSet<Schema.Query, {
+type TestQueryResult = Schema.__SelectionSet<Schema.Query, {
   me: Schema.__SelectionSet<Schema.User, {
     id: Schema.ID;
     name: Schema.String;
@@ -14,13 +14,13 @@ type QueryResult = Schema.__SelectionSet<Schema.Query, {
   }, {}>;
 }, {}>;
 
-type QueryVariables = {
+type TestQueryVariables = {
   foo: Schema.Int;
   bar: Schema.String | null;
 };
 
-declare const Query: TypedDocumentNode<QueryResult, QueryVariables>;
+declare const TestQueryQuery: TypedDocumentNode<TestQueryResult, TestQueryVariables>;
 
-export { Query as default };
+export { TestQueryQuery as default };
 
 

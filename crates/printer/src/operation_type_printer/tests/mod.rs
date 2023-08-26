@@ -81,7 +81,7 @@ fn basic_type_printing() {
 fn export_input_and_result_type() {
     let doc = parse_operation_document(
         "
-        query {
+        query sampleQuery {
             me {
                 id name type age
             }
@@ -107,7 +107,7 @@ fn export_input_and_result_type() {
 fn fragment_spread() {
     let doc = parse_operation_document(
         "
-        query {
+        query test{
             me {
                 id name type age
                 posts {
@@ -130,7 +130,7 @@ fn fragment_spread() {
 fn fragment_spread_cond() {
     let doc = parse_operation_document(
         "
-        query {
+        query fooBar123 {
             me {
                 id name type age
                 posts {
@@ -179,7 +179,7 @@ fn fragment_inline_spread() {
 fn query_variables() {
     let doc = parse_operation_document(
         "
-        query($foo: Int!, $bar: String) {
+        query testQuery($foo: Int!, $bar: String) {
             me(foo: $foo, bar: $bar) {
                 id name type age
             }

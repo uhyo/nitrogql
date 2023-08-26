@@ -5,16 +5,16 @@ expression: result
 import type { TypedDocumentNode } from "@graphql-typed-document-node/core";
 import type * as Schema from "";
 
-type QueryResult = Schema.__SelectionSet<Schema.Query, {
+type Result = Schema.__SelectionSet<Schema.Query, {
   me: Schema.__SelectionSet<Schema.User, {
     id: Schema.ID;
     name: Schema.String;
   }, {}>;
 }, {}>;
 
-type QueryVariables = {};
+type Variables = {};
 
-const Query: TypedDocumentNode<QueryResult, QueryVariables> = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","variableDefinitions":[],"directives":[],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"me"},"arguments":[],"directives":[],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"},"arguments":[],"directives":[]},{"kind":"Field","name":{"kind":"Name","value":"name"},"arguments":[],"directives":[]}]}}]}}]} as unknown as TypedDocumentNode<QueryResult, QueryVariables>;
+const Query: TypedDocumentNode<Result, Variables> = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","variableDefinitions":[],"directives":[],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"me"},"arguments":[],"directives":[],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"},"arguments":[],"directives":[]},{"kind":"Field","name":{"kind":"Name","value":"name"},"arguments":[],"directives":[]}]}}]}}]} as unknown as TypedDocumentNode<Result, Variables>;
 
 export { Query as default };
 

@@ -46,9 +46,9 @@ where
         for d in document.definitions.iter() {
             match d {
                 ExecutableDefinition::OperationDefinition(ref def) => {
-                    let var_name = operation_variable_name(&self.options, def);
+                    let operation_names = operation_variable_name(&self.options, def);
                     let context = PrintOperationContext {
-                        var_name: &var_name,
+                        operation_names: &operation_names,
                         exported: self.options.named_export_for_operation,
                         export_input_type: self.options.export_input_type,
                         export_result_type: self.options.export_result_type,
@@ -77,11 +77,19 @@ where
     }
 }
 
+#[derive(Debug)]
+pub struct OperationNames {
+    /// The (possibly capitalized) name of the operation.
+    pub operation_name: String,
+    /// The name of the variable that holds the operation.
+    pub operation_variable_name: String,
+}
+
 /// Calculates a variable name for given operation.
 pub fn operation_variable_name(
     options: &OperationBasePrinterOptions,
     operation: &OperationDefinition,
-) -> String {
+) -> OperationNames {
     let capitalized_name = if options.capitalize_operation_names {
         operation
             .name
@@ -93,7 +101,7 @@ pub fn operation_variable_name(
             .map(|name| name.name.to_owned())
             .unwrap_or(String::new())
     };
-    format!(
+    let operation_variable_name = format!(
         "{}{}",
         capitalized_name,
         match operation.operation_type {
@@ -101,5 +109,10 @@ pub fn operation_variable_name(
             OperationType::Mutation => &options.mutation_variable_suffix,
             OperationType::Subscription => &options.subscription_variable_suffix,
         }
-    )
+    );
+
+    OperationNames {
+        operation_name: capitalized_name,
+        operation_variable_name,
+    }
 }
