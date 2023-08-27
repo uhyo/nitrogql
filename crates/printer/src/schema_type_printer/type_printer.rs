@@ -49,7 +49,7 @@ impl TypePrinter for TypeSystemDocument<'_> {
             "type __Beautify<Obj> = { [K in keyof Obj]: Obj[K] } & {};
 export type __SelectionSet<Orig, Obj, Others> =
   __Beautify<Pick<{
-    [K in keyof Orig]: Obj extends Record<K, infer V> ? V : unknown
+    [K in keyof Orig]: Obj extends { [P in K]?: infer V } ? V : unknown
   }, Extract<keyof Orig, keyof Obj>> & Others>;
 ",
         );
