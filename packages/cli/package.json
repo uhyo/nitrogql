@@ -1,6 +1,6 @@
 {
   "name": "@nitrogql/cli",
-  "version": "1.0.0-beta.8",
+  "version": "1.0.0-beta.9",
   "description": "GraphQL + TypeScript toolchain",
   "main": "bin/index.mjs",
   "types": "./types.d.ts",
@@ -28,7 +28,7 @@
     "node": "18.15.0"
   },
   "dependencies": {
-    "@nitrogql/core": "1.0.0-beta.8",
-    "@nitrogql/wasi-preview1": "1.0.0-beta.8"
+    "@nitrogql/core": "1.0.0-beta.9",
+    "@nitrogql/wasi-preview1": "1.0.0-beta.9"
   }
 }

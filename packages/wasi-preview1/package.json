@@ -1,6 +1,6 @@
 {
   "name": "@nitrogql/wasi-preview1",
-  "version": "1.0.0-beta.8",
+  "version": "1.0.0-beta.9",
   "description": "WASI implementation for use by nitrogql",
   "repository": {
     "type": "git",
