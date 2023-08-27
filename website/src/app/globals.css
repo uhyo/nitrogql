@@ -133,8 +133,9 @@ h3 {
 }
 
 h4 {
-  margin-top: 1.5em;
+  margin-top: 1.75em;
   margin-bottom: 0.5em;
+  font-size: 1.1em;
 }
 
 ul, ol {
@@ -146,6 +147,20 @@ ul li, ol li {
   margin-block: 0.5em;
 }
 
+table {
+  margin-block: 1em;
+  border-collapse: collapse;
+  border-spacing: 0;
+  max-width: 100%;
+  overflow: auto;
+  font-size: 0.9em;
+}
+
+table th, table td {
+  padding: 0.5em 1em;
+  border-bottom: 1px solid rgb(var(--nitrogql-light-red));
+}
+
 p + p {
-  margin-block-start: 0.75em;
+  margin-block-start: 1.25em;
 }

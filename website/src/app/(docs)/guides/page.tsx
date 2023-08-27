@@ -13,6 +13,9 @@ export default function Guides() {
             Using GraphQL in TypeScript projects
           </Link>
           <Link href="/guides/monorepo">Monorepo Guide</Link>
+          <Link href="/guides/migrating-from-graphql-codegen">
+            Migrating from GraphQL Code Generator
+          </Link>
         </InPageNav>
       </main>
     </Toc>
