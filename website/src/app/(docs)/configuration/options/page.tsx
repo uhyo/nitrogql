@@ -431,14 +431,14 @@ export const UserType = {
   nitrogql:
     generate:
       export:
-        defaultExportForOperations: true
+        defaultExportForOperation: true
         operationResultType: false
         variablesType: false
 `}
         </Highlight>
 
-        <h4 id="generate.export.defaultExportForOperations">
-          defaultExportForOperations
+        <h4 id="generate.export.defaultExportForOperation">
+          defaultExportForOperation
         </h4>
         <p>
           If <code>true</code>, a generated operation document will be exported
@@ -450,7 +450,7 @@ export const UserType = {
           so that you can import it like:
         </p>
         <Highlight language="typescript">
-          {`// defaultExportForOperations: true
+          {`// defaultExportForOperation: true
 import GetUserQuery from "./app/graphql/queries/getUser.graphql";`}
         </Highlight>
         <p>
@@ -459,7 +459,7 @@ import GetUserQuery from "./app/graphql/queries/getUser.graphql";`}
           that you can import it like:
         </p>
         <Highlight language="typescript">
-          {`// defaultExportForOperations: false
+          {`// defaultExportForOperation: false
 import { GetUserQuery } from "./app/graphql/queries/getUser.graphql";`}
         </Highlight>
 
