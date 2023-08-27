@@ -43,6 +43,7 @@ impl OperationBasePrinterOptions {
     pub fn from_config(config: &Config) -> Self {
         let mut result = Self {
             default_export_for_operation: config.generate.export.default_export_for_operation,
+            named_export_for_operation: !config.generate.export.default_export_for_operation,
             export_input_type: config.generate.export.variables_type,
             export_result_type: config.generate.export.operation_result_type,
             ..Self::default()
