@@ -509,6 +509,7 @@ dependencies = [
  "json-writer",
  "nitrogql-ast",
  "nitrogql-checker",
+ "nitrogql-config-file",
  "nitrogql-parser",
  "nitrogql-semantics",
  "nitrogql-utils",

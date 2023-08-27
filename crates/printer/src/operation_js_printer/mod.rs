@@ -1,10 +1,11 @@
 use nitrogql_ast::OperationDocument;
 use sourcemap_writer::SourceMapWriter;
 
-use crate::operation_base_printer::OperationPrinter;
+use crate::{operation_base_printer::OperationPrinter, OperationJSPrinterOptions};
 
-use self::visitor::{OperationJSPrinterOptions, OperationJSPrinterVisitor};
+use self::visitor::OperationJSPrinterVisitor;
 
+pub mod options;
 pub mod visitor;
 
 /// Print a JavaScript module for given operation document.

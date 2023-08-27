@@ -10,7 +10,7 @@ use nitrogql_parser::{parse_operation_document, ParseError};
 
 thread_local! {
     /// Loaded config.
-    static CONFIG: RefCell<Option<Config>> = RefCell::new(None);
+    static CONFIG: RefCell<Config> = RefCell::new(Config::default());
     /// Result of last operation.
     static RESULT: RefCell<Option<String>> = RefCell::new(None);
 }
@@ -96,7 +96,10 @@ pub extern "C" fn get_result_size() -> usize {
 
 fn convert_to_js_impl(source: &str) -> Result<String, ParseError> {
     let document = parse_operation_document(source)?;
-    let js = print_js(&document);
+    let js = CONFIG.with(|cell| {
+        let config = cell.borrow();
+        print_js(&document, &config)
+    });
     Ok(js)
 }
 
@@ -105,7 +108,7 @@ fn load_config_impl(config_file: &str) -> bool {
     match config {
         None => false,
         Some(config) => {
-            CONFIG.with(|cell| cell.replace(Some(config)));
+            CONFIG.with(|cell| cell.replace(config));
             debug!("Loaded config from given source");
             true
         }

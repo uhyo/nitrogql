@@ -1,3 +1,6 @@
+use nitrogql_config_file::Config;
+use nitrogql_utils::clone_into;
+
 /// Options for OperationBasePrinter.
 #[derive(Debug, Clone)]
 pub struct OperationBasePrinterOptions {
@@ -31,5 +34,35 @@ impl Default for OperationBasePrinterOptions {
             mutation_variable_suffix: "Mutation".to_owned(),
             subscription_variable_suffix: "Subscription".to_owned(),
         }
+    }
+}
+
+impl OperationBasePrinterOptions {
+    /// Creates a new instance of OperationBasePrinterOptions from
+    /// Config.
+    pub fn from_config(config: &Config) -> Self {
+        let mut result = Self {
+            default_export_for_operation: config.generate.export.default_export_for_operation,
+            export_input_type: config.generate.export.variables_type,
+            export_result_type: config.generate.export.operation_result_type,
+            ..Self::default()
+        };
+        clone_into(
+            &config.generate.name.capitalize_operation_names,
+            &mut result.capitalize_operation_names,
+        );
+        clone_into(
+            &config.generate.name.query_variable_suffix,
+            &mut result.query_variable_suffix,
+        );
+        clone_into(
+            &config.generate.name.mutation_variable_suffix,
+            &mut result.mutation_variable_suffix,
+        );
+        clone_into(
+            &config.generate.name.subscription_variable_suffix,
+            &mut result.subscription_variable_suffix,
+        );
+        result
     }
 }

@@ -4,15 +4,9 @@ use sourcemap_writer::SourceMapWriter;
 use crate::{
     json_printer::print_to_json_string,
     operation_base_printer::{
-        options::OperationBasePrinterOptions, OperationPrinterVisitor, PrintFragmentContext,
-        PrintOperationContext,
+        OperationPrinterVisitor, PrintFragmentContext, PrintOperationContext,
     },
 };
-
-#[derive(Clone, Debug, Default)]
-pub struct OperationJSPrinterOptions {
-    pub base_options: OperationBasePrinterOptions,
-}
 
 pub struct OperationJSPrinterVisitor<'a, 'src> {
     context: OperationJSPrinterContext<'a, 'src>,

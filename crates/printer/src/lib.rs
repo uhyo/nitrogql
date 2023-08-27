@@ -18,5 +18,5 @@ pub use operation_type_printer::{
 };
 
 pub use operation_js_printer::{
-    print_js_for_operation_document, visitor::OperationJSPrinterOptions,
+    options::OperationJSPrinterOptions, print_js_for_operation_document,
 };

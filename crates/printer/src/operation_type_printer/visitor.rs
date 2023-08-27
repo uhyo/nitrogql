@@ -6,6 +6,8 @@ use nitrogql_ast::{
     operation::{ExecutableDefinition, FragmentDefinition, OperationType},
     OperationDocument,
 };
+use nitrogql_config_file::{Config, GenerateMode};
+use nitrogql_utils::clone_into;
 use sourcemap_writer::SourceMapWriter;
 
 use crate::{
@@ -52,6 +54,28 @@ impl Default for OperationTypePrinterOptions {
             operation_result_type_suffix: "Result".to_owned(),
             allow_undefined_as_optional_input: true,
         }
+    }
+}
+
+impl OperationTypePrinterOptions {
+    /// Generate options from config.
+    pub fn from_config(config: &Config) -> Self {
+        let mut result = Self {
+            base_options: OperationBasePrinterOptions::from_config(config),
+            ..Self::default()
+        };
+        if config.generate.mode == GenerateMode::StandaloneTS4_0 {
+            result.print_values = true;
+        }
+        clone_into(
+            &config.generate.name.operation_result_type_suffix,
+            &mut result.operation_result_type_suffix,
+        );
+        clone_into(
+            &config.generate.name.variables_type_suffix,
+            &mut result.variables_type_suffix,
+        );
+        result
     }
 }
 

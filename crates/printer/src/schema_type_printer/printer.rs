@@ -2,6 +2,7 @@ use std::{borrow::Cow, collections::HashMap};
 
 use graphql_type_system::Schema;
 use nitrogql_ast::{base::Pos, type_system::TypeSystemDocument};
+use nitrogql_config_file::Config;
 use nitrogql_semantics::ast_to_type_system;
 use sourcemap_writer::SourceMapWriter;
 
@@ -26,6 +27,29 @@ impl Default for SchemaTypePrinterOptions {
             input_nullable_field_is_optional: true,
             emit_schema_runtime: false,
         }
+    }
+}
+
+impl SchemaTypePrinterOptions {
+    /// Generate from config.
+    pub fn from_config(config: &Config) -> Self {
+        let mut result = SchemaTypePrinterOptions {
+            emit_schema_runtime: config.generate.emit_schema_runtime,
+            input_nullable_field_is_optional: config
+                .generate
+                .r#type
+                .allow_undefined_as_optional_input,
+            ..SchemaTypePrinterOptions::default()
+        };
+        result.scalar_types.extend(
+            config
+                .generate
+                .r#type
+                .scalar_types
+                .iter()
+                .map(|(key, value)| (key.to_owned(), value.to_owned())),
+        );
+        result
     }
 }
 

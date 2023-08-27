@@ -16,7 +16,7 @@ use nitrogql_printer::{
     print_types_for_operation_document, OperationTypePrinterOptions, SchemaTypePrinter,
     SchemaTypePrinterOptions,
 };
-use nitrogql_utils::{clone_into, relative_path};
+use nitrogql_utils::relative_path;
 use sourcemap_writer::{print_source_map_json, SourceWriter, SourceWriterBuffers};
 
 use super::{check::run_check, context::CliContext};
@@ -76,25 +76,7 @@ pub fn run_generate(mut context: CliContext) -> Result<CliContext> {
                         .collect(),
                 };
 
-                let mut options = SchemaTypePrinterOptions {
-                    emit_schema_runtime: config.config.generate.emit_schema_runtime,
-                    input_nullable_field_is_optional: config
-                        .config
-                        .generate
-                        .r#type
-                        .allow_undefined_as_optional_input,
-                    ..SchemaTypePrinterOptions::default()
-                };
-                options.scalar_types.extend(
-                    config
-                        .config
-                        .generate
-                        .r#type
-                        .scalar_types
-                        .iter()
-                        .map(|(key, value)| (key.to_owned(), value.to_owned())),
-                );
-
+                let options = SchemaTypePrinterOptions::from_config(&config.config);
                 let mut writer = SourceWriter::new();
                 writer.set_file_index_mapper(file_map.file_indices.clone());
                 let mut printer = SchemaTypePrinter::new(options, &mut writer);
@@ -192,10 +174,7 @@ fn generate_operation_type_printer_options(
     decl_file_path: &Path,
     schema_output: Option<&Path>,
 ) -> OperationTypePrinterOptions {
-    let mut printer_options = OperationTypePrinterOptions::default();
-    if config.generate.mode == GenerateMode::StandaloneTS4_0 {
-        printer_options.print_values = true;
-    }
+    let mut printer_options = OperationTypePrinterOptions::from_config(config);
     printer_options.schema_source = config
         .generate
         .schema_module_specifier
@@ -210,34 +189,6 @@ fn generate_operation_type_printer_options(
             .to_string_lossy()
             .to_string()
         });
-    clone_into(
-        &config.generate.name.operation_result_type_suffix,
-        &mut printer_options.operation_result_type_suffix,
-    );
-    clone_into(
-        &config.generate.name.variables_type_suffix,
-        &mut printer_options.variables_type_suffix,
-    );
-    clone_into(
-        &config.generate.name.capitalize_operation_names,
-        &mut printer_options.base_options.capitalize_operation_names,
-    );
-    clone_into(
-        &config.generate.name.query_variable_suffix,
-        &mut printer_options.base_options.query_variable_suffix,
-    );
-    clone_into(
-        &config.generate.name.mutation_variable_suffix,
-        &mut printer_options.base_options.mutation_variable_suffix,
-    );
-    clone_into(
-        &config.generate.name.subscription_variable_suffix,
-        &mut printer_options.base_options.subscription_variable_suffix,
-    );
-    printer_options.base_options.default_export_for_operation =
-        config.generate.export.default_export_for_operation;
-    printer_options.base_options.export_input_type = config.generate.export.variables_type;
-    printer_options.base_options.export_result_type = config.generate.export.operation_result_type;
     printer_options
 }
 
