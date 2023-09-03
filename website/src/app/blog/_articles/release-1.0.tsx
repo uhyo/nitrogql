@@ -376,6 +376,37 @@ documents: ./src/**/*.graphql`}
         investigating how to support them.
       </p>
 
+      <h3 id="development-of-nitrogql">Development of nitrogql</h3>
+      <p>
+        Although it is a side story, I would like to talk about the development
+        of nitrogql. I created several things in order to make nitrogql work.
+      </p>
+      <p>
+        Fundamentals of any language processing system include ASTs and parsers.
+        I created both of them from scratch for use in nitrogql. This enabled me
+        to implement the source map support.
+      </p>
+      <p>
+        nitrogql is written in Rust. I chose Rust because I knew that it is good
+        for writing language processors. Then I had to somehow distribute
+        nitrogql as an npm package. A popular way to do this is to prepare
+        pre-built binaries for each platform. However, I didn&apos;t want to
+        maintain multiple build systems for each platform. So, I decided to
+        compile nitrogql to WebAssembly and let it run in Node.js. Fortunately,
+        Node.js already had an experimental support for WASI, which is a set of
+        APIs that enables a WASM module to access the file system and other OS
+        features.
+      </p>
+      <p>
+        Well, I <i>thought</i> I was fortunate. But it turned out that the WASI
+        support in Node.js was broken. It was obvious that no one had ever
+        considered using Node.js WASI implementation seriously. It is okay as an
+        experimental feature, but the issues I reported didn&apos;t look like
+        they would be fixed anytime soon. Therefore I ended up creating a
+        userland WASI implementation just for use in nitrogql. Yes, I created
+        such a lot of things for nitrogql.
+      </p>
+
       <h3 id="whats-next">What&apos;s next?</h3>
       <p>
         nitrogql is still in its early days. Currently it has only two features
