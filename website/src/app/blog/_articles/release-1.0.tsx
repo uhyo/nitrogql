@@ -212,7 +212,8 @@ export const Posts: React.FC = () => {
       <h4 id="near-operation-file">near-operation-file preset</h4>
       <p>
         The <code>near-operation-file</code> preset <i>was</i> the recommended
-        way to use GraphQL Code Generator. It is a very nice feature that allows
+        way to use GraphQL Code Generator. This preset generates one TypeScript
+        file per GraphQL operation file. It is a very nice feature that allows
         you to keep your GraphQL code and TypeScript code separate from each
         other.
       </p>

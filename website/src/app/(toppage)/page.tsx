@@ -36,11 +36,6 @@ export default function Home() {
           GraphQL schema and queries, and also{" "}
           <strong>provides static checking</strong> for your queries.
         </p>
-        <p>
-          nitrogql is currently in <strong>beta</strong>. We are internally
-          trying it out in our projects, and we are also looking for early
-          adopters.
-        </p>
         <section className={styles.features}>
           <h2>✨ Available Features</h2>
           <h3>Static Checks for GraphQL</h3>
