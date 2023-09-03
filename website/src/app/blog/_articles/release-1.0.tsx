@@ -9,7 +9,7 @@ export const blogPostRelease1_0: ArticleMetadata = {
   shortDescription: `Today, we are happy to announce the first stable release of nitrogql!
 nitrogql is a toolchain for using GraphQL from TypeScript projects.
 In this post, we will go over the main features of nitrogql and how to get started with it.`,
-  publishDate: new Date("2023-09-01T00:00Z"),
+  publishDate: new Date("2023-09-03T00:00Z"),
   render,
 };
 
