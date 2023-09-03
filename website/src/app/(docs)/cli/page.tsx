@@ -1,10 +1,11 @@
 import { Hint } from "@/app/_utils/Hint";
 import { Highlight } from "@/app/_utils/Highlight";
 import { Toc } from "../_toc";
+import { ogp } from "@/app/_utils/metadata";
 
-export const metadata = {
+export const metadata = ogp({
   title: "nitrogql CLI Usage",
-};
+});
 
 export default function CLIUsage() {
   return (

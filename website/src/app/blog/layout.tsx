@@ -6,6 +6,12 @@ export const metadata = {
     template: "%s | nitrogql blog",
     default: "nitrogql blog",
   },
+  openGraph: {
+    title: "nitrogql blog",
+  },
+  twitter: {
+    title: "nitrogql blog",
+  },
 };
 
 export default function BlogLayout({

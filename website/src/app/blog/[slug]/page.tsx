@@ -3,6 +3,7 @@ import { articles } from "../_articles/articles";
 import { Breadcrumb } from "@/app/_utils/Breadcrumb";
 import "../blog.css";
 import { Toc } from "@/app/(docs)/_toc";
+import { ogp } from "@/app/_utils/metadata";
 
 export function generateStaticParams() {
   return articles.map((article) => ({
@@ -19,10 +20,10 @@ export function generateMetadata({
   if (!article) {
     notFound();
   }
-  return {
+  return ogp({
     title: article.title,
     description: article.shortDescription,
-  };
+  });
 }
 
 const dateFormat = new Intl.DateTimeFormat("en-US", {

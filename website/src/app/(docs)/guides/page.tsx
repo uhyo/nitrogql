@@ -1,10 +1,11 @@
 import Link from "next/link";
 import { Toc } from "../_toc";
 import { InPageNav } from "@/app/_utils/InPageNav";
+import { ogp } from "@/app/_utils/metadata";
 
-export const metadata = {
+export const metadata = ogp({
   title: "Guides",
-};
+});
 
 export default function Guides() {
   return (

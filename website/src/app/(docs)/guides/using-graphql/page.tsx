@@ -6,10 +6,11 @@ import { Figures } from "@/app/_utils/Figures";
 import ScreenshotGeneratedTypes from "./figures/screenshot-generated-types.png";
 import { Toc } from "../../_toc";
 import { Breadcrumb } from "@/app/_utils/Breadcrumb";
+import { ogp } from "@/app/_utils/metadata";
 
-export const metadata = {
+export const metadata = ogp({
   title: "Using GraphQL in TypeScript projects",
-};
+});
 
 export default function UsingGraphQL() {
   return (

@@ -1,9 +1,10 @@
 import Link from "next/link";
 import { Toc } from "../_toc";
+import { ogp } from "@/app/_utils/metadata";
 
-export const metadata = {
+export const metadata = ogp({
   title: "Recipes",
-};
+});
 
 export default function GettingStarted() {
   return (

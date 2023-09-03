@@ -12,6 +12,6 @@
     "highlight.js": "^11.7.0"
   },
   "devDependencies": {
-    "next": "^13.3.0"
+    "next": "^13.4.19"
   }
 }

@@ -1,12 +1,11 @@
-import Link from "next/link";
-import { Hint } from "@/app/_utils/Hint";
 import { Highlight } from "@/app/_utils/Highlight";
 import { Toc } from "../../_toc";
 import { Breadcrumb } from "@/app/_utils/Breadcrumb";
+import { ogp } from "@/app/_utils/metadata";
 
-export const metadata = {
+export const metadata = ogp({
   title: "Configuration File Name",
-};
+});
 
 export default function ConfigurationFileName() {
   return (

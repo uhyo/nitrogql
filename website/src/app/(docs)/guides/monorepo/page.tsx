@@ -3,10 +3,11 @@ import { Toc } from "../../_toc";
 import { Breadcrumb } from "@/app/_utils/Breadcrumb";
 import { Hint } from "@/app/_utils/Hint";
 import Link from "next/link";
+import { ogp } from "@/app/_utils/metadata";
 
-export const metadata = {
+export const metadata = ogp({
   title: "Monorepo Guide",
-};
+});
 
 export default function GettingStarted() {
   return (

@@ -3,10 +3,11 @@ import { Toc } from "../../_toc";
 import { Breadcrumb } from "@/app/_utils/Breadcrumb";
 import { Highlight } from "@/app/_utils/Highlight";
 import Link from "next/link";
+import { ogp } from "@/app/_utils/metadata";
 
-export const metadata = {
+export const metadata = ogp({
   title: "Migrating from GraphQL Code Generator",
-};
+});
 
 export default function Migrating() {
   return (
