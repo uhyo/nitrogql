@@ -1,6 +1,6 @@
 {
   "name": "nextjs",
-  "version": "1.0.0-beta.11",
+  "version": "1.0.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -26,7 +26,7 @@
   },
   "devDependencies": {
     "@graphql-typed-document-node/core": "^3.2.0",
-    "@nitrogql/cli": "^1.0.0-beta.11",
-    "@nitrogql/graphql-loader": "^1.0.0-beta.11"
+    "@nitrogql/cli": "^1.0.0",
+    "@nitrogql/graphql-loader": "^1.0.0"
   }
 }
