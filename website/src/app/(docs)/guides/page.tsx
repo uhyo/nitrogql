@@ -2,6 +2,10 @@ import Link from "next/link";
 import { Toc } from "../_toc";
 import { InPageNav } from "@/app/_utils/InPageNav";
 
+export const metadata = {
+  title: "Guides",
+};
+
 export default function Guides() {
   return (
     <Toc>

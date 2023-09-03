@@ -4,6 +4,10 @@ import { Breadcrumb } from "@/app/_utils/Breadcrumb";
 import { Highlight } from "@/app/_utils/Highlight";
 import Link from "next/link";
 
+export const metadata = {
+  title: "Migrating from GraphQL Code Generator",
+};
+
 export default function Migrating() {
   return (
     <Toc>

@@ -1,9 +1,9 @@
-import Image from "next/image";
 import Link from "next/link";
-import { Hint } from "@/app/_utils/Hint";
-import { Highlight } from "@/app/_utils/Highlight";
-import { Figures } from "@/app/_utils/Figures";
 import { Toc } from "../_toc";
+
+export const metadata = {
+  title: "Recipes",
+};
 
 export default function GettingStarted() {
   return (

@@ -4,6 +4,10 @@ import { Breadcrumb } from "@/app/_utils/Breadcrumb";
 import { Hint } from "@/app/_utils/Hint";
 import Link from "next/link";
 
+export const metadata = {
+  title: "Monorepo Guide",
+};
+
 export default function GettingStarted() {
   return (
     <Toc>

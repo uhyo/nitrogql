@@ -1,0 +1,16 @@
+main.blog-top article > a {
+  color: inherit;
+  text-decoration: none;
+}
+
+main.blog-top article > a h3 {
+  border: none;
+}
+
+main.blog-top p {
+  font-size: 0.9em;
+}
+
+main.blog-article p.meta {
+  font-size: 0.9em;
+}

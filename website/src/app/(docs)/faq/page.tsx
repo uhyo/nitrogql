@@ -4,6 +4,10 @@ import { Figures } from "@/app/_utils/Figures";
 import ScreenshotFileNesting from "./figures/screenshot-file-nesting.png";
 import { Toc } from "../_toc";
 
+export const metadata = {
+  title: "Frequently Asked Questions",
+};
+
 export default function GettingStarted() {
   return (
     <Toc>

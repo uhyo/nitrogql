@@ -4,6 +4,10 @@ import { Highlight } from "@/app/_utils/Highlight";
 import { Toc } from "../../_toc";
 import { Breadcrumb } from "@/app/_utils/Breadcrumb";
 
+export const metadata = {
+  title: "Configuration File Name",
+};
+
 export default function ConfigurationFileName() {
   return (
     <Toc>

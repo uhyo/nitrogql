@@ -25,6 +25,9 @@ export const Footer = () => {
           <li>
             <Link href="/faq">FAQ</Link>
           </li>
+          <li>
+            <Link href="/blog">Blog</Link>
+          </li>
         </ul>
         <ul>
           <li>

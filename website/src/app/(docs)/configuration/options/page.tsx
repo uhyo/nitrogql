@@ -2,8 +2,11 @@ import Link from "next/link";
 import { Hint } from "@/app/_utils/Hint";
 import { Highlight } from "@/app/_utils/Highlight";
 import { Toc } from "../../_toc";
-import { InPageNav } from "@/app/_utils/InPageNav";
 import { Breadcrumb } from "@/app/_utils/Breadcrumb";
+
+export const metadata = {
+  title: "Configuration Options",
+};
 
 export default function ConfigurationOptions() {
   return (

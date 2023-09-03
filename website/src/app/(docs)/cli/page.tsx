@@ -2,7 +2,11 @@ import { Hint } from "@/app/_utils/Hint";
 import { Highlight } from "@/app/_utils/Highlight";
 import { Toc } from "../_toc";
 
-export default function GettingStarted() {
+export const metadata = {
+  title: "nitrogql CLI Usage",
+};
+
+export default function CLIUsage() {
   return (
     <Toc>
       <main>

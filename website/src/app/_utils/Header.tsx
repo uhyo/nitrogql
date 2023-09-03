@@ -38,6 +38,9 @@ export const HeadNav: React.FC = () => {
         <li>
           <Link href="/faq">FAQ</Link>
         </li>
+        <li>
+          <Link href="/blog">Blog</Link>
+        </li>
       </ul>
     </nav>
   );
