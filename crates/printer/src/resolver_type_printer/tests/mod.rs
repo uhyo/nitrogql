@@ -6,7 +6,10 @@ use nitrogql_parser::parse_type_system_document;
 use nitrogql_semantics::resolve_extensions;
 use sourcemap_writer::JustWriter;
 
-use super::{options::ResolverTypePrinterOptions, printer::ResolverTypePrinter};
+use super::{
+    error::ResolverTypePrinterResult, options::ResolverTypePrinterOptions,
+    printer::ResolverTypePrinter,
+};
 
 #[test]
 fn resolver_printing() {
@@ -50,14 +53,24 @@ fn resolver_printing() {
     )
     .unwrap();
     let doc = resolve_extensions(doc).unwrap();
-    let printed = print_document(&doc, Default::default());
+    let printed = print_document(
+        &doc,
+        ResolverTypePrinterOptions {
+            schema_source: "schema".into(),
+            ..Default::default()
+        },
+    )
+    .unwrap();
     assert_snapshot!(printed);
 }
 
-fn print_document(document: &TypeSystemDocument, options: ResolverTypePrinterOptions) -> String {
+fn print_document(
+    document: &TypeSystemDocument,
+    options: ResolverTypePrinterOptions,
+) -> ResolverTypePrinterResult<String> {
     let mut result = String::new();
     let mut writer = JustWriter::new(&mut result);
     let mut printer = ResolverTypePrinter::new(options, &mut writer);
-    printer.print_document(document);
-    result
+    printer.print_document(document)?;
+    Ok(result)
 }

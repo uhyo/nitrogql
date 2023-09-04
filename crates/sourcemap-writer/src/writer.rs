@@ -9,4 +9,9 @@ pub trait SourceMapWriter {
     fn indent(&mut self);
     /// Decrease indent level.
     fn dedent(&mut self);
+
+    /// Compatible with `write!` macro.
+    fn write_fmt(&mut self, args: std::fmt::Arguments) {
+        self.write(&args.to_string());
+    }
 }

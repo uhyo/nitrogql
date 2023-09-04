@@ -5,6 +5,7 @@ mod operation_base_printer;
 mod operation_js_printer;
 mod operation_type_printer;
 mod resolver_type_printer;
+mod schema;
 mod schema_type_printer;
 mod ts_types;
 mod utils;
