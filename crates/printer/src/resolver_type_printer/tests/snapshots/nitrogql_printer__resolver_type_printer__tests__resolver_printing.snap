@@ -2,8 +2,9 @@
 source: crates/printer/src/resolver_type_printer/tests/mod.rs
 expression: printed
 ---
+import type { GraphQLResolveInfo } from "graphql";
 import type * as Schema from "schema";
-
+type __Resolver<Parent, Args, Context, Result> = (parent: Parent, args: Args, context: Context, info: GraphQLResolveInfo) => Result | Promise<Result>;
 type User = Schema.User;
 
 type Bot = Schema.Bot;
@@ -18,4 +19,25 @@ type UserType = Schema.UserType;
 
 type UserSearchQuery = Schema.UserSearchQuery;
 
-export type Resolvers = {};
+export type Resolvers<Context> = {
+  User: {
+    id: __Resolver<User, {}, Context, ID>;
+    name: __Resolver<User, {}, Context, String>;
+    type: __Resolver<User, {}, Context, UserType>;
+    age: __Resolver<User, {}, Context, Int | null>;
+    posts: __Resolver<User, {}, Context, (Post)[]>;
+  };
+  Bot: {
+    id: __Resolver<Bot, {}, Context, ID>;
+  };
+  Post: {
+    id: __Resolver<Post, {}, Context, ID>;
+    title: __Resolver<Post, {}, Context, String>;
+    tags: __Resolver<Post, {}, Context, (String)[] | null>;
+    body: __Resolver<Post, {}, Context, String>;
+  };
+  Query: {
+    me: __Resolver<Query, {}, Context, User>;
+  };
+};
+
