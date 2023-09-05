@@ -1,4 +1,3 @@
-use itertools::Itertools;
 use nitrogql_ast::type_system::{
     ArgumentsDefinition, InterfaceTypeDefinition, ObjectTypeDefinition, ScalarTypeDefinition,
     TypeDefinition, TypeSystemDefinition, UnionTypeDefinition,
@@ -150,7 +149,7 @@ fn get_interface_resolver_type(
         Box::new(TSType::TypeVariable("__TypeResolver".into())),
         vec![
             // Parent
-            parent_type.clone(),
+            parent_type,
             // Context
             TSType::TypeVariable("Context".into()),
             // Result
@@ -163,7 +162,7 @@ fn get_interface_resolver_type(
 
 fn get_union_resolver_type(
     def: &UnionTypeDefinition,
-    context: &ResolverTypePrinterContext,
+    _context: &ResolverTypePrinterContext,
 ) -> Option<TSType> {
     let (parent_types, result_types): (Vec<_>, Vec<_>) = def
         .members
