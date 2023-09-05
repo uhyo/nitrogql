@@ -5,6 +5,7 @@ expression: printed
 import type { GraphQLResolveInfo } from "graphql";
 import type * as Schema from "schema";
 type __Resolver<Parent, Args, Context, Result> = (parent: Parent, args: Args, context: Context, info: GraphQLResolveInfo) => Result | Promise<Result>;
+type __TypeResolver<Obj, Context, Result> = (object: Obj, context: Context, info: GraphQLResolveInfo) => Result | Promise<Result>;
 type User = Schema.User;
 
 type Bot = Schema.Bot;
@@ -38,6 +39,9 @@ export type Resolvers<Context> = {
   };
   Query: {
     me: __Resolver<Query, {}, Context, User>;
+  };
+  HasID: {
+    __resolveType: __TypeResolver<User | Bot, Context, "User" | "Bot">;
   };
 };
 

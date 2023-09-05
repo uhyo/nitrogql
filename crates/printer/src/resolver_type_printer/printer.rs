@@ -1,4 +1,8 @@
-use nitrogql_ast::{type_system::TypeSystemDefinition, TypeSystemDocument};
+use std::borrow::Cow;
+
+use graphql_type_system::Schema;
+use nitrogql_ast::{base::Pos, type_system::TypeSystemDefinition, TypeSystemDocument};
+use nitrogql_semantics::ast_to_type_system;
 use sourcemap_writer::SourceMapWriter;
 
 use crate::{
@@ -18,6 +22,7 @@ pub struct ResolverTypePrinter<'a, Writer> {
 pub struct ResolverTypePrinterContext<'src> {
     pub options: &'src ResolverTypePrinterOptions,
     pub document: &'src TypeSystemDocument<'src>,
+    pub schema: &'src Schema<Cow<'src, str>, Pos>,
 }
 
 impl<'a, Writer> ResolverTypePrinter<'a, Writer>
@@ -32,9 +37,11 @@ where
         &mut self,
         document: &TypeSystemDocument,
     ) -> ResolverTypePrinterResult<()> {
+        let schema = ast_to_type_system(document);
         let context = ResolverTypePrinterContext {
             options: &self.options,
             document,
+            schema: &schema,
         };
 
         writeln!(
@@ -49,6 +56,10 @@ where
         writeln!(
             self.writer,
             "type __Resolver<Parent, Args, Context, Result> = (parent: Parent, args: Args, context: Context, info: GraphQLResolveInfo) => Result | Promise<Result>;"
+        );
+        writeln!(
+            self.writer,
+            "type __TypeResolver<Obj, Context, Result> = (object: Obj, context: Context, info: GraphQLResolveInfo) => Result | Promise<Result>;"
         );
 
         for type_definition in &document.definitions {

@@ -57,19 +57,13 @@ impl HasPos for TypeVariable {
     }
 }
 
-impl<'a> From<&'a Ident<'a>> for TypeVariable {
-    fn from(value: &'a Ident<'a>) -> Self {
+impl<S> From<S> for TypeVariable
+where
+    S: ToString,
+{
+    fn from(value: S) -> Self {
         TypeVariable {
-            name: value.name.to_owned(),
-            pos: value.position,
-        }
-    }
-}
-
-impl<'a> From<&'a str> for TypeVariable {
-    fn from(value: &'a str) -> Self {
-        TypeVariable {
-            name: value.to_owned(),
+            name: value.to_string(),
             pos: Pos::builtin(),
         }
     }

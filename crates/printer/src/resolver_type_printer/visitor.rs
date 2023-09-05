@@ -1,9 +1,17 @@
+use itertools::Itertools;
 use nitrogql_ast::type_system::{
-    ArgumentsDefinition, ScalarTypeDefinition, TypeDefinition, TypeSystemDefinition,
+    ArgumentsDefinition, InterfaceTypeDefinition, ObjectTypeDefinition, ScalarTypeDefinition,
+    TypeDefinition, TypeSystemDefinition,
 };
 use sourcemap_writer::SourceMapWriter;
 
-use crate::ts_types::{type_to_ts_type::get_ts_type_of_type, ObjectField, ObjectKey, TSType};
+use crate::{
+    ts_types::{
+        ts_types_util::ts_union, type_to_ts_type::get_ts_type_of_type, ObjectField, ObjectKey,
+        TSType,
+    },
+    utils::interface_implementers,
+};
 
 use super::{error::ResolverTypePrinterResult, printer::ResolverTypePrinterContext};
 
@@ -71,7 +79,7 @@ pub fn get_resolver_type(
     match def {
         TypeDefinition::Scalar(_) => None,
         TypeDefinition::Object(def) => get_object_resolver_type(def, context),
-        TypeDefinition::Interface(_) => None,
+        TypeDefinition::Interface(def) => get_interface_resolver_type(def, context),
         TypeDefinition::Union(_) => None,
         TypeDefinition::Enum(_) => None,
         TypeDefinition::InputObject(_) => None,
@@ -79,8 +87,8 @@ pub fn get_resolver_type(
 }
 
 fn get_object_resolver_type(
-    def: &nitrogql_ast::type_system::ObjectTypeDefinition<'_>,
-    context: &ResolverTypePrinterContext,
+    def: &ObjectTypeDefinition<'_>,
+    _context: &ResolverTypePrinterContext,
 ) -> Option<TSType> {
     let parent_type = TSType::TypeVariable((&def.name).into());
     let fields = def
@@ -119,6 +127,38 @@ fn get_object_resolver_type(
         })
         .collect();
     Some(TSType::Object(fields))
+}
+
+fn get_interface_resolver_type(
+    def: &InterfaceTypeDefinition,
+    context: &ResolverTypePrinterContext,
+) -> Option<TSType> {
+    let implementers = interface_implementers(context.schema, def.name.name);
+    let (parent_types, result_types): (Vec<_>, Vec<_>) = implementers
+        .map(|obj| {
+            (
+                TSType::TypeVariable(obj.name.to_string().into()),
+                TSType::StringLiteral(obj.name.to_string()),
+            )
+        })
+        .unzip();
+
+    let parent_type = ts_union(parent_types);
+    let result_type = ts_union(result_types);
+
+    let resolver_type = TSType::TypeFunc(
+        Box::new(TSType::TypeVariable("__TypeResolver".into())),
+        vec![
+            // Parent
+            parent_type.clone(),
+            // Context
+            TSType::TypeVariable("Context".into()),
+            // Result
+            result_type,
+        ],
+    );
+
+    Some(TSType::object(vec![("__resolveType", resolver_type, None)]))
 }
 
 fn arguments_definition_to_ts(arguments: &ArgumentsDefinition) -> TSType {
