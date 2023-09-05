@@ -16,6 +16,8 @@ type Query = Schema.Query;
 
 type HasID = Schema.HasID;
 
+type UserOrBot = Schema.UserOrBot;
+
 type UserType = Schema.UserType;
 
 type UserSearchQuery = Schema.UserSearchQuery;
@@ -41,6 +43,9 @@ export type Resolvers<Context> = {
     me: __Resolver<Query, {}, Context, User>;
   };
   HasID: {
+    __resolveType: __TypeResolver<User | Bot, Context, "User" | "Bot">;
+  };
+  UserOrBot: {
     __resolveType: __TypeResolver<User | Bot, Context, "User" | "Bot">;
   };
 };

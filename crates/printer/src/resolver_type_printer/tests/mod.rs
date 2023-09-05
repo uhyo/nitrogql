@@ -33,6 +33,8 @@ fn resolver_printing() {
                 id: ID!
             }
 
+            union UserOrBot = User | Bot
+
             type Post {
                 id: ID!
                 title: String!

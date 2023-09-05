@@ -1,7 +1,7 @@
 use itertools::Itertools;
 use nitrogql_ast::type_system::{
     ArgumentsDefinition, InterfaceTypeDefinition, ObjectTypeDefinition, ScalarTypeDefinition,
-    TypeDefinition, TypeSystemDefinition,
+    TypeDefinition, TypeSystemDefinition, UnionTypeDefinition,
 };
 use sourcemap_writer::SourceMapWriter;
 
@@ -80,7 +80,7 @@ pub fn get_resolver_type(
         TypeDefinition::Scalar(_) => None,
         TypeDefinition::Object(def) => get_object_resolver_type(def, context),
         TypeDefinition::Interface(def) => get_interface_resolver_type(def, context),
-        TypeDefinition::Union(_) => None,
+        TypeDefinition::Union(def) => get_union_resolver_type(def, context),
         TypeDefinition::Enum(_) => None,
         TypeDefinition::InputObject(_) => None,
     }
@@ -151,6 +151,38 @@ fn get_interface_resolver_type(
         vec![
             // Parent
             parent_type.clone(),
+            // Context
+            TSType::TypeVariable("Context".into()),
+            // Result
+            result_type,
+        ],
+    );
+
+    Some(TSType::object(vec![("__resolveType", resolver_type, None)]))
+}
+
+fn get_union_resolver_type(
+    def: &UnionTypeDefinition,
+    context: &ResolverTypePrinterContext,
+) -> Option<TSType> {
+    let (parent_types, result_types): (Vec<_>, Vec<_>) = def
+        .members
+        .iter()
+        .map(|type_name| {
+            (
+                TSType::TypeVariable(type_name.name.to_string().into()),
+                TSType::StringLiteral(type_name.name.to_string()),
+            )
+        })
+        .unzip();
+    let parent_type = ts_union(parent_types);
+    let result_type = ts_union(result_types);
+
+    let resolver_type = TSType::TypeFunc(
+        Box::new(TSType::TypeVariable("__TypeResolver".into())),
+        vec![
+            // Parent
+            parent_type,
             // Context
             TSType::TypeVariable("Context".into()),
             // Result
