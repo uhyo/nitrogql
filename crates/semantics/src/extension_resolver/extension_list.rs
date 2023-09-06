@@ -74,7 +74,7 @@ impl<OriginalType: HasPos, ExtensionType: HasPos> ExtensionList<'_, OriginalType
 
     pub fn set_original(&mut self, original: OriginalType) -> Result<(), ExtensionError> {
         let name = original.name().map(|str| str.to_owned());
-        let mut item = self.items.entry(name.clone()).or_default();
+        let item = self.items.entry(name.clone()).or_default();
         if let Some(ref first) = item.original {
             return Err(ExtensionError {
                 message: ExtensionErrorMessage::DuplicateOriginal {

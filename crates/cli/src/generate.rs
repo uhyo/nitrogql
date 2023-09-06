@@ -123,7 +123,22 @@ pub fn run_generate(mut context: CliContext) -> Result<CliContext> {
                         .collect(),
                 };
 
-                let options = ResolverTypePrinterOptions::from_config(&config.config);
+                let mut options = ResolverTypePrinterOptions::from_config(&config.config);
+                options.schema_source = config
+                    .config
+                    .generate
+                    .schema_module_specifier
+                    .clone()
+                    .unwrap_or_else(|| {
+                        path_to_ts(relative_path(
+                            resolvers_output.as_ref(),
+                            schema_output
+                                .as_ref()
+                                .expect("This should be prevented by config validation"),
+                        ))
+                        .to_string_lossy()
+                        .to_string()
+                    });
                 let mut writer = SourceWriter::new();
                 writer.set_file_index_mapper(file_map.file_indices.clone());
                 let mut printer = ResolverTypePrinter::new(options, &mut writer);
