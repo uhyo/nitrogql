@@ -15,6 +15,11 @@ pub use schema_type_printer::printer::{
     SchemaTypePrinter, SchemaTypePrinterContext, SchemaTypePrinterOptions,
 };
 
+pub use resolver_type_printer::{
+    options::ResolverTypePrinterOptions,
+    printer::{ResolverTypePrinter, ResolverTypePrinterContext},
+};
+
 pub use operation_type_printer::{
     print_types_for_operation_document, visitor::OperationTypePrinterOptions,
 };

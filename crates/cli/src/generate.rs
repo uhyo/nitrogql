@@ -3,7 +3,7 @@ use std::fs::{self, File};
 use std::io::Write;
 use std::path::{Path, PathBuf};
 
-use log::debug;
+use log::{debug, info};
 use nitrogql_semantics::{ast_to_type_system, type_system_to_ast};
 
 use crate::context::LoadedSchema;
@@ -13,8 +13,8 @@ use crate::output::{CliOutput, OutputFileKind};
 use nitrogql_config_file::{Config, GenerateMode};
 use nitrogql_error::Result;
 use nitrogql_printer::{
-    print_types_for_operation_document, OperationTypePrinterOptions, SchemaTypePrinter,
-    SchemaTypePrinterOptions,
+    print_types_for_operation_document, OperationTypePrinterOptions, ResolverTypePrinter,
+    ResolverTypePrinterOptions, SchemaTypePrinter, SchemaTypePrinterOptions,
 };
 use nitrogql_utils::relative_path;
 use sourcemap_writer::{print_source_map_json, SourceWriter, SourceWriterBuffers};
@@ -97,6 +97,53 @@ pub fn run_generate(mut context: CliContext) -> Result<CliContext> {
                     output,
                     OutputFileKind::SchemaTypeDefinition,
                     schema_output,
+                    buffers,
+                )?;
+            }
+
+            if let Some(resolvers_output) = config
+                .config
+                .generate
+                .resolvers_output
+                .as_ref()
+                .map(|resolvers_output| config.root_dir.join(resolvers_output))
+            {
+                info!("Processing resolvers");
+                let file_map = FileMap {
+                    file_store,
+                    file_indices: file_store
+                        .iter()
+                        .map(|(idx, (_, _, kind))| {
+                            if kind == FileKind::Schema {
+                                idx
+                            } else {
+                                usize::MAX
+                            }
+                        })
+                        .collect(),
+                };
+
+                let options = ResolverTypePrinterOptions::from_config(&config.config);
+                let mut writer = SourceWriter::new();
+                writer.set_file_index_mapper(file_map.file_indices.clone());
+                let mut printer = ResolverTypePrinter::new(options, &mut writer);
+
+                match schema {
+                    LoadedSchema::GraphQL(ref schema) => {
+                        printer.print_document(schema)?;
+                    }
+                    LoadedSchema::Introspection(ref schema) => {
+                        let ast = type_system_to_ast(schema);
+                        printer.print_document(&ast)?;
+                    }
+                }
+
+                let buffers = writer.into_buffers();
+                write_file_and_sourcemap(
+                    &file_map,
+                    output,
+                    OutputFileKind::ResolversTypeDefinition,
+                    &resolvers_output,
                     buffers,
                 )?;
             }

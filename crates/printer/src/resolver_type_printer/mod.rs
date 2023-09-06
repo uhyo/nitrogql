@@ -1,5 +1,5 @@
 mod error;
-mod options;
-mod printer;
+pub mod options;
+pub mod printer;
 mod tests;
 mod visitor;

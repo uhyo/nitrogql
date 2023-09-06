@@ -1,3 +1,5 @@
+use nitrogql_config_file::Config;
+
 #[derive(Debug)]
 pub struct ResolverTypePrinterOptions {
     /// Name of root resolver type.
@@ -15,5 +17,11 @@ impl Default for ResolverTypePrinterOptions {
             schema_source: "".into(),
             schema_root_namespace: "Schema".into(),
         }
+    }
+}
+
+impl ResolverTypePrinterOptions {
+    pub fn from_config(_config: &Config) -> Self {
+        ResolverTypePrinterOptions::default()
     }
 }

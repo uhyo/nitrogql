@@ -21,6 +21,8 @@ impl Display for InputFileKind {
 pub enum OutputFileKind {
     SchemaTypeDefinition,
     SchemaTypeDefinitionSourceMap,
+    ResolversTypeDefinition,
+    ResolversTypeDefinitionSourceMap,
     OperationTypeDefinition,
     OperationTypeDefinitionSourceMap,
 }
@@ -33,6 +35,12 @@ impl OutputFileKind {
             OutputFileKind::SchemaTypeDefinition => OutputFileKind::SchemaTypeDefinitionSourceMap,
             OutputFileKind::SchemaTypeDefinitionSourceMap => {
                 OutputFileKind::SchemaTypeDefinitionSourceMap
+            }
+            OutputFileKind::ResolversTypeDefinition => {
+                OutputFileKind::ResolversTypeDefinitionSourceMap
+            }
+            OutputFileKind::ResolversTypeDefinitionSourceMap => {
+                OutputFileKind::ResolversTypeDefinitionSourceMap
             }
             OutputFileKind::OperationTypeDefinition => {
                 OutputFileKind::OperationTypeDefinitionSourceMap
@@ -50,6 +58,10 @@ impl Display for OutputFileKind {
             OutputFileKind::SchemaTypeDefinition => write!(f, "schemaTypeDefinition"),
             OutputFileKind::SchemaTypeDefinitionSourceMap => {
                 write!(f, "schemaTypeDefinitionSourceMap")
+            }
+            OutputFileKind::ResolversTypeDefinition => write!(f, "resolversTypeDefinition"),
+            OutputFileKind::ResolversTypeDefinitionSourceMap => {
+                write!(f, "resolversTypeDefinitionSourceMap")
             }
             OutputFileKind::OperationTypeDefinition => write!(f, "operationTypeDefinition"),
             OutputFileKind::OperationTypeDefinitionSourceMap => {
