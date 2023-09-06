@@ -27,9 +27,14 @@ export type NitrogqlConfig = {
                       | undefined;
                     /**
                      * Path to the output schema type definition file.
-                     * Required when using the `generate` command.
+                     * Needed if you want to generate schema types.
                      */
                     schemaOutput?: string | undefined;
+                    /**
+                     * Path to the output resolvers type definition file.
+                     * Needed if you want to generate resolvers types.
+                     */
+                    resolversOutput?: string | undefined;
                     /**
                      * Module specifier for importing schema types from operations.
                      * Defaults to relative paths if not specified.
