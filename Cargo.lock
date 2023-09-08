@@ -499,6 +499,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "nitrogql-plugin"
+version = "0.1.0"
+dependencies = [
+ "insta",
+ "nitrogql-ast",
+ "nitrogql-error",
+ "thiserror",
+]
+
+[[package]]
 name = "nitrogql-printer"
 version = "0.1.0"
 dependencies = [

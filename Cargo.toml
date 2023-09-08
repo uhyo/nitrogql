@@ -9,6 +9,7 @@ members = [
   "crates/graphql-loader",
   "crates/introspection",
   "crates/parser",
+  "crates/plugin",
   "crates/printer",
   "crates/semantics",
   "crates/sourcemap-writer",
