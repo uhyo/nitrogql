@@ -11,6 +11,8 @@ pub struct Config {
     /// Path(s) to operation definition files.
     pub operations: Vec<String>,
     // extensions
+    /// List of plugins.
+    pub plugins: Vec<String>,
     pub generate: GenerateConfig,
 }
 

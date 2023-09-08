@@ -439,6 +439,7 @@ dependencies = [
  "nitrogql-error",
  "nitrogql-introspection",
  "nitrogql-parser",
+ "nitrogql-plugin",
  "nitrogql-printer",
  "nitrogql-semantics",
  "nitrogql-utils",

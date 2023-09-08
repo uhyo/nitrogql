@@ -1,7 +1,7 @@
 use nitrogql_ast::base::Pos;
 
 /// Interface of a plugin.
-pub trait PluginV1Beta {
+pub trait PluginV1Beta: std::fmt::Debug {
     /// Name of the plugin.
     fn name(&self) -> &str;
     /// Returns additional schema definition provided by the plugin.

@@ -7,6 +7,7 @@ use nitrogql_ast::{
     type_system::{TypeSystemDocument, TypeSystemOrExtensionDocument},
 };
 use nitrogql_config_file::Config;
+use nitrogql_plugin::PluginV1Beta;
 use thiserror::Error;
 
 use crate::{file_store::FileStore, output::CliOutput};
@@ -52,6 +53,8 @@ pub struct CliConfig {
     /// Root directory for other paths.
     pub root_dir: PathBuf,
     pub config: Config,
+    /// Loaded plugins.
+    pub plugins: Vec<Box<dyn PluginV1Beta>>,
 }
 
 #[derive(Copy, Clone, Debug)]

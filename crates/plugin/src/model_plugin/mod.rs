@@ -1,6 +1,7 @@
 use crate::plugin_v1::{PluginCheckResult, PluginV1Beta};
 
 /// Plugin that adds a @model directive to the schema.
+#[derive(Debug)]
 pub struct ModelPlugin {}
 
 impl PluginV1Beta for ModelPlugin {

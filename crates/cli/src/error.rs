@@ -10,6 +10,8 @@ pub enum CliError {
     UnknownCommand(String),
     #[error("Invalid command: {0}")]
     InvalidCommand(String),
+    #[error("Cannot load plugin '{0}'")]
+    CannotLoadPlugin(String),
     #[error("Schema file not specified")]
     NoSchemaSpecified,
     #[error("Introspection JSON can only be specified once")]

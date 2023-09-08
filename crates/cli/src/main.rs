@@ -25,6 +25,7 @@ use crate::{
     context::{CliContext, LoadedSchema},
     error::CliError,
     file_store::FileKind,
+    load_plugins::load_plugins,
 };
 use nitrogql_config_file::load_config;
 
@@ -38,6 +39,7 @@ mod context;
 mod error;
 mod file_store;
 mod generate;
+mod load_plugins;
 mod output;
 
 #[derive(Parser, Debug)]
@@ -143,7 +145,12 @@ fn run_cli_impl(
     info!("Loaded config {config:?}");
     info!("root_dir {}", root_dir.display());
 
-    let config = CliConfig { root_dir, config };
+    let plugins = load_plugins(&config.plugins)?;
+    let config = CliConfig {
+        root_dir,
+        config,
+        plugins,
+    };
 
     if config.config.schema.is_empty() {
         return Err(CliError::NoSchemaSpecified.into());
