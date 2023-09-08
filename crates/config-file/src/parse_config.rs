@@ -11,11 +11,13 @@ struct ConfigParser {
 
 #[derive(Deserialize)]
 struct Extensions {
-    nitrogql: Option<GenerateConfigParser>,
+    nitrogql: Option<NitrogqlConfigParser>,
 }
 
-#[derive(Deserialize)]
-struct GenerateConfigParser {
+#[derive(Default, Deserialize)]
+#[serde(default)]
+struct NitrogqlConfigParser {
+    plugins: Vec<String>,
     generate: Option<GenerateConfig>,
 }
 

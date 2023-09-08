@@ -12,6 +12,10 @@ export type NitrogqlConfig = {
         nitrogql?:
           | {
               /**
+               * List of plugins to use.
+               */
+              plugins?: readonly string[] | undefined;
+              /**
                * Config related to the 'generate' command.
                */
               generate?:
