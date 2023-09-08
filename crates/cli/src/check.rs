@@ -1,9 +1,10 @@
-use std::borrow::Cow;
+use std::{borrow::Cow, path::PathBuf};
 
 use log::{debug, info};
 
 use graphql_builtins::generate_builtins;
-use nitrogql_checker::{check_operation_document, check_type_system_document};
+use nitrogql_ast::{OperationDocument, TypeSystemDocument, TypeSystemOrExtensionDocument};
+use nitrogql_checker::{check_operation_document, check_type_system_document, CheckError};
 use nitrogql_error::Result;
 use nitrogql_semantics::{ast_to_type_system, resolve_extensions};
 
@@ -22,56 +23,92 @@ pub fn run_check(context: CliContext) -> Result<CliContext> {
             output,
         } => {
             output.command_run("check".to_owned());
-            let loaded_schema = {
-                match schema {
-                    LoadedSchema::GraphQL(mut document) => {
-                        document.extend(generate_builtins());
-                        let resolved = resolve_extensions(document)?;
-                        let errors = check_type_system_document(&resolved);
-
-                        if !errors.is_empty() {
-                            output
-                                .extend(errors.into_iter().map(|err| (InputFileKind::Schema, err)));
-                            return Err(CliError::CommandNotSuccessful("check".into()).into());
-                        }
-                        LoadedSchema::GraphQL(resolved)
-                    }
-                    LoadedSchema::Introspection(schema) => LoadedSchema::Introspection(schema),
+            let result = check_impl(CheckImplInput {
+                schema,
+                operations: &operations,
+            })?;
+            match result {
+                CheckImplOutput::Ok { schema } => {
+                    info!("Check succeeded");
+                    eprintln!("'check' finished");
+                    Ok(CliContext::SchemaResolved {
+                        schema,
+                        operations,
+                        file_store,
+                        config,
+                        output,
+                    })
                 }
-            };
-            let schema =
-                loaded_schema.map_into(|doc| Cow::Owned(ast_to_type_system(doc)), Cow::Borrowed);
-            let errors = operations
-                .iter()
-                .flat_map(|(_, doc, file_by_index)| {
-                    check_operation_document(&schema, doc)
-                        .into_iter()
-                        .map(move |err| (err, file_by_index))
-                })
-                .collect::<Vec<_>>();
-            if errors.is_empty() {
-                info!("Check succeeded");
-                eprintln!("'check' finished");
-            } else {
-                output.extend(
-                    errors
-                        .into_iter()
-                        .map(|(err, _)| (InputFileKind::Operation, err)),
-                );
-                return Err(CliError::CommandNotSuccessful("check".into()).into());
+                CheckImplOutput::Err { errors } => {
+                    output.extend(errors);
+                    Err(CliError::CommandNotSuccessful("check".into()).into())
+                }
             }
-
-            Ok(CliContext::SchemaResolved {
-                schema: loaded_schema,
-                operations,
-                file_store,
-                config,
-                output,
-            })
         }
         _ => Err(CliError::InvalidCommand(
             "'check' command cannot be called after another command".into(),
         )
         .into()),
+    }
+}
+
+struct CheckImplInput<'src, 'a> {
+    pub schema: LoadedSchema<'src, TypeSystemOrExtensionDocument<'src>>,
+    pub operations: &'a [(PathBuf, OperationDocument<'src>, usize)],
+}
+
+enum CheckImplOutput<'src> {
+    Ok {
+        schema: LoadedSchema<'src, TypeSystemDocument<'src>>,
+    },
+    Err {
+        errors: Vec<(InputFileKind, CheckError)>,
+    },
+}
+
+fn check_impl<'src>(input: CheckImplInput<'src, '_>) -> Result<CheckImplOutput<'src>> {
+    let CheckImplInput { schema, operations } = input;
+
+    let loaded_schema = {
+        match schema {
+            LoadedSchema::GraphQL(mut document) => {
+                document.extend(generate_builtins());
+                let resolved = resolve_extensions(document)?;
+                let errors = check_type_system_document(&resolved);
+
+                if !errors.is_empty() {
+                    return Ok(CheckImplOutput::Err {
+                        errors: errors
+                            .into_iter()
+                            .map(|err| (InputFileKind::Schema, err))
+                            .collect(),
+                    });
+                }
+                LoadedSchema::GraphQL(resolved)
+            }
+            LoadedSchema::Introspection(schema) => LoadedSchema::Introspection(schema),
+        }
+    };
+    let schema = loaded_schema.map_into(|doc| Cow::Owned(ast_to_type_system(doc)), Cow::Borrowed);
+    let errors = operations
+        .iter()
+        .flat_map(|(_, doc, file_by_index)| {
+            check_operation_document(&schema, doc)
+                .into_iter()
+                .map(move |err| (err, file_by_index))
+        })
+        .collect::<Vec<_>>();
+
+    if !errors.is_empty() {
+        Ok(CheckImplOutput::Err {
+            errors: errors
+                .into_iter()
+                .map(|(err, _)| (InputFileKind::Operation, err))
+                .collect(),
+        })
+    } else {
+        Ok(CheckImplOutput::Ok {
+            schema: loaded_schema,
+        })
     }
 }
