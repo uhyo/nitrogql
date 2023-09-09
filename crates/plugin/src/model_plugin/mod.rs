@@ -1,3 +1,5 @@
+use nitrogql_ast::TypeSystemDocument;
+
 use crate::plugin_v1::{PluginCheckResult, PluginV1Beta};
 
 /// Plugin that adds a @model directive to the schema.
@@ -19,7 +21,7 @@ directive model(
             .into(),
         )
     }
-    fn check_schema(&self, _schema: &str) -> PluginCheckResult {
+    fn check_schema(&self, _schema: &TypeSystemDocument) -> PluginCheckResult {
         PluginCheckResult::success()
     }
 }

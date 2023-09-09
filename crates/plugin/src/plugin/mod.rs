@@ -1,6 +1,6 @@
 use std::cell::RefCell;
 
-use nitrogql_ast::TypeSystemOrExtensionDocument;
+use nitrogql_ast::{TypeSystemDocument, TypeSystemOrExtensionDocument};
 use nitrogql_parser::{parse_type_system_document, ParseError};
 
 use crate::PluginV1Beta;
@@ -55,7 +55,7 @@ impl<'host> Plugin<'host> {
     }
 
     /// Checks schema.
-    pub fn check_schema(&self, schema: &str) -> PluginCheckResult {
+    pub fn check_schema(&self, schema: &TypeSystemDocument) -> PluginCheckResult {
         self.raw.check_schema(schema)
     }
 }

@@ -4,7 +4,9 @@ use log::{debug, info};
 
 use graphql_builtins::generate_builtins;
 use nitrogql_ast::{OperationDocument, TypeSystemDocument, TypeSystemOrExtensionDocument};
-use nitrogql_checker::{check_operation_document, check_type_system_document, CheckError};
+use nitrogql_checker::{
+    check_operation_document, check_type_system_document, CheckError, CheckErrorMessage,
+};
 use nitrogql_error::Result;
 use nitrogql_plugin::Plugin;
 use nitrogql_semantics::{ast_to_type_system, resolve_extensions};
@@ -84,32 +86,53 @@ fn check_impl<'src>(input: CheckImplInput<'src, '_>) -> Result<CheckImplOutput<'
 
     let mut plugin_host = PluginHost::new(file_store);
 
-    let loaded_schema = {
-        match schema {
-            LoadedSchema::GraphQL(mut document) => {
-                document.extend(generate_builtins());
-                // extend schema with plugins
-                for plugin in plugins {
-                    if let Some(addition) = plugin.schema_addition(&mut plugin_host)? {
-                        document.extend(addition.definitions);
+    let loaded_schema =
+        {
+            match schema {
+                LoadedSchema::GraphQL(mut document) => {
+                    document.extend(generate_builtins());
+                    // extend schema with plugins
+                    for plugin in plugins {
+                        if let Some(addition) = plugin.schema_addition(&mut plugin_host)? {
+                            document.extend(addition.definitions);
+                        }
                     }
-                }
-                let resolved = resolve_extensions(document)?;
-                let errors = check_type_system_document(&resolved);
+                    let resolved = resolve_extensions(document)?;
+                    let mut errors = check_type_system_document(&resolved);
+                    // check schema with plugins
+                    for plugin in plugins {
+                        errors.extend(plugin.check_schema(&resolved).errors.into_iter().map(
+                            |error| {
+                                CheckError {
+                                    position: error.position,
+                                    message: CheckErrorMessage::Plugin {
+                                        message: error.message,
+                                    },
+                                    additional_info: error
+                                        .additional_info
+                                        .into_iter()
+                                        .map(|(pos, message)| {
+                                            (pos, CheckErrorMessage::Plugin { message })
+                                        })
+                                        .collect(),
+                                }
+                            },
+                        ));
+                    }
 
-                if !errors.is_empty() {
-                    return Ok(CheckImplOutput::Err {
-                        errors: errors
-                            .into_iter()
-                            .map(|err| (InputFileKind::Schema, err))
-                            .collect(),
-                    });
+                    if !errors.is_empty() {
+                        return Ok(CheckImplOutput::Err {
+                            errors: errors
+                                .into_iter()
+                                .map(|err| (InputFileKind::Schema, err))
+                                .collect(),
+                        });
+                    }
+                    LoadedSchema::GraphQL(resolved)
                 }
-                LoadedSchema::GraphQL(resolved)
+                LoadedSchema::Introspection(schema) => LoadedSchema::Introspection(schema),
             }
-            LoadedSchema::Introspection(schema) => LoadedSchema::Introspection(schema),
-        }
-    };
+        };
     let schema = loaded_schema.map_into(|doc| Cow::Owned(ast_to_type_system(doc)), Cow::Borrowed);
     let errors = operations
         .iter()

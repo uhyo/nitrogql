@@ -1,4 +1,4 @@
-use nitrogql_ast::base::Pos;
+use nitrogql_ast::{base::Pos, TypeSystemDocument};
 
 /// Interface of a naked plugin.
 pub trait PluginV1Beta: std::fmt::Debug {
@@ -7,7 +7,7 @@ pub trait PluginV1Beta: std::fmt::Debug {
     /// Returns additional schema definition provided by the plugin.
     fn schema_addition(&self) -> Option<String>;
     /// Checks schema.
-    fn check_schema(&self, schema: &str) -> PluginCheckResult;
+    fn check_schema(&self, schema: &TypeSystemDocument) -> PluginCheckResult;
 }
 
 pub struct PluginCheckResult {

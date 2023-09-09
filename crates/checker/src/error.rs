@@ -130,6 +130,9 @@ pub enum CheckErrorMessage {
     DefinitionPos { name: String },
     #[error("Root types are defined here")]
     RootTypesAreDefinedHere,
+    // Error from plugin
+    #[error("{message}")]
+    Plugin { message: String },
 }
 
 impl CheckErrorMessage {
