@@ -1,6 +1,6 @@
 use nitrogql_ast::base::Pos;
 
-/// Interface of a plugin.
+/// Interface of a naked plugin.
 pub trait PluginV1Beta: std::fmt::Debug {
     /// Name of the plugin.
     fn name(&self) -> &str;

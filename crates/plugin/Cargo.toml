@@ -8,6 +8,7 @@ edition = "2021"
 [dependencies]
 nitrogql-ast = { path = "../ast" }
 nitrogql-error = { path = "../error" }
+nitrogql-parser = { path = "../parser" }
 thiserror = "1.0.40"
 
 [dev-dependencies]

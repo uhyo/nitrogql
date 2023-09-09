@@ -41,6 +41,7 @@ mod file_store;
 mod generate;
 mod load_plugins;
 mod output;
+mod plugin_host;
 
 #[derive(Parser, Debug)]
 struct Args {

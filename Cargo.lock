@@ -506,6 +506,7 @@ dependencies = [
  "insta",
  "nitrogql-ast",
  "nitrogql-error",
+ "nitrogql-parser",
  "thiserror",
 ]
 
