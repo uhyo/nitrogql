@@ -6,13 +6,11 @@ use nitrogql_semantics::ast_to_type_system;
 use sourcemap_writer::SourceMapWriter;
 
 use crate::{
-    resolver_type_printer::visitor::get_resolver_type,
+    resolver_type_printer::visitor::{get_resolver_type, get_ts_type_for_resolver},
     ts_types::{ObjectKey, TSType},
 };
 
-use super::{
-    error::ResolverTypePrinterResult, options::ResolverTypePrinterOptions, visitor::TypePrinter,
-};
+use super::{error::ResolverTypePrinterResult, options::ResolverTypePrinterOptions};
 
 pub struct ResolverTypePrinter<'a, Writer> {
     options: ResolverTypePrinterOptions,
@@ -63,7 +61,14 @@ where
         );
 
         for type_definition in &document.definitions {
-            type_definition.print_type(&context, self.writer)?;
+            if let TypeSystemDefinition::TypeDefinition(def) = type_definition {
+                let ts_type = get_ts_type_for_resolver(def, &context);
+                self.writer.write("type ");
+                self.writer.write_for(def.name().name, def.name());
+                self.writer.write(" = ");
+                ts_type.print_type(self.writer);
+                writeln!(self.writer, ";");
+            }
         }
 
         let root_resolvers_type =

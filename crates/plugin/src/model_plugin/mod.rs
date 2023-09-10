@@ -1,7 +1,10 @@
+use graphql_type_system::Schema;
 use nitrogql_ast::{
+    base::Pos,
     type_system::{TypeDefinition, TypeSystemDefinition},
     TypeSystemDocument,
 };
+use nitrogql_printer::ts_types::TSType;
 
 use crate::{
     plugin_v1::{PluginCheckResult, PluginV1Beta},
@@ -49,7 +52,12 @@ directive model(
                             .flatten()
                             .find(|(arg, _)| arg.name == "type");
 
-                        if type_arg.is_none() {
+                        let type_arg_is_specified = match type_arg {
+                            Some((_, value)) => !value.is_null(),
+                            None => false,
+                        };
+
+                        if !type_arg_is_specified {
                             errors.push(PluginCheckError {
                                 position: directive.position,
                                 message: "'type' parameter is required".into(),
@@ -102,5 +110,13 @@ directive model(
             }
         }
         PluginCheckResult { errors }
+    }
+    fn transform_resolver_output_type(
+        &self,
+        schema: &Schema<&str, Pos>,
+        type_name: &str,
+        base: TSType,
+    ) -> TSType {
+        base
     }
 }

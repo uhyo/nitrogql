@@ -1,4 +1,6 @@
+use graphql_type_system::Schema;
 use nitrogql_ast::{base::Pos, TypeSystemDocument};
+use nitrogql_printer::ts_types::TSType;
 
 /// Interface of a naked plugin.
 pub trait PluginV1Beta: std::fmt::Debug {
@@ -8,6 +10,13 @@ pub trait PluginV1Beta: std::fmt::Debug {
     fn schema_addition(&self) -> Option<String>;
     /// Checks schema.
     fn check_schema(&self, schema: &TypeSystemDocument) -> PluginCheckResult;
+    /// Transforms resolver output type.
+    fn transform_resolver_output_type(
+        &self,
+        schema: &Schema<&str, Pos>,
+        type_name: &str,
+        base: TSType,
+    ) -> TSType;
 }
 
 pub struct PluginCheckResult {

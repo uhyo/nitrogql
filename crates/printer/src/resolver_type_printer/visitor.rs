@@ -1,9 +1,3 @@
-use nitrogql_ast::type_system::{
-    ArgumentsDefinition, InterfaceTypeDefinition, ObjectTypeDefinition, ScalarTypeDefinition,
-    TypeDefinition, TypeSystemDefinition, UnionTypeDefinition,
-};
-use sourcemap_writer::SourceMapWriter;
-
 use crate::{
     ts_types::{
         ts_types_util::ts_union, type_to_ts_type::get_ts_type_of_type, ObjectField, ObjectKey,
@@ -11,63 +5,39 @@ use crate::{
     },
     utils::interface_implementers,
 };
+use nitrogql_ast::type_system::{
+    ArgumentsDefinition, InterfaceTypeDefinition, ObjectTypeDefinition, TypeDefinition,
+    UnionTypeDefinition,
+};
 
-use super::{error::ResolverTypePrinterResult, printer::ResolverTypePrinterContext};
+use super::printer::ResolverTypePrinterContext;
 
-pub trait TypePrinter {
-    fn print_type(
-        &self,
-        context: &ResolverTypePrinterContext,
-        writer: &mut impl SourceMapWriter,
-    ) -> ResolverTypePrinterResult<()>;
-}
-
-impl TypePrinter for TypeSystemDefinition<'_> {
-    fn print_type(
-        &self,
-        context: &ResolverTypePrinterContext,
-        writer: &mut impl SourceMapWriter,
-    ) -> ResolverTypePrinterResult<()> {
-        match self {
-            TypeSystemDefinition::SchemaDefinition(_) => Ok(()),
-            TypeSystemDefinition::TypeDefinition(type_definition) => {
-                type_definition.print_type(context, writer)
-            }
-            TypeSystemDefinition::DirectiveDefinition(_) => Ok(()),
+pub fn get_ts_type_for_resolver(
+    def: &TypeDefinition<'_>,
+    context: &ResolverTypePrinterContext,
+) -> TSType {
+    let base_type = TSType::NamespaceMember(
+        context.options.schema_root_namespace.clone(),
+        def.name().name.to_string(),
+    );
+    match def {
+        TypeDefinition::Object(_) => {
+            // omit the __typename field for resolver logic
+            TSType::TypeFunc(
+                Box::new(TSType::TypeVariable("Omit".into())),
+                vec![base_type, TSType::StringLiteral("__typename".to_string())],
+            )
         }
-    }
-}
-
-impl TypePrinter for TypeDefinition<'_> {
-    fn print_type(
-        &self,
-        context: &ResolverTypePrinterContext,
-        writer: &mut impl SourceMapWriter,
-    ) -> ResolverTypePrinterResult<()> {
-        let name = self.name();
-        write!(
-            writer,
-            "type {} = {}.{};\n\n",
-            name, context.options.schema_root_namespace, name,
-        );
-
-        Ok(())
-    }
-}
-
-impl TypePrinter for ScalarTypeDefinition<'_> {
-    fn print_type(
-        &self,
-        context: &ResolverTypePrinterContext,
-        writer: &mut impl SourceMapWriter,
-    ) -> ResolverTypePrinterResult<()> {
-        write!(
-            writer,
-            "type {} = {}.{};\n\n",
-            self.name, context.options.schema_root_namespace, self.name,
-        );
-
-        Ok(())
+        TypeDefinition::Interface(def) => {
+            let implementers = interface_implementers(context.schema, def.name.name);
+            ts_union(implementers.map(|obj| TSType::TypeVariable(obj.name.to_string().into())))
+        }
+        TypeDefinition::Union(def) => ts_union(
+            def.members
+                .iter()
+                .map(|type_name| TSType::TypeVariable(type_name.name.to_string().into())),
+        ),
+        _ => base_type,
     }
 }
 

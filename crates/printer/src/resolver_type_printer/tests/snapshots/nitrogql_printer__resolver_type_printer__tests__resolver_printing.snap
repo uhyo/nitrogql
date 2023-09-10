@@ -6,22 +6,14 @@ import type { GraphQLResolveInfo } from "graphql";
 import type * as Schema from "schema";
 type __Resolver<Parent, Args, Context, Result> = (parent: Parent, args: Args, context: Context, info: GraphQLResolveInfo) => Result | Promise<Result>;
 type __TypeResolver<Obj, Context, Result> = (object: Obj, context: Context, info: GraphQLResolveInfo) => Result | Promise<Result>;
-type User = Schema.User;
-
-type Bot = Schema.Bot;
-
-type Post = Schema.Post;
-
-type Query = Schema.Query;
-
-type HasID = Schema.HasID;
-
-type UserOrBot = Schema.UserOrBot;
-
+type User = Omit<Schema.User, "__typename">;
+type Bot = Omit<Schema.Bot, "__typename">;
+type Post = Omit<Schema.Post, "__typename">;
+type Query = Omit<Schema.Query, "__typename">;
+type HasID = User | Bot;
+type UserOrBot = User | Bot;
 type UserType = Schema.UserType;
-
 type UserSearchQuery = Schema.UserSearchQuery;
-
 export type Resolvers<Context> = {
   User: {
     id: __Resolver<User, {}, Context, ID>;
