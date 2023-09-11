@@ -1,5 +1,4 @@
-use std::collections::HashMap;
-
+use indexmap::IndexMap;
 use thiserror::Error;
 
 use nitrogql_ast::base::{HasPos, Pos};
@@ -7,7 +6,7 @@ use nitrogql_error::PositionedError;
 
 pub struct ExtensionList<'a, OriginalType: HasPos, ExtensionType: HasPos> {
     name_of_elem: &'a str,
-    items: HashMap<Option<String>, ExtensionItem<OriginalType, ExtensionType>>,
+    items: IndexMap<Option<String>, ExtensionItem<OriginalType, ExtensionType>>,
 }
 
 struct ExtensionItem<OriginalType, ExtensionType> {
@@ -68,7 +67,7 @@ impl<OriginalType: HasPos, ExtensionType: HasPos> ExtensionList<'_, OriginalType
     pub fn new(name_of_elem: &str) -> ExtensionList<OriginalType, ExtensionType> {
         ExtensionList {
             name_of_elem,
-            items: HashMap::new(),
+            items: IndexMap::new(),
         }
     }
 
