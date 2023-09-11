@@ -17,8 +17,8 @@ struct DummyPlugin;
 impl ResolverTypePrinterPlugin for DummyPlugin {
     fn transform_resolver_output_types<'src>(
         &self,
-        document: &TypeSystemDocument<'src>,
-        base: std::collections::HashMap<&'src str, crate::ts_types::TSType>,
+        _document: &TypeSystemDocument<'src>,
+        _base: std::collections::HashMap<&'src str, crate::ts_types::TSType>,
     ) -> std::collections::HashMap<&'src str, crate::ts_types::TSType> {
         unimplemented!()
     }

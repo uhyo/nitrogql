@@ -512,6 +512,7 @@ dependencies = [
  "nitrogql-parser",
  "nitrogql-printer",
  "nitrogql-semantics",
+ "sourcemap-writer",
  "thiserror",
 ]
 

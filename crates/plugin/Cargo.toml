@@ -14,6 +14,7 @@ nitrogql-parser = { path = "../parser" }
 nitrogql-printer = { path = "../printer" }
 nitrogql-semantics = { path = "../semantics" }
 graphql-type-system = { path = "../type-system" }
+sourcemap-writer = { path = "../sourcemap-writer" }
 thiserror = "1.0.40"
 
 [dev-dependencies]

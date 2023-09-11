@@ -143,6 +143,53 @@ type User @model(type: "string") {
     }
 }
 
+mod resolvers {
+    use insta::{assert_debug_snapshot, assert_snapshot};
+    use nitrogql_ast::TypeSystemDocument;
+    use nitrogql_checker::check_type_system_document;
+    use nitrogql_printer::{ResolverTypePrinter, ResolverTypePrinterOptions};
+    use nitrogql_semantics::resolve_extensions;
+    use sourcemap_writer::JustWriter;
+
+    use crate::{ModelPlugin, Plugin};
+
+    use super::parse_to_type_system_document;
+
+    #[test]
+    fn model_on_fields() {
+        let doc = parse_to_type_system_document(
+            "
+type User {
+    id: ID! @model
+    name: String! @model
+    age: Int!
+    posts: [Post!]!
+}
+
+type Post {
+    id: ID! @model
+    title: String! @model
+    body: String!
+}
+        ",
+        );
+        let doc = print_document(&doc, ResolverTypePrinterOptions::default());
+        assert_snapshot!(doc);
+    }
+
+    fn print_document(
+        document: &TypeSystemDocument,
+        options: ResolverTypePrinterOptions,
+    ) -> String {
+        let plugins = [Plugin::new(Box::new(ModelPlugin {}))];
+        let mut result = String::new();
+        let mut writer = JustWriter::new(&mut result);
+        let mut printer = ResolverTypePrinter::new(options, &mut writer);
+        printer.print_document(document, &plugins).unwrap();
+        result
+    }
+}
+
 fn parse_to_type_system_document(source: &str) -> TypeSystemDocument {
     let mut doc = parse_type_system_document(source).unwrap();
     doc.extend(generate_builtins());
