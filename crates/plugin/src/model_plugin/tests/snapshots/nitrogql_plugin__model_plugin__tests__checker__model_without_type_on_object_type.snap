@@ -1,0 +1,30 @@
+---
+source: crates/plugin/src/model_plugin/tests/mod.rs
+expression: errors
+---
+[
+    CheckError {
+        position: Pos {
+            line: 1,
+            column: 10,
+            file: 0,
+            builtin: false,
+        },
+        message: Plugin {
+            message: "'type' parameter is required",
+        },
+        additional_info: [],
+    },
+    CheckError {
+        position: Pos {
+            line: 8,
+            column: 10,
+            file: 0,
+            builtin: false,
+        },
+        message: Plugin {
+            message: "'type' parameter is required",
+        },
+        additional_info: [],
+    },
+]

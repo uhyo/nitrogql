@@ -1,0 +1,30 @@
+---
+source: crates/plugin/src/model_plugin/tests/mod.rs
+expression: errors
+---
+[
+    CheckError {
+        position: Pos {
+            line: 2,
+            column: 12,
+            file: 0,
+            builtin: false,
+        },
+        message: Plugin {
+            message: "model directive cannot be used on fields if it is already used on the object",
+        },
+        additional_info: [],
+    },
+    CheckError {
+        position: Pos {
+            line: 3,
+            column: 18,
+            file: 0,
+            builtin: false,
+        },
+        message: Plugin {
+            message: "model directive cannot be used on fields if it is already used on the object",
+        },
+        additional_info: [],
+    },
+]

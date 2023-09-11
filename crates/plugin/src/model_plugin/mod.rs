@@ -69,6 +69,8 @@ directive @model(
                         }
                     }
 
+                    let has_object_model_directive = model_directive.is_some();
+
                     for field in def.fields.iter() {
                         let model_directive = field
                             .directives
@@ -76,6 +78,13 @@ directive @model(
                             .find(|directive| directive.name.name == "model");
 
                         if let Some(directive) = model_directive {
+                            if has_object_model_directive {
+                                errors.push(PluginCheckError {
+                                    position: directive.position,
+                                    message: "model directive cannot be used on fields if it is already used on the object".into(),
+                                    additional_info: vec![],
+                                });
+                            }
                             // Check type argument
                             let type_arg = directive
                                 .arguments

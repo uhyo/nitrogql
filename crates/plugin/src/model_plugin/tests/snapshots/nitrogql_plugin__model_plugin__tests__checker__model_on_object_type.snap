@@ -1,0 +1,5 @@
+---
+source: crates/plugin/src/model_plugin/tests/mod.rs
+expression: errors
+---
+[]
