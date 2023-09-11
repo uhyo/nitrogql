@@ -144,11 +144,9 @@ type User @model(type: "string") {
 }
 
 mod resolvers {
-    use insta::{assert_debug_snapshot, assert_snapshot};
+    use insta::assert_snapshot;
     use nitrogql_ast::TypeSystemDocument;
-    use nitrogql_checker::check_type_system_document;
     use nitrogql_printer::{ResolverTypePrinter, ResolverTypePrinterOptions};
-    use nitrogql_semantics::resolve_extensions;
     use sourcemap_writer::JustWriter;
 
     use crate::{ModelPlugin, Plugin};

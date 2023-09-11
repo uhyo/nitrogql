@@ -79,7 +79,11 @@ where
             plugin.transform_resolver_output_types(document, acc)
         });
 
-        for type_definition in &document.definitions {
+        let document_for_resolvers = plugins.iter().fold(Cow::Borrowed(document), |acc, plugin| {
+            Cow::Owned(plugin.transform_document_for_resolvers(acc.as_ref()))
+        });
+
+        for type_definition in &document_for_resolvers.definitions {
             if let TypeSystemDefinition::TypeDefinition(def) = type_definition {
                 let ts_type = ts_types.get(def.name().name).unwrap();
 
@@ -92,15 +96,15 @@ where
         }
 
         let root_resolvers_type =
-            TSType::object(document.definitions.iter().filter_map(|type_definition| {
-                match type_definition {
+            TSType::object(document_for_resolvers.definitions.iter().filter_map(
+                |type_definition| match type_definition {
                     TypeSystemDefinition::TypeDefinition(type_definition) => {
                         let resolver_type = get_resolver_type(type_definition, &context)?;
                         Some((ObjectKey::from(type_definition.name()), resolver_type, None))
                     }
                     _ => None,
-                }
-            }));
+                },
+            ));
 
         write!(
             self.writer,

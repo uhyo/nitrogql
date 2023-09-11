@@ -22,6 +22,12 @@ impl ResolverTypePrinterPlugin for DummyPlugin {
     ) -> std::collections::HashMap<&'src str, crate::ts_types::TSType> {
         unimplemented!()
     }
+    fn transform_document_for_resolvers<'src>(
+        &self,
+        _document: &TypeSystemDocument<'src>,
+    ) -> TypeSystemDocument<'src> {
+        unimplemented!()
+    }
 }
 
 static EMPTY_PLUGINS: &[DummyPlugin] = &[];

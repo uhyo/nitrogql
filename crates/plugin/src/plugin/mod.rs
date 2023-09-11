@@ -69,4 +69,10 @@ impl ResolverTypePrinterPlugin for Plugin<'_> {
     ) -> HashMap<&'src str, TSType> {
         self.raw.transform_resolver_output_types(document, base)
     }
+    fn transform_document_for_resolvers<'src>(
+        &self,
+        document: &TypeSystemDocument<'src>,
+    ) -> TypeSystemDocument<'src> {
+        self.raw.transform_document_for_resolvers(document)
+    }
 }

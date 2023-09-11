@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use nitrogql_ast::{
-    type_system::{TypeDefinition, TypeSystemDefinition},
+    type_system::{ObjectTypeDefinition, TypeDefinition, TypeSystemDefinition},
     value::Value,
     TypeSystemDocument,
 };
@@ -172,5 +172,46 @@ directive @model(
             }
         }
         base
+    }
+    fn transform_document_for_resolvers<'src>(
+        &self,
+        document: &TypeSystemDocument<'src>,
+    ) -> TypeSystemDocument<'src> {
+        let definitions = document.definitions.iter().map(|def| {
+            if let TypeSystemDefinition::TypeDefinition(TypeDefinition::Object(def)) = def {
+                let model_directive = def
+                    .directives
+                    .iter()
+                    .find(|directive| directive.name.name == "model");
+                if model_directive.is_some() {
+                    // If whole object is @model-ed, then you need to define
+                    // resolvers for all fields.
+                    return TypeSystemDefinition::TypeDefinition(TypeDefinition::Object(
+                        def.clone(),
+                    ));
+                }
+
+                let fields = def.fields.iter().filter_map(|field| {
+                    let model_directive = field
+                        .directives
+                        .iter()
+                        .find(|directive| directive.name.name == "model");
+                    if model_directive.is_none() {
+                        return Some(field.clone());
+                    }
+                    None
+                });
+                TypeSystemDefinition::TypeDefinition(TypeDefinition::Object(ObjectTypeDefinition {
+                    fields: fields.collect(),
+                    ..def.clone()
+                }))
+            } else {
+                def.clone()
+            }
+        });
+
+        TypeSystemDocument {
+            definitions: definitions.collect(),
+        }
     }
 }

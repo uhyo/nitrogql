@@ -17,6 +17,12 @@ pub trait PluginV1Beta: std::fmt::Debug {
         document: &TypeSystemDocument<'src>,
         base: HashMap<&'src str, TSType>,
     ) -> HashMap<&'src str, TSType>;
+    /// Transforms document so that it represents which fields
+    /// have resolvers.
+    fn transform_document_for_resolvers<'src>(
+        &self,
+        document: &TypeSystemDocument<'src>,
+    ) -> TypeSystemDocument<'src>;
 }
 
 pub struct PluginCheckResult {

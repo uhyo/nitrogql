@@ -6,23 +6,19 @@ import type { GraphQLResolveInfo } from "graphql";
 import type * as Schema from "";
 type __Resolver<Parent, Args, Context, Result> = (parent: Parent, args: Args, context: Context, info: GraphQLResolveInfo) => Result | Promise<Result>;
 type __TypeResolver<Obj, Context, Result> = (object: Obj, context: Context, info: GraphQLResolveInfo) => Result | Promise<Result>;
-type String = Schema.String;
-type Float = Schema.Float;
 type Int = Schema.Int;
+type Float = Schema.Float;
+type String = Schema.String;
 type Boolean = Schema.Boolean;
 type ID = Schema.ID;
 type User = Pick<Omit<Schema.User, "__typename">, "id" | "name">;
 type Post = Pick<Omit<Schema.Post, "__typename">, "id" | "title">;
 export type Resolvers<Context> = {
   User: {
-    id: __Resolver<User, {}, Context, ID>;
-    name: __Resolver<User, {}, Context, String>;
     age: __Resolver<User, {}, Context, Int>;
     posts: __Resolver<User, {}, Context, (Post)[]>;
   };
   Post: {
-    id: __Resolver<Post, {}, Context, ID>;
-    title: __Resolver<Post, {}, Context, String>;
     body: __Resolver<Post, {}, Context, String>;
   };
 };
