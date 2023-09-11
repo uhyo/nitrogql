@@ -146,7 +146,7 @@ fn check_object(
             &definitions.type_system,
             None,
             &f.directives,
-            "FIELD",
+            "FIELD_DEFINITION",
             result,
         );
 

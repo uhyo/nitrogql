@@ -503,12 +503,15 @@ dependencies = [
 name = "nitrogql-plugin"
 version = "0.1.0"
 dependencies = [
+ "graphql-builtins",
  "graphql-type-system",
  "insta",
  "nitrogql-ast",
+ "nitrogql-checker",
  "nitrogql-error",
  "nitrogql-parser",
  "nitrogql-printer",
+ "nitrogql-semantics",
  "thiserror",
 ]
 

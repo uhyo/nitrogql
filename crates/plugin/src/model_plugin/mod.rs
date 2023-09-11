@@ -12,6 +12,8 @@ use crate::{
     PluginCheckError,
 };
 
+mod tests;
+
 /// Plugin that adds a @model directive to the schema.
 #[derive(Debug)]
 pub struct ModelPlugin {}
@@ -23,7 +25,7 @@ impl PluginV1Beta for ModelPlugin {
     fn schema_addition(&self) -> Option<String> {
         Some(
             r#"
-directive model(
+directive @model(
   # TypeScript type of this object. Only applicable for whole objects.
   type: String
 ) on OBJECT | FIELD_DEFINITION
