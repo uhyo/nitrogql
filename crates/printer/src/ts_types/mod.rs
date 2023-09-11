@@ -34,6 +34,8 @@ pub enum TSType {
     Never,
     /// Unknown
     Unknown,
+    /// Raw type (TypeScript string)
+    Raw(String),
 }
 
 impl TSType {
@@ -217,6 +219,11 @@ impl TSType {
             TSType::Unknown => {
                 writer.write("unknown");
             }
+            TSType::Raw(s) => {
+                writer.write("(");
+                writer.write(s);
+                writer.write(")");
+            }
         }
     }
 
@@ -252,7 +259,8 @@ impl TSType {
             | t @ TSType::Never
             | t @ TSType::Null
             | t @ TSType::Undefined
-            | t @ TSType::Unknown => t,
+            | t @ TSType::Unknown
+            | t @ TSType::Raw(_) => t,
         }
     }
 

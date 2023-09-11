@@ -1,4 +1,5 @@
-use graphql_type_system::Schema;
+use std::collections::HashMap;
+
 use nitrogql_ast::{base::Pos, TypeSystemDocument};
 use nitrogql_printer::ts_types::TSType;
 
@@ -10,13 +11,12 @@ pub trait PluginV1Beta: std::fmt::Debug {
     fn schema_addition(&self) -> Option<String>;
     /// Checks schema.
     fn check_schema(&self, schema: &TypeSystemDocument) -> PluginCheckResult;
-    /// Transforms resolver output type.
-    fn transform_resolver_output_type(
+    /// Transforms resolver output types.
+    fn transform_resolver_output_types<'src>(
         &self,
-        schema: &Schema<&str, Pos>,
-        type_name: &str,
-        base: TSType,
-    ) -> TSType;
+        document: &TypeSystemDocument<'src>,
+        base: HashMap<&'src str, TSType>,
+    ) -> HashMap<&'src str, TSType>;
 }
 
 pub struct PluginCheckResult {

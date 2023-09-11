@@ -1,4 +1,4 @@
-use std::borrow::Cow;
+use std::{borrow::Cow, collections::HashMap};
 
 use graphql_type_system::Schema;
 use nitrogql_ast::{base::Pos, type_system::TypeSystemDefinition, TypeSystemDocument};
@@ -10,7 +10,10 @@ use crate::{
     ts_types::{ObjectKey, TSType},
 };
 
-use super::{error::ResolverTypePrinterResult, options::ResolverTypePrinterOptions};
+use super::{
+    error::ResolverTypePrinterResult, options::ResolverTypePrinterOptions,
+    plugin::ResolverTypePrinterPlugin,
+};
 
 pub struct ResolverTypePrinter<'a, Writer> {
     options: ResolverTypePrinterOptions,
@@ -34,6 +37,7 @@ where
     pub fn print_document(
         &mut self,
         document: &TypeSystemDocument,
+        plugins: &[impl ResolverTypePrinterPlugin],
     ) -> ResolverTypePrinterResult<()> {
         let schema = ast_to_type_system(document);
         let context = ResolverTypePrinterContext {
@@ -60,9 +64,25 @@ where
             "type __TypeResolver<Obj, Context, Result> = (object: Obj, context: Context, info: GraphQLResolveInfo) => Result | Promise<Result>;"
         );
 
+        let ts_types: HashMap<&str, TSType> = document
+            .definitions
+            .iter()
+            .filter_map(|type_definition| match type_definition {
+                TypeSystemDefinition::TypeDefinition(type_definition) => {
+                    let resolver_type = get_ts_type_for_resolver(type_definition, &context);
+                    Some((type_definition.name().name, resolver_type))
+                }
+                _ => None,
+            })
+            .collect();
+        let ts_types = plugins.iter().fold(ts_types, |acc, plugin| {
+            plugin.transform_resolver_output_types(document, acc)
+        });
+
         for type_definition in &document.definitions {
             if let TypeSystemDefinition::TypeDefinition(def) = type_definition {
-                let ts_type = get_ts_type_for_resolver(def, &context);
+                let ts_type = ts_types.get(def.name().name).unwrap();
+
                 self.writer.write("type ");
                 self.writer.write_for(def.name().name, def.name());
                 self.writer.write(" = ");

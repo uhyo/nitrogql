@@ -145,11 +145,11 @@ pub fn run_generate(mut context: CliContext) -> Result<CliContext> {
 
                 match schema {
                     LoadedSchema::GraphQL(ref schema) => {
-                        printer.print_document(schema)?;
+                        printer.print_document(schema, &config.plugins)?;
                     }
                     LoadedSchema::Introspection(ref schema) => {
                         let ast = type_system_to_ast(schema);
-                        printer.print_document(&ast)?;
+                        printer.print_document(&ast, &config.plugins)?;
                     }
                 }
 

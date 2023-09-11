@@ -6,10 +6,25 @@ use nitrogql_parser::parse_type_system_document;
 use nitrogql_semantics::resolve_extensions;
 use sourcemap_writer::JustWriter;
 
+use crate::ResolverTypePrinterPlugin;
+
 use super::{
     error::ResolverTypePrinterResult, options::ResolverTypePrinterOptions,
     printer::ResolverTypePrinter,
 };
+
+struct DummyPlugin;
+impl ResolverTypePrinterPlugin for DummyPlugin {
+    fn transform_resolver_output_types<'src>(
+        &self,
+        document: &TypeSystemDocument<'src>,
+        base: std::collections::HashMap<&'src str, crate::ts_types::TSType>,
+    ) -> std::collections::HashMap<&'src str, crate::ts_types::TSType> {
+        unimplemented!()
+    }
+}
+
+static EMPTY_PLUGINS: &[DummyPlugin] = &[];
 
 #[test]
 fn resolver_printing() {
@@ -61,6 +76,7 @@ fn resolver_printing() {
             schema_source: "schema".into(),
             ..Default::default()
         },
+        EMPTY_PLUGINS,
     )
     .unwrap();
     assert_snapshot!(printed);
@@ -69,10 +85,11 @@ fn resolver_printing() {
 fn print_document(
     document: &TypeSystemDocument,
     options: ResolverTypePrinterOptions,
+    plugins: &[impl ResolverTypePrinterPlugin],
 ) -> ResolverTypePrinterResult<String> {
     let mut result = String::new();
     let mut writer = JustWriter::new(&mut result);
     let mut printer = ResolverTypePrinter::new(options, &mut writer);
-    printer.print_document(document)?;
+    printer.print_document(document, plugins)?;
     Ok(result)
 }

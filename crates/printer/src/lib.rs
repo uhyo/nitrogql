@@ -17,6 +17,7 @@ pub use schema_type_printer::printer::{
 
 pub use resolver_type_printer::{
     options::ResolverTypePrinterOptions,
+    plugin::ResolverTypePrinterPlugin,
     printer::{ResolverTypePrinter, ResolverTypePrinterContext},
 };
 

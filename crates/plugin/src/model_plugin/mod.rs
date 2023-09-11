@@ -1,10 +1,11 @@
-use graphql_type_system::Schema;
+use std::collections::HashMap;
+
 use nitrogql_ast::{
-    base::Pos,
     type_system::{TypeDefinition, TypeSystemDefinition},
+    value::Value,
     TypeSystemDocument,
 };
-use nitrogql_printer::ts_types::TSType;
+use nitrogql_printer::ts_types::{ts_types_util::ts_union, TSType};
 
 use crate::{
     plugin_v1::{PluginCheckResult, PluginV1Beta},
@@ -111,12 +112,54 @@ directive model(
         }
         PluginCheckResult { errors }
     }
-    fn transform_resolver_output_type(
+    fn transform_resolver_output_types<'src>(
         &self,
-        schema: &Schema<&str, Pos>,
-        type_name: &str,
-        base: TSType,
-    ) -> TSType {
+        document: &TypeSystemDocument<'src>,
+        mut base: HashMap<&'src str, TSType>,
+    ) -> HashMap<&'src str, TSType> {
+        for def in document.definitions.iter() {
+            if let TypeSystemDefinition::TypeDefinition(TypeDefinition::Object(def)) = def {
+                let model_directive = def
+                    .directives
+                    .iter()
+                    .find(|directive| directive.name.name == "model");
+                if let Some(d) = model_directive {
+                    let type_arg = d
+                        .arguments
+                        .iter()
+                        .flatten()
+                        .find(|(arg, _)| arg.name == "type");
+                    let Some((_, value)) = type_arg else {
+                        panic!("'type' argument is required");
+                    };
+                    let Value::StringValue(value) = value else {
+                        continue;
+                    };
+                    // if @model(type: "...") is applied to a whole object,
+                    // then we need to replace the type of the object with the specified type
+                    *base.get_mut(&def.name.name).expect("object not found") =
+                        TSType::Raw(value.value.clone());
+                    continue;
+                }
+
+                let model_field_names = def.fields.iter().filter_map(|field| {
+                    field
+                        .directives
+                        .iter()
+                        .any(|directive| directive.name.name == "model")
+                        .then_some(field.name.name)
+                });
+                let base_type = base.remove(&def.name.name).expect("object not found");
+                let obj_type = TSType::TypeFunc(
+                    Box::new(TSType::TypeVariable("Pick".into())),
+                    vec![
+                        base_type,
+                        ts_union(model_field_names.map(|n| TSType::StringLiteral(n.into()))),
+                    ],
+                );
+                base.insert(def.name.name, obj_type);
+            }
+        }
         base
     }
 }
