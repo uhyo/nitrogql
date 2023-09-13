@@ -10,6 +10,7 @@ use clap::Parser;
 use context::OutputFormat;
 use file_store::FileStore;
 use globmatch::wrappers::{build_matchers, match_paths};
+use graphql_builtins::generate_builtins;
 use graphql_type_system::Schema;
 use itertools::Itertools;
 use log::info;
@@ -18,8 +19,10 @@ use nitrogql_ast::{
     type_system::TypeSystemOrExtensionDocument,
 };
 use nitrogql_introspection::schema_from_introspection_json;
+use nitrogql_plugin::Plugin;
 use nitrogql_utils::{get_cwd, normalize_path};
 use output::CliOutput;
+use plugin_host::PluginHost;
 
 use crate::{
     context::{CliContext, LoadedSchema},
@@ -180,7 +183,11 @@ fn run_cli_impl(
     if !schema_errors.is_empty() {
         return Err(CommandError::merge(schema_errors));
     }
-    let merged_schema_doc = resolve_loaded_schema(schema_docs)?;
+    let merged_schema_doc = {
+        let mut merged_schema_doc = resolve_loaded_schema(schema_docs)?;
+        extend_loaded_schema(&mut merged_schema_doc, file_store, &config.plugins)?;
+        merged_schema_doc
+    };
 
     let operation_files = load_glob_files(&config.root_dir, &config.config.operations)?;
 
@@ -310,6 +317,27 @@ fn resolve_loaded_schema<'src>(
         None => {
             let merged = TypeSystemOrExtensionDocument::merge(documents);
             Ok(LoadedSchema::GraphQL(merged))
+        }
+    }
+}
+
+/// Extend loaded schema with builtins and plugins.
+fn extend_loaded_schema<'src>(
+    schema: &mut LoadedSchema<'src, TypeSystemOrExtensionDocument<'src>>,
+    file_store: &mut FileStore,
+    plugins: &[Plugin<'src>],
+) -> Result<(), CommandError> {
+    let mut plugin_host = PluginHost::new(file_store);
+    match schema {
+        LoadedSchema::Introspection(_) => Ok(()),
+        LoadedSchema::GraphQL(doc) => {
+            doc.extend(generate_builtins());
+            for plugin in plugins {
+                if let Some(addition) = plugin.schema_addition(&mut plugin_host)? {
+                    doc.extend(addition.definitions);
+                }
+            }
+            Ok(())
         }
     }
 }

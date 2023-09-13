@@ -208,7 +208,7 @@ fn parse_to_type_system_document(source: &str) -> TypeSystemDocument {
 
 struct TestHost {}
 
-impl PluginHost<'static> for TestHost {
+impl PluginHost for TestHost {
     fn load_virtual_file(&mut self, content: String) -> &'static str {
         Box::leak(content.into_boxed_str())
     }

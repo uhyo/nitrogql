@@ -7,7 +7,7 @@ use sourcemap_writer::SourceMapWriter;
 
 use crate::{
     resolver_type_printer::visitor::{get_resolver_type, get_ts_type_for_resolver},
-    ts_types::{ObjectKey, TSType},
+    ts_types::{ObjectField, ObjectKey, TSType},
 };
 
 use super::{
@@ -95,16 +95,26 @@ where
             }
         }
 
-        let root_resolvers_type =
-            TSType::object(document_for_resolvers.definitions.iter().filter_map(
-                |type_definition| match type_definition {
+        let root_resolvers_type = TSType::Object(
+            document_for_resolvers
+                .definitions
+                .iter()
+                .filter_map(|type_definition| match type_definition {
                     TypeSystemDefinition::TypeDefinition(type_definition) => {
                         let resolver_type = get_resolver_type(type_definition, &context)?;
-                        Some((ObjectKey::from(type_definition.name()), resolver_type, None))
+                        let optional = is_empty_object(&resolver_type);
+                        Some(ObjectField {
+                            key: ObjectKey::from(type_definition.name()),
+                            r#type: resolver_type,
+                            description: None,
+                            readonly: false,
+                            optional,
+                        })
                     }
                     _ => None,
-                },
-            ));
+                })
+                .collect(),
+        );
 
         write!(
             self.writer,
@@ -116,5 +126,13 @@ where
         writeln!(self.writer, ";");
 
         Ok(())
+    }
+}
+
+fn is_empty_object(ty: &TSType) -> bool {
+    if let TSType::Object(fields) = ty {
+        fields.is_empty()
+    } else {
+        false
     }
 }

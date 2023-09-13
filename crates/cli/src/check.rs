@@ -2,7 +2,6 @@ use std::{borrow::Cow, path::PathBuf};
 
 use log::{debug, info};
 
-use graphql_builtins::generate_builtins;
 use nitrogql_ast::{OperationDocument, TypeSystemDocument, TypeSystemOrExtensionDocument};
 use nitrogql_checker::{
     check_operation_document, check_type_system_document, CheckError, CheckErrorMessage,
@@ -11,9 +10,7 @@ use nitrogql_error::Result;
 use nitrogql_plugin::Plugin;
 use nitrogql_semantics::{ast_to_type_system, resolve_extensions};
 
-use crate::{
-    context::LoadedSchema, file_store::FileStore, output::InputFileKind, plugin_host::PluginHost,
-};
+use crate::{context::LoadedSchema, output::InputFileKind};
 
 use super::{error::CliError, CliContext};
 
@@ -32,10 +29,9 @@ pub fn run_check(context: CliContext) -> Result<CliContext> {
                 schema,
                 operations: &operations,
                 plugins: &config.plugins,
-                file_store,
             })?;
             match result {
-                CheckImplOutput::Ok { schema, file_store } => {
+                CheckImplOutput::Ok { schema } => {
                     info!("Check succeeded");
                     eprintln!("'check' finished");
                     Ok(CliContext::SchemaResolved {
@@ -63,13 +59,11 @@ struct CheckImplInput<'src, 'a> {
     pub schema: LoadedSchema<'src, TypeSystemOrExtensionDocument<'src>>,
     pub operations: &'a [(PathBuf, OperationDocument<'src>, usize)],
     pub plugins: &'a [Plugin<'src>],
-    pub file_store: &'src mut FileStore,
 }
 
 enum CheckImplOutput<'src> {
     Ok {
         schema: LoadedSchema<'src, TypeSystemDocument<'src>>,
-        file_store: &'src mut FileStore,
     },
     Err {
         errors: Vec<(InputFileKind, CheckError)>,
@@ -81,21 +75,11 @@ fn check_impl<'src>(input: CheckImplInput<'src, '_>) -> Result<CheckImplOutput<'
         schema,
         operations,
         plugins,
-        file_store,
     } = input;
-
-    let mut plugin_host = PluginHost::new(file_store);
 
     let loaded_schema = {
         match schema {
-            LoadedSchema::GraphQL(mut document) => {
-                document.extend(generate_builtins());
-                // extend schema with plugins
-                for plugin in plugins {
-                    if let Some(addition) = plugin.schema_addition(&mut plugin_host)? {
-                        document.extend(addition.definitions);
-                    }
-                }
+            LoadedSchema::GraphQL(document) => {
                 let resolved = resolve_extensions(document)?;
                 let mut errors = check_type_system_document(&resolved);
                 // If basic schema check fails, we don't need to check with plugins.
@@ -155,7 +139,6 @@ fn check_impl<'src>(input: CheckImplInput<'src, '_>) -> Result<CheckImplOutput<'
     } else {
         Ok(CheckImplOutput::Ok {
             schema: loaded_schema,
-            file_store: plugin_host.file_store,
         })
     }
 }

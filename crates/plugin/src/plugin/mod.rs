@@ -14,14 +14,14 @@ mod host;
 
 /// Wrapper of naked plugin.
 #[derive(Debug)]
-pub struct Plugin<'host> {
+pub struct Plugin<'src> {
     /// The naked plugin.
     raw: Box<dyn PluginV1Beta>,
     /// Parsed schema addition.
-    parsed_schema_addition: RefCell<Option<TypeSystemOrExtensionDocument<'host>>>,
+    parsed_schema_addition: RefCell<Option<TypeSystemOrExtensionDocument<'src>>>,
 }
 
-impl<'host> Plugin<'host> {
+impl<'src> Plugin<'src> {
     /// Creates a new plugin.
     pub fn new(raw: Box<dyn PluginV1Beta>) -> Self {
         Self {
@@ -38,8 +38,8 @@ impl<'host> Plugin<'host> {
     /// Returns additional schema definition provided by the plugin.
     pub fn schema_addition(
         &self,
-        host: &mut impl PluginHost<'host>,
-    ) -> Result<Option<TypeSystemOrExtensionDocument<'host>>, ParseError> {
+        host: &mut impl PluginHost,
+    ) -> Result<Option<TypeSystemOrExtensionDocument<'src>>, ParseError> {
         let mut cached = self.parsed_schema_addition.borrow_mut();
         if let Some(cached) = &*cached {
             return Ok(Some(cached.clone()));
