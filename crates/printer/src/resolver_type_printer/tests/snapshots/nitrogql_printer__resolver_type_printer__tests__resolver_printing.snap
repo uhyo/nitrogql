@@ -41,4 +41,15 @@ export type Resolvers<Context> = {
     __resolveType: __TypeResolver<User | Bot, Context, "User" | "Bot">;
   };
 };
+export type ResolverOutput<T extends "User" | "Bot" | "Post" | "Query" | "HasID" | "UserOrBot" | "UserType" | "UserSearchQuery"> = 
+{
+  User: User;
+  Bot: Bot;
+  Post: Post;
+  Query: Query;
+  HasID: HasID;
+  UserOrBot: UserOrBot;
+  UserType: UserType;
+  UserSearchQuery: UserSearchQuery;
+};
 

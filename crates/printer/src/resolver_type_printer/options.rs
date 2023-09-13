@@ -4,6 +4,8 @@ use nitrogql_config_file::Config;
 pub struct ResolverTypePrinterOptions {
     /// Name of root resolver type.
     pub root_resolver_type: String,
+    /// Name of resolver output type.
+    pub resolver_output_type: String,
     /// Source of schema type to import from.
     pub schema_source: String,
     /// Name of the root TypeScript namespace that contains schema types.
@@ -14,6 +16,7 @@ impl Default for ResolverTypePrinterOptions {
     fn default() -> Self {
         ResolverTypePrinterOptions {
             root_resolver_type: "Resolvers".into(),
+            resolver_output_type: "ResolverOutput".into(),
             schema_source: "".into(),
             schema_root_namespace: "Schema".into(),
         }

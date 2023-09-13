@@ -22,4 +22,14 @@ export type Resolvers<Context> = {
     body: __Resolver<Post, {}, Context, String>;
   };
 };
+export type ResolverOutput<T extends "Int" | "Float" | "String" | "Boolean" | "ID" | "User" | "Post"> = 
+{
+  Int: Int;
+  Float: Float;
+  String: String;
+  Boolean: Boolean;
+  ID: ID;
+  User: User;
+  Post: Post;
+};
 

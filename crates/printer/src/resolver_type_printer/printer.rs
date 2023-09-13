@@ -7,7 +7,7 @@ use sourcemap_writer::SourceMapWriter;
 
 use crate::{
     resolver_type_printer::visitor::{get_resolver_type, get_ts_type_for_resolver},
-    ts_types::{ObjectField, ObjectKey, TSType},
+    ts_types::{ts_types_util::ts_union, ObjectField, ObjectKey, TSType},
 };
 
 use super::{
@@ -116,14 +116,48 @@ where
                 .collect(),
         );
 
+        let type_names_type = ts_union(document_for_resolvers.definitions.iter().filter_map(
+            |type_definition| match type_definition {
+                TypeSystemDefinition::TypeDefinition(type_definition) => {
+                    Some(TSType::StringLiteral(type_definition.name().to_string()))
+                }
+                _ => None,
+            },
+        ));
+        let resolver_output_type = TSType::Object(
+            document_for_resolvers
+                .definitions
+                .iter()
+                .filter_map(|type_definition| match type_definition {
+                    TypeSystemDefinition::TypeDefinition(type_definition) => Some(ObjectField {
+                        key: ObjectKey::from(type_definition.name()),
+                        r#type: TSType::TypeVariable(type_definition.name().into()),
+                        description: None,
+                        readonly: false,
+                        optional: false,
+                    }),
+                    _ => None,
+                })
+                .collect(),
+        );
+
         write!(
             self.writer,
             "export type {}<Context> = ",
             &context.options.root_resolver_type
         );
-
         root_resolvers_type.print_type(self.writer);
         writeln!(self.writer, ";");
+
+        write!(
+            self.writer,
+            "export type {}<T extends ",
+            &context.options.resolver_output_type
+        );
+        type_names_type.print_type(self.writer);
+        writeln!(self.writer, "> = ");
+        resolver_output_type.print_type(self.writer);
+        writeln!(self.writer, "[T];");
 
         Ok(())
     }

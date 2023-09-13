@@ -1,9 +1,16 @@
 import { ApolloServer, HeaderMap, HTTPGraphQLRequest } from "@apollo/server";
 import { readFile } from "fs/promises";
 import { glob } from "glob";
-import { getTodos, toggleTodo } from "./todoMaster";
+import {
+  getTodoBody,
+  getTodos,
+  getTodoTags,
+  Todo,
+  toggleTodo,
+} from "./todoMaster";
 import { fileURLToPath } from "url";
 import { dirname, join } from "path";
+import { ResolverOutput, Resolvers } from "@/generated/resolvers";
 
 export async function POST(request: Request) {
   server ??= await initServer();
@@ -57,27 +64,33 @@ async function initServer(): Promise<ApolloServer> {
     )
   );
 
-  const resolvers = {
+  const todoResolvers: Resolvers<{}>["Todo"] = {
+    body(todo) {
+      return getTodoBody(todo.id);
+    },
+    tags(todo) {
+      return getTodoTags(todo.id);
+    },
+  };
+
+  const resolvers: Resolvers<{}> = {
     Query: {
-      todos(
-        _parent: unknown,
-        variables: { filter?: { unfinishedOnly?: boolean | null } }
-      ) {
+      todos(_parent, variables) {
         if (variables.filter?.unfinishedOnly) {
-          return getTodos().filter((todo) => todo.finishedAt === null);
+          return getTodos()
+            .filter((todo) => todo.finishedAt === null)
+            .map(todoForResolver);
         } else {
-          return getTodos();
+          return getTodos().map(todoForResolver);
         }
       },
     },
     Mutation: {
-      toggleTodo(
-        _parent: unknown,
-        variables: { id: string; finished: boolean }
-      ) {
-        return toggleTodo(variables.id, variables.finished);
+      toggleTodo(_parent, variables) {
+        return todoForResolver(toggleTodo(variables.id, variables.finished));
       },
     },
+    Todo: todoResolvers,
   };
 
   const server = new ApolloServer({
@@ -86,4 +99,12 @@ async function initServer(): Promise<ApolloServer> {
   });
   await server.start();
   return server;
+}
+
+function todoForResolver(todo: Todo): ResolverOutput<"Todo"> {
+  return {
+    id: todo.id,
+    createdAt: todo.createdAt.toISOString(),
+    finishedAt: todo.finishedAt?.toISOString() ?? null,
+  };
 }
