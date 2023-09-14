@@ -2,7 +2,7 @@ use std::{cell::RefCell, collections::HashMap};
 
 use nitrogql_ast::{TypeSystemDocument, TypeSystemOrExtensionDocument};
 use nitrogql_parser::{parse_type_system_document, ParseError};
-use nitrogql_printer::{ts_types::TSType, ResolverTypePrinterPlugin};
+use nitrogql_printer::{ts_types::TSType, ResolverTypePrinterOptions, ResolverTypePrinterPlugin};
 
 use crate::PluginV1Beta;
 
@@ -65,9 +65,11 @@ impl ResolverTypePrinterPlugin for Plugin<'_> {
     fn transform_resolver_output_types<'src>(
         &self,
         document: &TypeSystemDocument<'src>,
+        options: &ResolverTypePrinterOptions,
         base: HashMap<&'src str, TSType>,
     ) -> HashMap<&'src str, TSType> {
-        self.raw.transform_resolver_output_types(document, base)
+        self.raw
+            .transform_resolver_output_types(document, options, base)
     }
     fn transform_document_for_resolvers<'src>(
         &self,

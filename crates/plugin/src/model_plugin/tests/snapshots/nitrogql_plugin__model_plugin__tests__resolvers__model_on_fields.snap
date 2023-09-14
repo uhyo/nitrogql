@@ -11,8 +11,8 @@ type Float = Schema.Float;
 type String = Schema.String;
 type Boolean = Schema.Boolean;
 type ID = Schema.ID;
-type User = Pick<Omit<Schema.User, "__typename">, "id" | "name">;
-type Post = Pick<Omit<Schema.Post, "__typename">, "id" | "title">;
+type User = Pick<Schema.User, "id" | "name">;
+type Post = Pick<Schema.Post, "id" | "title">;
 export type Resolvers<Context> = {
   User: {
     age: __Resolver<User, {}, Context, Int>;
@@ -31,5 +31,5 @@ export type ResolverOutput<T extends "Int" | "Float" | "String" | "Boolean" | "I
   ID: ID;
   User: User;
   Post: Post;
-};
+}[T];
 

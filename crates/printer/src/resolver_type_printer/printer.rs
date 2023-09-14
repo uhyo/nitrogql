@@ -76,7 +76,7 @@ where
             })
             .collect();
         let ts_types = plugins.iter().fold(ts_types, |acc, plugin| {
-            plugin.transform_resolver_output_types(document, acc)
+            plugin.transform_resolver_output_types(document, &self.options, acc)
         });
 
         let document_for_resolvers = plugins.iter().fold(Cow::Borrowed(document), |acc, plugin| {

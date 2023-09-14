@@ -5,7 +5,10 @@ use nitrogql_ast::{
     value::Value,
     TypeSystemDocument,
 };
-use nitrogql_printer::ts_types::{ts_types_util::ts_union, TSType};
+use nitrogql_printer::{
+    ts_types::{ts_types_util::ts_union, TSType},
+    ResolverTypePrinterOptions,
+};
 
 use crate::{
     plugin_v1::{PluginCheckResult, PluginV1Beta},
@@ -126,6 +129,7 @@ directive @model(
     fn transform_resolver_output_types<'src>(
         &self,
         document: &TypeSystemDocument<'src>,
+        options: &ResolverTypePrinterOptions,
         mut base: HashMap<&'src str, TSType>,
     ) -> HashMap<&'src str, TSType> {
         for def in document.definitions.iter() {
@@ -160,11 +164,13 @@ directive @model(
                         .any(|directive| directive.name.name == "model")
                         .then_some(field.name.name)
                 });
-                let base_type = base.remove(&def.name.name).expect("object not found");
                 let obj_type = TSType::TypeFunc(
                     Box::new(TSType::TypeVariable("Pick".into())),
                     vec![
-                        base_type,
+                        TSType::NamespaceMember(
+                            options.schema_root_namespace.clone(),
+                            def.name.name.into(),
+                        ),
                         ts_union(model_field_names.map(|n| TSType::StringLiteral(n.into()))),
                     ],
                 );

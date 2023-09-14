@@ -18,6 +18,7 @@ impl ResolverTypePrinterPlugin for DummyPlugin {
     fn transform_resolver_output_types<'src>(
         &self,
         _document: &TypeSystemDocument<'src>,
+        _options: &ResolverTypePrinterOptions,
         _base: std::collections::HashMap<&'src str, crate::ts_types::TSType>,
     ) -> std::collections::HashMap<&'src str, crate::ts_types::TSType> {
         unimplemented!()

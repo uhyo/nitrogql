@@ -51,5 +51,5 @@ export type ResolverOutput<T extends "User" | "Bot" | "Post" | "Query" | "HasID"
   UserOrBot: UserOrBot;
   UserType: UserType;
   UserSearchQuery: UserSearchQuery;
-};
+}[T];
 

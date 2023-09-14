@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use nitrogql_ast::{base::Pos, TypeSystemDocument};
-use nitrogql_printer::ts_types::TSType;
+use nitrogql_printer::{ts_types::TSType, ResolverTypePrinterOptions};
 
 /// Interface of a naked plugin.
 pub trait PluginV1Beta: std::fmt::Debug {
@@ -15,6 +15,7 @@ pub trait PluginV1Beta: std::fmt::Debug {
     fn transform_resolver_output_types<'src>(
         &self,
         document: &TypeSystemDocument<'src>,
+        options: &ResolverTypePrinterOptions,
         base: HashMap<&'src str, TSType>,
     ) -> HashMap<&'src str, TSType>;
     /// Transforms document so that it represents which fields
