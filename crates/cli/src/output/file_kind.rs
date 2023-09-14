@@ -25,6 +25,8 @@ pub enum OutputFileKind {
     ResolversTypeDefinitionSourceMap,
     OperationTypeDefinition,
     OperationTypeDefinitionSourceMap,
+    GraphqlSource,
+    GraphqlSourceSourceMap,
 }
 
 impl OutputFileKind {
@@ -48,6 +50,8 @@ impl OutputFileKind {
             OutputFileKind::OperationTypeDefinitionSourceMap => {
                 OutputFileKind::OperationTypeDefinitionSourceMap
             }
+            OutputFileKind::GraphqlSource => OutputFileKind::GraphqlSourceSourceMap,
+            OutputFileKind::GraphqlSourceSourceMap => OutputFileKind::GraphqlSourceSourceMap,
         }
     }
 }
@@ -67,6 +71,8 @@ impl Display for OutputFileKind {
             OutputFileKind::OperationTypeDefinitionSourceMap => {
                 write!(f, "operationTypeDefinitionSourceMap")
             }
+            OutputFileKind::GraphqlSource => write!(f, "graphqlSource"),
+            OutputFileKind::GraphqlSourceSourceMap => write!(f, "graphqlSourceSourceMap"),
         }
     }
 }

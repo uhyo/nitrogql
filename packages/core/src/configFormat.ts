@@ -35,6 +35,12 @@ export type NitrogqlConfig = {
                      */
                     schemaOutput?: string | undefined;
                     /**
+                     * Path to the output GraphQl source file for use by a GraphQL server.
+                     * Allows you to emit processed GraphQL source as one string.
+                     * Note: output is a `.ts` file so you can use it as a module.
+                     */
+                    serverGraphqlOutput?: string | undefined;
+                    /**
                      * Path to the output resolvers type definition file.
                      * Needed if you want to generate resolvers types.
                      */
