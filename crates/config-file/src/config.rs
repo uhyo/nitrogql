@@ -11,6 +11,8 @@ pub struct Config {
     /// Path(s) to operation definition files.
     pub operations: Vec<String>,
     // extensions
+    /// List of plugins.
+    pub plugins: Vec<String>,
     pub generate: GenerateConfig,
 }
 
@@ -23,6 +25,10 @@ pub struct GenerateConfig {
     pub mode: GenerateMode,
     /// Output file path for schema.
     pub schema_output: Option<PathBuf>,
+    /// Output file path for processed GraphQL sources.
+    pub server_graphql_output: Option<PathBuf>,
+    /// Output file path for resolvers.
+    pub resolvers_output: Option<PathBuf>,
     /// Module specifier for import schema types from operations.
     /// Defaults to relative paths.
     pub schema_module_specifier: Option<String>,

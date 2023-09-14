@@ -6,6 +6,8 @@ use nitrogql_config_file::Config;
 use nitrogql_semantics::ast_to_type_system;
 use sourcemap_writer::SourceMapWriter;
 
+use crate::schema::get_builtin_scalar_types;
+
 use super::{error::SchemaTypePrinterResult, type_printer::TypePrinter};
 
 pub struct SchemaTypePrinterOptions {
@@ -82,17 +84,4 @@ where
         document.print_type(&context, self.writer)?;
         Ok(())
     }
-}
-
-/// Generates scalar definitions for built-in scalars.
-fn get_builtin_scalar_types() -> HashMap<String, String> {
-    vec![
-        ("ID".into(), "string".into()),
-        ("String".into(), "string".into()),
-        ("Int".into(), "number".into()),
-        ("Float".into(), "number".into()),
-        ("Boolean".into(), "boolean".into()),
-    ]
-    .into_iter()
-    .collect()
 }

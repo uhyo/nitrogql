@@ -1,0 +1,35 @@
+---
+source: crates/plugin/src/model_plugin/tests/mod.rs
+expression: doc
+---
+import type { GraphQLResolveInfo } from "graphql";
+import type * as Schema from "";
+type __Resolver<Parent, Args, Context, Result> = (parent: Parent, args: Args, context: Context, info: GraphQLResolveInfo) => Result | Promise<Result>;
+type __TypeResolver<Obj, Context, Result> = (object: Obj, context: Context, info: GraphQLResolveInfo) => Result | Promise<Result>;
+type Int = Schema.Int;
+type Float = Schema.Float;
+type String = Schema.String;
+type Boolean = Schema.Boolean;
+type ID = Schema.ID;
+type User = Pick<Schema.User, "id" | "name">;
+type Post = Pick<Schema.Post, "id" | "title">;
+export type Resolvers<Context> = {
+  User: {
+    age: __Resolver<User, {}, Context, Int>;
+    posts: __Resolver<User, {}, Context, (Post)[]>;
+  };
+  Post: {
+    body: __Resolver<Post, {}, Context, String>;
+  };
+};
+export type ResolverOutput<T extends "Int" | "Float" | "String" | "Boolean" | "ID" | "User" | "Post"> = 
+{
+  Int: Int;
+  Float: Float;
+  String: String;
+  Boolean: Boolean;
+  ID: ID;
+  User: User;
+  Post: Post;
+}[T];
+

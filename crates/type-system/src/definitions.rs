@@ -47,6 +47,14 @@ impl<'a, Str: Text<'a>, OriginalNode> TypeDefinition<Str, OriginalNode> {
         }
     }
 
+    /// Returns Some if self is an interface type.
+    pub fn as_interface(&self) -> Option<&InterfaceDefinition<Str, OriginalNode>> {
+        match self {
+            TypeDefinition::Interface(ref def) => Some(def),
+            _ => None,
+        }
+    }
+
     /// Returns Some if self is a union type.
     pub fn as_union(&self) -> Option<&UnionDefinition<Str, OriginalNode>> {
         match self {

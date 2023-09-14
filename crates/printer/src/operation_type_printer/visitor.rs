@@ -120,14 +120,16 @@ pub struct OperationTypePrinterContext<'a, 'src, S: Text<'src>> {
 
 impl<'a, 'src> OperationPrinterVisitor for OperationTypePrinterVisitor<'a, 'src> {
     fn print_header(&self, writer: &mut impl SourceMapWriter) {
-        writer.write(&format!(
-            "import type {{ TypedDocumentNode }} from \"{}\";\n",
+        writeln!(
+            writer,
+            "import type {{ TypedDocumentNode }} from \"{}\";",
             self.options.typed_document_node_source
-        ));
-        writer.write(&format!(
+        );
+        write!(
+            writer,
             "import type * as {} from \"{}\";\n\n",
             self.options.schema_root_namespace, self.options.schema_source,
-        ));
+        );
     }
     fn print_trailer(&self, _writer: &mut impl SourceMapWriter) {}
     fn print_operation_definition(

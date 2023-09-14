@@ -21,8 +21,12 @@ impl Display for InputFileKind {
 pub enum OutputFileKind {
     SchemaTypeDefinition,
     SchemaTypeDefinitionSourceMap,
+    ResolversTypeDefinition,
+    ResolversTypeDefinitionSourceMap,
     OperationTypeDefinition,
     OperationTypeDefinitionSourceMap,
+    GraphqlSource,
+    GraphqlSourceSourceMap,
 }
 
 impl OutputFileKind {
@@ -34,12 +38,20 @@ impl OutputFileKind {
             OutputFileKind::SchemaTypeDefinitionSourceMap => {
                 OutputFileKind::SchemaTypeDefinitionSourceMap
             }
+            OutputFileKind::ResolversTypeDefinition => {
+                OutputFileKind::ResolversTypeDefinitionSourceMap
+            }
+            OutputFileKind::ResolversTypeDefinitionSourceMap => {
+                OutputFileKind::ResolversTypeDefinitionSourceMap
+            }
             OutputFileKind::OperationTypeDefinition => {
                 OutputFileKind::OperationTypeDefinitionSourceMap
             }
             OutputFileKind::OperationTypeDefinitionSourceMap => {
                 OutputFileKind::OperationTypeDefinitionSourceMap
             }
+            OutputFileKind::GraphqlSource => OutputFileKind::GraphqlSourceSourceMap,
+            OutputFileKind::GraphqlSourceSourceMap => OutputFileKind::GraphqlSourceSourceMap,
         }
     }
 }
@@ -51,10 +63,16 @@ impl Display for OutputFileKind {
             OutputFileKind::SchemaTypeDefinitionSourceMap => {
                 write!(f, "schemaTypeDefinitionSourceMap")
             }
+            OutputFileKind::ResolversTypeDefinition => write!(f, "resolversTypeDefinition"),
+            OutputFileKind::ResolversTypeDefinitionSourceMap => {
+                write!(f, "resolversTypeDefinitionSourceMap")
+            }
             OutputFileKind::OperationTypeDefinition => write!(f, "operationTypeDefinition"),
             OutputFileKind::OperationTypeDefinitionSourceMap => {
                 write!(f, "operationTypeDefinitionSourceMap")
             }
+            OutputFileKind::GraphqlSource => write!(f, "graphqlSource"),
+            OutputFileKind::GraphqlSourceSourceMap => write!(f, "graphqlSourceSourceMap"),
         }
     }
 }

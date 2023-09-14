@@ -18,6 +18,12 @@ pub enum Value<'a> {
     ObjectValue(ObjectValue<'a>),
 }
 
+impl Value<'_> {
+    pub fn is_null(&self) -> bool {
+        matches!(self, Value::NullValue(_))
+    }
+}
+
 impl HasPos for Value<'_> {
     fn name(&self) -> Option<&str> {
         match self {

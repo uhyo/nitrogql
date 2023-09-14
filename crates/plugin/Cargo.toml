@@ -1,0 +1,21 @@
+[package]
+name = "nitrogql-plugin"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+nitrogql-ast = { path = "../ast" }
+graphql-builtins = { path = "../builtins" }
+nitrogql-checker = { path = "../checker" }
+nitrogql-error = { path = "../error" }
+nitrogql-parser = { path = "../parser" }
+nitrogql-printer = { path = "../printer" }
+nitrogql-semantics = { path = "../semantics" }
+graphql-type-system = { path = "../type-system" }
+sourcemap-writer = { path = "../sourcemap-writer" }
+thiserror = "1.0.40"
+
+[dev-dependencies]
+insta = "1.28.0"

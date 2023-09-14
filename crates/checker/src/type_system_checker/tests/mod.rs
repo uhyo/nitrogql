@@ -735,6 +735,62 @@ mod objects {
         ]
         "###);
     }
+
+    #[test]
+    fn undefined_directive_on_object() {
+        let doc = parse_to_type_system_document(
+            "
+            type MyType @wow {
+                foo: String!
+            }
+        ",
+        );
+        let errors = check_type_system_document(&doc);
+        assert_debug_snapshot!(errors, @r#"
+        [
+            CheckError {
+                position: Pos {
+                    line: 1,
+                    column: 25,
+                    file: 0,
+                    builtin: false,
+                },
+                message: UnknownDirective {
+                    name: "wow",
+                },
+                additional_info: [],
+            },
+        ]
+        "#);
+    }
+
+    #[test]
+    fn undefined_directive_on_field() {
+        let doc = parse_to_type_system_document(
+            "
+            type MyType {
+                foo: String! @wow
+            }
+        ",
+        );
+        let errors = check_type_system_document(&doc);
+        assert_debug_snapshot!(errors, @r###"
+        [
+            CheckError {
+                position: Pos {
+                    line: 2,
+                    column: 30,
+                    file: 0,
+                    builtin: false,
+                },
+                message: UnknownDirective {
+                    name: "wow",
+                },
+                additional_info: [],
+            },
+        ]
+        "###);
+    }
 }
 
 #[cfg(test)]

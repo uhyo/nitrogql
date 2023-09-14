@@ -197,6 +197,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a357d28ed41a50f9c765dbfe56cbc04a64e53e5fc58ba79fbc34c10ef3df831f"
 
 [[package]]
+name = "equivalent"
+version = "1.0.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5443807d6dff69373d433ab9ef5378ad8df50ca6298caf15de6e52e24aaf54d5"
+
+[[package]]
 name = "fnv"
 version = "1.0.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -284,6 +290,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "hashbrown"
+version = "0.14.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2c6201b9ff9fd90a5a3bac2e56a830d0caa509576f0e503818ee82c181b3437a"
+
+[[package]]
 name = "heck"
 version = "0.4.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -306,6 +318,16 @@ checksum = "bd070e393353796e801d209ad339e89596eb4c8d430d18ede6a1cced8fafbd99"
 dependencies = [
  "autocfg",
  "hashbrown 0.12.3",
+]
+
+[[package]]
+name = "indexmap"
+version = "2.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d5477fe2230a79769d8dc68e0eabf5437907c0457a5614a9e8dddb67f65eb65d"
+dependencies = [
+ "equivalent",
+ "hashbrown 0.14.0",
 ]
 
 [[package]]
@@ -439,6 +461,7 @@ dependencies = [
  "nitrogql-error",
  "nitrogql-introspection",
  "nitrogql-parser",
+ "nitrogql-plugin",
  "nitrogql-printer",
  "nitrogql-semantics",
  "nitrogql-utils",
@@ -499,6 +522,23 @@ dependencies = [
 ]
 
 [[package]]
+name = "nitrogql-plugin"
+version = "0.1.0"
+dependencies = [
+ "graphql-builtins",
+ "graphql-type-system",
+ "insta",
+ "nitrogql-ast",
+ "nitrogql-checker",
+ "nitrogql-error",
+ "nitrogql-parser",
+ "nitrogql-printer",
+ "nitrogql-semantics",
+ "sourcemap-writer",
+ "thiserror",
+]
+
+[[package]]
 name = "nitrogql-printer"
 version = "0.1.0"
 dependencies = [
@@ -522,13 +562,13 @@ name = "nitrogql-semantics"
 version = "0.1.0"
 dependencies = [
  "graphql-type-system",
+ "indexmap 2.0.0",
  "insta",
  "nitrogql-ast",
  "nitrogql-error",
  "nitrogql-introspection",
  "nitrogql-parser",
  "nitrogql-printer",
- "once_cell",
  "sourcemap-writer",
  "thiserror",
 ]
@@ -683,7 +723,7 @@ version = "0.9.21"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d9d684e3ec7de3bf5466b32bd75303ac16f0736426e5a4e0d6e489559ce1249c"
 dependencies = [
- "indexmap",
+ "indexmap 1.9.3",
  "itoa",
  "ryu",
  "serde",

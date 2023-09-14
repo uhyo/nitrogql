@@ -34,6 +34,8 @@ pub enum TSType {
     Never,
     /// Unknown
     Unknown,
+    /// Raw type (TypeScript string)
+    Raw(String),
 }
 
 impl TSType {
@@ -57,19 +59,13 @@ impl HasPos for TypeVariable {
     }
 }
 
-impl<'a> From<&'a Ident<'a>> for TypeVariable {
-    fn from(value: &'a Ident<'a>) -> Self {
+impl<S> From<S> for TypeVariable
+where
+    S: ToString,
+{
+    fn from(value: S) -> Self {
         TypeVariable {
-            name: value.name.to_owned(),
-            pos: value.position,
-        }
-    }
-}
-
-impl<'a> From<&'a str> for TypeVariable {
-    fn from(value: &'a str) -> Self {
-        TypeVariable {
-            name: value.to_owned(),
+            name: value.to_string(),
             pos: Pos::builtin(),
         }
     }
@@ -223,6 +219,11 @@ impl TSType {
             TSType::Unknown => {
                 writer.write("unknown");
             }
+            TSType::Raw(s) => {
+                writer.write("(");
+                writer.write(s);
+                writer.write(")");
+            }
         }
     }
 
@@ -258,7 +259,8 @@ impl TSType {
             | t @ TSType::Never
             | t @ TSType::Null
             | t @ TSType::Undefined
-            | t @ TSType::Unknown => t,
+            | t @ TSType::Unknown
+            | t @ TSType::Raw(_) => t,
         }
     }
 

@@ -4,13 +4,21 @@ mod json_printer;
 mod operation_base_printer;
 mod operation_js_printer;
 mod operation_type_printer;
+mod resolver_type_printer;
+mod schema;
 mod schema_type_printer;
-mod ts_types;
+pub mod ts_types;
 mod utils;
 
 pub use graphql_printer::GraphQLPrinter;
 pub use schema_type_printer::printer::{
     SchemaTypePrinter, SchemaTypePrinterContext, SchemaTypePrinterOptions,
+};
+
+pub use resolver_type_printer::{
+    options::ResolverTypePrinterOptions,
+    plugin::ResolverTypePrinterPlugin,
+    printer::{ResolverTypePrinter, ResolverTypePrinterContext},
 };
 
 pub use operation_type_printer::{

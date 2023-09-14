@@ -12,6 +12,7 @@ nitrogql-config-file = { path = "../config-file", features = ["fs", "execute_con
 nitrogql-error = { path = "../error" }
 nitrogql-introspection = { path = "../introspection" }
 nitrogql-parser = { path = "../parser" }
+nitrogql-plugin = { path = "../plugin" }
 nitrogql-printer = { path = "../printer" }
 nitrogql-semantics = { path = "../semantics" }
 nitrogql-utils = { path = "../utils" }

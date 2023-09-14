@@ -12,6 +12,10 @@ export type NitrogqlConfig = {
         nitrogql?:
           | {
               /**
+               * List of plugins to use.
+               */
+              plugins?: readonly string[] | undefined;
+              /**
                * Config related to the 'generate' command.
                */
               generate?:
@@ -27,9 +31,20 @@ export type NitrogqlConfig = {
                       | undefined;
                     /**
                      * Path to the output schema type definition file.
-                     * Required when using the `generate` command.
+                     * Needed if you want to generate schema types.
                      */
                     schemaOutput?: string | undefined;
+                    /**
+                     * Path to the output GraphQl source file for use by a GraphQL server.
+                     * Allows you to emit processed GraphQL source as one string.
+                     * Note: output is a `.ts` file so you can use it as a module.
+                     */
+                    serverGraphqlOutput?: string | undefined;
+                    /**
+                     * Path to the output resolvers type definition file.
+                     * Needed if you want to generate resolvers types.
+                     */
+                    resolversOutput?: string | undefined;
                     /**
                      * Module specifier for importing schema types from operations.
                      * Defaults to relative paths if not specified.

@@ -7,6 +7,7 @@ use nitrogql_ast::{
     type_system::{TypeSystemDocument, TypeSystemOrExtensionDocument},
 };
 use nitrogql_config_file::Config;
+use nitrogql_plugin::Plugin;
 use thiserror::Error;
 
 use crate::{file_store::FileStore, output::CliOutput};
@@ -32,14 +33,14 @@ impl<'src, Gql> LoadedSchema<'src, Gql> {
 
 pub enum CliContext<'src> {
     SchemaUnresolved {
-        config: CliConfig,
+        config: CliConfig<'src>,
         schema: LoadedSchema<'src, TypeSystemOrExtensionDocument<'src>>,
         operations: Vec<(PathBuf, OperationDocument<'src>, usize)>,
-        file_store: &'src FileStore,
+        file_store: &'src mut FileStore,
         output: &'src mut CliOutput,
     },
     SchemaResolved {
-        config: CliConfig,
+        config: CliConfig<'src>,
         schema: LoadedSchema<'src, TypeSystemDocument<'src>>,
         operations: Vec<(PathBuf, OperationDocument<'src>, usize)>,
         file_store: &'src FileStore,
@@ -48,10 +49,12 @@ pub enum CliContext<'src> {
 }
 
 #[derive(Debug)]
-pub struct CliConfig {
+pub struct CliConfig<'file_store> {
     /// Root directory for other paths.
     pub root_dir: PathBuf,
     pub config: Config,
+    /// Loaded plugins.
+    pub plugins: Vec<Plugin<'file_store>>,
 }
 
 #[derive(Copy, Clone, Debug)]

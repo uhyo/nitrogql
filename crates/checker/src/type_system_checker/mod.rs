@@ -141,6 +141,15 @@ fn check_object(
         if name_starts_with_unscounsco(&f.name) {
             result.push(CheckErrorMessage::UnscoUnsco.with_pos(*f.name.position()));
         }
+
+        check_directives(
+            &definitions.type_system,
+            None,
+            &f.directives,
+            "FIELD_DEFINITION",
+            result,
+        );
+
         match inout_kind_of_type(
             &definitions.type_system,
             f.r#type.unwrapped_type().name.name,
@@ -171,11 +180,21 @@ fn check_object(
     }
     for interface in object.implements.iter() {
         let Some(interface_def) = definitions.types.get(interface.name) else {
-            result.push(CheckErrorMessage::UnknownType { name: interface.name.to_owned() }.with_pos(*interface.position()));
+            result.push(
+                CheckErrorMessage::UnknownType {
+                    name: interface.name.to_owned(),
+                }
+                .with_pos(*interface.position()),
+            );
             continue;
         };
         let TypeDefinition::Interface(ref def) = interface_def else {
-            result.push(CheckErrorMessage::NotInterface  { name: interface.name.to_owned() }.with_pos(*interface.position()));
+            result.push(
+                CheckErrorMessage::NotInterface {
+                    name: interface.name.to_owned(),
+                }
+                .with_pos(*interface.position()),
+            );
             continue;
         };
         check_valid_implementation(
@@ -220,6 +239,15 @@ fn check_interface(
         if name_starts_with_unscounsco(&f.name) {
             result.push(CheckErrorMessage::UnscoUnsco.with_pos(*f.name.position()));
         }
+
+        check_directives(
+            &definitions.type_system,
+            None,
+            &f.directives,
+            "FIELD",
+            result,
+        );
+
         if inout_kind_of_type(
             &definitions.type_system,
             f.r#type.unwrapped_type().name.name,
@@ -243,12 +271,21 @@ fn check_interface(
             continue;
         }
         let Some(interface_def) = definitions.types.get(other_interface.name) else {
-            result.push(CheckErrorMessage::UnknownType { name: other_interface.name.to_owned() }.with_pos(*other_interface.position()));
+            result.push(
+                CheckErrorMessage::UnknownType {
+                    name: other_interface.name.to_owned(),
+                }
+                .with_pos(*other_interface.position()),
+            );
             continue;
         };
         let TypeDefinition::Interface(ref def) = interface_def else {
-            result.push(CheckErrorMessage::NotInterface  { name: other_interface.name.to_owned() }
-            .with_pos(*other_interface.position()));
+            result.push(
+                CheckErrorMessage::NotInterface {
+                    name: other_interface.name.to_owned(),
+                }
+                .with_pos(*other_interface.position()),
+            );
             continue;
         };
         check_valid_implementation(
