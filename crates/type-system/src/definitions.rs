@@ -1,4 +1,5 @@
 use crate::{
+    cloning_utils::{map_option_node, map_vec_node},
     node::{Node, OriginalNodeRef},
     r#type::Type,
     text::Text,
@@ -68,6 +69,49 @@ impl<'a, Str: Text<'a>, OriginalNode> TypeDefinition<Str, OriginalNode> {
         match self {
             TypeDefinition::InputObject(ref def) => Some(def),
             _ => None,
+        }
+    }
+}
+
+impl<Str, OriginalNode> TypeDefinition<Str, OriginalNode>
+where
+    OriginalNode: Clone,
+{
+    pub fn map_str<U>(&self, f: impl Fn(&Str) -> U) -> TypeDefinition<U, OriginalNode> {
+        match self {
+            TypeDefinition::Scalar(def) => TypeDefinition::Scalar(ScalarDefinition {
+                name: def.name.as_ref().map(&f),
+                description: map_option_node(&def.description, &f),
+            }),
+            TypeDefinition::Object(def) => TypeDefinition::Object(ObjectDefinition {
+                name: def.name.as_ref().map(&f),
+                description: map_option_node(&def.description, &f),
+                fields: def.fields.iter().map(|x| x.map_str(&f)).collect(),
+                interfaces: map_vec_node(&def.interfaces, &f),
+            }),
+            TypeDefinition::Interface(def) => TypeDefinition::Interface(InterfaceDefinition {
+                name: def.name.as_ref().map(&f),
+                description: map_option_node(&def.description, &f),
+                fields: def.fields.iter().map(|x| x.map_str(&f)).collect(),
+                interfaces: map_vec_node(&def.interfaces, &f),
+            }),
+            TypeDefinition::Union(def) => TypeDefinition::Union(UnionDefinition {
+                name: def.name.as_ref().map(&f),
+                description: map_option_node(&def.description, &f),
+                possible_types: map_vec_node(&def.possible_types, &f),
+            }),
+            TypeDefinition::Enum(def) => TypeDefinition::Enum(EnumDefinition {
+                name: def.name.as_ref().map(&f),
+                description: map_option_node(&def.description, &f),
+                members: def.members.iter().map(|x| x.map_str(&f)).collect(),
+            }),
+            TypeDefinition::InputObject(def) => {
+                TypeDefinition::InputObject(InputObjectDefinition {
+                    name: def.name.as_ref().map(&f),
+                    description: map_option_node(&def.description, &f),
+                    fields: def.fields.iter().map(|x| x.map_str(&f)).collect(),
+                })
+            }
         }
     }
 }
@@ -168,6 +212,21 @@ pub struct Field<Str, OriginalNode> {
     pub deprecation: Option<Str>,
 }
 
+impl<Str, OriginalNode> Field<Str, OriginalNode>
+where
+    OriginalNode: Clone,
+{
+    pub fn map_str<U>(&self, f: impl Fn(&Str) -> U) -> Field<U, OriginalNode> {
+        Field {
+            name: self.name.as_ref().map(&f),
+            description: map_option_node(&self.description, &f),
+            r#type: self.r#type.map_str(&f),
+            arguments: self.arguments.iter().map(|x| x.map_str(&f)).collect(),
+            deprecation: self.deprecation.as_ref().map(&f),
+        }
+    }
+}
+
 impl<Str, OriginalNode> OriginalNodeRef<OriginalNode> for Field<Str, OriginalNode> {
     fn original_node_ref(&self) -> &OriginalNode {
         self.name.original_node_ref()
@@ -189,6 +248,21 @@ pub struct InputValue<Str, OriginalNode> {
     pub deprecation: Option<Str>,
 }
 
+impl<Str, OriginalNode> InputValue<Str, OriginalNode>
+where
+    OriginalNode: Clone,
+{
+    pub fn map_str<U>(&self, f: impl Fn(&Str) -> U) -> InputValue<U, OriginalNode> {
+        InputValue {
+            name: self.name.as_ref().map(&f),
+            description: map_option_node(&self.description, &f),
+            r#type: self.r#type.map_str(&f),
+            default_value: map_option_node(&self.default_value, &f),
+            deprecation: self.deprecation.as_ref().map(&f),
+        }
+    }
+}
+
 impl<Str, OriginalNode> OriginalNodeRef<OriginalNode> for InputValue<Str, OriginalNode> {
     fn original_node_ref(&self) -> &OriginalNode {
         self.name.original_node_ref()
@@ -204,6 +278,19 @@ pub struct EnumMember<Str, OriginalNode> {
     pub description: Option<Node<Str, OriginalNode>>,
     /// If deprecated, contains the reason.
     pub deprecation: Option<Str>,
+}
+
+impl<Str, OriginalNode> EnumMember<Str, OriginalNode>
+where
+    OriginalNode: Clone,
+{
+    pub fn map_str<U>(&self, f: impl Fn(&Str) -> U) -> EnumMember<U, OriginalNode> {
+        EnumMember {
+            name: self.name.as_ref().map(&f),
+            description: map_option_node(&self.description, &f),
+            deprecation: self.deprecation.as_ref().map(&f),
+        }
+    }
 }
 
 /// Represents a directive definition.
@@ -225,5 +312,20 @@ impl<Str, OriginalNode> DirectiveDefinition<Str, OriginalNode> {
     /// Get name of this directive.
     pub fn name(&self) -> &Str {
         &self.name
+    }
+}
+
+impl<Str, OriginalNode> DirectiveDefinition<Str, OriginalNode>
+where
+    OriginalNode: Clone,
+{
+    pub fn map_str<U>(&self, f: impl Fn(&Str) -> U) -> DirectiveDefinition<U, OriginalNode> {
+        DirectiveDefinition {
+            name: self.name.as_ref().map(&f),
+            description: map_option_node(&self.description, &f),
+            locations: map_vec_node(&self.locations, &f),
+            arguments: self.arguments.iter().map(|x| x.map_str(&f)).collect(),
+            repeatable: self.repeatable.clone(),
+        }
     }
 }

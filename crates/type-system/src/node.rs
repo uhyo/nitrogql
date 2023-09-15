@@ -32,6 +32,24 @@ impl<T, OriginalNode> Node<T, OriginalNode> {
     }
 }
 
+impl<T, OriginalNode> Node<T, OriginalNode>
+where
+    OriginalNode: Clone,
+{
+    pub fn as_ref(&self) -> Node<&T, OriginalNode> {
+        Node {
+            inner: &self.inner,
+            original_node: self.original_node.clone(),
+        }
+    }
+    pub fn map<U>(self, f: impl FnOnce(T) -> U) -> Node<U, OriginalNode> {
+        Node {
+            inner: f(self.inner),
+            original_node: self.original_node.clone(),
+        }
+    }
+}
+
 impl<T, OriginalNode> Deref for Node<T, OriginalNode> {
     type Target = T;
     fn deref(&self) -> &Self::Target {

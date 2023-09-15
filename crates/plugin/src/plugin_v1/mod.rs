@@ -24,6 +24,12 @@ pub trait PluginV1Beta: std::fmt::Debug {
         &self,
         document: &TypeSystemDocument<'src>,
     ) -> TypeSystemDocument<'src>;
+    /// Transforms document so that it represents the runtime
+    /// schema used by a GraphQL server.
+    fn transform_document_for_runtime_server<'src>(
+        &self,
+        document: &TypeSystemDocument<'src>,
+    ) -> TypeSystemDocument<'src>;
 }
 
 pub struct PluginCheckResult {

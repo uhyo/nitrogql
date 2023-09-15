@@ -163,8 +163,10 @@ pub fn check_value<'src, S: Text<'src>>(
         if let Value::Variable(variable) = value {
             let Some(v_def) = get_variable_definition(variables, variable) else {
                 result.push(
-                    CheckErrorMessage::UnknownVariable { name: variable.name.to_owned() }
-                    .with_pos(*value.position())
+                    CheckErrorMessage::UnknownVariable {
+                        name: variable.name.to_owned(),
+                    }
+                    .with_pos(*value.position()),
                 );
                 return;
             };
@@ -194,11 +196,13 @@ pub fn check_value<'src, S: Text<'src>>(
                     // unknown type name
                     result.push(
                         CheckErrorMessage::TypeSystemError
-                        .with_pos(*expected_name.original_node_ref())
-                        .with_additional_info(vec![(
-                            *expected_name.original_node_ref(),
-                            CheckErrorMessage::UnknownType { name: expected_name.to_string() }
-                        )])
+                            .with_pos(*expected_name.original_node_ref())
+                            .with_additional_info(vec![(
+                                *expected_name.original_node_ref(),
+                                CheckErrorMessage::UnknownType {
+                                    name: expected_name.to_string(),
+                                },
+                            )]),
                     );
                     return;
                 };
@@ -232,7 +236,7 @@ fn is_value_compatible_type_def<'src, S: Text<'src>>(
         TypeDefinition::Scalar(scalar_def) => {
             // TODO: better handling of scalar, including custom scalars
             (
-                match scalar_def.name.as_ref() {
+                match scalar_def.name.inner_ref().as_ref() {
                     "Boolean" => matches!(value, Value::BooleanValue(_) | Value::NullValue(_)),
                     "Int" => matches!(value, Value::IntValue(_) | Value::NullValue(_)),
                     "Float" => matches!(value, Value::FloatValue(_) | Value::NullValue(_)),

@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use nitrogql_ast::{
-    type_system::{ObjectTypeDefinition, TypeDefinition, TypeSystemDefinition},
+    type_system::{FieldDefinition, ObjectTypeDefinition, TypeDefinition, TypeSystemDefinition},
     value::Value,
     TypeSystemDocument,
 };
@@ -213,6 +213,59 @@ directive @model(
                 }))
             } else {
                 def.clone()
+            }
+        });
+
+        TypeSystemDocument {
+            definitions: definitions.collect(),
+        }
+    }
+
+    fn transform_document_for_runtime_server<'src>(
+        &self,
+        document: &TypeSystemDocument<'src>,
+    ) -> TypeSystemDocument<'src> {
+        // removes @model directives
+        let definitions = document.definitions.iter().flat_map(|def| {
+            if let TypeSystemDefinition::DirectiveDefinition(def) = def {
+                if def.name.name == "model" {
+                    return None;
+                }
+            }
+            if let TypeSystemDefinition::TypeDefinition(TypeDefinition::Object(def)) = def {
+                let directives = def
+                    .directives
+                    .iter()
+                    .filter(|directive| directive.name.name != "model")
+                    .cloned()
+                    .collect();
+
+                let fields = def
+                    .fields
+                    .iter()
+                    .map(|field| {
+                        let directives = field
+                            .directives
+                            .iter()
+                            .filter(|directive| directive.name.name != "model")
+                            .cloned()
+                            .collect();
+                        FieldDefinition {
+                            directives,
+                            ..field.clone()
+                        }
+                    })
+                    .collect();
+
+                Some(TypeSystemDefinition::TypeDefinition(
+                    TypeDefinition::Object(ObjectTypeDefinition {
+                        directives,
+                        fields,
+                        ..def.clone()
+                    }),
+                ))
+            } else {
+                Some(def.clone())
             }
         });
 

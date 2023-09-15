@@ -59,6 +59,13 @@ impl<'src> Plugin<'src> {
     pub fn check_schema(&self, schema: &TypeSystemDocument) -> PluginCheckResult {
         self.raw.check_schema(schema)
     }
+
+    pub fn transform_document_for_runtime_server<'s>(
+        &self,
+        document: &TypeSystemDocument<'s>,
+    ) -> TypeSystemDocument<'s> {
+        self.raw.transform_document_for_runtime_server(document)
+    }
 }
 
 impl ResolverTypePrinterPlugin for Plugin<'_> {

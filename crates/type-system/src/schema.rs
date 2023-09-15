@@ -1,6 +1,7 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, hash::Hash};
 
 use crate::{
+    cloning_utils::map_option_node,
     definitions::{DirectiveDefinition, TypeDefinition},
     node::Node,
     root_types::RootTypes,
@@ -33,6 +34,37 @@ impl<Str, OriginalNode> Schema<Str, OriginalNode> {
     /// Returns the set of root operation types.
     pub fn root_types(&self) -> &Node<RootTypes<Option<Node<Str, OriginalNode>>>, OriginalNode> {
         &self.root_types
+    }
+}
+
+impl<Str, OriginalNode> Schema<Str, OriginalNode>
+where
+    OriginalNode: Clone,
+{
+    /// Maps all string values in this schema.
+    pub fn map_str<U>(&self, f: impl Fn(&Str) -> U) -> Schema<U, OriginalNode>
+    where
+        U: Eq + Hash,
+    {
+        Schema {
+            description: map_option_node(&self.description, &f),
+            type_definitions: self
+                .type_definitions
+                .iter()
+                .map(|(k, v)| (f(k), v.as_ref().map(|x| x.map_str(&f))))
+                .collect(),
+            directive_definitions: self
+                .directive_definitions
+                .iter()
+                .map(|(k, v)| (f(k), v.as_ref().map(|x| x.map_str(&f))))
+                .collect(),
+            type_names: self.type_names.iter().map(&f).collect(),
+            directive_names: self.directive_names.iter().map(&f).collect(),
+            root_types: self
+                .root_types
+                .as_ref()
+                .map(|root_types| root_types.map_str(&f)),
+        }
     }
 }
 

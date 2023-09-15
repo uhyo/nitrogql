@@ -1,4 +1,4 @@
-use crate::{text::Text, Node};
+use crate::{cloning_utils::map_option_node, text::Text, Node};
 
 #[derive(Debug, Copy, Clone)]
 pub struct RootTypes<T> {
@@ -28,6 +28,19 @@ impl<T> Default for RootTypes<Option<T>> {
             query_type: None,
             mutation_type: None,
             subscription_type: None,
+        }
+    }
+}
+
+impl<Str, OriginalNode> RootTypes<Option<Node<Str, OriginalNode>>>
+where
+    OriginalNode: Clone,
+{
+    pub fn map_str<U>(&self, f: impl Fn(&Str) -> U) -> RootTypes<Option<Node<U, OriginalNode>>> {
+        RootTypes {
+            query_type: map_option_node(&self.query_type, &f),
+            mutation_type: map_option_node(&self.mutation_type, &f),
+            subscription_type: map_option_node(&self.subscription_type, &f),
         }
     }
 }

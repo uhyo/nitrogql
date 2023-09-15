@@ -25,6 +25,21 @@ impl<Str, OriginalNode> Type<Str, OriginalNode> {
     }
 }
 
+impl<Str, OriginalNode> Type<Str, OriginalNode>
+where
+    OriginalNode: Clone,
+{
+    pub fn map_str<U>(&self, f: impl Fn(&Str) -> U) -> Type<U, OriginalNode> {
+        match self {
+            Type::Named(named) => Type::Named(NamedType {
+                name: named.name.as_ref().map(f),
+            }),
+            Type::List(inner) => Type::List(Box::new(ListType::from(inner.map_str(f)))),
+            Type::NonNull(inner) => Type::NonNull(Box::new(NonNullType::from(inner.map_str(f)))),
+        }
+    }
+}
+
 impl<Str: Display, OriginalNode> Display for Type<Str, OriginalNode> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
