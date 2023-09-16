@@ -3,6 +3,7 @@ import { Highlight } from "@/app/_utils/Highlight";
 import { Toc } from "../../_toc";
 import { Breadcrumb } from "@/app/_utils/Breadcrumb";
 import { ogp } from "@/app/_utils/metadata";
+import { Hint } from "@/app/_utils/Hint";
 
 export const metadata = ogp({
   title: "nitrogql:model plugin",
@@ -197,6 +198,13 @@ const userResolvers: Resolvers<Context>["User"] = {
           </Link>{" "}
           option).
         </p>
+
+        <Hint>
+          🧺 <b>See Also:</b> the{" "}
+          <Link href="/blog/release-1.1">blog post for the 1.1 release</Link>{" "}
+          also explains the <code>@model</code> directive and its usage in
+          detail.
+        </Hint>
       </main>
     </Toc>
   );
