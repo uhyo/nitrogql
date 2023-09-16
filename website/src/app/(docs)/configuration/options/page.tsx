@@ -64,6 +64,28 @@ documents:
           <code>extensions.nitrogql</code> in the configuration file.
         </Hint>
 
+        <h3 id="plugins">plugins</h3>
+        <p>
+          The <code>plugins</code> field is used to configure which plugins to
+          use.
+        </p>
+        <p>
+          Currently, third-party plugins are not supported. You can only use
+          built-in plugins. Available plugins are:
+        </p>
+        <ul>
+          <li>
+            <code>nitrogql:model</code>
+          </li>
+        </ul>
+        <p>Example:</p>
+        <Highlight language="yaml">
+          {`extensions:
+  nitrogql:
+    plugins:
+      - nitrogql:model`}
+        </Highlight>
+
         <h3 id="generate.schemaOutput">generate.schemaOutput</h3>
         <p>
           Where to output the generated schema types. Generated file is depended
@@ -99,6 +121,57 @@ extensions:
   nitrogql:
     generate:
       schemaOutput: "./app/generated/schema.ts"`}
+        </Highlight>
+
+        <h3 id="generate.serverGraphqlOutput">generate.serverGraphqlOutput</h3>
+        <p>
+          When set, the <code>generate</code> command will generate a single
+          TypeScript file which contains the entire GraphQL schema. This file
+          can be used to create a GraphQL server.
+        </p>
+        <p>Example:</p>
+        <Highlight language="yaml">
+          {`schema: "./schema/*.graphql"
+documents:
+  - "./app/**/*.graphql"
+extensions:
+  nitrogql:
+    generate:
+      serverGraphqlOutput: "./app/generated/graphql.ts"`}
+        </Highlight>
+        <p>With the above configuration, the generated code will look like:</p>
+        <Highlight language="typescript">
+          {`// ./app/generated/graphql.ts
+export const schema = \`
+scalar String
+scalar Boolean
+# ...
+type Query {
+  # ...
+}
+# ...
+\`;
+`}
+        </Highlight>
+
+        <h3 id="generate.resolversOutput">generate.resolversOutput</h3>
+        <p>
+          When set, the <code>generate</code> command will generate a single
+          TypeScript file which contains type definitions for resolvers. This is
+          helpful for writing resolvers in a type-safe manner.
+        </p>
+        <p>
+          This file depends on the generated schema types. Therefore, you need
+          to configure either <code>generate.schemaOutput</code> or{" "}
+          <code>generate.schemaModuleSpecifier</code> to use this option.
+        </p>
+        <p>Example:</p>
+        <Highlight language="yaml">
+          {`schema: "./schema/*.graphql"
+extensions:
+  nitrogql:
+    generate:
+      resolversOutput: "./app/generated/resolvers.ts"`}
         </Highlight>
 
         <h3 id="generate.mode">generate.mode</h3>
@@ -262,7 +335,7 @@ export const UserType = {
         allowUndefinedAsOptionalInput: true`}
         </Highlight>
 
-        <h4 id="generate.name.scalarTypes">scalarTypes</h4>
+        <h4 id="generate.type.scalarTypes">scalarTypes</h4>
         <p>
           Configures how GraphQL scalar types are mapped to TypeScript types.
           The default mapping is:

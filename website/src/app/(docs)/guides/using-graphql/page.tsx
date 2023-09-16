@@ -111,11 +111,47 @@ query getTodos {
           Otherwise, it will print errors and exit with code 1.
         </p>
 
-        <h3 id="generating-typescript-types">Generating TypeScript types</h3>
+        <h3 id="generating-typescript-files">Generating TypeScript files</h3>
+        <p>nitrogql generates several TypeScript files from GraphQL files:</p>
         <p>
-          nitrogql generates one <code>.d.ts</code> file for the whole schema,
-          and one <code>.d.graphql.ts</code> for each operation file.{" "}
-          <code>.d.graphql.ts</code> files are placed next to operation files.
+          <b>Schema type definition file</b> is configured by the{" "}
+          <Link href="/configuration/options#generate.schemaOutput">
+            <code>generate.schemaOutput</code>
+          </Link>{" "}
+          option. It is a single <code>.d.ts</code> file that contains type
+          definitions for all types in the schema, so it must be generated.
+        </p>
+        <p>
+          <b>Resolver type definition file</b> is configured by the{" "}
+          <Link href="/configuration/options#generate.resolversOutput">
+            <code>generate.resolversOutput</code>
+          </Link>{" "}
+          option. It is a single <code>.d.ts</code> file that contains type
+          definitions for all resolvers. It is optional, and only generated when
+          you specify the option. Resolver types are useful when you are
+          developing a GraphQL server.
+        </p>
+        <p>
+          <b>Server GraphQL schema file</b> is configured by the{" "}
+          <Link href="/configuration/options#generate.serverGraphqlOutput">
+            <code>generate.serverGraphqlOutput</code>
+          </Link>{" "}
+          option. It is a <code>.ts</code> file that exports the entire GraphQL
+          schema as a single string (in SDL format). It can be used at runtime
+          to initialize a GraphQL server without having to manually load and
+          concatenate all schema files. It is optional, and only generated when
+          you specify the option.
+        </p>
+        <p>
+          <b>Operation type definition files</b> are generated for each
+          operation file. They are always emitted as long as you configure
+          nitrogql to load operation files (via the{" "}
+          <Link href="/configuration/options#schema-operations">
+            <code>documents</code>
+          </Link>{" "}
+          option). By default, operation type definition files are{" "}
+          <code>.d.graphql.ts</code> files and are placed next to each operation
+          file.
         </p>
         <Hint>
           💡 <b>Note</b>: <code>.d.graphql.ts</code> files are supported by
@@ -124,8 +160,8 @@ query getTodos {
           <Link href="/configuration">Configuration</Link> for details.
         </Hint>
         <p>
-          Before generating types, you need to specify the location of generated
-          schema file in the configuration file:
+          To generate these files, you need to specify the location of generated
+          files in the configuration file:
         </p>
         <Highlight language="yaml">
           {`schema: ./schema/*.graphql
@@ -134,16 +170,18 @@ extensions:
   nitrogql:
     generate:
       # Specify the location of generated schema file.
-      schemaOutput: ./src/generated/schema.d.ts`}
+      schemaOutput: ./src/generated/schema.d.ts
+      # Specify the location of generated resolver file.
+      resolversOutput: ./src/generated/resolvers.d.ts
+      # Specify the location of generated server GraphQL schema file.
+      serverGraphqlOutput: ./src/generated/graphql.ts
+      `}
         </Highlight>
         <p>
           There is no option to specify the location of generated types for
           operation files; they are always placed next to operation files.
         </p>
-        <p>
-          To generate TypeScript types, run the following command in your
-          project directory:
-        </p>
+        <p>Then, run the following command in your project directory:</p>
         <Highlight language="bash">{`npx nitrogql generate`}</Highlight>
         <Hint>
           💡 <b>Note</b>: the <code>generate</code> command implies{" "}
@@ -151,9 +189,8 @@ extensions:
           fails and does not generate any files.
         </Hint>
         <p>
-          After a successful run, you will see types (<code>.d.graphql.ts</code>
-          ) and source maps (<code>.d.graphql.ts.map</code>) generated next to
-          your operation files.
+          After a successful run, you will see generated files in the specified
+          locations.
         </p>
         <Figures>
           <figure>
@@ -169,10 +206,17 @@ extensions:
           </figure>
         </Figures>
 
-        <h3 id="using-generated-types">Using generated types</h3>
+        <h3 id="using-generated-types-from-client-code">
+          Using generated types from client code
+        </h3>
         <p>
-          Now you can import <code>.graphql</code> files in your TypeScript
-          code, but probably you need to adjust your <code>tsconfig.json</code>{" "}
+          With the help of the generated operation type definition files,
+          nitrogql allows you to use GraphQL operations type-safely in your
+          TypeScript code. To use them, you directly import{" "}
+          <code>.graphql</code> files in your code.
+        </p>
+        <p>
+          However, probably you need to adjust your <code>tsconfig.json</code>{" "}
           so that TypeScript allows importing <code>.graphql</code> files.
         </p>
         <Highlight language="diff">
@@ -186,10 +230,10 @@ extensions:
         </Highlight>
         <p>
           After configuring TypeScript correctly, it&apos;s time to import{" "}
-          <code>.graphql</code> files in your code. With default settings, these
-          files export <code>TypedDocumentNode</code> objects as default
-          exports. You can use them with any GraphQL client library. Below is an
-          example with Apollo Client and React:
+          <code>.graphql</code> files. With default settings, these files export{" "}
+          a <code>TypedDocumentNode</code> object as a default export. You can
+          use it with any GraphQL client library. Below is an example with
+          Apollo Client and React:
         </p>
         <Highlight language="typescript">
           {`import { useQuery } from "@apollo/client";
@@ -206,9 +250,120 @@ export function SampleComponent() {
 }`}
         </Highlight>
         <p>
-          Of course this is type-safe. If your code tries to access a field that
-          does not exist in the schema, or is not fetched by the operation,
-          TypeScript will report an error.
+          In this example <code>getTodos.graphql</code> is an operation file
+          that contains a GraphQL query (<code>query getTodos {"{ ... }"}</code>
+          ). By passing the exported query object to <code>useQuery</code>, you
+          can execute the query.
+        </p>
+        <p>
+          Of course this is type-safe. The type of the query result,{" "}
+          <code>data</code>, precisely matches the shape of the query. This
+          means that if your code tries to access a field that does not exist in
+          the schema, or is not fetched by the operation, TypeScript will report
+          an error.
+        </p>
+
+        <h3 id="using-generated-types-from-server-code">
+          Using generated types from server code
+        </h3>
+        <p>
+          In the schema-first approach to GraphQL, you develop a GraphQL server
+          so that it implements the schema you wrote. Typically this is done by
+          writing <strong>resolvers</strong>. The generated resolver type
+          definition file helps you write resolvers in a type-safe manner.
+        </p>
+        <Hint>
+          🍰 Below guide uses{" "}
+          <a
+            href="https://www.apollographql.com/docs/apollo-server/"
+            target="_blank"
+          >
+            Apollo Server
+          </a>{" "}
+          as an example, but you can use any GraphQL server library.
+        </Hint>
+        <p>
+          With nitrogql, the basic setup of a GraphQL server will look like:
+        </p>
+        <Highlight language="ts">
+          {`import { ApolloServer } from "@apollo/server";
+// server GraphQL schema file
+import { schema } from "@/app/generated/graphql";
+// resolver types
+import { Resolvers } from "@/app/generated/resolvers";
+
+// Context is an object that is passed to all resolvers.
+// It is created per request.
+type Context = {};
+
+// define all resolvers.
+const resolvers: Resolvers<Context> = {
+  Query: {
+    todos: async () => { /* ... */ }
+  },
+  Mutation: {
+    toggleTodos: async (_, variables) => { /* ... */ }
+  },
+  // ...
+};
+
+const server = new ApolloServer({
+  typeDefs: schema,
+  resolvers,
+});
+// ...
+`}
+        </Highlight>
+        <p>
+          Of course, you can use any TypeScript technique you know to
+          organize/structure your code. For example, you might want to define
+          Query resolvers and Mutation resolvers separately:
+        </p>
+        <Highlight language="ts">
+          {`const queryResolvers: Resolvers<Context>["Query"] = {
+  // ...
+};
+const mutationResolvers: Resolvers<Context>["Mutation"] = {
+  // ...
+};
+const resolvers = {
+  Query: queryResolvers,
+  Mutation: mutationResolvers,
+  // ...
+};`}
+        </Highlight>
+        <p>
+          <strong>However</strong>, at this step the generated resolver type
+          definition is not practically usable because it does not allow use of{" "}
+          <a
+            href="https://www.apollographql.com/docs/apollo-server/data/resolvers/#default-resolvers"
+            target="_blank"
+          >
+            default resolvers
+          </a>
+          . This means that you need to define resolvers for every single field
+          of every object type in the schema. This isn&apos;t what you usually
+          do.
+        </p>
+        <p>
+          To mitigate this problem, nitrogql provides the{" "}
+          <code>nitrogql:model</code> plugin. This plugin allows you to use a{" "}
+          <code>@model</code> directive in your schema to mark a field as
+          included in the model. Fields with this directive are to be resolved
+          by default resolvers, so you don&apos;t need to define resolvers for
+          them.
+        </p>
+        <p>
+          This may not be something familiar to you, but it is needed for making
+          it practical to write resolvers while maintaining the perfect type
+          safety.
+        </p>
+        <p>
+          For details about the <code>nitrogql:model</code> plugin, see{" "}
+          <Link href="/references/plugin-model">
+            <code>nitrogql:model</code> plugin
+          </Link>
+          .
         </p>
 
         <h3 id="watching-and-generated-types-automatically">

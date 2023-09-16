@@ -88,16 +88,17 @@ export default function Home() {
             generated TypeScript code.
           </p>
           <p>
-            Currently, nitrogql supports generating types for client-side code.
-            Thanks to{" "}
+            Currently, nitrogql supports generating types for both server-side
+            code and client-side code. For client-side code, generated types can
+            be used regardless of UI libraries and with most of GraphQL client
+            libraries without any additional setup, thanks to{" "}
             <a
               href="https://github.com/dotansimha/graphql-typed-document-node"
               target="_blank"
             >
               TypedDocumentNode
             </a>
-            , generated types can be used regardless of UI libraries and with
-            most of GraphQL client libraries without any additional setup.
+            .
           </p>
           <Figures>
             <figure>
@@ -136,8 +137,8 @@ export default function Home() {
           </Figures>
           <h3>Loaders for GraphQL files</h3>
           <p>
-            nitrogql recommends importing <code>.graphql</code> files directly
-            from <code>.ts</code> files:
+            For client-side code, nitrogql recommends importing{" "}
+            <code>.graphql</code> files directly from <code>.ts</code> files:
           </p>
           <Highlight language="typescript">
             import MyQuery from &quot;./query.graphql&quot;;
@@ -159,16 +160,9 @@ export default function Home() {
         <section className={styles.features}>
           <h2>🛣 On the Roadmap</h2>
 
-          <h3>Type Generation for Server-side Code</h3>
           <p>
-            nitrogql is supportive of <strong>schema-first</strong> approach for
-            GraphQL where you define schema first and then write server-side and
-            client-side code based on the schema.
-          </p>
-          <p>
-            We are planning to add support for generating resolver types from
-            GraphQL schema. This will help you write resolvers in a type-safe
-            way.
+            There is no features that are declared to be on the roadmap. We are
+            considering what to develop next.
           </p>
         </section>
 
