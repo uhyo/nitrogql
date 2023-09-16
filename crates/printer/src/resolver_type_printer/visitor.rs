@@ -30,12 +30,12 @@ pub fn get_ts_type_for_resolver(
         }
         TypeDefinition::Interface(def) => {
             let implementers = interface_implementers(context.schema, def.name.name);
-            ts_union(implementers.map(|obj| TSType::TypeVariable(obj.name.to_string().into())))
+            ts_union(implementers.map(|obj| TSType::TypeVariable(obj.name.as_ref().into())))
         }
         TypeDefinition::Union(def) => ts_union(
             def.members
                 .iter()
-                .map(|type_name| TSType::TypeVariable(type_name.name.to_string().into())),
+                .map(|type_name| TSType::TypeVariable(type_name.into())),
         ),
         _ => base_type,
     }
@@ -106,7 +106,7 @@ fn get_interface_resolver_type(
     let (parent_types, result_types): (Vec<_>, Vec<_>) = implementers
         .map(|obj| {
             (
-                TSType::TypeVariable(obj.name.to_string().into()),
+                TSType::TypeVariable(obj.name.as_ref().into()),
                 TSType::StringLiteral(obj.name.to_string()),
             )
         })
@@ -139,7 +139,7 @@ fn get_union_resolver_type(
         .iter()
         .map(|type_name| {
             (
-                TSType::TypeVariable(type_name.name.to_string().into()),
+                TSType::TypeVariable(type_name.into()),
                 TSType::StringLiteral(type_name.name.to_string()),
             )
         })

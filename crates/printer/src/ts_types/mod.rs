@@ -1,3 +1,4 @@
+use graphql_type_system::{Node, OriginalNodeRef};
 use nitrogql_ast::base::{HasPos, Ident, Pos};
 use sourcemap_writer::SourceMapWriter;
 
@@ -59,17 +60,47 @@ impl HasPos for TypeVariable {
     }
 }
 
-impl<S> From<S> for TypeVariable
-where
-    S: ToString,
-{
-    fn from(value: S) -> Self {
+impl From<&Ident<'_>> for TypeVariable {
+    fn from(value: &Ident) -> Self {
         TypeVariable {
-            name: value.to_string(),
+            name: value.name.to_owned(),
+            pos: value.position,
+        }
+    }
+}
+
+impl From<&str> for TypeVariable {
+    fn from(value: &str) -> Self {
+        TypeVariable {
+            name: value.to_owned(),
             pos: Pos::builtin(),
         }
     }
 }
+
+impl<S> From<Node<&S, Pos>> for TypeVariable
+where
+    S: ToString,
+{
+    fn from(value: Node<&S, Pos>) -> Self {
+        TypeVariable {
+            name: value.to_string(),
+            pos: *value.original_node_ref(),
+        }
+    }
+}
+
+// impl<S> From<S> for TypeVariable
+// where
+//     S: ToString,
+// {
+//     fn from(value: S) -> Self {
+//         TypeVariable {
+//             name: value.to_string(),
+//             pos: Pos::builtin(),
+//         }
+//     }
+// }
 
 #[derive(Clone, Debug)]
 pub struct ObjectField {
