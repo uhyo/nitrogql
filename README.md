@@ -20,10 +20,6 @@ nitrogql can check your GraphQL code statically and guard you from any runtime e
 
 ![Result of running `nitrogql check` on a sample project](./assets/docs/screenshot-check.png)
 
-## And more planned...
-
-Type generation currently only supports client side code (usage with GraphQL clients like Apollo Client). Support for writing server side code (resolvers) is planned.
-
 ## Installation
 
 Install the nitrogql CLI with npm:
