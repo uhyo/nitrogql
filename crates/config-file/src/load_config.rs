@@ -1,3 +1,4 @@
+use log::trace;
 use std::{
     fs, io,
     path::{Path, PathBuf},
@@ -14,13 +15,16 @@ enum LoaderKind {
     Js,
 }
 
-const CONFIG_NAMES: [(&str, LoaderKind); 13] = [
+const CONFIG_NAMES: [(&str, LoaderKind); 19] = [
     ("graphql.config.json", LoaderKind::Yaml),
     ("graphql.config.yaml", LoaderKind::Yaml),
     ("graphql.config.yml", LoaderKind::Yaml),
     ("graphql.config.js", LoaderKind::Js),
     ("graphql.config.mjs", LoaderKind::Js),
     ("graphql.config.cjs", LoaderKind::Js),
+    ("graphql.config.ts", LoaderKind::Js),
+    ("graphql.config.mts", LoaderKind::Js),
+    ("graphql.config.cts", LoaderKind::Js),
     (".graphqlrc", LoaderKind::Yaml),
     (".graphqlrc.json", LoaderKind::Yaml),
     (".graphqlrc.yaml", LoaderKind::Yaml),
@@ -28,30 +32,45 @@ const CONFIG_NAMES: [(&str, LoaderKind); 13] = [
     (".graphqlrc.js", LoaderKind::Js),
     (".graphqlrc.mjs", LoaderKind::Js),
     (".graphqlrc.cjs", LoaderKind::Js),
+    (".graphqlrc.ts", LoaderKind::Js),
+    (".graphqlrc.mts", LoaderKind::Js),
+    (".graphqlrc.cts", LoaderKind::Js),
 ];
 
 /// searches graphql config and loads it if one is found.
 fn search_graphql_config(cwd: &Path) -> io::Result<Option<(PathBuf, String)>> {
+    trace!("search_graphql_config from {}", cwd.display());
     for (name, kind) in CONFIG_NAMES.iter() {
         let config_file_path = cwd.join(name);
         match kind {
             LoaderKind::Yaml => {
                 match fs::read_to_string(&config_file_path) {
                     Ok(buf) => {
+                        trace!("Found config file {}", config_file_path.display());
                         return Ok(Some((config_file_path, buf)));
                     }
-                    Err(err) if err.kind() == io::ErrorKind::NotFound => {}
+                    Err(err) if err.kind() == io::ErrorKind::NotFound => {
+                        trace!("Not found: {}", config_file_path.display());
+                    }
                     // Maybe a WASI way of expressing file not found error
                     Err(err)
                         if err.to_string().starts_with(
                             "failed to find a pre-opened file descriptor through which",
-                        ) => {}
+                        ) =>
+                    {
+                        trace!("Not found: {}", config_file_path.display());
+                    }
                     Err(err) => return Err(err),
                 }
             }
             LoaderKind::Js => {
-                return load_config_from_js_file(&config_file_path)
-                    .map(|buf| Some((config_file_path, buf)))
+                if config_file_path.try_exists()? {
+                    trace!("Found config file {}", config_file_path.display());
+                    return load_config_from_js_file(&config_file_path)
+                        .map(|buf| Some((config_file_path, buf)));
+                } else {
+                    trace!("Not found: {}", config_file_path.display());
+                }
             }
         }
     }

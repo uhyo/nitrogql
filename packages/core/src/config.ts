@@ -50,14 +50,23 @@ function execute_config_file(
 ): number {
   const configFilePath = readString(config_file_path, config_file_path_len);
   try {
-    const result = execFileSync("node", ["--input-type=module"], {
-      encoding: "utf-8",
-      input: `
+    const result = execFileSync(
+      "node",
+      [
+        "--no-warnings",
+        "--loader=esbuild-register/loader",
+        "--require=esbuild-register",
+        "--input-type=module",
+      ],
+      {
+        encoding: "utf-8",
+        input: `
 import config from ${JSON.stringify(configFilePath)};
 import { stdout } from "process";
-stdout.write(JSON.stringify(config));
+stdout.write(JSON.stringify(config.default ?? config));
 `,
-    });
+      }
+    );
     const handle = ++handleCounter;
     handleMap.set(handle, result);
     return handle;
