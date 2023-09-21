@@ -28,6 +28,10 @@
   "volta": {
     "node": "18.15.0"
   },
+  "dependencies": {
+    "esbuild": "0.x",
+    "esbuild-register": "^3.5.0"
+  },
   "devDependencies": {
     "@types/node": "^18.16.0",
     "webpack": "^5.76.2"
