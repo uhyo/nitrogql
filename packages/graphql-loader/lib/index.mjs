@@ -2,6 +2,7 @@
 
 import path from "node:path";
 import { readFile } from "node:fs/promises";
+import { executeConfigFileSync } from "@nitrogql/core";
 import { StringAllocator } from "./alloc.mjs";
 
 const wasm = await WebAssembly.compile(
@@ -31,7 +32,7 @@ export default function graphQLLoader(source) {
 
     if (lastLoadedConfigPath !== configFilePath && configFilePath) {
       const configFileSource = configFileIsJS(configFilePath)
-        ? JSON.stringify(await import(configFilePath))
+        ? executeConfigFileSync(configFilePath)
         : await readFile(configFilePath, "utf-8");
       const configFilePathString = alloc.allocString(configFileSource);
       instance.exports.load_config(
@@ -64,5 +65,5 @@ export default function graphQLLoader(source) {
 }
 
 function configFileIsJS(configFile) {
-  return /\.[cm]?js$/.test(configFile);
+  return /\.[cm]?[jt]s$/.test(configFile);
 }
