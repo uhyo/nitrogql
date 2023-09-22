@@ -46,6 +46,15 @@ export default function ConfigurationFileName() {
             <code>graphql.config.cjs</code>
           </li>
           <li>
+            <code>graphql.config.ts</code>
+          </li>
+          <li>
+            <code>graphql.config.mts</code>
+          </li>
+          <li>
+            <code>graphql.config.cts</code>
+          </li>
+          <li>
             <code>.graphqlrc</code>
           </li>
           <li>
@@ -66,24 +75,32 @@ export default function ConfigurationFileName() {
           <li>
             <code>.graphqlrc.cjs</code>
           </li>
+          <li>
+            <code>.graphqlrc.ts</code>
+          </li>
+          <li>
+            <code>.graphqlrc.mts</code>
+          </li>
+          <li>
+            <code>.graphqlrc.cts</code>
+          </li>
         </ol>
 
         <h3 id="using-javascript-configuration-files">
-          Using JavaScript configuration files
+          Using JavaScript/TypeScript configuration files
         </h3>
         <p>
-          nitrogql supports configuration files written in JavaScript (both
-          CommonJS and ES Module syntax are supported). When using a JavaScript
-          configuration file, an ES Module configuration file should
-          default-export the configuration object. A CommonJS configuration file
-          should assign the configuration object to <code>module.exports</code>.
+          nitrogql supports configuration files written in JavaScript or
+          TypeScript (both CommonJS and ES Module syntax are supported). When
+          using a JavaScript configuration file, an ES Module configuration file
+          should default-export the configuration object. A CommonJS
+          configuration file should assign the configuration object to{" "}
+          <code>module.exports</code>.
         </p>
-        <p>Also you can use JSDoc for type checking and auto-completion.</p>
-        <Highlight language="js">
-          {`/**
-  * @type {import("@nitrogql/cli").NitrogqlConfig}
-  */
-const config = {
+        <Highlight language="ts">
+          {`import type { NitrogqlConfig } from "@nitrogql/cli";
+
+const config: NitrogqlConfig = {
   schema: "./schema/*.graphql",
   documents: ["./app/**/*.graphql", "./common/**/*.graphql"],
   // ...
