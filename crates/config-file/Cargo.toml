@@ -15,3 +15,4 @@ execute_config = []
 serde = { version = "1.0.160", features = ["derive"] }
 serde_yaml = "0.9.21"
 thiserror = "1.0.40"
+log = "0.4.17"

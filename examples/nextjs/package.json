@@ -12,21 +12,21 @@
   },
   "dependencies": {
     "@apollo/server": "^4.9.1",
-    "@types/node": "18.15.3",
-    "@types/react": "18.0.28",
-    "@types/react-dom": "18.0.11",
+    "@types/node": "^18.15.3",
     "eslint": "8.36.0",
     "eslint-config-next": "13.2.4",
     "glob": "^9.3.0",
-    "next": "13.4.19",
+    "next": "^13.5.2",
     "react": "18.2.0",
     "react-dom": "18.2.0",
-    "typescript": "5.0.2",
     "urql": "^3.0.4"
   },
   "devDependencies": {
     "@graphql-typed-document-node/core": "^3.2.0",
     "@nitrogql/cli": "^1.0.0",
-    "@nitrogql/graphql-loader": "^1.0.0"
+    "@nitrogql/graphql-loader": "^1.0.0",
+    "@types/react": "^18.2.22",
+    "@types/react-dom": "^18.2.7",
+    "typescript": "^5.2.2"
   }
 }

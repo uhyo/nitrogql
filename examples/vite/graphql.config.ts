@@ -1,9 +1,6 @@
-// @ts-check
+import { NitrogqlConfig } from "@nitrogql/cli";
 
-/**
- * @type {import('@nitrogql/cli').NitrogqlConfig}
- */
-const config = {
+const config: NitrogqlConfig = {
   schema: "./src/schema/pokeapi.json",
   documents: "./src/**/*.graphql",
   extensions: {

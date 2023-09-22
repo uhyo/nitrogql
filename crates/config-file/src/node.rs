@@ -5,11 +5,16 @@ use std::{
     process::{Command, Stdio},
 };
 
+use log::trace;
+
 /// Load config from a JS file by executing it and returning the `module.exports` value.
 pub fn load_config_from_js_file(path: &Path) -> io::Result<String> {
     #[cfg(not(target_os = "wasi"))]
     {
         let mut command = Command::new("node")
+            .arg("--no-warnings")
+            .arg("--loader=esbuild-register/loader")
+            .arg("--require=esbuild-register")
             .arg("--input-type=module")
             .stdin(Stdio::piped())
             .stdout(Stdio::piped())
@@ -22,7 +27,7 @@ pub fn load_config_from_js_file(path: &Path) -> io::Result<String> {
             r#"
 import config from "{}";
 import {{ stdout }} from "process";
-stdout.write(JSON.stringify(config));
+stdout.write(JSON.stringify(config.default ?? config));
 "#,
             path.display()
         )?;
@@ -34,6 +39,8 @@ stdout.write(JSON.stringify(config));
                 "Node.js process exited with non-zero status",
             ));
         }
+
+        trace!("Loaded config\n{}", String::from_utf8_lossy(&result.stdout));
 
         Ok(String::from_utf8_lossy(&result.stdout).into_owned())
     }

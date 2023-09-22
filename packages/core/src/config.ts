@@ -5,6 +5,31 @@
 import { execFileSync } from "node:child_process";
 import { getMemory, readString } from "./memory.js";
 
+/**
+ * Executes given config file.
+ * Note: requires `esbuild-register` and `esbuild` to be installed.
+ * @returns result in JSON string
+ */
+export function executeConfigFileSync(configFilePath: string): string {
+  return execFileSync(
+    "node",
+    [
+      "--no-warnings",
+      "--loader=esbuild-register/loader",
+      "--require=esbuild-register",
+      "--input-type=module",
+    ],
+    {
+      encoding: "utf-8",
+      input: `
+import config from ${JSON.stringify(configFilePath)};
+import { stdout } from "process";
+stdout.write(JSON.stringify(config.default ?? config));
+`,
+    }
+  );
+}
+
 export type NitrogqlConfigNamespace = {
   /**
    * Executes given config file.
@@ -34,6 +59,10 @@ export type NitrogqlConfigNamespace = {
   free_result(handle: number): void;
 };
 
+/**
+ * `nitrogql_helper/config` namespace
+ * depended on by nitrogql's wasm modules.
+ */
 export const config: NitrogqlConfigNamespace = {
   execute_config_file,
   result_len,
@@ -50,14 +79,7 @@ function execute_config_file(
 ): number {
   const configFilePath = readString(config_file_path, config_file_path_len);
   try {
-    const result = execFileSync("node", ["--input-type=module"], {
-      encoding: "utf-8",
-      input: `
-import config from ${JSON.stringify(configFilePath)};
-import { stdout } from "process";
-stdout.write(JSON.stringify(config));
-`,
-    });
+    const result = executeConfigFileSync(configFilePath);
     const handle = ++handleCounter;
     handleMap.set(handle, result);
     return handle;

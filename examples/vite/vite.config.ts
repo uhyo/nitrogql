@@ -7,7 +7,7 @@ export default defineConfig({
   plugins: [
     react(),
     nitrogql({
-      configFile: "./graphql.config.js",
+      configFile: "./graphql.config.ts",
       include: ["**/*.graphql"],
     }),
   ],
