@@ -1,4 +1,4 @@
-import { config } from "./config.js";
+import { config, executeConfigFileSync } from "./config.js";
 import { NitrogqlConfig } from "./configFormat.js";
 import { setMemory } from "./memory.js";
 
@@ -11,6 +11,7 @@ export {
    * `nitrogql_helper/config` namespace
    */
   config,
+  executeConfigFileSync,
 };
 
 export type { NitrogqlConfig };

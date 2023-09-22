@@ -2,6 +2,7 @@
 
 import path from "node:path";
 import { readFile } from "node:fs/promises";
+import { executeConfigFileSync } from "@nitrogql/core";
 import { createFilter } from "@rollup/pluginutils";
 import { StringAllocator } from "./alloc.mjs";
 
@@ -47,7 +48,7 @@ export default function NitrogqlRollupPlugin(options) {
 
       if (lastLoadedConfigPath !== configFilePath && configFilePath) {
         const configFileSource = configFileIsJS(configFilePath)
-          ? JSON.stringify(await import(configFilePath))
+          ? executeConfigFileSync(configFilePath)
           : await readFile(configFilePath, "utf-8");
         const configFilePathString = alloc.allocString(configFileSource);
         instance.exports.load_config(
@@ -78,5 +79,5 @@ export default function NitrogqlRollupPlugin(options) {
 }
 
 function configFileIsJS(configFile) {
-  return /\.[cm]?js$/.test(configFile);
+  return /\.[cm]?[jt]s$/.test(configFile);
 }
