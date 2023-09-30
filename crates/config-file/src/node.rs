@@ -34,8 +34,8 @@ pub fn run_node(code: &str) -> io::Result<String> {
     }
     #[cfg(target_os = "wasi")]
     {
-        use crate::execute::execute_node;
-        execute_node(code).map_err(|err| {
+        use crate::execute::execute_js;
+        execute_js(code).map_err(|err| {
             io::Error::new(
                 io::ErrorKind::Other,
                 format!("Failed to execute config file: {}", err),
