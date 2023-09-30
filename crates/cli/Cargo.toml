@@ -8,7 +8,7 @@ edition = "2021"
 [dependencies]
 nitrogql-ast = { path = "../ast" }
 nitrogql-checker = { path = "../checker" }
-nitrogql-config-file = { path = "../config-file", features = ["fs", "execute_config"] }
+nitrogql-config-file = { path = "../config-file", features = ["fs", "execute_js"] }
 nitrogql-error = { path = "../error" }
 nitrogql-introspection = { path = "../introspection" }
 nitrogql-parser = { path = "../parser" }

@@ -1,4 +1,6 @@
-schema: ./src/schema/*.graphql
+schema:
+  - ./src/schema/*.graphql
+  - ./src/schema/scalar.ts
 documents: ./src/app/**/*.graphql
 extensions:
   nitrogql:
@@ -12,4 +14,4 @@ extensions:
       schemaModuleSpecifier: "@/generated/schema"
       type:
         scalarTypes:
-          Date: string
+          DateTime: string

@@ -1,8 +1,6 @@
-use std::{borrow::Cow, path::PathBuf, str::FromStr};
+use std::{path::PathBuf, str::FromStr};
 
-use graphql_type_system::Schema;
 use nitrogql_ast::{
-    base::Pos,
     operation::OperationDocument,
     type_system::{TypeSystemDocument, TypeSystemOrExtensionDocument},
 };
@@ -10,26 +8,7 @@ use nitrogql_config_file::Config;
 use nitrogql_plugin::Plugin;
 use thiserror::Error;
 
-use crate::{file_store::FileStore, output::CliOutput};
-
-#[allow(clippy::large_enum_variant)]
-pub enum LoadedSchema<'src, Gql> {
-    GraphQL(Gql),
-    Introspection(Schema<Cow<'src, str>, Pos>),
-}
-
-impl<'src, Gql> LoadedSchema<'src, Gql> {
-    pub fn map_into<'a, F, G, R>(&'a self, graphql: F, introspection: G) -> R
-    where
-        F: FnOnce(&'a Gql) -> R,
-        G: FnOnce(&'a Schema<Cow<'src, str>, Pos>) -> R,
-    {
-        match self {
-            LoadedSchema::GraphQL(gql) => graphql(gql),
-            LoadedSchema::Introspection(schema) => introspection(schema),
-        }
-    }
-}
+use crate::{file_store::FileStore, output::CliOutput, schema_loader::LoadedSchema};
 
 pub enum CliContext<'src> {
     SchemaUnresolved {

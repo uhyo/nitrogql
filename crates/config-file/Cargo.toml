@@ -5,9 +5,9 @@ edition = "2021"
 
 [features]
 # Searches and loads config from file system.
-fs = []
-# Invokes function provided as wasm import to execute config.
-execute_config = []
+fs = ["execute_js"]
+# Executes JS file.
+execute_js = []
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 

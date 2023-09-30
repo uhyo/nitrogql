@@ -10,7 +10,7 @@ import { getMemory, readString } from "./memory.js";
  * Note: requires `esbuild-register` and `esbuild` to be installed.
  * @returns result in JSON string
  */
-export function executeConfigFileSync(configFilePath: string): string {
+export function executeConfigFileSync(code: string): string {
   return execFileSync(
     "node",
     [
@@ -21,25 +21,18 @@ export function executeConfigFileSync(configFilePath: string): string {
     ],
     {
       encoding: "utf-8",
-      input: `
-import config from ${JSON.stringify(configFilePath)};
-import { stdout } from "process";
-stdout.write(JSON.stringify(config.default ?? config));
-`,
+      input: code,
     }
   );
 }
 
 export type NitrogqlConfigNamespace = {
   /**
-   * Executes given config file.
-   * Returns the handle to the result.
+   * Executes given JavaScript (or TypeScript) code.
+   * Returns the handle to the result (string written to stdout).
    * 0 if there was an error.
    */
-  execute_config_file(
-    config_file_path: number,
-    config_file_path_len: number
-  ): number;
+  execute_node(code_ptr: number, code_len: number): number;
   /**
    * Returns the length of the result.
    */
@@ -64,7 +57,7 @@ export type NitrogqlConfigNamespace = {
  * depended on by nitrogql's wasm modules.
  */
 export const config: NitrogqlConfigNamespace = {
-  execute_config_file,
+  execute_node,
   result_len,
   write_result_to_buffer,
   free_result,
@@ -73,13 +66,10 @@ export const config: NitrogqlConfigNamespace = {
 const handleMap = new Map<number, string>();
 let handleCounter = 0;
 
-function execute_config_file(
-  config_file_path: number,
-  config_file_path_len: number
-): number {
-  const configFilePath = readString(config_file_path, config_file_path_len);
+function execute_node(code_ptr: number, code_len: number): number {
+  const code = readString(code_ptr, code_len);
   try {
-    const result = executeConfigFileSync(configFilePath);
+    const result = executeConfigFileSync(code);
     const handle = ++handleCounter;
     handleMap.set(handle, result);
     return handle;

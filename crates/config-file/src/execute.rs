@@ -1,12 +1,10 @@
-use std::path::Path;
-
 use thiserror::Error;
 
 #[cfg(target_os = "wasi")]
 #[link(wasm_import_module = "nitrogql_helper/config")]
 extern "C" {
-    /// Executes given config file and returns the handle to result.
-    fn execute_config_file(config_file_path: *const u8, config_file_path_len: usize) -> u32;
+    /// Executes given code and returns the handle to result.
+    fn execute_node(code_ptr: *const u8, code_len: usize) -> u32;
     /// Returns the length of result of executing config file.
     fn result_len(handle: u32) -> usize;
     /// Writes result of executing config file to given buffer.
@@ -16,7 +14,7 @@ extern "C" {
 }
 
 #[cfg(not(target_os = "wasi"))]
-unsafe fn execute_config_file(_config_file_path: *const u8, _config_file_path_len: usize) -> u32 {
+unsafe fn execute_node(_code_ptr: *const u8, _code_len: usize) -> u32 {
     panic!("Not implemented")
 }
 
@@ -43,10 +41,9 @@ pub enum ExecuteConfigError {
     FailedToReadResult,
 }
 
-/// Executes given config file and returns the result.
-pub fn execute_config(config_file_path: &Path) -> Result<String, ExecuteConfigError> {
-    let config_file_path = config_file_path.to_string_lossy();
-    let handle = unsafe { execute_config_file(config_file_path.as_ptr(), config_file_path.len()) };
+/// Executes given code using Node.js and returns the result.
+pub fn execute_js(code: &str) -> Result<String, ExecuteConfigError> {
+    let handle = unsafe { execute_node(code.as_ptr(), code.len()) };
     if handle == 0 {
         return Err(ExecuteConfigError::FailedToExecuteConfigFile);
     }

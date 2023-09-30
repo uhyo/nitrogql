@@ -10,7 +10,7 @@ use nitrogql_error::Result;
 use nitrogql_plugin::Plugin;
 use nitrogql_semantics::{ast_to_type_system, resolve_extensions};
 
-use crate::{context::LoadedSchema, output::InputFileKind};
+use crate::{output::InputFileKind, schema_loader::LoadedSchema};
 
 use super::{error::CliError, CliContext};
 

@@ -5,7 +5,7 @@ use std::{
 };
 
 use crate::parse_config::parse_config;
-use crate::{config::Config, node::load_config_from_js_file};
+use crate::{config::Config, node::load_default_from_js_file};
 
 use super::error::ConfigFileError;
 
@@ -66,7 +66,7 @@ fn search_graphql_config(cwd: &Path) -> io::Result<Option<(PathBuf, String)>> {
             LoaderKind::Js => {
                 if config_file_path.try_exists()? {
                     trace!("Found config file {}", config_file_path.display());
-                    return load_config_from_js_file(&config_file_path)
+                    return load_default_from_js_file(&config_file_path)
                         .map(|buf| Some((config_file_path, buf)));
                 } else {
                     trace!("Not found: {}", config_file_path.display());

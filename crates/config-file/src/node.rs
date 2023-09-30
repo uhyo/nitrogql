@@ -5,10 +5,8 @@ use std::{
     process::{Command, Stdio},
 };
 
-use log::trace;
-
-/// Load config from a JS file by executing it and returning the `module.exports` value.
-pub fn load_config_from_js_file(path: &Path) -> io::Result<String> {
+/// Runs given string as JavaScript code, and returns string written to stdout.
+pub fn run_node(code: &str) -> io::Result<String> {
     #[cfg(not(target_os = "wasi"))]
     {
         let mut command = Command::new("node")
@@ -22,15 +20,7 @@ pub fn load_config_from_js_file(path: &Path) -> io::Result<String> {
             .spawn()?;
 
         let stdin = command.stdin.as_mut().unwrap();
-        write!(
-            stdin,
-            r#"
-import config from "{}";
-import {{ stdout }} from "process";
-stdout.write(JSON.stringify(config.default ?? config));
-"#,
-            path.display()
-        )?;
+        write!(stdin, "{code}")?;
 
         let result = command.wait_with_output()?;
         if !result.status.success() {
@@ -40,18 +30,28 @@ stdout.write(JSON.stringify(config.default ?? config));
             ));
         }
 
-        trace!("Loaded config\n{}", String::from_utf8_lossy(&result.stdout));
-
         Ok(String::from_utf8_lossy(&result.stdout).into_owned())
     }
     #[cfg(target_os = "wasi")]
     {
-        use crate::execute::execute_config;
-        execute_config(path).map_err(|err| {
+        use crate::execute::execute_node;
+        execute_node(code).map_err(|err| {
             io::Error::new(
                 io::ErrorKind::Other,
                 format!("Failed to execute config file: {}", err),
             )
         })
     }
+}
+
+/// Load the default export of a JS file by executing it and returning the `module.exports` value.
+pub fn load_default_from_js_file(path: &Path) -> io::Result<String> {
+    run_node(&format!(
+        r#"
+import config from "{}";
+import {{ stdout }} from "process";
+stdout.write(JSON.stringify(config?.default ?? config));
+"#,
+        path.display()
+    ))
 }

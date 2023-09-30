@@ -1,5 +1,6 @@
 import { config, executeConfigFileSync } from "./config.js";
 import { NitrogqlConfig } from "./configFormat.js";
+import { loadSchemaJs } from "./loader.js";
 import { setMemory } from "./memory.js";
 
 export {
@@ -12,6 +13,7 @@ export {
    */
   config,
   executeConfigFileSync,
+  loadSchemaJs,
 };
 
 export type { NitrogqlConfig };

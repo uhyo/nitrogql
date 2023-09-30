@@ -23,12 +23,14 @@ use nitrogql_plugin::Plugin;
 use nitrogql_utils::{get_cwd, normalize_path};
 use output::CliOutput;
 use plugin_host::PluginHost;
+use schema_loader::LoadedSchema;
 
 use crate::{
-    context::{CliContext, LoadedSchema},
+    context::CliContext,
     error::CliError,
     file_store::FileKind,
     load_plugins::load_plugins,
+    schema_loader::{load_schema_js, schema_kind_by_path, SchemaFileKind},
 };
 use nitrogql_config_file::load_config;
 
@@ -45,6 +47,7 @@ mod generate;
 mod load_plugins;
 mod output;
 mod plugin_host;
+mod schema_loader;
 
 #[derive(Parser, Debug)]
 struct Args {
@@ -163,17 +166,27 @@ fn run_cli_impl(
     let schema_files = load_glob_files(&config.root_dir, &config.config.schema)?;
     let (schema_docs, schema_errors): (Vec<_>, Vec<_>) = schema_files
         .into_iter()
-        .map(|(path, buf)| -> Result<_, CommandError> {
-            let file_idx = file_store.add_file(path, buf, FileKind::Schema);
-            let (ref path, buf, _) = file_store.get_file(file_idx).unwrap();
-            // Treat JSON file as introspection result schema.
-            let is_introspection = path.extension().map(|ext| ext == "json").unwrap_or(false);
-            if is_introspection {
+        .map(|(path, buf)| match schema_kind_by_path(&path) {
+            SchemaFileKind::GraphQL => {
+                let file_idx = file_store.add_file(path, buf, FileKind::Schema);
+                let (ref path, buf, _) = file_store.get_file(file_idx).unwrap();
+                info!("parsing(schema) {} {}", path.to_string_lossy(), file_idx);
+                set_current_file_of_pos(file_idx);
+                let doc = parse_type_system_document(buf)?;
+                Ok(LoadedSchema::GraphQL(doc))
+            }
+            SchemaFileKind::IntrospectionJson => {
+                let file_idx = file_store.add_file(path, buf, FileKind::Schema);
+                let (ref path, buf, _) = file_store.get_file(file_idx).unwrap();
                 info!("parsing(introspection) {}", path.to_string_lossy());
                 let doc = schema_from_introspection_json(buf)?;
                 Ok(LoadedSchema::Introspection(doc))
-            } else {
-                info!("parsing(schema) {} {}", path.to_string_lossy(), file_idx);
+            }
+            SchemaFileKind::SchemaJavaScript => {
+                info!("loading schema js {}", path.to_string_lossy());
+                let schema = load_schema_js(&path)?;
+                let file_idx = file_store.add_file(path, schema, FileKind::Schema);
+                let (_, buf, _) = file_store.get_file(file_idx).unwrap();
                 set_current_file_of_pos(file_idx);
                 let doc = parse_type_system_document(buf)?;
                 Ok(LoadedSchema::GraphQL(doc))

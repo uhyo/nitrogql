@@ -5,9 +5,9 @@ type Todo {
   "Contents of this todo item."
   body: String!
   "When not null, date when this item was marked done."
-  finishedAt: Date @model
+  finishedAt: DateTime @model
   "Date when this item was created."
-  createdAt: Date! @model
+  createdAt: DateTime! @model
   "Tags associated to this item."
   tags: [Tag!]!
 }

@@ -6,10 +6,10 @@ use std::path::{Path, PathBuf};
 use log::{debug, info};
 use nitrogql_semantics::{ast_to_type_system, type_system_to_ast};
 
-use crate::context::LoadedSchema;
 use crate::error::CliError;
 use crate::file_store::{FileKind, FileStore};
 use crate::output::{CliOutput, OutputFileKind};
+use crate::schema_loader::LoadedSchema;
 use nitrogql_config_file::{Config, GenerateMode};
 use nitrogql_error::Result;
 use nitrogql_printer::{
