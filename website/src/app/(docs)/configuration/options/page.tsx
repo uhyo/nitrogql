@@ -59,6 +59,41 @@ documents:
           <code>documents</code> is optional. If you only have schema, you can
           still use nitrogql to check your schema.
         </p>
+
+        <h4 id="schema-file-types">Schema file types</h4>
+        <p>Nitrogql supports three types of schema files:</p>
+        <ul>
+          <li>
+            <code>.graphql</code> files (GraphQL SDL)
+          </li>
+          <li>
+            <code>.json</code> files (introspection result)
+          </li>
+          <li>
+            <code>.js</code>/<code>.ts</code> files
+          </li>
+        </ul>
+        <p>
+          Nitrogql automatically detects the type of the schema file based on
+          the file extension.
+        </p>
+        <p>
+          A <code>.js</code>/<code>.ts</code> schema file must default-export
+          schema either as a string or as a{" "}
+          <a
+            href="https://graphql.org/graphql-js/type/#graphqlschema"
+            target="_blank"
+          >
+            GraphQLSchema
+          </a>{" "}
+          object.
+        </p>
+
+        <h4 id="operation-file-types">Operation file type</h4>
+        <p>
+          Nitrogql only supports <code>.graphql</code> files for operations.
+        </p>
+
         <Hint>
           💡 Other configuration options are placed under{" "}
           <code>extensions.nitrogql</code> in the configuration file.
