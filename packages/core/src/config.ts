@@ -6,11 +6,11 @@ import { execFileSync } from "node:child_process";
 import { getMemory, readString } from "./memory.js";
 
 /**
- * Executes given config file.
+ * Executes given code with Node.js.
  * Note: requires `esbuild-register` and `esbuild` to be installed.
- * @returns result in JSON string
+ * @returns stdout
  */
-export function executeConfigFileSync(code: string): string {
+export function executeNodeSync(code: string): string {
   return execFileSync(
     "node",
     [
@@ -24,6 +24,17 @@ export function executeConfigFileSync(code: string): string {
       input: code,
     }
   );
+}
+
+/**
+ * Executes given config file.
+ */
+export function executeConfigFileSync(configFilePath: string): string {
+  return executeNodeSync(`
+import config from ${JSON.stringify(configFilePath)};
+import { stdout } from "process";
+stdout.write(JSON.stringify(config.default ?? config));
+`);
 }
 
 export type NitrogqlConfigNamespace = {
@@ -69,7 +80,7 @@ let handleCounter = 0;
 function execute_node(code_ptr: number, code_len: number): number {
   const code = readString(code_ptr, code_len);
   try {
-    const result = executeConfigFileSync(code);
+    const result = executeNodeSync(code);
     const handle = ++handleCounter;
     handleMap.set(handle, result);
     return handle;

@@ -1,4 +1,4 @@
-import { config, executeConfigFileSync } from "./config.js";
+import { config, executeConfigFileSync, executeNodeSync } from "./config.js";
 import { NitrogqlConfig } from "./configFormat.js";
 import { loadSchemaJs } from "./loader.js";
 import { setMemory } from "./memory.js";
@@ -12,6 +12,7 @@ export {
    * `nitrogql_helper/config` namespace
    */
   config,
+  executeNodeSync,
   executeConfigFileSync,
   loadSchemaJs,
 };
