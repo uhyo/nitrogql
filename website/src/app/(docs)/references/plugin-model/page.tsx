@@ -21,7 +21,7 @@ export default function ModelPlugin() {
           <code>nitrogql:model</code> plugin
         </h2>
         <p>
-          <code>nitrogql:model</code> plugin is a built-in plugin for enhancing
+          <code>nitrogql:model-plugin</code> is a built-in plugin for enhancing
           generated resolver types. It helps you to define which fields use{" "}
           <a
             href="https://www.apollographql.com/docs/apollo-server/data/resolvers/#default-resolvers"
@@ -43,7 +43,7 @@ export default function ModelPlugin() {
 extensions:
   nitrogql:
     plugins:
-      - "nitrogql:model"
+      - "nitrogql:model-plugin"
     # ...`}
         </Highlight>
 

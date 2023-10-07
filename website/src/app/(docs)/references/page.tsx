@@ -41,12 +41,17 @@ export default function References() {
 
         <h3>Plugins</h3>
         <p>
-          Currently, one built-in plugin is available. Third-party plugins are
+          Currently, two built-in plugins are available. Third-party plugins are
           not supported yet.
         </p>
         <ul>
           <li>
-            <Link href="/references/plugin-model">nitrogql:model plugin</Link>
+            <Link href="/references/plugin-model">nitrogql:model-plugin</Link>
+          </li>
+          <li>
+            <Link href="/references/plugin-graphql-scalars">
+              nitrogql:graphql-scalars-plugin
+            </Link>
           </li>
         </ul>
       </main>
