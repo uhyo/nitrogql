@@ -182,7 +182,7 @@ directive @model(
     fn transform_document_for_resolvers<'src>(
         &self,
         document: &TypeSystemDocument<'src>,
-    ) -> TypeSystemDocument<'src> {
+    ) -> Option<TypeSystemDocument<'src>> {
         let definitions = document.definitions.iter().map(|def| {
             if let TypeSystemDefinition::TypeDefinition(TypeDefinition::Object(def)) = def {
                 let model_directive = def
@@ -216,15 +216,15 @@ directive @model(
             }
         });
 
-        TypeSystemDocument {
+        Some(TypeSystemDocument {
             definitions: definitions.collect(),
-        }
+        })
     }
 
     fn transform_document_for_runtime_server<'src>(
         &self,
         document: &TypeSystemDocument<'src>,
-    ) -> TypeSystemDocument<'src> {
+    ) -> Option<TypeSystemDocument<'src>> {
         // removes @model directives
         let definitions = document.definitions.iter().flat_map(|def| {
             if let TypeSystemDefinition::DirectiveDefinition(def) = def {
@@ -269,8 +269,8 @@ directive @model(
             }
         });
 
-        TypeSystemDocument {
+        Some(TypeSystemDocument {
             definitions: definitions.collect(),
-        }
+        })
     }
 }

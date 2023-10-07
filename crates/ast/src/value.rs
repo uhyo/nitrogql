@@ -22,6 +22,12 @@ impl Value<'_> {
     pub fn is_null(&self) -> bool {
         matches!(self, Value::NullValue(_))
     }
+    pub fn as_string(&self) -> Option<&StringValue> {
+        match self {
+            Value::StringValue(s) => Some(s),
+            _ => None,
+        }
+    }
 }
 
 impl HasPos for Value<'_> {

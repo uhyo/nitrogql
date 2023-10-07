@@ -82,7 +82,7 @@ fn get_schema_metadata_type(document: &TypeSystemDocument) -> TSType {
         let TypeSystemDefinition::TypeDefinition(ref def) = d else {
             continue;
         };
-        let TypeDefinition::Object(ref def) = def else{
+        let TypeDefinition::Object(ref def) = def else {
             continue;
         };
 
@@ -144,7 +144,25 @@ impl TypePrinter for ScalarTypeDefinition<'_> {
         context: &SchemaTypePrinterContext,
         writer: &mut impl SourceMapWriter,
     ) -> SchemaTypePrinterResult<()> {
-        let Some(scalar_type_str) = context.options.scalar_types.get(self.name.name) else {
+        // type of scalar has two sources:
+        // @nitrogql_ts_type built-in directive and scalarTypes option.
+        // If scalarType is provided, it takes precedence.
+        let scalar_type_from_config = context.options.scalar_types.get(self.name.name);
+        let directive_ts_type = self
+            .directives
+            .iter()
+            .find(|directive| (directive.name.name == "nitrogql_ts_type"))
+            .and_then(|directive| directive.arguments.as_ref())
+            .and_then(|args| {
+                args.arguments.iter().find_map(|(key, value)| {
+                    (key.name == "type")
+                        .then_some(value)
+                        .and_then(|v| v.as_string())
+                })
+            })
+            .map(|v| &v.value);
+        let scalar_ts_type = scalar_type_from_config.or(directive_ts_type);
+        let Some(scalar_type_str) = scalar_ts_type else {
             return Err(SchemaTypePrinterError::ScalarTypeNotProvided {
                 position: self.position,
                 name: self.name.to_string(),

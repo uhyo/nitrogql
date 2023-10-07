@@ -1,8 +1,10 @@
-use std::{borrow::Cow, io, path::Path};
+use std::{borrow::Cow, collections::HashMap, io, path::Path};
 
 use graphql_type_system::Schema;
 use nitrogql_ast::base::Pos;
 use nitrogql_config_file::run_node;
+use serde::Deserialize;
+use serde_yaml::Value;
 
 pub enum SchemaFileKind {
     GraphQL,
@@ -20,18 +22,27 @@ pub fn schema_kind_by_path(path: &Path) -> SchemaFileKind {
     }
 }
 
-pub fn load_schema_js(path: &Path) -> io::Result<String> {
-    run_node(&format!(
+pub fn load_schema_js(path: &Path) -> io::Result<LoadSchemaJsResult> {
+    let res_json = run_node(&format!(
         r#"
 import {{ loadSchemaJs }} from "@nitrogql/core";
 import {{ stdout }} from "process";
 
-loadSchemaJs("{}").then((schema) => {{
-    stdout.write(schema);
+loadSchemaJs("{}").then((result) => {{
+    stdout.write(JSON.stringify(result));
 }});
 "#,
         path.display()
-    ))
+    ))?;
+    let parsed: LoadSchemaJsResult = serde_yaml::from_str(&res_json).expect("failed to parse JSON");
+    Ok(parsed)
+}
+
+#[derive(Deserialize)]
+pub struct LoadSchemaJsResult {
+    pub schema: String,
+    #[serde(rename = "typeExtensions")]
+    pub type_extensions: HashMap<String, HashMap<String, Value>>,
 }
 
 #[allow(clippy::large_enum_variant)]

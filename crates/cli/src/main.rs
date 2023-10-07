@@ -6,6 +6,7 @@ use std::{
 };
 
 use anyhow::Result;
+use builtins::nitrogql_builtins;
 use clap::Parser;
 use context::OutputFormat;
 use file_store::FileStore;
@@ -19,7 +20,7 @@ use nitrogql_ast::{
     type_system::TypeSystemOrExtensionDocument,
 };
 use nitrogql_introspection::schema_from_introspection_json;
-use nitrogql_plugin::Plugin;
+use nitrogql_plugin::{Plugin, PluginSchemaExtensions};
 use nitrogql_utils::{get_cwd, normalize_path};
 use output::CliOutput;
 use plugin_host::PluginHost;
@@ -30,7 +31,7 @@ use crate::{
     error::CliError,
     file_store::FileKind,
     load_plugins::load_plugins,
-    schema_loader::{load_schema_js, schema_kind_by_path, SchemaFileKind},
+    schema_loader::{load_schema_js, schema_kind_by_path, LoadSchemaJsResult, SchemaFileKind},
 };
 use nitrogql_config_file::load_config;
 
@@ -39,6 +40,7 @@ use nitrogql_parser::{parse_operation_document, parse_type_system_document};
 
 use self::{check::run_check, context::CliConfig, generate::run_generate};
 
+mod builtins;
 mod check;
 mod context;
 mod error;
@@ -152,18 +154,13 @@ fn run_cli_impl(
     info!("Loaded config {config:?}");
     info!("root_dir {}", root_dir.display());
 
-    let plugins = load_plugins(&config.plugins)?;
-    let config = CliConfig {
-        root_dir,
-        config,
-        plugins,
-    };
+    let mut plugins = load_plugins(&config.plugins)?;
 
-    if config.config.schema.is_empty() {
+    if config.schema.is_empty() {
         return Err(CliError::NoSchemaSpecified.into());
     }
 
-    let schema_files = load_glob_files(&config.root_dir, &config.config.schema)?;
+    let schema_files = load_glob_files(&root_dir, &config.schema)?;
     let (schema_docs, schema_errors): (Vec<_>, Vec<_>) = schema_files
         .into_iter()
         .map(|(path, buf)| match schema_kind_by_path(&path) {
@@ -184,11 +181,19 @@ fn run_cli_impl(
             }
             SchemaFileKind::SchemaJavaScript => {
                 info!("loading schema js {}", path.to_string_lossy());
-                let schema = load_schema_js(&path)?;
+                let LoadSchemaJsResult {
+                    schema,
+                    type_extensions,
+                } = load_schema_js(&path)?;
                 let file_idx = file_store.add_file(path, schema, FileKind::Schema);
                 let (_, buf, _) = file_store.get_file(file_idx).unwrap();
                 set_current_file_of_pos(file_idx);
                 let doc = parse_type_system_document(buf)?;
+                for p in plugins.iter_mut() {
+                    p.load_schema_extensions(PluginSchemaExtensions {
+                        type_extensions: &type_extensions,
+                    });
+                }
                 Ok(LoadedSchema::GraphQL(doc))
             }
         })
@@ -196,6 +201,12 @@ fn run_cli_impl(
     if !schema_errors.is_empty() {
         return Err(CommandError::merge(schema_errors));
     }
+
+    let config = CliConfig {
+        root_dir,
+        config,
+        plugins,
+    };
     let merged_schema_doc = {
         let mut merged_schema_doc = resolve_loaded_schema(schema_docs)?;
         extend_loaded_schema(&mut merged_schema_doc, file_store, &config.plugins)?;
@@ -345,6 +356,7 @@ fn extend_loaded_schema<'src>(
         LoadedSchema::Introspection(_) => Ok(()),
         LoadedSchema::GraphQL(doc) => {
             doc.extend(generate_builtins());
+            doc.extend(nitrogql_builtins());
             for plugin in plugins {
                 if let Some(addition) = plugin.schema_addition(&mut plugin_host)? {
                     doc.extend(addition.definitions);

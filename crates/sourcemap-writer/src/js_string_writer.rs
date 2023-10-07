@@ -48,6 +48,7 @@ impl SourceMapWriter for JsStringWriter<'_> {
                 match c {
                     '\\' => self.buffer.push_str("\\\\"),
                     '$' => self.buffer.push('$'),
+                    '`' => self.buffer.push_str("\\`"),
                     '{' => {
                         if dollar_flag {
                             self.buffer.push_str("\\{");

@@ -80,7 +80,10 @@ where
         });
 
         let document_for_resolvers = plugins.iter().fold(Cow::Borrowed(document), |acc, plugin| {
-            Cow::Owned(plugin.transform_document_for_resolvers(acc.as_ref()))
+            match plugin.transform_document_for_resolvers(acc.as_ref()) {
+                Some(next) => Cow::Owned(next),
+                None => acc,
+            }
         });
 
         for type_definition in &document_for_resolvers.definitions {

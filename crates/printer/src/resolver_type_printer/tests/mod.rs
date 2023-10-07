@@ -26,7 +26,7 @@ impl ResolverTypePrinterPlugin for DummyPlugin {
     fn transform_document_for_resolvers<'src>(
         &self,
         _document: &TypeSystemDocument<'src>,
-    ) -> TypeSystemDocument<'src> {
+    ) -> Option<TypeSystemDocument<'src>> {
         unimplemented!()
     }
 }

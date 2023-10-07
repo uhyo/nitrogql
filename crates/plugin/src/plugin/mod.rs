@@ -4,7 +4,7 @@ use nitrogql_ast::{TypeSystemDocument, TypeSystemOrExtensionDocument};
 use nitrogql_parser::{parse_type_system_document, ParseError};
 use nitrogql_printer::{ts_types::TSType, ResolverTypePrinterOptions, ResolverTypePrinterPlugin};
 
-use crate::PluginV1Beta;
+use crate::{plugin_v1::PluginSchemaExtensions, PluginV1Beta};
 
 pub use crate::PluginCheckResult;
 
@@ -35,6 +35,11 @@ impl<'src> Plugin<'src> {
         self.raw.name()
     }
 
+    /// Load schema extensions.
+    pub fn load_schema_extensions(&mut self, extensions: PluginSchemaExtensions) {
+        self.raw.load_schema_extensions(extensions)
+    }
+
     /// Returns additional schema definition provided by the plugin.
     pub fn schema_addition(
         &self,
@@ -63,7 +68,7 @@ impl<'src> Plugin<'src> {
     pub fn transform_document_for_runtime_server<'s>(
         &self,
         document: &TypeSystemDocument<'s>,
-    ) -> TypeSystemDocument<'s> {
+    ) -> Option<TypeSystemDocument<'s>> {
         self.raw.transform_document_for_runtime_server(document)
     }
 }
@@ -81,7 +86,7 @@ impl ResolverTypePrinterPlugin for Plugin<'_> {
     fn transform_document_for_resolvers<'src>(
         &self,
         document: &TypeSystemDocument<'src>,
-    ) -> TypeSystemDocument<'src> {
+    ) -> Option<TypeSystemDocument<'src>> {
         self.raw.transform_document_for_resolvers(document)
     }
 }

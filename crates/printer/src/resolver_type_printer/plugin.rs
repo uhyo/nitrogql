@@ -18,5 +18,5 @@ pub trait ResolverTypePrinterPlugin {
     fn transform_document_for_resolvers<'src>(
         &self,
         document: &TypeSystemDocument<'src>,
-    ) -> TypeSystemDocument<'src>;
+    ) -> Option<TypeSystemDocument<'src>>;
 }

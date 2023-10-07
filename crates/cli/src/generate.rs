@@ -6,6 +6,7 @@ use std::path::{Path, PathBuf};
 use log::{debug, info};
 use nitrogql_semantics::{ast_to_type_system, type_system_to_ast};
 
+use crate::builtins::remove_builtins;
 use crate::error::CliError;
 use crate::file_store::{FileKind, FileStore};
 use crate::output::{CliOutput, OutputFileKind};
@@ -117,22 +118,26 @@ pub fn run_generate(mut context: CliContext) -> Result<CliContext> {
                 match schema {
                     LoadedSchema::GraphQL(ref schema) => {
                         // apply plugins
-                        let schema =
-                            config
-                                .plugins
-                                .iter()
-                                .fold(Cow::Borrowed(schema), |schema, plugin| {
-                                    Cow::Owned(
-                                        plugin.transform_document_for_runtime_server(&schema),
-                                    )
-                                });
+                        let schema = config.plugins.iter().fold(
+                            remove_builtins(schema),
+                            |schema, plugin| match plugin
+                                .transform_document_for_runtime_server(&schema)
+                            {
+                                Some(next) => next,
+                                None => schema,
+                            },
+                        );
                         schema.print_graphql(&mut writer);
                     }
                     LoadedSchema::Introspection(ref schema) => {
                         let schema = type_system_to_ast(schema);
+                        let schema = remove_builtins(&schema);
                         // apply plugins
                         let schema = config.plugins.iter().fold(schema, |schema, plugin| {
-                            plugin.transform_document_for_runtime_server(&schema)
+                            match plugin.transform_document_for_runtime_server(&schema) {
+                                Some(next) => next,
+                                None => schema,
+                            }
                         });
                         // config.plugins[0].transform_document_for_runtime_server(&schema);
                         schema.print_graphql(&mut writer);
