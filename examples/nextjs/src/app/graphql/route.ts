@@ -7,7 +7,9 @@ import {
   toggleTodo,
 } from "./todoMaster";
 import { ResolverOutput, Resolvers } from "@/generated/resolvers";
-import { schema } from "@/generated/graphql";
+import schema from "../../schema/scalar";
+import { schema as typeDefs } from "@/generated/graphql";
+import { mergeSchemas } from "@graphql-tools/schema";
 
 export async function POST(request: Request) {
   server ??= await initServer();
@@ -53,8 +55,11 @@ let server: ApolloServer | undefined;
 
 async function initServer(): Promise<ApolloServer> {
   const server = new ApolloServer({
-    typeDefs: schema,
-    resolvers,
+    schema: mergeSchemas({
+      schemas: [schema],
+      typeDefs,
+      resolvers,
+    }),
   });
   await server.start();
   return server;
