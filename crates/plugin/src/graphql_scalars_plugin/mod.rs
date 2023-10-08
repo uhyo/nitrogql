@@ -30,7 +30,10 @@ impl PluginV1Beta for GraphQLScalarsPlugin {
     }
     fn schema_addition(&self) -> Option<String> {
         let mut schema_addition = String::new();
-        for (type_name, codegen_scalar_type) in &self.scalar_extensions {
+        // Sort by type name to make the output deterministic.
+        let mut scalar_extensions: Vec<_> = self.scalar_extensions.iter().collect();
+        scalar_extensions.sort_by_key(|(type_name, _)| *type_name);
+        for (type_name, codegen_scalar_type) in scalar_extensions {
             schema_addition.push_str(&format!(
                 "extend scalar {} @nitrogql_ts_type(type: \"{}\")\n",
                 type_name, codegen_scalar_type
