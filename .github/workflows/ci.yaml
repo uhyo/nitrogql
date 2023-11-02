@@ -43,6 +43,7 @@ jobs:
     strategy:
       matrix:
         node-version: [18, 20]
+    name: e2e-test (Node ${{ matrix.node-version }})
     steps:
       - uses: actions/checkout@v3
       - name: install rustup
