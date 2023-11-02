@@ -40,6 +40,9 @@ jobs:
       - run: npm test --workspaces --if-present
   e2e-test:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [18, 20]
     steps:
       - uses: actions/checkout@v3
       - name: install rustup
@@ -49,7 +52,7 @@ jobs:
         run: rustup target add wasm32-wasi wasm32-unknown-unknown
       - uses: actions/setup-node@v3
         with:
-          node-version: 18
+          node-version: ${{ matrix.node-version }}
       - run: npm install
       - name: build rust
         run: ./build/build-rust.sh
