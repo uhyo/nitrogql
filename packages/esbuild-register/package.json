@@ -13,7 +13,7 @@
   "scripts": {
     "build": "tsc",
     "watch": "tsc --watch",
-    "test": "vitest",
+    "test": "tsc && vitest",
     "check": "tsc"
   },
   "keywords": [
@@ -23,10 +23,10 @@
   "license": "MIT",
   "devDependencies": {
     "@types/node": "^20.8.10",
-    "memfs": "^4.2.1",
     "vitest": "^0.34.2"
   },
   "dependencies": {
-    "esbuild": ">=0.19.5 && <1"
+    "esbuild": ">=0.19.5 && <1",
+    "tsconfig-paths": "^4.2.0"
   }
 }
