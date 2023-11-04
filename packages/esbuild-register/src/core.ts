@@ -37,6 +37,9 @@ export async function resolveModule(
   return undefined;
 }
 
+/**
+ * Resolves module in a CJS style.
+ */
 export function resolveModuleSync(
   specifier: string,
   parentURL: string | undefined
@@ -94,9 +97,7 @@ export async function decideOutputFormatOfFile(
   return "cjs";
 }
 
-export function decideOutputFormatOfFileSync(
-  url: URL
-): "cjs" | "esm" | undefined {
+export function decideOutputFormatOfFileSync(url: URL): "cjs" | "esm" {
   if (url.pathname.endsWith(".cts")) {
     return "cjs";
   }
@@ -114,7 +115,7 @@ export function decideOutputFormatOfFileSync(
       return "cjs";
     }
   }
-  return undefined;
+  return "cjs";
 }
 
 export function rawSourceToText(

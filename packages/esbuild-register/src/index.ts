@@ -35,7 +35,8 @@ if (module.register) {
   };
 }
 
-// CJS stuff
+// CJS stuff.
+// Only needed for Node.js < 20.6.0 (as long as the entrypoint is ESM)
 addHook(cjsHook, {
   extensions: [".js", ".jsx", ".cjs", ".mjs", ".ts", ".tsx", ".cts", ".mts"],
 });

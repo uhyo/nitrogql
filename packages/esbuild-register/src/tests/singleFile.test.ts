@@ -60,7 +60,7 @@ describe("With package.json", () => {
     const result = await runNode(filePath);
     expect(result.endsWith("single.ts\n")).toBe(true);
   });
-  it.only("single file .cts should work", async (test) => {
+  it("single file .cts should work", async (test) => {
     const filePath = await tmp()
       .file(
         "single.cts",
