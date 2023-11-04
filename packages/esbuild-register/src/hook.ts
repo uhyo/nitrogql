@@ -67,5 +67,14 @@ export const load: LoadHook = async (url, context, nextLoad) => {
     };
   }
   const loadResult = await nextLoad(url, context);
+  // To avoid https://github.com/nodejs/node/issues/50435,
+  // we always fill the CommonJS source
+  if (loadResult.format === "commonjs") {
+    loadResult.source ??= await readFile(
+      // @ts-expect-error
+      new URL(loadResult.responseURL ?? url),
+      "utf-8"
+    );
+  }
   return loadResult;
 };
