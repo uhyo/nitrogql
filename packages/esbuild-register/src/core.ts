@@ -20,35 +20,48 @@ export async function resolveModule(
   if (specifier.startsWith("node:") || specifier.startsWith("data:")) {
     return undefined;
   }
-  let candidates: URL[];
-  const tsConfig = await loadTsConfig(
-    parentURL
-      ? new URL(parentURL)
-      : new URL("__entrypoint__", pathToFileURL(process.cwd()))
-  );
+  parentURL ??= pathToFileURL(
+    path.join(process.cwd(), "__entrypoint__")
+  ).toString();
+  let candidates: {
+    specifier: string;
+    parentURL: string;
+  }[];
+  const tsConfig = await loadTsConfig(new URL(parentURL));
   if (tsConfig !== undefined) {
     const { url: tsConfigUrl, content } = tsConfig;
     const { baseUrl, paths } = parseJSONC(content)?.compilerOptions ?? {};
     if (paths !== undefined) {
       const resolved = resolvePaths(specifier, paths);
       if (resolved !== undefined) {
-        candidates = resolved.map((resolved) =>
-          pathToFileURL(
-            path.resolve(
-              fileURLToPath(tsConfigUrl),
-              "..",
-              baseUrl ?? ".",
-              resolved
-            )
-          )
-        );
+        candidates = resolved.map((resolved) => {
+          return {
+            specifier: resolved,
+            parentURL: pathToFileURL(
+              path.resolve(
+                fileURLToPath(tsConfigUrl),
+                "..",
+                baseUrl ?? "./__entrypoint__"
+              )
+            ).toString(),
+          };
+        });
       }
     }
   }
 
   try {
-    candidates ??= [new URL(specifier, parentURL)];
-    for (const url of candidates) {
+    candidates ??= [
+      {
+        specifier,
+        parentURL,
+      },
+    ];
+    for (const { specifier, parentURL } of candidates) {
+      if (isExternalSpecifier(specifier)) {
+        continue;
+      }
+      const url = new URL(specifier, parentURL);
       const tsUrl = await mapJsToTs(url);
 
       if (tsUrl !== undefined) {
@@ -82,35 +95,48 @@ export function resolveModuleSync(
     return undefined;
   }
 
-  let candidates: URL[];
-  const tsConfig = loadTsConfigSync(
-    parentURL
-      ? new URL(parentURL)
-      : new URL("__entrypoint__", pathToFileURL(process.cwd()))
-  );
+  parentURL ??= pathToFileURL(
+    path.join(process.cwd(), "__entrypoint__")
+  ).toString();
+  let candidates: {
+    specifier: string;
+    parentURL: string;
+  }[];
+  const tsConfig = loadTsConfigSync(new URL(parentURL));
   if (tsConfig !== undefined) {
     const { url: tsConfigUrl, content } = tsConfig;
     const { baseUrl, paths } = parseJSONC(content)?.compilerOptions ?? {};
     if (paths !== undefined) {
       const resolved = resolvePaths(specifier, paths);
       if (resolved !== undefined) {
-        candidates = resolved.map((resolved) =>
-          pathToFileURL(
-            path.resolve(
-              fileURLToPath(tsConfigUrl),
-              "..",
-              baseUrl ?? ".",
-              resolved
-            )
-          )
-        );
+        candidates = resolved.map((resolved) => {
+          return {
+            specifier: resolved,
+            parentURL: pathToFileURL(
+              path.resolve(
+                fileURLToPath(tsConfigUrl),
+                "..",
+                baseUrl ?? "./__entrypoint__"
+              )
+            ).toString(),
+          };
+        });
       }
     }
   }
 
   try {
-    candidates ??= [new URL(specifier, parentURL)];
-    for (const url of candidates) {
+    candidates ??= [
+      {
+        specifier,
+        parentURL,
+      },
+    ];
+    for (const { specifier, parentURL } of candidates) {
+      if (isExternalSpecifier(specifier)) {
+        continue;
+      }
+      const url = new URL(specifier, parentURL);
       const tsUrl = mapJsToTsSync(url);
 
       if (tsUrl !== undefined) {
@@ -244,4 +270,16 @@ export function mapJsToTsSync(url: URL): URL | undefined {
     }
   }
   return undefined;
+}
+
+function isExternalSpecifier(specifier: string) {
+  // has protocol
+  if (/^[a-zA-Z]+:/.test(specifier)) {
+    return false;
+  }
+  // relative path
+  if (specifier.startsWith("./") || specifier.startsWith("../")) {
+    return false;
+  }
+  return true;
 }
