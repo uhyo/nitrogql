@@ -1,4 +1,5 @@
-import { LoadHook, ResolveHook } from "node:module";
+import type { LoadHook, ResolveHook } from "node:module";
+import * as module from "node:module";
 import { transform } from "esbuild";
 import { loadTsConfig } from "./tsconfig.js";
 import { readFile } from "node:fs/promises";
@@ -8,6 +9,11 @@ import {
   rawSourceToText,
   resolveModule,
 } from "./core.js";
+
+// >= Node 20.6.0
+const esmLoaderHasCjsSupport =
+  // @ts-expect-error
+  module.register !== undefined;
 
 const tsExtensions = /\.(?:[cm]?ts|tsx)$/;
 
@@ -41,6 +47,15 @@ export const load: LoadHook = async (url, context, nextLoad) => {
     });
     const tsconfig = await loadTsConfig(tsUrl);
     const outputFormat = await decideOutputFormatOfFile(tsUrl);
+    if (outputFormat === "cjs" && !esmLoaderHasCjsSupport) {
+      // Node.js < 20.6.0 doesn't support returning source when
+      // the format is "cjs", so we save work by short-circuiting
+      // here.
+      return {
+        shortCircuit: true,
+        format: "commonjs",
+      };
+    }
     const source = await transform(rawSourceToText(rawSource), {
       loader: "ts",
       tsconfigRaw: tsconfig,

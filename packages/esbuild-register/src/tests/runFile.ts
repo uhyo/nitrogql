@@ -14,14 +14,20 @@ export async function runNode(path: string): Promise<string> {
   if (nodeVersion[0] > 20 || (nodeVersion[0] === 20 && nodeVersion[1] >= 6)) {
     const { stdout } = await promisify(execFile)(
       process.execPath,
-      ["--loader", register.toString(), path],
+      ["--import", register.toString(), path],
       {}
     );
     return stdout;
   } else {
     const { stdout } = await promisify(execFile)(
       process.execPath,
-      ["--experimental-loader", hook.toString(), path],
+      [
+        "--import",
+        register.toString(),
+        "--experimental-loader",
+        hook.toString(),
+        path,
+      ],
       {}
     );
     return stdout;
