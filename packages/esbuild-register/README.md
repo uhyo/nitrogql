@@ -17,3 +17,7 @@ node --import=@nitrogql/esbuild-register
 ```sh
 node --import=@nitrogql/esbuild-register --experimental-loader=@nitrogql/esbuild-register/hook
 ```
+
+## Notes
+
+This package does not intend to be a drop-in replacement for `esbuild-register`. It intentionally does not support some features, for example `import.meta.url` support in CJS modules.
