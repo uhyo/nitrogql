@@ -5,6 +5,7 @@ import {
   loadPackageJson,
   loadPackageJsonSync,
   loadTsConfig,
+  loadTsConfigSync,
 } from "./tsconfig.js";
 import { existsSync } from "node:fs";
 import { resolvePaths } from "./paths.js";
@@ -80,26 +81,55 @@ export function resolveModuleSync(
   if (specifier.startsWith("node:") || specifier.startsWith("data:")) {
     return undefined;
   }
-  try {
-    const url = new URL(specifier, parentURL);
-    const tsUrl = mapJsToTsSync(url);
 
-    if (tsUrl !== undefined) {
-      return tsUrl.toString();
-    }
-    // Allow .ts files
-    if (tsExtensions.test(url.pathname)) {
-      if (existsSync(url)) {
-        return url.toString();
-      } else {
-        return undefined;
+  let candidates: URL[];
+  const tsConfig = loadTsConfigSync(
+    parentURL
+      ? new URL(parentURL)
+      : new URL("__entrypoint__", pathToFileURL(process.cwd()))
+  );
+  if (tsConfig !== undefined) {
+    const { url: tsConfigUrl, content } = tsConfig;
+    const { baseUrl, paths } = parseJSONC(content)?.compilerOptions ?? {};
+    if (paths !== undefined) {
+      const resolved = resolvePaths(specifier, paths);
+      if (resolved !== undefined) {
+        candidates = resolved.map((resolved) =>
+          pathToFileURL(
+            path.resolve(
+              fileURLToPath(tsConfigUrl),
+              "..",
+              baseUrl ?? ".",
+              resolved
+            )
+          )
+        );
       }
     }
-    // Try CommonJS-style resolution
-    for (const ext of [".ts", ".tsx", ".cts", ".mts"]) {
-      const tsUrl = new URL(url.pathname + ext, url);
-      if (existsSync(tsUrl)) {
+  }
+
+  try {
+    candidates ??= [new URL(specifier, parentURL)];
+    for (const url of candidates) {
+      const tsUrl = mapJsToTsSync(url);
+
+      if (tsUrl !== undefined) {
         return tsUrl.toString();
+      }
+      // Allow .ts files
+      if (tsExtensions.test(url.pathname)) {
+        if (existsSync(url)) {
+          return url.toString();
+        } else {
+          return undefined;
+        }
+      }
+      // Try CommonJS-style resolution
+      for (const ext of [".ts", ".tsx", ".cts", ".mts"]) {
+        const tsUrl = new URL(url.pathname + ext, url);
+        if (existsSync(tsUrl)) {
+          return tsUrl.toString();
+        }
       }
     }
   } catch {}
