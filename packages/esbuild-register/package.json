@@ -10,6 +10,10 @@
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "exports": {
+    ".": "./dist/index.js",
+    "./hook": "./dist/hook.js"
+  },
   "scripts": {
     "build": "tsc",
     "watch": "tsc --watch",

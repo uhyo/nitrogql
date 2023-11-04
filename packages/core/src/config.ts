@@ -7,16 +7,38 @@ import { getMemory, readString } from "./memory.js";
 
 /**
  * Executes given code with Node.js.
- * Note: requires `esbuild-register` and `esbuild` to be installed.
+ * Requires @nitrogql/esbuild-register to be installed.
  * @returns stdout
  */
 export function executeNodeSync(code: string): string {
+  const nodeVersion = process.versions.node;
+  // @nitrogql/esbuild-register requires different usage
+  // depending on whether Node.js >= 20.6.0 or not.
+  const [major, minor] = nodeVersion.split(".").map((x) => Number(x)) as [
+    number,
+    number
+  ];
+  const isNode2060OrLater = major > 20 || (major === 20 && minor >= 6);
+  if (isNode2060OrLater) {
+    return execFileSync(
+      process.execPath,
+      [
+        "--no-warnings",
+        "--import=@nitrogql/esbuild-register",
+        "--input-type=module",
+      ],
+      {
+        encoding: "utf-8",
+        input: code,
+      }
+    );
+  }
   return execFileSync(
-    "node",
+    process.execPath,
     [
       "--no-warnings",
-      "--loader=esbuild-register/loader",
-      "--require=esbuild-register",
+      "--import=@nitrogql/esbuild-register",
+      "--experimental-loader=@nitrogql/esbuild-register/hook",
       "--input-type=module",
     ],
     {

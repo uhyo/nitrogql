@@ -29,8 +29,8 @@
     "node": "18.15.0"
   },
   "dependencies": {
-    "esbuild": "0.x",
-    "esbuild-register": "^3.5.0"
+    "@nitrogql/esbuild-register": "1.3.0",
+    "esbuild": "0.x"
   },
   "devDependencies": {
     "@types/node": "^20.8.10",

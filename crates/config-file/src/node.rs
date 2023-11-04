@@ -5,15 +5,47 @@ use std::{
     process::{Command, Stdio},
 };
 
+use once_cell::sync::Lazy;
+
+// @nitrogql/esbuild-register requires different usage
+// depending on whether Node.js >= 20.6.0 or not.
+static NODE_VERSION_IS_20_6_0_OR_LATER: Lazy<bool> = Lazy::new(|| {
+    let command = Command::new("node")
+        .arg("--version")
+        .stdin(Stdio::null())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::inherit())
+        .spawn()
+        .unwrap();
+
+    let result = command.wait_with_output().unwrap();
+    if !result.status.success() {
+        panic!("Node.js process exited with non-zero status");
+    }
+
+    let version = String::from_utf8_lossy(&result.stdout);
+    let version = version.trim();
+    let version = version.strip_prefix('v').unwrap_or(version);
+    let version = version.split('.').collect::<Vec<_>>();
+    let version = (
+        version[0].parse::<u32>().unwrap(),
+        version[1].parse::<u32>().unwrap(),
+    );
+    version >= (20, 6)
+});
+
 /// Runs given string as JavaScript code, and returns string written to stdout.
 pub fn run_node(code: &str) -> io::Result<String> {
     #[cfg(not(target_os = "wasi"))]
     {
-        let mut command = Command::new("node")
-            .arg("--no-warnings")
-            .arg("--loader=esbuild-register/loader")
-            .arg("--require=esbuild-register")
-            .arg("--input-type=module")
+        let mut command = Command::new("node");
+        command.arg("--no-warnings");
+        command.arg("--import=@nitrogql/esbuild-register");
+        command.arg("--input-type=module");
+        if !*NODE_VERSION_IS_20_6_0_OR_LATER {
+            command.arg("--experimenta-loader=@nitrogql/esbuild-register/hook");
+        }
+        let mut command = command
             .stdin(Stdio::piped())
             .stdout(Stdio::piped())
             .stderr(Stdio::inherit())
