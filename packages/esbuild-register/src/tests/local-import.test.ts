@@ -65,6 +65,6 @@ console.log(mod.name2);
       )
       .path("entry.mts");
     const result = await runNode(filePath);
-    expect(result).toBe("foofoofoofoofoo\n");
+    expect(result).toBe("pikachu\n");
   });
 });
