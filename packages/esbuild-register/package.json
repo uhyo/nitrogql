@@ -27,7 +27,6 @@
   },
   "dependencies": {
     "esbuild": ">=0.19.5 && <1",
-    "pirates": "^4.0.6",
-    "tsconfig-paths": "^4.2.0"
+    "pirates": "^4.0.6"
   }
 }

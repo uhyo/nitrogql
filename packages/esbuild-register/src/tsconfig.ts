@@ -4,23 +4,30 @@ import { parentDir } from "./util.js";
 
 export async function loadTsConfig(
   targetUrl: URL
-): Promise<string | undefined> {
+): Promise<LoadConfigResult | undefined> {
   return loadConfig(targetUrl, "tsconfig.json");
 }
 
-export function loadTsConfigSync(targetUrl: URL): string | undefined {
+export function loadTsConfigSync(targetUrl: URL): LoadConfigResult | undefined {
   return loadConfigSync(targetUrl, "tsconfig.json");
 }
 
 export async function loadPackageJson(
   targetUrl: URL
-): Promise<string | undefined> {
+): Promise<LoadConfigResult | undefined> {
   return loadConfig(targetUrl, "package.json");
 }
 
-export function loadPackageJsonSync(targetUrl: URL): string | undefined {
+export function loadPackageJsonSync(
+  targetUrl: URL
+): LoadConfigResult | undefined {
   return loadConfigSync(targetUrl, "package.json");
 }
+
+type LoadConfigResult = {
+  url: string;
+  content: string;
+};
 
 /**
  * Loads config file from the same directory or parent directories of the target.
@@ -28,12 +35,15 @@ export function loadPackageJsonSync(targetUrl: URL): string | undefined {
 async function loadConfig(
   targetUrl: URL,
   fileName: string
-): Promise<string | undefined> {
+): Promise<LoadConfigResult | undefined> {
   while (true) {
     try {
-      return await readFile(new URL(fileName, targetUrl), {
-        encoding: "utf-8",
-      });
+      const loadUrl = new URL(fileName, targetUrl);
+      const content = await readFile(loadUrl, { encoding: "utf-8" });
+      return {
+        url: loadUrl.toString(),
+        content,
+      };
     } catch (e) {
       if (
         e !== null &&
@@ -53,12 +63,18 @@ async function loadConfig(
   }
 }
 
-function loadConfigSync(targetUrl: URL, fileName: string): string | undefined {
+function loadConfigSync(
+  targetUrl: URL,
+  fileName: string
+): LoadConfigResult | undefined {
   while (true) {
     try {
-      return readFileSync(new URL(fileName, targetUrl).toString(), {
-        encoding: "utf-8",
-      });
+      const loadUrl = new URL(fileName, targetUrl);
+      const content = readFileSync(loadUrl, { encoding: "utf-8" });
+      return {
+        url: loadUrl.toString(),
+        content,
+      };
     } catch (e) {
       if (
         e !== null &&

@@ -57,7 +57,7 @@ export const load: LoadHook = async (url, context, nextLoad) => {
     }
     const source = await transform(rawSourceToText(rawSource), {
       loader: "ts",
-      tsconfigRaw: tsconfig,
+      tsconfigRaw: tsconfig?.content,
       format: outputFormat,
     });
     return {

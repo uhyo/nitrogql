@@ -9,7 +9,7 @@ export const cjsHook = (code: string, fileName: string): string => {
   const outputFormat = decideOutputFormatOfFileSync(url);
   const source = transformSync(rawSourceToText(code), {
     loader: "ts",
-    tsconfigRaw: tsconfig,
+    tsconfigRaw: tsconfig?.content,
     format: outputFormat,
   });
   return source.code;

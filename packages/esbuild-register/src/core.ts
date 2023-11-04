@@ -1,6 +1,13 @@
-import { access } from "fs/promises";
-import { loadPackageJson, loadPackageJsonSync } from "./tsconfig.js";
+import { access } from "node:fs/promises";
+import path from "node:path";
+import { pathToFileURL, fileURLToPath } from "node:url";
+import {
+  loadPackageJson,
+  loadPackageJsonSync,
+  loadTsConfig,
+} from "./tsconfig.js";
 import { existsSync } from "node:fs";
+import { resolvePaths } from "./paths.js";
 
 const tsExtensions = /\.(?:[cm]?ts|tsx)$/;
 
@@ -11,35 +18,60 @@ export async function resolveModule(
   if (specifier.startsWith("node:") || specifier.startsWith("data:")) {
     return undefined;
   }
-  try {
-    const url = new URL(specifier, parentURL);
-    const tsUrl = await mapJsToTs(url);
+  let candidates: URL[];
+  const tsConfig = await loadTsConfig(
+    parentURL
+      ? new URL(parentURL)
+      : new URL("__entrypoint__", pathToFileURL(process.cwd()))
+  );
+  if (tsConfig !== undefined) {
+    const { url: tsConfigUrl, content } = tsConfig;
+    const { baseUrl, paths } = JSON.parse(content)?.compilerOptions ?? {};
+    if (paths !== undefined) {
+      const resolved = resolvePaths(specifier, paths);
+      if (resolved !== undefined) {
+        candidates = resolved.map((resolved) =>
+          pathToFileURL(
+            path.resolve(
+              fileURLToPath(tsConfigUrl),
+              "..",
+              baseUrl ?? ".",
+              resolved
+            )
+          )
+        );
+      }
+    }
+  }
 
-    if (tsUrl !== undefined) {
-      return tsUrl.toString();
-    }
-    // Allow .ts files
-    if (tsExtensions.test(url.pathname)) {
-      await access(url);
-      return url.toString();
-    }
-    // Try CommonJS-style resolution
-    for (const ext of [".ts", ".tsx", ".cts", ".mts"]) {
-      const tsUrl = new URL(url.pathname + ext, url);
-      const exists = await access(tsUrl)
-        .then(() => true)
-        .catch(() => false);
-      if (exists) {
+  try {
+    candidates ??= [new URL(specifier, parentURL)];
+    for (const url of candidates) {
+      const tsUrl = await mapJsToTs(url);
+
+      if (tsUrl !== undefined) {
         return tsUrl.toString();
+      }
+      // Allow .ts files
+      if (tsExtensions.test(url.pathname)) {
+        await access(url);
+        return url.toString();
+      }
+      // Try CommonJS-style resolution
+      for (const ext of [".ts", ".tsx", ".cts", ".mts"]) {
+        const tsUrl = new URL(url.pathname + ext, url);
+        const exists = await access(tsUrl)
+          .then(() => true)
+          .catch(() => false);
+        if (exists) {
+          return tsUrl.toString();
+        }
       }
     }
   } catch {}
   return undefined;
 }
 
-/**
- * Resolves module in a CJS style.
- */
 export function resolveModuleSync(
   specifier: string,
   parentURL: string | undefined
@@ -85,7 +117,8 @@ export async function decideOutputFormatOfFile(
 
   const packageJson = await loadPackageJson(url);
   if (packageJson) {
-    const { type } = JSON.parse(packageJson);
+    const { content } = packageJson;
+    const { type } = JSON.parse(content);
     if (type === "module") {
       return "esm";
     }
@@ -106,7 +139,8 @@ export function decideOutputFormatOfFileSync(url: URL): "cjs" | "esm" {
 
   const packageJson = loadPackageJsonSync(url);
   if (packageJson) {
-    const { type } = JSON.parse(packageJson);
+    const { content } = packageJson;
+    const { type } = JSON.parse(content);
     if (type === "module") {
       return "esm";
     }
