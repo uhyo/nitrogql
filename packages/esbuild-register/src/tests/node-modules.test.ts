@@ -69,4 +69,24 @@ console.log(repeated);
     const result = await runNode(filePath);
     expect(result).toBe("This is fooThis is fooThis is foo\n");
   });
+  it(".mts -> .cts -> mod", async () => {
+    const filePath = await addPackage(tmp())
+      .file(
+        "loader.cts",
+        `
+import { foo } from "foo";
+export const repeated: Promise<string> = import("foo").then(({ foo }) => foo.repeat(3));
+`
+      )
+      .file(
+        "entry.mts",
+        `
+import mod from "./loader.cjs";
+console.log(await mod.repeated);
+`
+      )
+      .path("entry.mts");
+    const result = await runNode(filePath);
+    expect(result).toBe("This is fooThis is fooThis is foo\n");
+  });
 });
