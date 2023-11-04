@@ -39,8 +39,8 @@ export const load: LoadHook = async (url, context, nextLoad) => {
     const rawSource = await readFile(fileURLToPath(tsUrl), {
       encoding: "utf-8",
     });
-    const tsconfig = await loadTsConfig(new URL("../", tsUrl));
-    const outputFormat = await decideOutputFormatOfFile(new URL(tsUrl));
+    const tsconfig = await loadTsConfig(tsUrl);
+    const outputFormat = await decideOutputFormatOfFile(tsUrl);
     const source = await transform(rawSourceToText(rawSource), {
       loader: "ts",
       tsconfigRaw: tsconfig,

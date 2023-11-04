@@ -1,31 +1,37 @@
 import { readFileSync } from "node:fs";
 import { readFile } from "node:fs/promises";
+import { parentDir } from "./util.js";
 
-export async function loadTsConfig(dirUrl: URL): Promise<string | undefined> {
-  return loadConfig(dirUrl, "tsconfig.json");
+export async function loadTsConfig(
+  targetUrl: URL
+): Promise<string | undefined> {
+  return loadConfig(targetUrl, "tsconfig.json");
 }
 
-export function loadTsConfigSync(dirUrl: URL): string | undefined {
-  return loadConfigSync(dirUrl, "tsconfig.json");
+export function loadTsConfigSync(targetUrl: URL): string | undefined {
+  return loadConfigSync(targetUrl, "tsconfig.json");
 }
 
 export async function loadPackageJson(
-  dirUrl: URL
+  targetUrl: URL
 ): Promise<string | undefined> {
-  return loadConfig(dirUrl, "package.json");
+  return loadConfig(targetUrl, "package.json");
 }
 
-export function loadPackageJsonSync(dirUrl: URL): string | undefined {
-  return loadConfigSync(dirUrl, "package.json");
+export function loadPackageJsonSync(targetUrl: URL): string | undefined {
+  return loadConfigSync(targetUrl, "package.json");
 }
 
+/**
+ * Loads config file from the same directory or parent directories of the target.
+ */
 async function loadConfig(
-  dirUrl: URL,
+  targetUrl: URL,
   fileName: string
 ): Promise<string | undefined> {
   while (true) {
     try {
-      return await readFile(new URL(fileName, dirUrl).toString(), {
+      return await readFile(new URL(fileName, targetUrl), {
         encoding: "utf-8",
       });
     } catch (e) {
@@ -35,11 +41,11 @@ async function loadConfig(
         "code" in e &&
         e.code === "ENOENT"
       ) {
-        const parent = new URL("../", dirUrl);
-        if (parent.toString() === dirUrl.toString()) {
+        const parent = parentDir(targetUrl);
+        if (parent.toString() === targetUrl.toString()) {
           return undefined;
         }
-        dirUrl = parent;
+        targetUrl = parent;
       } else {
         throw e;
       }
@@ -47,10 +53,10 @@ async function loadConfig(
   }
 }
 
-function loadConfigSync(dirUrl: URL, fileName: string): string | undefined {
+function loadConfigSync(targetUrl: URL, fileName: string): string | undefined {
   while (true) {
     try {
-      return readFileSync(new URL(fileName, dirUrl).toString(), {
+      return readFileSync(new URL(fileName, targetUrl).toString(), {
         encoding: "utf-8",
       });
     } catch (e) {
@@ -60,11 +66,11 @@ function loadConfigSync(dirUrl: URL, fileName: string): string | undefined {
         "code" in e &&
         e.code === "ENOENT"
       ) {
-        const parent = new URL("../", dirUrl);
-        if (parent.toString() === dirUrl.toString()) {
+        const parent = new URL("../", targetUrl);
+        if (parent.toString() === targetUrl.toString()) {
           return undefined;
         }
-        dirUrl = parent;
+        targetUrl = parent;
       } else {
         throw e;
       }

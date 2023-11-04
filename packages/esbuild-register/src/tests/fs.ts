@@ -6,11 +6,14 @@ import path from "node:path";
  * Creates temporary folder.
  */
 export function tmp(): Folder {
-  const folder = path.join(tmpdir(), "nitrogql-" + Date.now());
+  const folder = path.join(
+    tmpdir(),
+    "nitrogql-" + Date.now() + "-" + Math.random().toString(36).slice(2)
+  );
   return new Folder(folder);
 }
 
-class Folder {
+export class Folder {
   #work: Promise<unknown>;
   #path: string;
   constructor(path: string) {
@@ -21,6 +24,15 @@ class Folder {
   file(name: string, content: string): this {
     this.#work = this.#work.then(() =>
       writeFile(path.join(this.#path, name), content)
+    );
+    return this;
+  }
+
+  dir(name: string): this {
+    this.#work = this.#work.then(() =>
+      mkdir(path.join(this.#path, name), {
+        recursive: true,
+      })
     );
     return this;
   }

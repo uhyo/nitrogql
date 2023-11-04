@@ -80,7 +80,8 @@ export async function decideOutputFormatOfFile(
     return "esm";
   }
 
-  const packageJson = await loadPackageJson(new URL("../", url));
+  const packageJson = await loadPackageJson(url);
+  console.error("decide packageJson", packageJson);
   if (packageJson) {
     const { type } = JSON.parse(packageJson);
     if (type === "module") {
@@ -103,7 +104,7 @@ export function decideOutputFormatOfFileSync(
     return "esm";
   }
 
-  const packageJson = loadPackageJsonSync(new URL("../", url));
+  const packageJson = loadPackageJsonSync(url);
   if (packageJson) {
     const { type } = JSON.parse(packageJson);
     if (type === "module") {
