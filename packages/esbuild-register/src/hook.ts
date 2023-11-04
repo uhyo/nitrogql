@@ -40,7 +40,6 @@ export const load: LoadHook = async (url, context, nextLoad) => {
   //   ? new URL(url)
   //   : await mapJsToTs(new URL(url));
   const tsUrl = tsExtensions.test(url) ? new URL(url) : undefined;
-  console.error("tsUrl", tsUrl);
   if (tsUrl !== undefined) {
     const rawSource = await readFile(fileURLToPath(tsUrl), {
       encoding: "utf-8",
@@ -61,7 +60,6 @@ export const load: LoadHook = async (url, context, nextLoad) => {
       tsconfigRaw: tsconfig,
       format: outputFormat,
     });
-    console.error("source!", outputFormat, source.code);
     return {
       shortCircuit: true,
       format: outputFormat === "cjs" ? "commonjs" : "module",

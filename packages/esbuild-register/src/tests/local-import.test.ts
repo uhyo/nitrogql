@@ -67,6 +67,32 @@ console.log(mod.name2);
     const result = await runNode(filePath);
     expect(result).toBe("pikachu\n");
   });
+  it(".mts -> .cts -> .ts", async () => {
+    const filePath = await tmp()
+      .file(
+        "pika.ts",
+        `
+export const name1: string = "pika";
+`
+      )
+      .file(
+        "chu.cts",
+        `
+import { name1 } from "./pika.js";
+export const name2: string = name1 + "chu";
+`
+      )
+      .file(
+        "entry.mts",
+        `
+import mod from "./chu.cjs";
+console.log(mod.name2);
+`
+      )
+      .path("entry.mts");
+    const result = await runNode(filePath);
+    expect(result).toBe("pikachu\n");
+  });
   it(".mts -> .cts -> .cts (without extension)", async () => {
     const filePath = await tmp()
       .file(

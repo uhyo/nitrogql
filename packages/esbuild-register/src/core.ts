@@ -84,7 +84,6 @@ export async function decideOutputFormatOfFile(
   }
 
   const packageJson = await loadPackageJson(url);
-  console.error("decide packageJson", packageJson);
   if (packageJson) {
     const { type } = JSON.parse(packageJson);
     if (type === "module") {

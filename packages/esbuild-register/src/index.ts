@@ -23,7 +23,6 @@ if (module.register) {
     specifier: string,
     parent: NodeJS.Module | undefined
   ) => {
-    console.error("_resolveFilename", specifier, parent);
     const resolved = resolveModuleSync(
       specifier,
       parent && pathToFileURL(parent.filename).toString()
