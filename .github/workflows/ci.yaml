@@ -30,11 +30,15 @@ jobs:
         run: cargo build --target wasm32-wasi
   unit-test-js:
     runs-on: ubuntu-latest
+    name: unit-test-js (Node ${{ matrix.node-version }})
+    strategy:
+      matrix:
+        node-version: [18, 20.5, 20]
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
         with:
-          node-version: 18
+          node-version: ${{ matrix.node-version }}
       - run: npm ci
       - run: npm run check --workspaces --if-present
       - run: npm test --workspaces --if-present
@@ -42,7 +46,9 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        node-version: [18, 20]
+        # 20.5 is added because @nitrogql/esbuild-register behaves differently
+        # before and after 20.6
+        node-version: [18, 20.5, 20]
     name: e2e-test (Node ${{ matrix.node-version }})
     steps:
       - uses: actions/checkout@v3
