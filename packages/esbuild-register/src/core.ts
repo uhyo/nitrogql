@@ -8,6 +8,7 @@ import {
 } from "./tsconfig.js";
 import { existsSync } from "node:fs";
 import { resolvePaths } from "./paths.js";
+import { parseJSONC } from "./parseJSONC.js";
 
 const tsExtensions = /\.(?:[cm]?ts|tsx)$/;
 
@@ -26,7 +27,7 @@ export async function resolveModule(
   );
   if (tsConfig !== undefined) {
     const { url: tsConfigUrl, content } = tsConfig;
-    const { baseUrl, paths } = JSON.parse(content)?.compilerOptions ?? {};
+    const { baseUrl, paths } = parseJSONC(content)?.compilerOptions ?? {};
     if (paths !== undefined) {
       const resolved = resolvePaths(specifier, paths);
       if (resolved !== undefined) {
