@@ -28,6 +28,13 @@ jobs:
           OPTIMIZE: "1"
       - name: build node
         run: ./build/build-node.sh
+      - name: publish to npm (esbuild-register)
+        uses: JS-DevTools/npm-publish@v1
+        with:
+          token: ${{ secrets.NPM_TOKEN }}
+          package: "./packages/esbuild-register/package.json"
+          access: public
+          greater-version-only: true
       - name: publish to npm (core)
         uses: JS-DevTools/npm-publish@v1
         with:
