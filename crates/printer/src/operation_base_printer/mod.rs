@@ -94,12 +94,12 @@ pub fn operation_variable_name(
         operation
             .name
             .map(|name| capitalize(name.name))
-            .unwrap_or(String::new())
+            .unwrap_or_default()
     } else {
         operation
             .name
             .map(|name| name.name.to_owned())
-            .unwrap_or(String::new())
+            .unwrap_or_default()
     };
     let operation_variable_name = format!(
         "{}{}",
