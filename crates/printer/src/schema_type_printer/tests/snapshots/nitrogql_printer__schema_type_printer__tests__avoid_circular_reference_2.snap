@@ -11,6 +11,13 @@ export type __SelectionSet<Orig, Obj, Others> =
   }, Extract<keyof Orig, keyof Obj>> & Others>;
 export type BigInt = bigint;
 
-export type URL = string;
+type __tmp_Date = Date | string;
+export type { __tmp_Date as Date};
+
+export type Obj = {
+  __typename: "Obj";
+  bigint: BigInt | null;
+  date: __tmp_Date;
+};
 
 
