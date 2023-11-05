@@ -11,9 +11,7 @@ pub mod ts_types;
 mod utils;
 
 pub use graphql_printer::GraphQLPrinter;
-pub use schema_type_printer::printer::{
-    SchemaTypePrinter, SchemaTypePrinterContext, SchemaTypePrinterOptions,
-};
+pub use schema_type_printer::printer::{SchemaTypePrinter, SchemaTypePrinterOptions};
 
 pub use resolver_type_printer::{
     options::ResolverTypePrinterOptions,

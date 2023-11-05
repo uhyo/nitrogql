@@ -1,14 +1,15 @@
-use std::{borrow::Cow, collections::HashMap};
+use std::collections::HashMap;
 
-use graphql_type_system::Schema;
-use nitrogql_ast::{base::Pos, type_system::TypeSystemDocument};
+use nitrogql_ast::type_system::TypeSystemDocument;
 use nitrogql_config_file::Config;
 use nitrogql_semantics::ast_to_type_system;
 use sourcemap_writer::SourceMapWriter;
 
 use crate::schema::get_builtin_scalar_types;
 
-use super::{error::SchemaTypePrinterResult, type_printer::TypePrinter};
+use super::{
+    context::SchemaTypePrinterContext, error::SchemaTypePrinterResult, type_printer::TypePrinter,
+};
 
 pub struct SchemaTypePrinterOptions {
     /// Type of each scalar. Provided as raw TypeScript code.
@@ -55,12 +56,6 @@ impl SchemaTypePrinterOptions {
     }
 }
 
-pub struct SchemaTypePrinterContext<'src> {
-    pub options: &'src SchemaTypePrinterOptions,
-    pub document: &'src TypeSystemDocument<'src>,
-    pub schema: &'src Schema<Cow<'src, str>, Pos>,
-}
-
 pub struct SchemaTypePrinter<'a, Writer: SourceMapWriter> {
     options: SchemaTypePrinterOptions,
     writer: &'a mut Writer,
@@ -76,11 +71,7 @@ where
 
     pub fn print_document(&mut self, document: &TypeSystemDocument) -> SchemaTypePrinterResult<()> {
         let schema = ast_to_type_system(document);
-        let context = SchemaTypePrinterContext {
-            options: &self.options,
-            document,
-            schema: &schema,
-        };
+        let context = SchemaTypePrinterContext::new(&self.options, document, &schema);
         document.print_type(&context, self.writer)?;
         Ok(())
     }
