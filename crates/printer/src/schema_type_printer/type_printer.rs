@@ -7,7 +7,7 @@ use crate::{
     utils::interface_implementers,
 };
 use nitrogql_ast::{
-    base::{Ident, Pos},
+    base::{HasPos, Ident, Pos},
     type_system::{
         EnumTypeDefinition, InputObjectTypeDefinition, InterfaceTypeDefinition,
         ObjectTypeDefinition, ScalarTypeDefinition, TypeDefinition, TypeSystemDefinition,
@@ -153,25 +153,20 @@ impl TypePrinter for ScalarTypeDefinition<'_> {
         };
 
         print_description(&self.description, writer);
-        // Special casing for reexport
-        if self.name.name == scalar_type_str {
-            let tmp_type_name = format!("__tmp_{}", self.name);
-            writer.write_for("type ", &self.scalar_keyword);
-            writer.write_for(&tmp_type_name, &self.name);
-            writer.write(" = ");
-            writer.write(scalar_type_str);
-            writer.write(";\nexport type { ");
-            writer.write(&tmp_type_name);
-            writer.write(" as ");
-            writer.write(self.name.name);
-            writer.write("};\n");
-        } else {
-            writer.write_for("export type ", &self.scalar_keyword);
-            writer.write_for(self.name.name, &self.name);
-            writer.write(" = ");
-            writer.write(scalar_type_str);
-            writer.write(";\n");
-        }
+        let local_name = context
+            .local_type_names
+            .get(self.name.name)
+            .expect("Local type name not generated");
+
+        export_type(
+            writer,
+            &self.scalar_keyword,
+            &self.name,
+            local_name,
+            |writer| {
+                writer.write(scalar_type_str);
+            },
+        );
         Ok(())
     }
 }
@@ -212,11 +207,20 @@ impl TypePrinter for ObjectTypeDefinition<'_> {
         );
 
         print_description(&self.description, writer);
-        writer.write_for("export type ", &self.type_keyword);
-        writer.write_for(self.name.name, &self.name);
-        writer.write(" = ");
-        obj_type.print_type(writer);
-        writer.write(";\n");
+        let local_name = context
+            .local_type_names
+            .get(self.name.name)
+            .expect("Local type name not generated");
+
+        export_type(
+            writer,
+            &self.type_keyword,
+            &self.name,
+            local_name,
+            |writer| {
+                obj_type.print_type(writer);
+            },
+        );
         Ok(())
     }
 }
@@ -238,11 +242,19 @@ impl TypePrinter for InterfaceTypeDefinition<'_> {
         let intf_type = ts_union(union_constituents);
 
         print_description(&self.description, writer);
-        writer.write_for("export type ", &self.interface_keyword);
-        writer.write_for(self.name.name, &self.name);
-        writer.write(" = ");
-        intf_type.print_type(writer);
-        writer.write(";\n");
+        let local_name = context
+            .local_type_names
+            .get(self.name.name)
+            .expect("Local type name not generated");
+        export_type(
+            writer,
+            &self.interface_keyword,
+            &self.name,
+            local_name,
+            |writer| {
+                intf_type.print_type(writer);
+            },
+        );
         Ok(())
     }
 }
@@ -250,7 +262,7 @@ impl TypePrinter for InterfaceTypeDefinition<'_> {
 impl TypePrinter for UnionTypeDefinition<'_> {
     fn print_type(
         &self,
-        _context: &SchemaTypePrinterContext,
+        context: &SchemaTypePrinterContext,
         writer: &mut impl SourceMapWriter,
     ) -> SchemaTypePrinterResult<()> {
         let union_type = ts_union(
@@ -260,11 +272,19 @@ impl TypePrinter for UnionTypeDefinition<'_> {
         );
 
         print_description(&self.description, writer);
-        writer.write_for("export type ", &self.union_keyword);
-        writer.write_for(self.name.name, &self.name);
-        writer.write(" = ");
-        union_type.print_type(writer);
-        writer.write(";\n");
+        let local_name = context
+            .local_type_names
+            .get(self.name.name)
+            .expect("Local type name not generated");
+        export_type(
+            writer,
+            &self.union_keyword,
+            &self.name,
+            local_name,
+            |writer| {
+                union_type.print_type(writer);
+            },
+        );
         Ok(())
     }
 }
@@ -283,11 +303,19 @@ impl TypePrinter for EnumTypeDefinition<'_> {
         );
 
         print_description(&self.description, writer);
-        writer.write_for("export type ", &self.enum_keyword);
-        writer.write_for(self.name.name, &self.name);
-        writer.write(" = ");
-        enum_type.print_type(writer);
-        writer.write(";\n");
+        let local_name = context
+            .local_type_names
+            .get(self.name.name)
+            .expect("Local type name not generated");
+        export_type(
+            writer,
+            &self.enum_keyword,
+            &self.name,
+            local_name,
+            |writer| {
+                enum_type.print_type(writer);
+            },
+        );
 
         if context.options.emit_schema_runtime {
             writer.write_for("export const ", &self.enum_keyword);
@@ -347,12 +375,46 @@ impl TypePrinter for InputObjectTypeDefinition<'_> {
         );
 
         print_description(&self.description, writer);
-        writer.write_for("export type ", &self.input_keyword);
-        writer.write_for(self.name.name, &self.name);
-        writer.write(" = ");
-        obj_type.print_type(writer);
-        writer.write(";\n");
+        let local_name = context
+            .local_type_names
+            .get(self.name.name)
+            .expect("Local type name not generated");
+        export_type(
+            writer,
+            &self.input_keyword,
+            &self.name,
+            local_name,
+            |writer| {
+                obj_type.print_type(writer);
+            },
+        );
         Ok(())
+    }
+}
+
+fn export_type<Writer: SourceMapWriter>(
+    writer: &mut Writer,
+    type_keyword: &impl HasPos,
+    schema_name: &Ident,
+    local_name: &str,
+    print_type: impl FnOnce(&mut Writer),
+) {
+    if schema_name.name == local_name {
+        writer.write_for("export type ", type_keyword);
+        writer.write_for(local_name, schema_name);
+        writer.write(" = ");
+        print_type(writer);
+        writer.write(";\n");
+    } else {
+        writer.write_for("type ", type_keyword);
+        writer.write_for(local_name, schema_name);
+        writer.write(" = ");
+        print_type(writer);
+        writer.write(";\nexport type { ");
+        writer.write(local_name);
+        writer.write(" as ");
+        writer.write(schema_name.name);
+        writer.write("};\n");
     }
 }
 
