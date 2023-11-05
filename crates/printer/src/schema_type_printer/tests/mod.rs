@@ -120,7 +120,30 @@ fn scalar_printing() {
     let doc = parse_type_system_document(
         "
         scalar BigInt
+        scalar URL
+        ",
+    )
+    .unwrap();
+    let doc = resolve_extensions(doc).unwrap();
+    let mut options = SchemaTypePrinterOptions::default();
+    options.scalar_types.extend(vec![
+        ("BigInt".to_owned(), "bigint".to_owned()),
+        ("URL".to_owned(), "string".to_owned()),
+    ]);
+    let printed = print_document(&doc, options).unwrap();
+    assert_snapshot!(printed);
+}
+
+#[test]
+fn avoid_circular_reference_1() {
+    let doc = parse_type_system_document(
+        "
+        scalar BigInt
         scalar Date
+        type Obj {
+            bigint: BigInt
+            date: Date!
+        }
         ",
     )
     .unwrap();
@@ -129,6 +152,54 @@ fn scalar_printing() {
     options.scalar_types.extend(vec![
         ("BigInt".to_owned(), "bigint".to_owned()),
         ("Date".to_owned(), "Date".to_owned()),
+    ]);
+    let printed = print_document(&doc, options).unwrap();
+    // Date should be emitted as __tmp_Date
+    assert_snapshot!(printed);
+}
+
+#[test]
+fn avoid_circular_reference_2() {
+    let doc = parse_type_system_document(
+        "
+        scalar BigInt
+        scalar Date
+        type Obj {
+            bigint: BigInt
+            date: Date!
+        }
+        ",
+    )
+    .unwrap();
+    let doc = resolve_extensions(doc).unwrap();
+    let mut options = SchemaTypePrinterOptions::default();
+    options.scalar_types.extend(vec![
+        ("BigInt".to_owned(), "bigint".to_owned()),
+        ("Date".to_owned(), "Date | string".to_owned()),
+    ]);
+    let printed = print_document(&doc, options).unwrap();
+    // Date should be emitted as __tmp_Date
+    assert_snapshot!(printed);
+}
+
+#[test]
+fn avoid_circular_reference_3() {
+    let doc = parse_type_system_document(
+        "
+        scalar Rec1
+        scalar Rec2
+        type Obj {
+            rec1: Rec1!
+            rec2: Rec2!
+        }
+        ",
+    )
+    .unwrap();
+    let doc = resolve_extensions(doc).unwrap();
+    let mut options = SchemaTypePrinterOptions::default();
+    options.scalar_types.extend(vec![
+        ("Rec1".to_owned(), "string | Rec2".to_owned()),
+        ("Rec2".to_owned(), "Rec1 | number".to_owned()),
     ]);
     let printed = print_document(&doc, options).unwrap();
     assert_snapshot!(printed);
