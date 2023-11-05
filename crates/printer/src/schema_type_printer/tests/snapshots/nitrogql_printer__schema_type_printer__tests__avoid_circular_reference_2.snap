@@ -11,7 +11,7 @@ export type __SelectionSet<Orig, Obj, Others> =
   }, Extract<keyof Orig, keyof Obj>> & Others>;
 export type BigInt = bigint;
 
-type __tmp_Date = Date;
+type __tmp_Date = Date | string;
 export type { __tmp_Date as Date};
 
 export type Obj = {

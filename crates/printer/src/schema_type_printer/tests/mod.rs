@@ -15,6 +15,10 @@ use sourcemap_writer::JustWriter;
 fn type_printing() {
     let doc = parse_type_system_document(
         "
+            scalar ID
+            scalar String
+            scalar Int
+
             type User implements HasID {
                 id: ID!
                 name: String!
@@ -61,6 +65,10 @@ fn type_printing() {
 fn type_printing_with_desc() {
     let doc = parse_type_system_document(
         r#"
+            scalar ID
+            scalar String
+            scalar Int
+
             "This is User."
             type User implements HasID {
                 id: ID!
@@ -209,6 +217,10 @@ fn avoid_circular_reference_3() {
 fn deprecated_items() {
     let doc = parse_type_system_document(
         r#"
+        scalar ID
+        scalar String
+        scalar Int
+
         type User {
             id: ID!
             name: String!

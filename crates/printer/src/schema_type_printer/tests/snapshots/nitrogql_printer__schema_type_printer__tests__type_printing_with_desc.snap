@@ -11,6 +11,12 @@ export type __SelectionSet<Orig, Obj, Others> =
   __Beautify<Pick<{
     [K in keyof Orig]: Obj extends { [P in K]?: infer V } ? V : unknown
   }, Extract<keyof Orig, keyof Obj>> & Others>;
+export type ID = string;
+
+export type String = string;
+
+export type Int = number;
+
 /**
  * This is User.
  */

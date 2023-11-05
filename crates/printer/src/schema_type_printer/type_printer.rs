@@ -196,7 +196,11 @@ impl TypePrinter for ObjectTypeDefinition<'_> {
                 (
                     &field.name,
                     get_ts_type_of_type(&field.r#type, |name| {
-                        TSType::TypeVariable((&name.name).into())
+                        let local_name = context
+                            .local_type_names
+                            .get(name.name.name)
+                            .expect("Local type name not generated");
+                        TSType::TypeVariable(local_name.as_str().into())
                     }),
                     make_ts_description(
                         &field.description,
@@ -350,7 +354,11 @@ impl TypePrinter for InputObjectTypeDefinition<'_> {
                         .expect("Type system error");
 
                     let ts_type = get_ts_type_of_type(&field.r#type, |name| {
-                        TSType::TypeVariable((&name.name).into())
+                        let local_name = context
+                            .local_type_names
+                            .get(name.name.name)
+                            .expect("Local type name not generated");
+                        TSType::TypeVariable(local_name.as_str().into())
                     })
                     .into_readonly();
                     let is_optional = context.options.input_nullable_field_is_optional
