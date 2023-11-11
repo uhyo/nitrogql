@@ -1,0 +1,53 @@
+---
+source: crates/printer/src/graphql_printer/tests/mod.rs
+expression: printed
+---
+schema {
+  query: Query
+}
+
+scalar ID
+
+scalar String
+
+scalar Int
+
+type User implements & HasID {
+  id: ID!
+  name: String!
+  type: UserType!
+  age: Int
+  posts: [Post!]!
+}
+
+type Bot implements & HasID {
+  id: ID!
+}
+
+type Post {
+  id: ID!
+  title: String!
+  tags: [String!]
+  body: String!
+}
+
+type Query {
+  me: User!
+}
+
+interface HasID {
+  id: ID!
+}
+
+enum UserType {
+  NormalUser
+  PremiumUser
+}
+
+input UserSearchQuery {
+  age: Int
+  name: String
+  keywords: [String!]
+}
+
+
