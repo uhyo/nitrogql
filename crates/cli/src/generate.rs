@@ -406,22 +406,31 @@ fn write_file_without_sourcemap(
     Ok(())
 }
 
-/// Removes '.d.ts' suffix
+static TS_TO_JS: [(&str, &str); 7] = [
+    (".d.ts", ".js"),
+    (".d.cts", ".cjs"),
+    (".d.mts", ".mjs"),
+    (".ts", ".js"),
+    (".tsx", ".js"),
+    (".cts", ".cjs"),
+    (".mts", ".mjs"),
+];
+
+/// Converts relative path for use with `import` statements.
+/// This is done by converting TS extensions to JS extensions.
 fn path_to_ts(mut path: PathBuf) -> PathBuf {
     match path.file_name() {
         None => path,
         Some(file_name) => match file_name.to_os_string().into_string() {
             Err(_) => path,
             Ok(mut file_name) => {
-                if file_name.ends_with(".d.ts") {
-                    file_name.truncate(file_name.len() - 5);
-                    path.set_file_name(file_name);
-                    return path;
-                }
-                if file_name.ends_with(".ts") {
-                    file_name.truncate(file_name.len() - 3);
-                    path.set_file_name(file_name);
-                    return path;
+                for (ts_ext, js_ext) in TS_TO_JS.iter() {
+                    if file_name.ends_with(ts_ext) {
+                        file_name.truncate(file_name.len() - ts_ext.len());
+                        file_name.push_str(js_ext);
+                        path.set_file_name(file_name);
+                        return path;
+                    }
                 }
                 path
             }

@@ -1,9 +1,10 @@
 {
-  "name": "@nitrogql/e2e-test-cjs",
+  "name": "@nitrogql/e2e-test-node16",
   "private": true,
   "version": "1.3.2",
   "description": "",
   "main": "index.js",
+  "type": "module",
   "scripts": {
     "e2e-test": "nitrogql generate && tsc"
   },
