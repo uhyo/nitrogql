@@ -5,7 +5,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "nitrogql generate && tsc"
+    "e2e-test": "nitrogql generate && tsc"
   },
   "keywords": [],
   "author": "uhyo <uhyo@uhy.ooo>",
