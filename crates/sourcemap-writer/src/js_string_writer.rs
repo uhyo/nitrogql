@@ -24,7 +24,7 @@ impl JsStringWriter<'_> {
 
 impl Drop for JsStringWriter<'_> {
     fn drop(&mut self) {
-        self.buffer.push_str("\n`");
+        self.buffer.push('`');
     }
 }
 

@@ -11,7 +11,7 @@ use crate::GraphQLPrinter;
 #[test]
 fn schema_printing() {
     let doc = parse_type_system_document(
-        "
+        r#"
             schema {
                 query: Query
             }
@@ -19,7 +19,13 @@ fn schema_printing() {
             scalar String
             scalar Int
 
+            "Single line description"
             type User implements HasID {
+                """
+                Multi
+                line
+                description
+                """
                 id: ID!
                 name: String!
                 type: UserType!
@@ -53,7 +59,7 @@ fn schema_printing() {
             type Query {
                 me: User!
             }
-            ",
+            "#,
     )
     .unwrap();
     let doc = resolve_extensions(doc).unwrap();

@@ -25,7 +25,6 @@ impl GraphQLPrinter for OperationDocument<'_> {
     fn print_graphql(&self, writer: &mut impl SourceMapWriter) {
         for def in self.definitions.iter() {
             def.print_graphql(writer);
-            writer.write("\n");
         }
     }
 }
@@ -218,7 +217,6 @@ impl GraphQLPrinter for TypeSystemDocument<'_> {
     fn print_graphql(&self, writer: &mut impl SourceMapWriter) {
         for def in self.definitions.iter() {
             def.print_graphql(writer);
-            writer.write("\n");
         }
     }
 }
