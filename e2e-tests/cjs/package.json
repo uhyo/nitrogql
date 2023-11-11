@@ -1,0 +1,22 @@
+{
+  "name": "@nitrogql/e2e-test-cjs",
+  "private": true,
+  "version": "0.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "nitrogql generate && tsc"
+  },
+  "keywords": [],
+  "author": "uhyo <uhyo@uhy.ooo>",
+  "license": "MIT",
+  "devDependencies": {
+    "@nitrogql/cli": "*",
+    "graphql": "^16.8.1",
+    "graphql-scalars": "^1.22.4",
+    "typescript": "^5.2.2"
+  },
+  "dependencies": {
+    "@apollo/client": "^3.8.7"
+  }
+}

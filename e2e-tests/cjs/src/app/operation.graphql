@@ -1,0 +1,12 @@
+query topPage {
+  me {
+    id
+    name
+  }
+  news {
+    id
+    title
+    content
+    publishedAt
+  }
+}

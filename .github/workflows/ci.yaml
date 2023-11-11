@@ -65,6 +65,8 @@ jobs:
         run: ./build/build-rust.sh
       - name: build node
         run: ./build/build-node.sh
+      - name: run e2e tests
+        run: npm test --workspace ./e2e-tests
       - name: run nitrogql in nextjs example
         run: |
           npm run generate
