@@ -1,3 +1,3 @@
-import type { NitrogqlConfig } from "@nitrogql/core";
+import type { NitrogqlConfig, NitrogqlExtension } from "@nitrogql/core";
 
-export type { NitrogqlConfig };
+export type { NitrogqlConfig, NitrogqlExtension };
