@@ -1,0 +1,17 @@
+type Query {
+  me: User
+  news: [News!]!
+}
+
+type User {
+  id: ID! @model
+  name: String! @model
+  email: String! @model
+}
+
+type News {
+  id: ID! @model
+  title: String! @model
+  content: String! @model
+  publishedAt: DateTime! @model
+}
