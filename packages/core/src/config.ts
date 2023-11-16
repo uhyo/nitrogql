@@ -37,7 +37,7 @@ export function executeNodeSync(code: string): string {
     process.execPath,
     [
       "--no-warnings",
-      "--import=@nitrogql/esbuild-register",
+      "--require=@nitrogql/esbuild-register",
       "--experimental-loader=@nitrogql/esbuild-register/hook",
       "--input-type=module",
     ],
