@@ -1,8 +1,9 @@
 import { promisify } from "node:util";
 import { execFile } from "node:child_process";
+import { pathToFileURL } from "node:url";
 
-const register = new URL("../../dist/index.js", import.meta.url);
-const hook = new URL("../../dist/hook.js", import.meta.url);
+const register = new URL("../../dist/index.js", pathToFileURL(__filename));
+const hook = new URL("../../dist/hook.mjs", pathToFileURL(__filename));
 const nodeVersion = process.versions.node.split(".").map((x) => Number(x)) as [
   number,
   number,
@@ -22,7 +23,7 @@ export async function runNode(path: string): Promise<string> {
     const { stdout } = await promisify(execFile)(
       process.execPath,
       [
-        "--import",
+        "--require",
         register.toString(),
         "--experimental-loader",
         hook.toString(),

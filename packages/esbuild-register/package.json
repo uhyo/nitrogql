@@ -7,12 +7,16 @@
     "url": "https://github.com/uhyo/nitrogql.git",
     "directory": "packages/esbuild-register"
   },
-  "type": "module",
+  "type": "commonjs",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "exports": {
-    ".": "./dist/index.js",
-    "./hook": "./dist/hook.js"
+    ".": {
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js",
+      "default": "./dist/index.js"
+    },
+    "./hook": "./dist/hook.mjs"
   },
   "scripts": {
     "build": "tsc",
