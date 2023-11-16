@@ -40,9 +40,11 @@ pub fn run_node(code: &str) -> io::Result<String> {
     {
         let mut command = Command::new("node");
         command.arg("--no-warnings");
-        command.arg("--import=@nitrogql/esbuild-register");
         command.arg("--input-type=module");
-        if !*NODE_VERSION_IS_20_6_0_OR_LATER {
+        if *NODE_VERSION_IS_20_6_0_OR_LATER {
+            command.arg("--import=@nitrogql/esbuild-register");
+        } else {
+            command.arg("--require=@nitrogql/esbuild-register");
             command.arg("--experimenta-loader=@nitrogql/esbuild-register/hook");
         }
         let mut command = command
