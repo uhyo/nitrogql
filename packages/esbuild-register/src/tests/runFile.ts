@@ -1,9 +1,10 @@
+import path from "node:path";
 import { promisify } from "node:util";
 import { execFile } from "node:child_process";
 import { pathToFileURL } from "node:url";
 
 const registerMJS = new URL("../../dist/index.mjs", pathToFileURL(__filename));
-const registerCJS = new URL("../../dist/index.cjs", pathToFileURL(__filename));
+const registerCJS = path.join(__dirname, "../../dist/index.cjs");
 const hook = new URL("../../dist/hook.mjs", pathToFileURL(__filename));
 const nodeVersion = process.versions.node.split(".").map((x) => Number(x)) as [
   number,
