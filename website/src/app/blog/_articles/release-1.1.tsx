@@ -64,7 +64,7 @@ documents: ./src/**/*.graphql
 extensions:
   nitrogql:
     plugins:
-      - "nitrogql:model"
+      - "nitrogql:model-plugin"
     generate:
       schemaOutput: ./src/generated/schema.d.ts
       resolversOutput: ./src/generated/resolvers.d.ts

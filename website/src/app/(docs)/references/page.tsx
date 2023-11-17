@@ -10,6 +10,12 @@ export default function References() {
     <Toc>
       <main>
         <h2>References</h2>
+        <h3>Packages</h3>
+        <ul>
+          <li>
+            <Link href="/references/nitrogql-cli">@nitrogql/cli</Link>
+          </li>
+        </ul>
         <h3>Generated Files</h3>
         <p>
           This is a documentation on the details of generated files. Anything

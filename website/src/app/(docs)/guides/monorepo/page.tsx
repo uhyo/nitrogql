@@ -122,7 +122,7 @@ extensions:
 extensions:
   nitrogql:
     plugins:
-      - "nitrogql:model"
+      - "nitrogql:model-plugin"
     generate:
       schemaModuleSpecifier: "@your-org/schema-package"
       resolversOutput: ./dist/resolvers.d.ts

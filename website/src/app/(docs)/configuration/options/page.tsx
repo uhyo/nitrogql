@@ -110,7 +110,8 @@ documents:
         </p>
         <ul>
           <li>
-            <code>nitrogql:model</code>
+            <code>nitrogql:model-plugin</code>
+            <code>nitrogql:graphql-scalars-plugin</code>
           </li>
         </ul>
         <p>Example:</p>
@@ -118,7 +119,7 @@ documents:
           {`extensions:
   nitrogql:
     plugins:
-      - nitrogql:model`}
+      - nitrogql:model-plugin`}
         </Highlight>
 
         <h3 id="generate.schemaOutput">generate.schemaOutput</h3>
