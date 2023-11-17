@@ -19,7 +19,7 @@ mod utils;
 mod value;
 
 pub fn build_operation_document(pairs: Pairs<Rule>) -> OperationDocument {
-    for pair in pairs {
+    if let Some(pair) = pairs.into_iter().next() {
         match pair.as_rule() {
             Rule::ExecutableDocument => {
                 let definitions: Vec<_> = pair
@@ -38,7 +38,7 @@ pub fn build_operation_document(pairs: Pairs<Rule>) -> OperationDocument {
 pub fn build_type_system_or_extension_document(
     pairs: Pairs<Rule>,
 ) -> TypeSystemOrExtensionDocument {
-    for pair in pairs {
+    if let Some(pair) = pairs.into_iter().next() {
         match pair.as_rule() {
             Rule::TypeSystemExtensionDocument => {
                 let definitions: Vec<_> = pair
