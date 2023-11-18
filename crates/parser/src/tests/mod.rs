@@ -89,6 +89,26 @@ mod operation {
             .unwrap()
         ));
     }
+    #[test]
+    fn comments() {
+        assert_snapshot!(print_graphql(
+            parse_operation_document(
+                "# Comment
+query #comment
+sample#comment
+($foo: Int!, #comment
+# # # # #
+     $bar: Int!) {
+    # comment
+    foo
+    # comment
+    bar
+} # comment
+"
+            )
+            .unwrap()
+        ));
+    }
 
     fn print_graphql<T: GraphQLPrinter>(value: T) -> String {
         let mut result = String::new();
@@ -255,6 +275,30 @@ mod definition {
                 directive @bar repeatable on INPUT_FIELD_DEFINITION
                 directive @baz(arg1: Int! @arg, arg2: Int! @arg) on INPUT_OBJECT
                 "
+            )
+            .unwrap()
+        ));
+    }
+
+    #[test]
+    fn comments() {
+        assert_snapshot!(print_graphql(
+            parse_type_system_document(
+                "# Comment
+scalar Date # Comment
+# Comment
+# comment # comment ### comment
+
+type #comment
+Foo # comment
+# comment
+{
+    # comment
+    foo: String! # comment
+    # comment
+    bar: String! # comment
+}
+"
             )
             .unwrap()
         ));

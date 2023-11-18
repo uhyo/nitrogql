@@ -1,0 +1,12 @@
+---
+source: crates/parser/src/tests/mod.rs
+expression: "print_graphql(parse_type_system_document(\"# Comment\nscalar Date # Comment\n# Comment\n# comment # comment ### comment\n\ntype #comment\nFoo # comment\n# comment\n{\n    # comment\n    foo: String! # comment\n    # comment\n    bar: String! # comment\n}\n\").unwrap())"
+---
+scalar Date
+
+type Foo {
+  foo: String!
+  bar: String!
+}
+
+
