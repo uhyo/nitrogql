@@ -21,7 +21,7 @@ use nitrogql_ast::{
 };
 use nitrogql_introspection::schema_from_introspection_json;
 use nitrogql_plugin::{Plugin, PluginSchemaExtensions};
-use nitrogql_semantics::resolve_operation_extensions;
+use nitrogql_semantics::{resolve_operation_extensions, OperationExtension};
 use nitrogql_utils::{get_cwd, normalize_path};
 use output::CliOutput;
 use plugin_host::PluginHost;
@@ -216,22 +216,25 @@ fn run_cli_impl(
 
     let operation_files = load_glob_files(&config.root_dir, &config.config.operations)?;
 
-    let (operation_docs, operation_errors): (Vec<_>, Vec<_>) = operation_files
-        .into_iter()
-        .map(
-            |(path, buf)| -> Result<(PathBuf, OperationDocument, usize), CommandError> {
-                info!("parsing(operation) {}", path.to_string_lossy());
-                let file_idx = file_store.add_file(path.clone(), buf, FileKind::Operation);
-                let (_, buf, _) = file_store.get_file(file_idx).unwrap();
-                set_current_file_of_pos(file_idx);
+    let (operation_docs, operation_errors): (Vec<_>, Vec<_>) =
+        operation_files
+            .into_iter()
+            .map(
+                |(path, buf)| -> Result<
+                    (PathBuf, OperationDocument, OperationExtension, usize),
+                    CommandError,
+                > {
+                    info!("parsing(operation) {}", path.to_string_lossy());
+                    let file_idx = file_store.add_file(path.clone(), buf, FileKind::Operation);
+                    let (_, buf, _) = file_store.get_file(file_idx).unwrap();
+                    set_current_file_of_pos(file_idx);
 
-                let doc = parse_operation_document(buf)?;
-                // TODO: keep extensions
-                let (doc, _) = resolve_operation_extensions(doc)?;
-                Ok((path, doc, file_idx))
-            },
-        )
-        .partition_result();
+                    let doc = parse_operation_document(buf)?;
+                    let (doc, extensions) = resolve_operation_extensions(doc)?;
+                    Ok((path, doc, extensions, file_idx))
+                },
+            )
+            .partition_result();
     if !operation_errors.is_empty() {
         return Err(CommandError::merge(operation_errors));
     }

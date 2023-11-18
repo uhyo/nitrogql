@@ -9,7 +9,7 @@ use thiserror::Error;
 
 use self::operation_extension::{Import, ImportTargets, OperationExtension};
 
-mod operation_extension;
+pub mod operation_extension;
 
 pub fn resolve_operation_extensions(
     document: OperationDocumentExt,

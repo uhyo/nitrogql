@@ -8,7 +8,7 @@ use nitrogql_checker::{
 };
 use nitrogql_error::Result;
 use nitrogql_plugin::Plugin;
-use nitrogql_semantics::{ast_to_type_system, resolve_schema_extensions};
+use nitrogql_semantics::{ast_to_type_system, resolve_schema_extensions, OperationExtension};
 
 use crate::{output::InputFileKind, schema_loader::LoadedSchema};
 
@@ -57,7 +57,12 @@ pub fn run_check(context: CliContext) -> Result<CliContext> {
 
 struct CheckImplInput<'src, 'a> {
     pub schema: LoadedSchema<'src, TypeSystemOrExtensionDocument<'src>>,
-    pub operations: &'a [(PathBuf, OperationDocument<'src>, usize)],
+    pub operations: &'a [(
+        PathBuf,
+        OperationDocument<'src>,
+        OperationExtension<'src>,
+        usize,
+    )],
     pub plugins: &'a [Plugin<'src>],
 }
 
@@ -122,7 +127,7 @@ fn check_impl<'src>(input: CheckImplInput<'src, '_>) -> Result<CheckImplOutput<'
     let schema = loaded_schema.map_into(|doc| Cow::Owned(ast_to_type_system(doc)), Cow::Borrowed);
     let errors = operations
         .iter()
-        .flat_map(|(_, doc, file_by_index)| {
+        .flat_map(|(_, doc, _, file_by_index)| {
             check_operation_document(&schema, doc)
                 .into_iter()
                 .map(move |err| (err, file_by_index))

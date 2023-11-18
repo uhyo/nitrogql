@@ -6,6 +6,7 @@ use nitrogql_ast::{
 };
 use nitrogql_config_file::Config;
 use nitrogql_plugin::Plugin;
+use nitrogql_semantics::OperationExtension;
 use thiserror::Error;
 
 use crate::{file_store::FileStore, output::CliOutput, schema_loader::LoadedSchema};
@@ -14,14 +15,24 @@ pub enum CliContext<'src> {
     SchemaUnresolved {
         config: CliConfig<'src>,
         schema: LoadedSchema<'src, TypeSystemOrExtensionDocument<'src>>,
-        operations: Vec<(PathBuf, OperationDocument<'src>, usize)>,
+        operations: Vec<(
+            PathBuf,
+            OperationDocument<'src>,
+            OperationExtension<'src>,
+            usize,
+        )>,
         file_store: &'src mut FileStore,
         output: &'src mut CliOutput,
     },
     SchemaResolved {
         config: CliConfig<'src>,
         schema: LoadedSchema<'src, TypeSystemDocument<'src>>,
-        operations: Vec<(PathBuf, OperationDocument<'src>, usize)>,
+        operations: Vec<(
+            PathBuf,
+            OperationDocument<'src>,
+            OperationExtension<'src>,
+            usize,
+        )>,
         file_store: &'src FileStore,
         output: &'src mut CliOutput,
     },
