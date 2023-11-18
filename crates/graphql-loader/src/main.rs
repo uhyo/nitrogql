@@ -6,7 +6,9 @@ use std::{cell::RefCell, mem::ManuallyDrop, slice};
 use js_printer::print_js;
 use log::{debug, error};
 use nitrogql_config_file::Config;
-use nitrogql_parser::{parse_operation_document, ParseError};
+use nitrogql_error::PositionedError;
+use nitrogql_parser::parse_operation_document;
+use nitrogql_semantics::resolve_operation_extensions;
 
 thread_local! {
     /// Loaded config.
@@ -67,7 +69,7 @@ pub extern "C" fn convert_to_js(source_ptr: *const u8, source_len: usize) -> boo
             true
         }
         Err(err) => {
-            error!("{}", err.into_message());
+            error!("{}", err.into_inner());
             RESULT.with(|cell| cell.replace(None));
             false
         }
@@ -94,8 +96,9 @@ pub extern "C" fn get_result_size() -> usize {
     })
 }
 
-fn convert_to_js_impl(source: &str) -> Result<String, ParseError> {
+fn convert_to_js_impl(source: &str) -> Result<String, PositionedError> {
     let document = parse_operation_document(source)?;
+    let (document, _) = resolve_operation_extensions(document)?;
     let js = CONFIG.with(|cell| {
         let config = cell.borrow();
         print_js(&document, &config)

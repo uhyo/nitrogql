@@ -6,7 +6,9 @@ use self::{
 };
 
 use super::Rule;
-use nitrogql_ast::{operation::OperationDocument, type_system::TypeSystemOrExtensionDocument};
+use nitrogql_ast::{
+    operation_ext::OperationDocumentExt, type_system::TypeSystemOrExtensionDocument,
+};
 use pest::iterators::Pairs;
 
 mod base;
@@ -18,7 +20,7 @@ mod type_system;
 mod utils;
 mod value;
 
-pub fn build_operation_document(pairs: Pairs<Rule>) -> OperationDocument {
+pub fn build_operation_document(pairs: Pairs<Rule>) -> OperationDocumentExt {
     if let Some(pair) = pairs.into_iter().next() {
         match pair.as_rule() {
             Rule::ExecutableDocument => {
@@ -27,7 +29,7 @@ pub fn build_operation_document(pairs: Pairs<Rule>) -> OperationDocument {
                     .filter(|pair| pair.is_rule(Rule::ExecutableDefinition))
                     .map(build_executable_definition)
                     .collect();
-                return OperationDocument { definitions };
+                return OperationDocumentExt { definitions };
             }
             rule => panic!("Unexpected Rule {:?}", rule),
         }

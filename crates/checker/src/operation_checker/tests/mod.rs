@@ -1,14 +1,14 @@
 use graphql_builtins::generate_builtins;
 use nitrogql_ast::TypeSystemDocument;
 use nitrogql_parser::parse_type_system_document;
-use nitrogql_semantics::resolve_extensions;
+use nitrogql_semantics::resolve_schema_extensions;
 
 mod operations {
     use std::borrow::Cow;
 
     use graphql_type_system::Schema;
     use insta::assert_debug_snapshot;
-    use nitrogql_semantics::ast_to_type_system;
+    use nitrogql_semantics::{ast_to_type_system, resolve_operation_extensions};
 
     use crate::operation_checker::check_operation_document;
     use nitrogql_ast::base::Pos;
@@ -47,6 +47,7 @@ mod operations {
         )
         .unwrap();
 
+        let (doc, _) = resolve_operation_extensions(doc).unwrap();
         assert_debug_snapshot!(check_operation_document(&schema, &doc));
     }
 
@@ -63,6 +64,7 @@ mod operations {
         )
         .unwrap();
 
+        let (doc, _) = resolve_operation_extensions(doc).unwrap();
         assert_debug_snapshot!(check_operation_document(&schema, &doc));
     }
 }
@@ -72,7 +74,7 @@ mod operation_directives {
 
     use graphql_type_system::Schema;
     use insta::assert_debug_snapshot;
-    use nitrogql_semantics::ast_to_type_system;
+    use nitrogql_semantics::{ast_to_type_system, resolve_operation_extensions};
 
     use crate::operation_checker::check_operation_document;
     use nitrogql_ast::base::Pos;
@@ -115,6 +117,7 @@ mod operation_directives {
         )
         .unwrap();
 
+        let (doc, _) = resolve_operation_extensions(doc).unwrap();
         assert_debug_snapshot!(check_operation_document(&schema, &doc));
     }
     #[test]
@@ -129,6 +132,7 @@ mod operation_directives {
         )
         .unwrap();
 
+        let (doc, _) = resolve_operation_extensions(doc).unwrap();
         assert_debug_snapshot!(check_operation_document(&schema, &doc));
     }
 
@@ -144,6 +148,7 @@ mod operation_directives {
         )
         .unwrap();
 
+        let (doc, _) = resolve_operation_extensions(doc).unwrap();
         assert_debug_snapshot!(check_operation_document(&schema, &doc));
     }
 
@@ -159,6 +164,7 @@ mod operation_directives {
         )
         .unwrap();
 
+        let (doc, _) = resolve_operation_extensions(doc).unwrap();
         assert_debug_snapshot!(check_operation_document(&schema, &doc));
     }
 
@@ -180,6 +186,7 @@ mod operation_directives {
         )
         .unwrap();
 
+        let (doc, _) = resolve_operation_extensions(doc).unwrap();
         assert_debug_snapshot!(check_operation_document(&schema, &doc));
     }
 
@@ -201,6 +208,7 @@ mod operation_directives {
         )
         .unwrap();
 
+        let (doc, _) = resolve_operation_extensions(doc).unwrap();
         assert_debug_snapshot!(check_operation_document(&schema, &doc))
     }
 
@@ -220,6 +228,7 @@ mod operation_directives {
         )
         .unwrap();
 
+        let (doc, _) = resolve_operation_extensions(doc).unwrap();
         assert_debug_snapshot!(check_operation_document(&schema, &doc))
     }
 
@@ -237,6 +246,7 @@ mod operation_directives {
         )
         .unwrap();
 
+        let (doc, _) = resolve_operation_extensions(doc).unwrap();
         assert_debug_snapshot!(check_operation_document(&schema, &doc))
     }
 
@@ -254,6 +264,7 @@ mod operation_directives {
         )
         .unwrap();
 
+        let (doc, _) = resolve_operation_extensions(doc).unwrap();
         assert_debug_snapshot!(check_operation_document(&schema, &doc))
     }
 
@@ -271,6 +282,7 @@ mod operation_directives {
         )
         .unwrap();
 
+        let (doc, _) = resolve_operation_extensions(doc).unwrap();
         assert_debug_snapshot!(check_operation_document(&schema, &doc))
     }
 
@@ -288,6 +300,7 @@ mod operation_directives {
         )
         .unwrap();
 
+        let (doc, _) = resolve_operation_extensions(doc).unwrap();
         assert_debug_snapshot!(check_operation_document(&schema, &doc))
     }
 }
@@ -297,7 +310,7 @@ mod selection_set {
 
     use graphql_type_system::Schema;
     use insta::assert_debug_snapshot;
-    use nitrogql_semantics::ast_to_type_system;
+    use nitrogql_semantics::{ast_to_type_system, resolve_operation_extensions};
 
     use crate::operation_checker::check_operation_document;
     use nitrogql_ast::base::Pos;
@@ -348,6 +361,7 @@ mod selection_set {
         )
         .unwrap();
 
+        let (doc, _) = resolve_operation_extensions(doc).unwrap();
         assert_debug_snapshot!(check_operation_document(&schema, &doc))
     }
 
@@ -368,6 +382,7 @@ mod selection_set {
         )
         .unwrap();
 
+        let (doc, _) = resolve_operation_extensions(doc).unwrap();
         assert_debug_snapshot!(check_operation_document(&schema, &doc))
     }
 
@@ -385,6 +400,7 @@ mod selection_set {
         )
         .unwrap();
 
+        let (doc, _) = resolve_operation_extensions(doc).unwrap();
         assert_debug_snapshot!(check_operation_document(&schema, &doc))
     }
 
@@ -400,6 +416,7 @@ mod selection_set {
         )
         .unwrap();
 
+        let (doc, _) = resolve_operation_extensions(doc).unwrap();
         assert_debug_snapshot!(check_operation_document(&schema, &doc))
     }
 
@@ -416,6 +433,7 @@ mod selection_set {
         )
         .unwrap();
 
+        let (doc, _) = resolve_operation_extensions(doc).unwrap();
         assert_debug_snapshot!(check_operation_document(&schema, &doc))
     }
 
@@ -433,6 +451,7 @@ mod selection_set {
         )
         .unwrap();
 
+        let (doc, _) = resolve_operation_extensions(doc).unwrap();
         assert_debug_snapshot!(check_operation_document(&schema, &doc))
     }
 
@@ -459,6 +478,7 @@ mod selection_set {
         )
         .unwrap();
 
+        let (doc, _) = resolve_operation_extensions(doc).unwrap();
         assert_debug_snapshot!(check_operation_document(&schema, &doc))
     }
 
@@ -482,6 +502,7 @@ mod selection_set {
         )
         .unwrap();
 
+        let (doc, _) = resolve_operation_extensions(doc).unwrap();
         assert_debug_snapshot!(check_operation_document(&schema, &doc))
     }
 }
@@ -491,7 +512,7 @@ mod fragments {
 
     use graphql_type_system::Schema;
     use insta::assert_debug_snapshot;
-    use nitrogql_semantics::ast_to_type_system;
+    use nitrogql_semantics::{ast_to_type_system, resolve_operation_extensions};
 
     use crate::operation_checker::check_operation_document;
     use nitrogql_ast::base::Pos;
@@ -565,6 +586,7 @@ mod fragments {
         )
         .unwrap();
 
+        let (doc, _) = resolve_operation_extensions(doc).unwrap();
         assert_debug_snapshot!(check_operation_document(&schema, &doc))
     }
 
@@ -587,6 +609,7 @@ mod fragments {
         )
         .unwrap();
 
+        let (doc, _) = resolve_operation_extensions(doc).unwrap();
         assert_debug_snapshot!(check_operation_document(&schema, &doc))
     }
 
@@ -606,6 +629,7 @@ mod fragments {
         )
         .unwrap();
 
+        let (doc, _) = resolve_operation_extensions(doc).unwrap();
         assert_debug_snapshot!(check_operation_document(&schema, &doc))
     }
 
@@ -624,6 +648,7 @@ mod fragments {
         )
         .unwrap();
 
+        let (doc, _) = resolve_operation_extensions(doc).unwrap();
         assert_debug_snapshot!(check_operation_document(&schema, &doc))
     }
 
@@ -647,6 +672,7 @@ mod fragments {
         )
         .unwrap();
 
+        let (doc, _) = resolve_operation_extensions(doc).unwrap();
         assert_debug_snapshot!(check_operation_document(&schema, &doc))
     }
 
@@ -673,6 +699,7 @@ mod fragments {
         )
         .unwrap();
 
+        let (doc, _) = resolve_operation_extensions(doc).unwrap();
         assert_debug_snapshot!(check_operation_document(&schema, &doc))
     }
 
@@ -705,6 +732,7 @@ mod fragments {
         )
         .unwrap();
 
+        let (doc, _) = resolve_operation_extensions(doc).unwrap();
         assert_debug_snapshot!(check_operation_document(&schema, &doc))
     }
 
@@ -737,6 +765,7 @@ mod fragments {
         )
         .unwrap();
 
+        let (doc, _) = resolve_operation_extensions(doc).unwrap();
         assert_debug_snapshot!(check_operation_document(&schema, &doc));
     }
 
@@ -756,6 +785,7 @@ mod fragments {
         )
         .unwrap();
 
+        let (doc, _) = resolve_operation_extensions(doc).unwrap();
         assert_debug_snapshot!(check_operation_document(&schema, &doc));
     }
 
@@ -778,6 +808,7 @@ mod fragments {
         )
         .unwrap();
 
+        let (doc, _) = resolve_operation_extensions(doc).unwrap();
         assert_debug_snapshot!(check_operation_document(&schema, &doc));
     }
 
@@ -796,6 +827,7 @@ mod fragments {
         )
         .unwrap();
 
+        let (doc, _) = resolve_operation_extensions(doc).unwrap();
         assert_debug_snapshot!(check_operation_document(&schema, &doc))
     }
 
@@ -820,6 +852,7 @@ mod fragments {
         )
         .unwrap();
 
+        let (doc, _) = resolve_operation_extensions(doc).unwrap();
         assert_debug_snapshot!(check_operation_document(&schema, &doc))
     }
 
@@ -844,6 +877,7 @@ mod fragments {
         )
         .unwrap();
 
+        let (doc, _) = resolve_operation_extensions(doc).unwrap();
         assert_debug_snapshot!(check_operation_document(&schema, &doc))
     }
 
@@ -865,6 +899,7 @@ mod fragments {
         )
         .unwrap();
 
+        let (doc, _) = resolve_operation_extensions(doc).unwrap();
         assert_debug_snapshot!(check_operation_document(&schema, &doc))
     }
 
@@ -890,6 +925,7 @@ mod fragments {
         )
         .unwrap();
 
+        let (doc, _) = resolve_operation_extensions(doc).unwrap();
         assert_debug_snapshot!(check_operation_document(&schema, &doc))
     }
 
@@ -913,6 +949,7 @@ mod fragments {
         )
         .unwrap();
 
+        let (doc, _) = resolve_operation_extensions(doc).unwrap();
         assert_debug_snapshot!(check_operation_document(&schema, &doc))
     }
 }
@@ -920,6 +957,6 @@ mod fragments {
 fn parse_to_type_system_document(source: &str) -> TypeSystemDocument {
     let mut doc = parse_type_system_document(source).unwrap();
     doc.extend(generate_builtins());
-    let doc = resolve_extensions(doc).unwrap();
+    let doc = resolve_schema_extensions(doc).unwrap();
     doc
 }

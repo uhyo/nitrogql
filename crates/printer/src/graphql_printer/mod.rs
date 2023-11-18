@@ -2,6 +2,7 @@ use sourcemap_writer::SourceMapWriter;
 
 mod ast;
 mod base;
+mod ext;
 mod schema;
 mod tests;
 mod utils;

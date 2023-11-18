@@ -1,6 +1,6 @@
 use nitrogql_ast::TypeSystemDocument;
 use nitrogql_parser::parse_type_system_document;
-use nitrogql_semantics::resolve_extensions;
+use nitrogql_semantics::resolve_schema_extensions;
 
 mod directives {
     use graphql_builtins::generate_builtins;
@@ -10,7 +10,7 @@ mod directives {
         check_type_system_document, tests::parse_to_type_system_document,
     };
     use nitrogql_parser::parse_type_system_document;
-    use nitrogql_semantics::resolve_extensions;
+    use nitrogql_semantics::resolve_schema_extensions;
 
     // https://spec.graphql.org/draft/#sec-Type-System.Directives.Validation
     #[test]
@@ -247,7 +247,7 @@ mod directives {
         )
         .unwrap();
         doc.extend(generate_builtins());
-        let doc = resolve_extensions(doc).unwrap();
+        let doc = resolve_schema_extensions(doc).unwrap();
         let errors = check_type_system_document(&doc);
         assert_debug_snapshot!(errors, @"[]");
     }
@@ -1555,6 +1555,6 @@ fn parse_to_type_system_document(source: &str) -> TypeSystemDocument {
 
     let mut doc = parse_type_system_document(source).unwrap();
     doc.extend(generate_builtins());
-    let doc = resolve_extensions(doc).unwrap();
+    let doc = resolve_schema_extensions(doc).unwrap();
     doc
 }

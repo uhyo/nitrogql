@@ -11,7 +11,7 @@ use self::extension_list::{ExtensionError, ExtensionList};
 mod extension_list;
 mod tests;
 
-pub fn resolve_extensions(
+pub fn resolve_schema_extensions(
     document: TypeSystemOrExtensionDocument,
 ) -> Result<TypeSystemDocument, ExtensionError> {
     let mut schema_list = ExtensionList::new("schema");

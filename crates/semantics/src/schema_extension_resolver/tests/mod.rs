@@ -1,6 +1,6 @@
 #[cfg(test)]
 mod tests {
-    use crate::resolve_extensions;
+    use crate::resolve_schema_extensions;
     use insta::assert_snapshot;
     use nitrogql_parser::parse_type_system_document;
     use nitrogql_printer::GraphQLPrinter;
@@ -52,7 +52,7 @@ mod tests {
             ",
         )
         .unwrap();
-        let resolved = resolve_extensions(doc).unwrap();
+        let resolved = resolve_schema_extensions(doc).unwrap();
 
         assert_snapshot!(print_graphql(resolved));
     }
@@ -67,7 +67,7 @@ mod tests {
         )
         .unwrap();
 
-        let resolved = resolve_extensions(doc).unwrap_err();
+        let resolved = resolve_schema_extensions(doc).unwrap_err();
         assert_snapshot!(resolved.message.to_string());
     }
 
@@ -81,7 +81,7 @@ mod tests {
         )
         .unwrap();
 
-        let resolved = resolve_extensions(doc).unwrap_err();
+        let resolved = resolve_schema_extensions(doc).unwrap_err();
         assert_snapshot!(resolved.message.to_string());
     }
 

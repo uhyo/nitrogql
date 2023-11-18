@@ -21,6 +21,7 @@ use nitrogql_ast::{
 };
 use nitrogql_introspection::schema_from_introspection_json;
 use nitrogql_plugin::{Plugin, PluginSchemaExtensions};
+use nitrogql_semantics::resolve_operation_extensions;
 use nitrogql_utils::{get_cwd, normalize_path};
 use output::CliOutput;
 use plugin_host::PluginHost;
@@ -225,6 +226,8 @@ fn run_cli_impl(
                 set_current_file_of_pos(file_idx);
 
                 let doc = parse_operation_document(buf)?;
+                // TODO: keep extensions
+                let (doc, _) = resolve_operation_extensions(doc)?;
                 Ok((path, doc, file_idx))
             },
         )

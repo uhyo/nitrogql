@@ -1,6 +1,7 @@
 use crate::parts;
 use nitrogql_ast::{
-    operation::{ExecutableDefinition, FragmentDefinition, OperationDefinition, OperationType},
+    operation::{FragmentDefinition, OperationDefinition, OperationType},
+    operation_ext::ExecutableDefinitionExt,
     variable::{VariableDefinition, VariablesDefinition},
 };
 
@@ -43,7 +44,7 @@ pub fn build_variable_definition(pair: Pair<Rule>) -> VariableDefinition {
     }
 }
 
-pub fn build_executable_definition(pair: Pair<Rule>) -> ExecutableDefinition {
+pub fn build_executable_definition(pair: Pair<Rule>) -> ExecutableDefinitionExt {
     let pair = pair.only_child();
     let position = pair.to_pos();
     match pair.as_rule() {
@@ -57,7 +58,7 @@ pub fn build_executable_definition(pair: Pair<Rule>) -> ExecutableDefinition {
                 Directives opt,
                 SelectionSet
             );
-            ExecutableDefinition::OperationDefinition(OperationDefinition {
+            ExecutableDefinitionExt::OperationDefinition(OperationDefinition {
                 position,
                 operation_type: str_to_operation_type(operation_type.as_str()),
                 name: name.map(|pair| pair.to_ident()),
@@ -75,7 +76,7 @@ pub fn build_executable_definition(pair: Pair<Rule>) -> ExecutableDefinition {
                 Directives opt,
                 SelectionSet
             );
-            ExecutableDefinition::FragmentDefinition(FragmentDefinition {
+            ExecutableDefinitionExt::FragmentDefinition(FragmentDefinition {
                 position,
                 name: name.to_ident(),
                 type_condition: {

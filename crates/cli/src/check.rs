@@ -8,7 +8,7 @@ use nitrogql_checker::{
 };
 use nitrogql_error::Result;
 use nitrogql_plugin::Plugin;
-use nitrogql_semantics::{ast_to_type_system, resolve_extensions};
+use nitrogql_semantics::{ast_to_type_system, resolve_schema_extensions};
 
 use crate::{output::InputFileKind, schema_loader::LoadedSchema};
 
@@ -80,7 +80,7 @@ fn check_impl<'src>(input: CheckImplInput<'src, '_>) -> Result<CheckImplOutput<'
     let loaded_schema = {
         match schema {
             LoadedSchema::GraphQL(document) => {
-                let resolved = resolve_extensions(document)?;
+                let resolved = resolve_schema_extensions(document)?;
                 let mut errors = check_type_system_document(&resolved);
                 // If basic schema check fails, we don't need to check with plugins.
                 if errors.is_empty() {
