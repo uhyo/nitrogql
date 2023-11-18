@@ -1,6 +1,6 @@
-use std::borrow::{Borrow, Cow};
+use std::borrow::Borrow;
 
-use graphql_type_system::{Field, Node, OriginalNodeRef, RootTypes, Schema, Text, TypeDefinition};
+use graphql_type_system::{Field, Node, OriginalNodeRef, RootTypes, Text, TypeDefinition};
 use nitrogql_ast::{
     base::{HasPos, Pos},
     operation::{
@@ -25,14 +25,17 @@ use super::{
 };
 use nitrogql_semantics::direct_fields_of_output_type;
 
+mod context;
 mod count_selection_set_fields;
 mod fragment_map;
 #[cfg(test)]
 mod tests;
 
-pub fn check_operation_document<'src>(
-    definitions: &Schema<Cow<'src, str>, Pos>,
+pub use context::OperationCheckContext;
+
+pub fn check_operation_document<'src, S: Text<'src>>(
     document: &OperationDocument<'src>,
+    context: &OperationCheckContext<'_, 'src, S>,
 ) -> Vec<CheckError> {
     let mut result = vec![];
 
@@ -86,7 +89,7 @@ pub fn check_operation_document<'src>(
                     }
                 }
 
-                check_operation(definitions, &fragment_map, op, &mut result);
+                check_operation(&fragment_map, op, context, &mut result);
             }
             ExecutableDefinition::FragmentDefinition(def) => {
                 // Find other one with same name
@@ -109,7 +112,7 @@ pub fn check_operation_document<'src>(
                     );
                 }
 
-                check_fragment_definition(definitions, def, &mut result);
+                check_fragment_definition(def, context, &mut result);
             }
         }
     }
@@ -117,13 +120,13 @@ pub fn check_operation_document<'src>(
 }
 
 fn check_operation<'src, S: Text<'src>>(
-    definitions: &Schema<S, Pos>,
     fragment_map: &FragmentMap<'_, 'src>,
     op: &OperationDefinition<'src>,
+    context: &OperationCheckContext<'_, 'src, S>,
     result: &mut Vec<CheckError>,
 ) {
     let root_type = {
-        let root_types = definitions.root_types();
+        let root_types = context.definitions.root_types();
         if !root_types.original_node_ref().builtin {
             // When RootTypes has a non-builtin Pos, there is an explicit schema definition.
             // This means that type for operation must also be declared explicitly.
@@ -145,7 +148,7 @@ fn check_operation<'src, S: Text<'src>>(
         let root_types = root_types.unwrap_or_default();
         let root_type_name = operation_type_from_root_types(&root_types, op.operation_type);
 
-        let Some(root_type) = definitions.get_type(root_type_name) else {
+        let Some(root_type) = context.definitions.get_type(root_type_name) else {
             result.push(
                 CheckErrorMessage::UnknownType {
                     name: root_type_name.to_string(),
@@ -157,7 +160,7 @@ fn check_operation<'src, S: Text<'src>>(
         root_type
     };
     check_directives(
-        definitions,
+        context.definitions,
         op.variables_definition.as_ref(),
         &op.directives,
         match op.operation_type {
@@ -168,7 +171,7 @@ fn check_operation<'src, S: Text<'src>>(
         result,
     );
     if let Some(ref variables_definition) = op.variables_definition {
-        check_variables_definition(definitions, variables_definition, result);
+        check_variables_definition(variables_definition, context, result);
     }
     if op.operation_type == OperationType::Subscription {
         // Single root field check
@@ -180,12 +183,12 @@ fn check_operation<'src, S: Text<'src>>(
     }
     let seen_fragments = vec![];
     check_selection_set(
-        definitions,
         fragment_map,
         &seen_fragments,
         op.variables_definition.as_ref(),
         root_type,
         &op.selection_set,
+        context,
         result,
     );
 }
@@ -199,11 +202,11 @@ fn operation_type_from_root_types<T>(root_types: &RootTypes<T>, op: OperationTyp
 }
 
 fn check_fragment_definition<'src, S: Text<'src>>(
-    definitions: &Schema<S, Pos>,
     op: &FragmentDefinition<'src>,
+    context: &OperationCheckContext<'_, 'src, S>,
     result: &mut Vec<CheckError>,
 ) {
-    let target = definitions.get_type(op.type_condition.name);
+    let target = context.definitions.get_type(op.type_condition.name);
     let Some(target) = target else {
         result.push(
             CheckErrorMessage::UnknownType {
@@ -234,8 +237,8 @@ fn check_fragment_definition<'src, S: Text<'src>>(
 }
 
 fn check_variables_definition<'src, S: Text<'src>>(
-    definitions: &Schema<S, Pos>,
     variables: &VariablesDefinition<'src>,
+    context: &OperationCheckContext<'_, 'src, S>,
     result: &mut Vec<CheckError>,
 ) {
     let mut seen_variables = vec![];
@@ -250,7 +253,8 @@ fn check_variables_definition<'src, S: Text<'src>>(
         } else {
             seen_variables.push(v.name.name);
         }
-        let type_kind = inout_kind_of_type(definitions, v.r#type.unwrapped_type().name.name);
+        let type_kind =
+            inout_kind_of_type(context.definitions, v.r#type.unwrapped_type().name.name);
         match type_kind {
             None => {
                 result.push(
@@ -274,12 +278,12 @@ fn check_variables_definition<'src, S: Text<'src>>(
 }
 
 fn check_selection_set<'src, S: Text<'src>>(
-    definitions: &Schema<S, Pos>,
     fragment_map: &FragmentMap<'_, 'src>,
     seen_fragments: &[&str],
     variables: Option<&VariablesDefinition<'src>>,
     root_type: &Node<TypeDefinition<S, Pos>, Pos>,
     selection_set: &SelectionSet<'src>,
+    context: &OperationCheckContext<'_, 'src, S>,
     result: &mut Vec<CheckError>,
 ) {
     let root_type_name = root_type.name();
@@ -305,7 +309,6 @@ fn check_selection_set<'src, S: Text<'src>>(
         match selection {
             Selection::Field(field_selection) => {
                 check_selection_field(
-                    definitions,
                     fragment_map,
                     seen_fragments,
                     variables,
@@ -313,28 +316,29 @@ fn check_selection_set<'src, S: Text<'src>>(
                     root_type_name,
                     &root_fields,
                     field_selection,
+                    context,
                     result,
                 );
             }
             Selection::FragmentSpread(fragment_spread) => {
                 check_fragment_spread(
-                    definitions,
                     fragment_map,
                     seen_fragments,
                     variables,
                     root_type,
                     fragment_spread,
+                    context,
                     result,
                 );
             }
             Selection::InlineFragment(inline_fragment) => {
                 check_inline_fragment(
-                    definitions,
                     fragment_map,
                     seen_fragments,
                     variables,
                     root_type,
                     inline_fragment,
+                    context,
                     result,
                 );
             }
@@ -344,7 +348,6 @@ fn check_selection_set<'src, S: Text<'src>>(
 
 #[allow(clippy::too_many_arguments)]
 fn check_selection_field<'src, S: Text<'src>, F: Borrow<Field<S, Pos>>>(
-    definitions: &Schema<S, Pos>,
     fragment_map: &FragmentMap<'_, 'src>,
     seen_fragments: &[&str],
     variables: Option<&VariablesDefinition<'src>>,
@@ -352,6 +355,7 @@ fn check_selection_field<'src, S: Text<'src>, F: Borrow<Field<S, Pos>>>(
     root_type_name: &str,
     root_fields: &[F],
     field_selection: &SelectionField<'src>,
+    context: &OperationCheckContext<'_, 'src, S>,
     result: &mut Vec<CheckError>,
 ) {
     let selection_name = field_selection.name.name;
@@ -377,14 +381,14 @@ fn check_selection_field<'src, S: Text<'src>, F: Borrow<Field<S, Pos>>>(
     };
 
     check_directives(
-        definitions,
+        context.definitions,
         variables,
         &field_selection.directives,
         "FIELD",
         result,
     );
     check_arguments(
-        definitions,
+        context.definitions,
         variables,
         field_selection.name.position,
         field_selection.name.name,
@@ -393,19 +397,22 @@ fn check_selection_field<'src, S: Text<'src>, F: Borrow<Field<S, Pos>>>(
         target_field.arguments.as_ref(),
         result,
     );
-    let Some(target_field_type) = definitions.get_type(target_field.r#type.unwrapped()) else {
+    let Some(target_field_type) = context
+        .definitions
+        .get_type(target_field.r#type.unwrapped())
+    else {
         result.push(CheckErrorMessage::TypeSystemError.with_pos(field_selection.name.position));
         return;
     };
 
     if let Some(ref selection_set) = field_selection.selection_set {
         check_selection_set(
-            definitions,
             fragment_map,
             seen_fragments,
             variables,
             target_field_type,
             selection_set,
+            context,
             result,
         );
     } else {
@@ -422,12 +429,12 @@ fn check_selection_field<'src, S: Text<'src>, F: Borrow<Field<S, Pos>>>(
 }
 
 fn check_fragment_spread<'src, S: Text<'src>>(
-    definitions: &Schema<S, Pos>,
     fragment_map: &FragmentMap<'_, 'src>,
     seen_fragments: &[&str],
     variables: Option<&VariablesDefinition<'src>>,
     root_type: &Node<TypeDefinition<S, Pos>, Pos>,
     fragment_spread: &FragmentSpread<'src>,
+    context: &OperationCheckContext<'_, 'src, S>,
     result: &mut Vec<CheckError>,
 ) {
     if seen_fragments.contains(&fragment_spread.fragment_name.name) {
@@ -454,12 +461,11 @@ fn check_fragment_spread<'src, S: Text<'src>>(
         );
         return;
     };
-    let Some(fragment_condition) = definitions.get_type(target.type_condition.name) else {
+    let Some(fragment_condition) = context.definitions.get_type(target.type_condition.name) else {
         // This should be checked elsewhere
         return;
     };
     check_fragment_spread_core(
-        definitions,
         fragment_map,
         seen_fragments,
         variables,
@@ -467,33 +473,34 @@ fn check_fragment_spread<'src, S: Text<'src>>(
         fragment_spread.position,
         fragment_condition,
         &target.selection_set,
+        context,
         result,
     );
 }
 
 fn check_inline_fragment<'src, S: Text<'src>>(
-    definitions: &Schema<S, Pos>,
     fragment_map: &FragmentMap<'_, 'src>,
     seen_fragments: &[&str],
     variables: Option<&VariablesDefinition<'src>>,
     root_type: &Node<TypeDefinition<S, Pos>, Pos>,
     inline_fragment: &InlineFragment<'src>,
+    context: &OperationCheckContext<'_, 'src, S>,
     result: &mut Vec<CheckError>,
 ) {
     match inline_fragment.type_condition {
         None => {
             check_selection_set(
-                definitions,
                 fragment_map,
                 seen_fragments,
                 variables,
                 root_type,
                 &inline_fragment.selection_set,
+                context,
                 result,
             );
         }
         Some(ref type_cond) => {
-            let Some(type_cond_definition) = definitions.get_type(type_cond.name) else {
+            let Some(type_cond_definition) = context.definitions.get_type(type_cond.name) else {
                 result.push(
                     CheckErrorMessage::UnknownType {
                         name: type_cond.name.to_owned(),
@@ -503,7 +510,6 @@ fn check_inline_fragment<'src, S: Text<'src>>(
                 return;
             };
             check_fragment_spread_core(
-                definitions,
                 fragment_map,
                 seen_fragments,
                 variables,
@@ -511,6 +517,7 @@ fn check_inline_fragment<'src, S: Text<'src>>(
                 inline_fragment.position,
                 type_cond_definition,
                 &inline_fragment.selection_set,
+                context,
                 result,
             );
         }
@@ -519,7 +526,6 @@ fn check_inline_fragment<'src, S: Text<'src>>(
 
 #[allow(clippy::too_many_arguments)]
 fn check_fragment_spread_core<'src, S: Text<'src>>(
-    definitions: &Schema<S, Pos>,
     fragment_map: &FragmentMap<'_, 'src>,
     seen_fragments: &[&str],
     variables: Option<&VariablesDefinition<'src>>,
@@ -527,6 +533,7 @@ fn check_fragment_spread_core<'src, S: Text<'src>>(
     spread_pos: Pos,
     fragment_condition: &Node<TypeDefinition<S, Pos>, Pos>,
     fragment_selection_set: &SelectionSet<'src>,
+    context: &OperationCheckContext<'_, 'src, S>,
     result: &mut Vec<CheckError>,
 ) {
     match (&**root_type, &**fragment_condition) {
@@ -652,7 +659,8 @@ fn check_fragment_spread_core<'src, S: Text<'src>>(
             }
             // When matching interfaces, we have to look for concrete types that implement both interfaces
             let any_obj_implements_both_type =
-                definitions
+                context
+                    .definitions
                     .iter_types()
                     .any(|(_, type_def)| match type_def.as_object() {
                         Some(obj_def) => {
@@ -702,7 +710,10 @@ fn check_fragment_spread_core<'src, S: Text<'src>>(
             let intf_name = interface_definition.name.inner_ref();
             let some_member_implements_interface =
                 union_definition.possible_types.iter().any(|mem| {
-                    let mem_def = definitions.get_type(mem).and_then(|ty| ty.as_object());
+                    let mem_def = context
+                        .definitions
+                        .get_type(mem)
+                        .and_then(|ty| ty.as_object());
                     match mem_def {
                         Some(mem_def) => mem_def
                             .interfaces
@@ -778,12 +789,12 @@ fn check_fragment_spread_core<'src, S: Text<'src>>(
         _ => {}
     }
     check_selection_set(
-        definitions,
         fragment_map,
         seen_fragments,
         variables,
         fragment_condition,
         fragment_selection_set,
+        context,
         result,
     );
 }

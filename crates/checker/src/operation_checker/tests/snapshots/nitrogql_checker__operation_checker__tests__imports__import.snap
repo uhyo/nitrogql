@@ -1,0 +1,18 @@
+---
+source: crates/checker/src/operation_checker/tests/mod.rs
+expression: "test_check(schema, doc)"
+---
+[
+    CheckError {
+        position: Pos {
+            line: 3,
+            column: 23,
+            file: 0,
+            builtin: false,
+        },
+        message: UnknownFragment {
+            name: "F",
+        },
+        additional_info: [],
+    },
+]

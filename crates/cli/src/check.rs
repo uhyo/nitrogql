@@ -5,6 +5,7 @@ use log::{debug, info};
 use nitrogql_ast::{OperationDocument, TypeSystemDocument, TypeSystemOrExtensionDocument};
 use nitrogql_checker::{
     check_operation_document, check_type_system_document, CheckError, CheckErrorMessage,
+    OperationCheckContext,
 };
 use nitrogql_error::Result;
 use nitrogql_plugin::Plugin;
@@ -125,10 +126,11 @@ fn check_impl<'src>(input: CheckImplInput<'src, '_>) -> Result<CheckImplOutput<'
         }
     };
     let schema = loaded_schema.map_into(|doc| Cow::Owned(ast_to_type_system(doc)), Cow::Borrowed);
+    let context = OperationCheckContext::new(&schema);
     let errors = operations
         .iter()
         .flat_map(|(_, doc, _, file_by_index)| {
-            check_operation_document(&schema, doc)
+            check_operation_document(doc, &context)
                 .into_iter()
                 .map(move |err| (err, file_by_index))
         })
