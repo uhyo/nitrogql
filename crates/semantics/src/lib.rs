@@ -2,6 +2,7 @@ mod ast_to_type_system;
 mod definition_map;
 mod direct_fields_of_output_type;
 mod operation_extension_resolver;
+mod operation_import_resolver;
 mod schema_extension_resolver;
 #[cfg(test)]
 mod tests;
@@ -15,5 +16,6 @@ pub use operation_extension_resolver::{
     operation_extension::{Import, ImportTargets, OperationExtension},
     resolve_operation_extensions,
 };
+pub use operation_import_resolver::{resolve_operation_imports, OperationResolver};
 pub use schema_extension_resolver::resolve_schema_extensions;
 pub use type_system_to_ast::type_system_to_ast;
