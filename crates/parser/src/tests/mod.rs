@@ -119,6 +119,39 @@ sample#comment
 }
 
 #[cfg(test)]
+mod import_syntax {
+    use insta::assert_snapshot;
+
+    use crate::parser::parse_operation_document;
+    use nitrogql_printer::GraphQLPrinter;
+    use sourcemap_writer::JustWriter;
+
+    #[test]
+    fn specific_import() {
+        assert_snapshot!(print_graphql(
+            parse_operation_document(
+                r#"
+                #import Frag1 from "./frag1.graphql"
+                query Foo {
+                    foo {
+                        ...Frag1
+                    }
+                }
+                "#
+            )
+            .unwrap()
+        ));
+    }
+
+    fn print_graphql<T: GraphQLPrinter>(value: T) -> String {
+        let mut result = String::new();
+        let mut writer = JustWriter::new(&mut result);
+        value.print_graphql(&mut writer);
+        result
+    }
+}
+
+#[cfg(test)]
 mod definition {
     use crate::parser::parse_type_system_document;
     use insta::assert_snapshot;

@@ -1,13 +1,18 @@
 use crate::parts;
 use nitrogql_ast::{
     operation::{FragmentDefinition, OperationDefinition, OperationType},
-    operation_ext::ExecutableDefinitionExt,
+    operation_ext::{ExecutableDefinitionExt, ImportDefinition, ImportTarget},
     variable::{VariableDefinition, VariablesDefinition},
 };
 
 use super::{
-    base::build_variable, directives::build_directives, r#type::build_type,
-    selection_set::build_selection_set, utils::PairExt, value::build_value, Rule,
+    base::build_variable,
+    directives::build_directives,
+    r#type::build_type,
+    selection_set::build_selection_set,
+    utils::PairExt,
+    value::{build_string_value, build_value},
+    Rule,
 };
 use pest::iterators::Pair;
 
@@ -85,6 +90,32 @@ pub fn build_executable_definition(pair: Pair<Rule>) -> ExecutableDefinitionExt 
                 },
                 directives: directives.map_or(vec![], build_directives),
                 selection_set: build_selection_set(selection_set),
+            })
+        }
+        Rule::ext_ImportStatement => {
+            // pair becomes ext_ImportStatementContent
+            let pair = pair.only_child();
+            let (_, targets, _, path) = parts!(
+                pair,
+                ext_KEYWORD_import,
+                ext_ImportTargets,
+                ext_KEYWORD_from,
+                StringValue
+            );
+            ExecutableDefinitionExt::Import(ImportDefinition {
+                position,
+                targets: targets
+                    .into_inner()
+                    .map(|pair| {
+                        if pair.is_rule(Rule::Name) {
+                            ImportTarget::Name(pair.to_ident())
+                        } else {
+                            // "*"
+                            ImportTarget::Wildcard
+                        }
+                    })
+                    .collect(),
+                path: build_string_value(path),
             })
         }
         rule => panic!("Unexpected {:?} as a child of ExecutableDefinition", rule),

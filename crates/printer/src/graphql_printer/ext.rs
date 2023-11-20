@@ -46,5 +46,6 @@ impl GraphQLPrinter for ImportDefinition<'_> {
         }
         writer.write("from ");
         self.path.print_graphql(writer);
+        writer.write("\n");
     }
 }

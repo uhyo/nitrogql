@@ -6,7 +6,8 @@
 // B.3 Lexical Tokens
 
 WHITESPACE = _{ "\u{FEFF}" | "\u{0009}" | " " | NEWLINE | "," }
-COMMENT = _{ "#" ~ !(&ext_KEYWORD_import ~ ext_ImportStatementContent) ~ CommentCharacter* ~ NEWLINE }
+COMMENT = _{ "#" ~ !ext_ImportStatementContent ~ CommentCharacter* ~ NEWLINE }
+// COMMENT = _{ "#" ~ !ext_KEYWORD_import  ~ CommentCharacter* ~ NEWLINE }
 CommentCharacter = { !NEWLINE ~ ANY }
 
 Token = { Punctuator | Name | IntValue | FloatValue | StringValue }
@@ -258,5 +259,6 @@ TypeSystemDirectiveLocation = @{
 }
 
 ext_ImportStatement = { "#" ~ ext_ImportStatementContent }
-ext_ImportStatementContent = _{ ext_KEYWORD_import ~ ext_NameOrAsterisk+ ~ ext_KEYWORD_from ~ StringValue }
-ext_NameOrAsterisk = { Name | "*" }
+ext_ImportStatementContent = !{ ext_KEYWORD_import ~ ext_ImportTargets ~ ext_KEYWORD_from ~ StringValue }
+ext_ImportTargets = { ext_NameOrAsterisk+ }
+ext_NameOrAsterisk = _{ !ext_KEYWORD_from ~ Name | "*" }
