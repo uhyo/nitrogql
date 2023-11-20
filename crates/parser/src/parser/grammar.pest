@@ -261,4 +261,5 @@ TypeSystemDirectiveLocation = @{
 ext_ImportStatement = { "#" ~ ext_ImportStatementContent }
 ext_ImportStatementContent = !{ ext_KEYWORD_import ~ ext_ImportTargets ~ ext_KEYWORD_from ~ StringValue }
 ext_ImportTargets = { ext_NameOrAsterisk+ }
-ext_NameOrAsterisk = _{ !ext_KEYWORD_from ~ Name | "*" }
+ext_NameOrAsterisk = _{ !ext_KEYWORD_from ~ Name | ext_PUNC_asterisk }
+ext_PUNC_asterisk = { "*" }

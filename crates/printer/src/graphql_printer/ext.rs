@@ -33,18 +33,20 @@ impl GraphQLPrinter for ExecutableDefinitionExt<'_> {
 impl GraphQLPrinter for ImportDefinition<'_> {
     fn print_graphql(&self, writer: &mut impl SourceMapWriter) {
         writer.write("#import ");
-        for target in self.targets.iter() {
+        for (idx, target) in self.targets.iter().enumerate() {
+            if idx > 0 {
+                writer.write(", ");
+            }
             match target {
                 ImportTarget::Wildcard => {
-                    writer.write("* ");
+                    writer.write("*");
                 }
                 ImportTarget::Name(name) => {
                     writer.write(name.name);
-                    writer.write(" ");
                 }
             }
         }
-        writer.write("from ");
+        writer.write(" from ");
         self.path.print_graphql(writer);
         writer.write("\n");
     }

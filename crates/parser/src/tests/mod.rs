@@ -143,6 +143,97 @@ mod import_syntax {
         ));
     }
 
+    #[test]
+    fn wildcard_import() {
+        assert_snapshot!(print_graphql(
+            parse_operation_document(
+                r#"
+                #import * from "./frag1.graphql"
+                query Foo {
+                    foo {
+                        ...Frag1
+                    }
+                }
+                "#
+            )
+            .unwrap()
+        ));
+    }
+
+    #[test]
+    fn multiple_imports() {
+        assert_snapshot!(print_graphql(
+            parse_operation_document(
+                r#"
+                #import Frag1, Frag2 from "./frag1.graphql"
+                query Foo {
+                    foo {
+                        ...Frag1
+                        ...Frag2
+                    }
+                }
+                "#
+            )
+            .unwrap()
+        ));
+    }
+
+    #[test]
+    fn multiple_imports_with_wildcard() {
+        assert_snapshot!(print_graphql(
+            parse_operation_document(
+                r#"
+                #import Frag1, * from "./frag1.graphql"
+                query Foo {
+                    foo {
+                        ...Frag1
+                        ...Frag2
+                    }
+                }
+                "#
+            )
+            .unwrap()
+        ));
+    }
+    #[test]
+    fn multiple_import_statements() {
+        assert_snapshot!(print_graphql(
+            parse_operation_document(
+                r#"
+                #import Frag1 from "./frag1.graphql"
+                #import Frag2 from "./frag2.graphql"
+                query Foo {
+                    foo {
+                        ...Frag1
+                        ...Frag2
+                    }
+                }
+                "#
+            )
+            .unwrap()
+        ));
+    }
+
+    #[test]
+    fn resembling_comments() {
+        assert_snapshot!(print_graphql(
+            parse_operation_document(
+                r#"
+                #IMPORT * from "./frag1.graphql"
+                #import Frag2 from './frag2.graphql'
+                # import something!
+                #import * from
+                query Foo {
+                    foo {
+                        id
+                    }
+                }
+                "#
+            )
+            .unwrap()
+        ));
+    }
+
     fn print_graphql<T: GraphQLPrinter>(value: T) -> String {
         let mut result = String::new();
         let mut writer = JustWriter::new(&mut result);
