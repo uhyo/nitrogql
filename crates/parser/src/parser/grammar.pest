@@ -6,7 +6,7 @@
 // B.3 Lexical Tokens
 
 WHITESPACE = _{ "\u{FEFF}" | "\u{0009}" | " " | NEWLINE | "," }
-COMMENT = _{ "#" ~ !ext_ImportStatementContent ~ CommentCharacter* ~ NEWLINE }
+COMMENT = _{ "#" ~ " "* ~ !ext_ImportStatementContent ~ CommentCharacter* ~ NEWLINE }
 // COMMENT = _{ "#" ~ !ext_KEYWORD_import  ~ CommentCharacter* ~ NEWLINE }
 CommentCharacter = { !NEWLINE ~ ANY }
 

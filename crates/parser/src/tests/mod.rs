@@ -215,6 +215,23 @@ mod import_syntax {
     }
 
     #[test]
+    fn space_before_import() {
+        assert_snapshot!(print_graphql(
+            parse_operation_document(
+                r#"
+                # import Frag1 from "./frag1.graphql"
+                query Foo {
+                    foo {
+                        ...Frag1
+                    }
+                }
+                "#
+            )
+            .unwrap()
+        ));
+    }
+
+    #[test]
     fn resembling_comments() {
         assert_snapshot!(print_graphql(
             parse_operation_document(
