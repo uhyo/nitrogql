@@ -5,6 +5,7 @@ use std::{
 
 use nitrogql_ast::{base::Pos, operation::ExecutableDefinition, OperationDocument};
 use nitrogql_error::PositionedError;
+use nitrogql_utils::resolve_relative_path;
 use thiserror::Error;
 
 use crate::{ImportTargets, OperationExtension};
@@ -12,6 +13,8 @@ use crate::{ImportTargets, OperationExtension};
 pub use self::path_resolver::OperationResolver;
 
 mod path_resolver;
+#[cfg(test)]
+mod tests;
 
 /// Resolves operation imports in the given document.
 /// Currently, only Fragments can be imported and
@@ -35,7 +38,7 @@ fn resolve_operation_imports_rec<'src>(
 ) -> Result<(), ExtensionError> {
     let (document_path, _, extensions) = document;
     for import in extensions.imports.iter() {
-        let imported_path = document_path.join(&import.path.value);
+        let imported_path = resolve_relative_path(document_path, Path::new(&import.path.value));
         if visited.contains(&imported_path) {
             continue;
         }

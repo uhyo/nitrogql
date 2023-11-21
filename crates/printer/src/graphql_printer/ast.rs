@@ -58,6 +58,7 @@ impl GraphQLPrinter for OperationDefinition<'_> {
         }
         writer.write(" ");
         self.selection_set.print_graphql(writer);
+        writer.write("\n");
     }
 }
 
@@ -199,8 +200,13 @@ impl GraphQLPrinter for FragmentDefinition<'_> {
         self.name.print_graphql(writer);
         writer.write(" on ");
         self.type_condition.print_graphql(writer);
+        for d in self.directives.iter() {
+            writer.write(" ");
+            d.print_graphql(writer);
+        }
         writer.write(" ");
-        todo!()
+        self.selection_set.print_graphql(writer);
+        writer.write("\n");
     }
 }
 

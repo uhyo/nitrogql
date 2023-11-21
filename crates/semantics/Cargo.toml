@@ -8,6 +8,7 @@ edition = "2021"
 [dependencies]
 nitrogql-ast = { path = "../ast" }
 nitrogql-error = { path = "../error" }
+nitrogql-utils = { path = "../utils" }
 graphql-type-system = { path = "../type-system" }
 indexmap = "2.0.0"
 thiserror = "1.0.40"

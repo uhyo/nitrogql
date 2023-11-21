@@ -62,3 +62,131 @@ pub fn normalize_path(path: &Path) -> PathBuf {
     }
     result
 }
+
+/// Calculates file-to-file relative path.
+pub fn resolve_relative_path(from_file: &Path, relative: &Path) -> PathBuf {
+    let mut result = from_file.to_path_buf();
+    result.pop();
+    result.push(relative);
+    normalize_path(&result)
+}
+
+#[test]
+fn test_relative_path() {
+    assert_eq!(
+        relative_path(
+            Path::new("/path/to/main.graphql"),
+            Path::new("/path/to/frag1.graphql")
+        ),
+        Path::new("./frag1.graphql")
+    );
+    assert_eq!(
+        relative_path(
+            Path::new("/path/to/main.graphql"),
+            Path::new("/path/to/sub/frag1.graphql")
+        ),
+        Path::new("./sub/frag1.graphql")
+    );
+    assert_eq!(
+        relative_path(
+            Path::new("/path/to/main.graphql"),
+            Path::new("/path/to/sub/../frag1.graphql")
+        ),
+        Path::new("./frag1.graphql")
+    );
+    assert_eq!(
+        relative_path(
+            Path::new("/path/to/main.graphql"),
+            Path::new("/path/to/sub/../../frag1.graphql")
+        ),
+        Path::new("../frag1.graphql")
+    );
+    assert_eq!(
+        relative_path(
+            Path::new("/path/to/main.graphql"),
+            Path::new("/path/to/frag1.graphql")
+        ),
+        Path::new("./frag1.graphql")
+    );
+    assert_eq!(
+        relative_path(
+            Path::new("/path/to/main.graphql"),
+            Path::new("/path/to/frag1.graphql")
+        ),
+        Path::new("./frag1.graphql")
+    );
+    assert_eq!(
+        relative_path(
+            Path::new("/path/to/main.graphql"),
+            Path::new("/path/to/frag1.graphql")
+        ),
+        Path::new("./frag1.graphql")
+    );
+    assert_eq!(
+        relative_path(
+            Path::new("/path/to/main.graphql"),
+            Path::new("/path/to/frag1.graphql")
+        ),
+        Path::new("./frag1.graphql")
+    );
+    assert_eq!(
+        relative_path(
+            Path::new("/path/to/main.graphql"),
+            Path::new("/path/to/frag1.graphql")
+        ),
+        Path::new("./frag1.graphql")
+    );
+}
+
+#[test]
+fn test_resolve_relative_path() {
+    assert_eq!(
+        resolve_relative_path(
+            Path::new("/path/to/main.graphql"),
+            Path::new("./frag1.graphql")
+        ),
+        Path::new("/path/to/frag1.graphql")
+    );
+    assert_eq!(
+        resolve_relative_path(
+            Path::new("/path/to/main.graphql"),
+            Path::new("./sub/frag1.graphql")
+        ),
+        Path::new("/path/to/sub/frag1.graphql")
+    );
+    assert_eq!(
+        resolve_relative_path(
+            Path::new("/path/to/main.graphql"),
+            Path::new("./sub/../frag1.graphql")
+        ),
+        Path::new("/path/to/frag1.graphql")
+    );
+    assert_eq!(
+        resolve_relative_path(
+            Path::new("/path/to/main.graphql"),
+            Path::new("./sub/../../frag1.graphql")
+        ),
+        Path::new("/path/frag1.graphql")
+    );
+    assert_eq!(
+        resolve_relative_path(
+            Path::new("/path/to/main.graphql"),
+            Path::new("../frag1.graphql")
+        ),
+        Path::new("/path/frag1.graphql")
+    );
+    assert_eq!(
+        resolve_relative_path(
+            Path::new("/path/to/main.graphql"),
+            Path::new("../../frag1.graphql")
+        ),
+        Path::new("/frag1.graphql")
+    );
+    assert_eq!(
+        resolve_relative_path(
+            Path::new("/path/to/main.graphql"),
+            Path::new("/path/to/frag1.graphql")
+        ),
+        Path::new("/path/to/frag1.graphql")
+    );
+}
