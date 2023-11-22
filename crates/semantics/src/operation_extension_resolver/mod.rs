@@ -25,8 +25,17 @@ pub fn resolve_operation_extensions(
                 definitions.push(ExecutableDefinition::FragmentDefinition(def));
             }
             ExecutableDefinitionExt::Import(import) => {
+                let existing = imports
+                    .iter()
+                    .position(|i: &Import| i.path.value == import.path.value);
+                let initial = if let Some(existing) = existing {
+                    imports.remove(existing).targets
+                } else {
+                    ImportTargets::Specific(vec![])
+                };
+
                 let targets = import.targets.into_iter().try_fold(
-                    ImportTargets::Specific(vec![]),
+                    initial,
                     |acc, target| {
                         match (acc, target) {
                             (ImportTargets::Wildcard, ImportTarget::Wildcard) => {

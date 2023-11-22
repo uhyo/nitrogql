@@ -186,6 +186,27 @@ fn recursive_import() {
     assert_snapshot!(print_document(&resolved));
 }
 
+#[test]
+fn import_twice() {
+    let doc = parse_operation_document(
+        r#"
+        #import Frag1 from "./frag1.graphql"
+        #import Frag1_1 from "./frag1.graphql"
+        query Foo {
+            foo {
+                ...Frag1
+                ...Frag1_1
+            }
+        }
+        "#,
+    )
+    .unwrap();
+    let (doc, extensions) = resolve_operation_extensions(doc).unwrap();
+    let doc = (Path::new("/path/to/main.graphql"), &doc, &extensions);
+    let resolved = resolve_operation_imports(doc, &TestOperationResolver).unwrap();
+    assert_snapshot!(print_document(&resolved));
+}
+
 fn print_document(document: &OperationDocument) -> String {
     let mut buffer = String::new();
     let mut printer = JustWriter::new(&mut buffer);
