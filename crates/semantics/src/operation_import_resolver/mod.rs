@@ -45,7 +45,7 @@ fn resolve_operation_imports_rec<'src>(
         let Some(imported_op) = operation_resolver.resolve(&imported_path) else {
             return Err(ExtensionError {
                 message: ExtensionErrorMessage::FileNotFound {
-                    name: import.path.value.clone(),
+                    file: import.path.value.clone(),
                     position: import.path.position,
                 },
             });
@@ -69,19 +69,43 @@ fn resolve_operation_imports_rec<'src>(
                 );
             }
             ImportTargets::Specific(ref targets) => {
-                definitions.extend(
-                    imported_op
-                        .0
-                        .definitions
+                let mut count = 0;
+                let target_fragments = imported_op
+                    .0
+                    .definitions
+                    .iter()
+                    .filter(|def| match def {
+                        ExecutableDefinition::FragmentDefinition(def) => {
+                            targets.iter().any(|target| target.name == def.name.name)
+                        }
+                        _ => false,
+                    })
+                    .cloned();
+                for target in target_fragments {
+                    definitions.push(target);
+                    count += 1;
+                }
+                if count < targets.len() {
+                    // figure out which targets are missing (first one)
+                    let missing_target = targets
                         .iter()
-                        .filter(|def| match def {
-                            ExecutableDefinition::FragmentDefinition(def) => {
-                                targets.iter().any(|target| target.name == def.name.name)
-                            }
-                            _ => false,
+                        .find(|target| {
+                            !imported_op.0.definitions.iter().any(|def| match def {
+                                ExecutableDefinition::FragmentDefinition(def) => {
+                                    target.name == def.name.name
+                                }
+                                _ => false,
+                            })
                         })
-                        .cloned(),
-                );
+                        .expect("missing target not found");
+                    return Err(ExtensionError {
+                        message: ExtensionErrorMessage::FragmentNotFound {
+                            name: missing_target.name.to_string(),
+                            file: import.path.value.clone(),
+                            position: missing_target.position,
+                        },
+                    });
+                }
             }
         }
     }
@@ -90,8 +114,14 @@ fn resolve_operation_imports_rec<'src>(
 
 #[derive(Error, Debug)]
 pub enum ExtensionErrorMessage {
-    #[error("File '{name}' not found.")]
-    FileNotFound { name: String, position: Pos },
+    #[error("File '{file}' not found.")]
+    FileNotFound { file: String, position: Pos },
+    #[error("'{name}' is not found in the imported file '{file}'.")]
+    FragmentNotFound {
+        name: String,
+        file: String,
+        position: Pos,
+    },
 }
 
 #[derive(Debug)]
@@ -103,6 +133,7 @@ impl From<ExtensionError> for PositionedError {
     fn from(value: ExtensionError) -> Self {
         let position = match &value.message {
             ExtensionErrorMessage::FileNotFound { position, .. } => *position,
+            ExtensionErrorMessage::FragmentNotFound { position, .. } => *position,
         };
         let additional_info = match &value.message {
             ExtensionErrorMessage::FileNotFound { .. } => vec![
@@ -111,6 +142,7 @@ impl From<ExtensionError> for PositionedError {
                     "Hint: imported file must be included in the 'documents' option of the config file.".into(),
                 )
             ],
+            _ => vec![],
         };
 
         PositionedError::new(value.message.into(), Some(position), additional_info)

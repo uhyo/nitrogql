@@ -1,6 +1,6 @@
 use std::path::Path;
 
-use insta::assert_snapshot;
+use insta::{assert_debug_snapshot, assert_snapshot};
 use nitrogql_ast::OperationDocument;
 use nitrogql_parser::parse_operation_document;
 use nitrogql_printer::GraphQLPrinter;
@@ -205,6 +205,44 @@ fn import_twice() {
     let doc = (Path::new("/path/to/main.graphql"), &doc, &extensions);
     let resolved = resolve_operation_imports(doc, &TestOperationResolver).unwrap();
     assert_snapshot!(print_document(&resolved));
+}
+
+#[test]
+fn error_import_nonexistent() {
+    let doc = parse_operation_document(
+        r#"
+        #import Frag1 from "./nonexistent.graphql"
+        query Foo {
+            foo {
+                ...Frag1
+            }
+        }
+        "#,
+    )
+    .unwrap();
+    let (doc, extensions) = resolve_operation_extensions(doc).unwrap();
+    let doc = (Path::new("/path/to/main.graphql"), &doc, &extensions);
+    let err = resolve_operation_imports(doc, &TestOperationResolver).unwrap_err();
+    assert_debug_snapshot!(err);
+}
+
+#[test]
+fn error_import_fragment_nonexistent() {
+    let doc = parse_operation_document(
+        r#"
+        #import Frag999 from "./frag1.graphql"
+        query Foo {
+            foo {
+                ...Frag1
+            }
+        }
+        "#,
+    )
+    .unwrap();
+    let (doc, extensions) = resolve_operation_extensions(doc).unwrap();
+    let doc = (Path::new("/path/to/main.graphql"), &doc, &extensions);
+    let err = resolve_operation_imports(doc, &TestOperationResolver).unwrap_err();
+    assert_debug_snapshot!(err);
 }
 
 fn print_document(document: &OperationDocument) -> String {
