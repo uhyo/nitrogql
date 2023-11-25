@@ -8,6 +8,7 @@ use crate::{
 
 #[derive(Clone, Debug)]
 pub struct OperationDocumentExt<'a> {
+    pub position: Pos,
     pub definitions: Vec<ExecutableDefinitionExt<'a>>,
 }
 

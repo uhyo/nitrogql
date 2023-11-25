@@ -24,12 +24,16 @@ pub fn build_operation_document(pairs: Pairs<Rule>) -> OperationDocumentExt {
     if let Some(pair) = pairs.into_iter().next() {
         match pair.as_rule() {
             Rule::ExecutableDocument => {
+                let position = pair.to_pos();
                 let definitions: Vec<_> = pair
                     .into_inner()
                     .filter(|pair| pair.is_rule(Rule::ExecutableDefinition))
                     .map(build_executable_definition)
                     .collect();
-                return OperationDocumentExt { definitions };
+                return OperationDocumentExt {
+                    position,
+                    definitions,
+                };
             }
             rule => panic!("Unexpected Rule {:?}", rule),
         }

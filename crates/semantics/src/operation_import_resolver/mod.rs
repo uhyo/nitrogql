@@ -26,7 +26,10 @@ pub fn resolve_operation_imports<'src>(
     let mut definitions: Vec<_> = document.1.definitions.to_vec();
     let mut visited = HashSet::new();
     resolve_operation_imports_rec(document, operation_resolver, &mut visited, &mut definitions)?;
-    let result = OperationDocument { definitions };
+    let result = OperationDocument {
+        definitions,
+        position: document.1.position,
+    };
     Ok(result)
 }
 

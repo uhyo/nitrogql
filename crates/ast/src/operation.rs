@@ -99,5 +99,8 @@ impl HasPos for FragmentDefinition<'_> {
 
 #[derive(Clone, Debug)]
 pub struct OperationDocument<'a> {
+    /// Position of document. This is the position of the first character of the document.
+    /// Mainly useful for knowing the file index.
+    pub position: Pos,
     pub definitions: Vec<ExecutableDefinition<'a>>,
 }

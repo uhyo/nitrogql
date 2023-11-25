@@ -78,7 +78,10 @@ pub fn resolve_operation_extensions(
         }
     }
     Ok((
-        OperationDocument { definitions },
+        OperationDocument {
+            definitions,
+            position: document.position,
+        },
         OperationExtension { imports },
     ))
 }
