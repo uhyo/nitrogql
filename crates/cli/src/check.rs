@@ -1,4 +1,8 @@
-use std::{borrow::Cow, path::PathBuf};
+use std::{
+    borrow::Cow,
+    collections::HashMap,
+    path::{Path, PathBuf},
+};
 
 use itertools::Itertools;
 use log::{debug, info};
@@ -13,7 +17,8 @@ use nitrogql_checker::{
 use nitrogql_error::{PositionedError, Result};
 use nitrogql_plugin::Plugin;
 use nitrogql_semantics::{
-    ast_to_type_system, resolve_operation_extensions, resolve_schema_extensions, OperationExtension,
+    ast_to_type_system, resolve_operation_extensions, resolve_operation_imports,
+    resolve_schema_extensions, OperationExtension, OperationResolver,
 };
 
 use crate::{output::InputFileKind, schema_loader::LoadedSchema};
@@ -102,22 +107,17 @@ fn check_impl<'src>(input: CheckImplInput<'src, '_>) -> CheckImplOutput<'src> {
     };
     let schema = loaded_schema.map_into(|doc| Cow::Owned(ast_to_type_system(doc)), Cow::Borrowed);
 
-    let (operations, resolve_errors): (Vec<_>, Vec<_>) = operations
-        .into_iter()
-        .map(|(path, doc, file_by_index)| -> std::result::Result<_, _> {
-            let (doc, ext) = resolve_operation_extensions(doc)?;
-            Ok((path, doc, ext, file_by_index))
-        })
-        .partition_result();
-
-    if !resolve_errors.is_empty() {
-        return CheckImplOutput::Err {
-            errors: resolve_errors
-                .into_iter()
-                .map(|err| (InputFileKind::Operation, err))
-                .collect(),
-        };
-    }
+    let operations = match resolve_operations(operations) {
+        Ok(operations) => operations,
+        Err(errors) => {
+            return CheckImplOutput::Err {
+                errors: errors
+                    .into_iter()
+                    .map(|err| (InputFileKind::Operation, err))
+                    .collect(),
+            };
+        }
+    };
 
     let context = OperationCheckContext::new(&schema);
     let errors = operations
@@ -184,5 +184,76 @@ fn resolve_schema<'src>(
             Ok(LoadedSchema::GraphQL(resolved))
         }
         LoadedSchema::Introspection(schema) => Ok(LoadedSchema::Introspection(schema)),
+    }
+}
+
+type ResolveOperationsResult<'src> = std::result::Result<
+    Vec<(
+        PathBuf,
+        OperationDocument<'src>,
+        OperationExtension<'src>,
+        usize,
+    )>,
+    Vec<PositionedError>,
+>;
+
+fn resolve_operations(
+    operations: Vec<(PathBuf, OperationDocumentExt, usize)>,
+) -> ResolveOperationsResult {
+    let (operations, resolve_errors): (Vec<_>, Vec<_>) = operations
+        .into_iter()
+        .map(|(path, doc, file_by_index)| -> std::result::Result<_, _> {
+            let (doc, ext) = resolve_operation_extensions(doc)?;
+            // resolve_operation_imports((&path, &doc, &ext), operation_resolver);
+            Ok((path, doc, ext, file_by_index))
+        })
+        .partition_result();
+    if !resolve_errors.is_empty() {
+        return Err(resolve_errors);
+    }
+
+    let operation_resolver = Operations::new(&operations);
+    let (operations, resolve_errors): (Vec<_>, Vec<_>) = operations
+        .iter()
+        .map(
+            |(path, doc, ext, file_by_index)| -> std::result::Result<_, _> {
+                let doc = resolve_operation_imports((&path, &doc, &ext), &operation_resolver)?;
+                Ok((path.clone(), doc, ext.clone(), *file_by_index))
+            },
+        )
+        .partition_result();
+    if !resolve_errors.is_empty() {
+        return Err(resolve_errors);
+    }
+    Ok(operations)
+}
+
+struct Operations<'a, 'src> {
+    file_by_path: HashMap<&'a Path, (&'a OperationDocument<'src>, &'a OperationExtension<'src>)>,
+}
+
+impl<'a, 'src> Operations<'a, 'src> {
+    pub fn new(
+        operations: &'a [(
+            PathBuf,
+            OperationDocument<'src>,
+            OperationExtension<'src>,
+            usize,
+        )],
+    ) -> Self {
+        let file_by_path = operations
+            .iter()
+            .map(|(path, doc, ext, _)| (path.as_path(), (doc, ext)))
+            .collect();
+        Self { file_by_path }
+    }
+}
+
+impl<'a, 'src> OperationResolver<'src> for Operations<'a, 'src> {
+    fn resolve(
+        &self,
+        path: &Path,
+    ) -> Option<(&OperationDocument<'src>, &OperationExtension<'src>)> {
+        self.file_by_path.get(path).copied()
     }
 }
