@@ -1,15 +1,20 @@
 use std::{borrow::Cow, path::PathBuf};
 
+use itertools::Itertools;
 use log::{debug, info};
 
-use nitrogql_ast::{OperationDocument, TypeSystemDocument, TypeSystemOrExtensionDocument};
+use nitrogql_ast::{
+    OperationDocument, OperationDocumentExt, TypeSystemDocument, TypeSystemOrExtensionDocument,
+};
 use nitrogql_checker::{
     check_operation_document, check_type_system_document, CheckError, CheckErrorMessage,
     OperationCheckContext,
 };
-use nitrogql_error::Result;
+use nitrogql_error::{PositionedError, Result};
 use nitrogql_plugin::Plugin;
-use nitrogql_semantics::{ast_to_type_system, resolve_schema_extensions, OperationExtension};
+use nitrogql_semantics::{
+    ast_to_type_system, resolve_operation_extensions, resolve_schema_extensions, OperationExtension,
+};
 
 use crate::{output::InputFileKind, schema_loader::LoadedSchema};
 
@@ -28,11 +33,11 @@ pub fn run_check(context: CliContext) -> Result<CliContext> {
             output.command_run("check".to_owned());
             let result = check_impl(CheckImplInput {
                 schema,
-                operations: &operations,
+                operations,
                 plugins: &config.plugins,
             })?;
             match result {
-                CheckImplOutput::Ok { schema } => {
+                CheckImplOutput::Ok { schema, operations } => {
                     info!("Check succeeded");
                     eprintln!("'check' finished");
                     Ok(CliContext::SchemaResolved {
@@ -58,21 +63,22 @@ pub fn run_check(context: CliContext) -> Result<CliContext> {
 
 struct CheckImplInput<'src, 'a> {
     pub schema: LoadedSchema<'src, TypeSystemOrExtensionDocument<'src>>,
-    pub operations: &'a [(
-        PathBuf,
-        OperationDocument<'src>,
-        OperationExtension<'src>,
-        usize,
-    )],
+    pub operations: Vec<(PathBuf, OperationDocumentExt<'src>, usize)>,
     pub plugins: &'a [Plugin<'src>],
 }
 
 enum CheckImplOutput<'src> {
     Ok {
         schema: LoadedSchema<'src, TypeSystemDocument<'src>>,
+        operations: Vec<(
+            PathBuf,
+            OperationDocument<'src>,
+            OperationExtension<'src>,
+            usize,
+        )>,
     },
     Err {
-        errors: Vec<(InputFileKind, CheckError)>,
+        errors: Vec<(InputFileKind, PositionedError)>,
     },
 }
 
@@ -116,7 +122,7 @@ fn check_impl<'src>(input: CheckImplInput<'src, '_>) -> Result<CheckImplOutput<'
                     return Ok(CheckImplOutput::Err {
                         errors: errors
                             .into_iter()
-                            .map(|err| (InputFileKind::Schema, err))
+                            .map(|err| (InputFileKind::Schema, err.into()))
                             .collect(),
                     });
                 }
@@ -126,6 +132,24 @@ fn check_impl<'src>(input: CheckImplInput<'src, '_>) -> Result<CheckImplOutput<'
         }
     };
     let schema = loaded_schema.map_into(|doc| Cow::Owned(ast_to_type_system(doc)), Cow::Borrowed);
+
+    let (operations, resolve_errors): (Vec<_>, Vec<_>) = operations
+        .into_iter()
+        .map(|(path, doc, file_by_index)| -> std::result::Result<_, _> {
+            let (doc, ext) = resolve_operation_extensions(doc)?;
+            Ok((path, doc, ext, file_by_index))
+        })
+        .partition_result();
+
+    if !resolve_errors.is_empty() {
+        return Ok(CheckImplOutput::Err {
+            errors: resolve_errors
+                .into_iter()
+                .map(|err| (InputFileKind::Operation, err))
+                .collect(),
+        });
+    }
+
     let context = OperationCheckContext::new(&schema);
     let errors = operations
         .iter()
@@ -140,12 +164,13 @@ fn check_impl<'src>(input: CheckImplInput<'src, '_>) -> Result<CheckImplOutput<'
         Ok(CheckImplOutput::Err {
             errors: errors
                 .into_iter()
-                .map(|(err, _)| (InputFileKind::Operation, err))
+                .map(|(err, _)| (InputFileKind::Operation, err.into()))
                 .collect(),
         })
     } else {
         Ok(CheckImplOutput::Ok {
             schema: loaded_schema,
+            operations,
         })
     }
 }

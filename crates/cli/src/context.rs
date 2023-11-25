@@ -3,6 +3,7 @@ use std::{path::PathBuf, str::FromStr};
 use nitrogql_ast::{
     operation::OperationDocument,
     type_system::{TypeSystemDocument, TypeSystemOrExtensionDocument},
+    OperationDocumentExt,
 };
 use nitrogql_config_file::Config;
 use nitrogql_plugin::Plugin;
@@ -15,12 +16,7 @@ pub enum CliContext<'src> {
     SchemaUnresolved {
         config: CliConfig<'src>,
         schema: LoadedSchema<'src, TypeSystemOrExtensionDocument<'src>>,
-        operations: Vec<(
-            PathBuf,
-            OperationDocument<'src>,
-            OperationExtension<'src>,
-            usize,
-        )>,
+        operations: Vec<(PathBuf, OperationDocumentExt<'src>, usize)>,
         file_store: &'src mut FileStore,
         output: &'src mut CliOutput,
     },

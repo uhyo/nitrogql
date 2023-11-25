@@ -33,6 +33,10 @@ impl PositionedError {
         self.position.is_some()
     }
 
+    pub fn position(&self) -> Option<Pos> {
+        self.position
+    }
+
     pub fn into_inner(self) -> anyhow::Error {
         self.inner
     }

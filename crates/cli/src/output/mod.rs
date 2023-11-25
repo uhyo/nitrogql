@@ -1,12 +1,11 @@
 use std::path::PathBuf;
 
 use json_writer::JSONObjectWriter;
-use nitrogql_checker::CheckError;
 
 mod file_kind;
 
 pub use file_kind::{InputFileKind, OutputFileKind};
-use nitrogql_error::print_positioned_error;
+use nitrogql_error::{print_positioned_error, PositionedError};
 
 use crate::file_store::FileStore;
 
@@ -14,7 +13,7 @@ use crate::file_store::FileStore;
 pub struct CliOutput {
     commands_run: Vec<String>,
     command_error: Option<(Option<String>, String)>,
-    check_errors: Vec<(file_kind::InputFileKind, CheckError)>,
+    check_errors: Vec<(file_kind::InputFileKind, PositionedError)>,
     generated_files: Vec<(file_kind::OutputFileKind, PathBuf)>,
 }
 
@@ -61,7 +60,7 @@ impl CliOutput {
                     if schema_errors.len() > 1 { "s" } else { "" }
                 );
                 for (_, error) in schema_errors {
-                    eprintln!("{}", print_positioned_error(&error.into(), file_store));
+                    eprintln!("{}", print_positioned_error(&error, file_store));
                 }
                 eprintln!();
             }
@@ -72,7 +71,7 @@ impl CliOutput {
                     if operation_errors.len() > 1 { "s" } else { "" }
                 );
                 for (_, error) in operation_errors {
-                    eprintln!("{}", print_positioned_error(&error.into(), file_store));
+                    eprintln!("{}", print_positioned_error(&error, file_store));
                 }
                 eprintln!();
             }
@@ -98,8 +97,9 @@ impl CliOutput {
             let mut obj = writer.object("check");
             let mut errors = obj.array("errors");
             for (kind, error) in self.check_errors {
-                let file = (!error.position.builtin)
-                    .then(|| file_store.get_file(error.position.file))
+                let position = error.position().unwrap_or_default();
+                let file = (!position.builtin)
+                    .then(|| file_store.get_file(position.file))
                     .flatten();
                 let mut obj = errors.object();
                 obj.value("fileType", &kind.to_string());
@@ -107,12 +107,12 @@ impl CliOutput {
                     Some((path, _, _)) => {
                         let mut obj = obj.object("file");
                         obj.value("path", &path.to_string_lossy());
-                        obj.value("line", error.position.line as u32);
-                        obj.value("column", error.position.column as u32);
+                        obj.value("line", position.line as u32);
+                        obj.value("column", position.column as u32);
                     }
                     None => obj.value("file", None::<&bool>),
                 }
-                obj.value("message", &error.message.to_string());
+                obj.value("message", &error.into_inner().to_string());
             }
         }
         if self.commands_run.iter().any(|c| c == "generate") {
@@ -142,18 +142,19 @@ impl CliOutput {
             let mut diagnostics = writer.array("diagnostics");
             for (_, error) in self.check_errors {
                 let mut obj = diagnostics.object();
-                obj.value("message", &error.message.to_string());
+                let position = error.position().unwrap_or_default();
+                obj.value("message", &error.into_inner().to_string());
                 {
                     let mut location = obj.object("location");
-                    let file = (!error.position.builtin)
-                        .then(|| file_store.get_file(error.position.file))
+                    let file = (!position.builtin)
+                        .then(|| file_store.get_file(position.file))
                         .flatten();
                     if let Some((path, _, _)) = file {
                         location.value("path", &path.to_string_lossy());
                         let mut range = location.object("range");
                         let mut start = range.object("start");
-                        start.value("line", error.position.line as u32 + 1);
-                        start.value("column", error.position.column as u32 + 1);
+                        start.value("line", position.line as u32 + 1);
+                        start.value("column", position.column as u32 + 1);
                     }
                 }
             }
@@ -163,8 +164,8 @@ impl CliOutput {
     }
 }
 
-impl Extend<(InputFileKind, CheckError)> for CliOutput {
-    fn extend<T: IntoIterator<Item = (InputFileKind, CheckError)>>(&mut self, iter: T) {
+impl Extend<(InputFileKind, PositionedError)> for CliOutput {
+    fn extend<T: IntoIterator<Item = (InputFileKind, PositionedError)>>(&mut self, iter: T) {
         self.check_errors.extend(iter);
     }
 }

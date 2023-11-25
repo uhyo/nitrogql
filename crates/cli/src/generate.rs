@@ -218,7 +218,7 @@ pub fn run_generate(mut context: CliContext) -> Result<CliContext> {
             let mapped_schema =
                 schema.map_into(|doc| Cow::Owned(ast_to_type_system(doc)), Cow::Borrowed);
 
-            for (path, doc, extensions, file_index) in operations.iter() {
+            for (path, doc, _, file_index) in operations.iter() {
                 debug!("Processing {}", path.to_string_lossy());
                 let file_map = FileMap {
                     file_store,
