@@ -35,7 +35,7 @@ pub fn run_check(context: CliContext) -> Result<CliContext> {
                 schema,
                 operations,
                 plugins: &config.plugins,
-            })?;
+            });
             match result {
                 CheckImplOutput::Ok { schema, operations } => {
                     info!("Check succeeded");
@@ -82,53 +82,22 @@ enum CheckImplOutput<'src> {
     },
 }
 
-fn check_impl<'src>(input: CheckImplInput<'src, '_>) -> Result<CheckImplOutput<'src>> {
+fn check_impl<'src>(input: CheckImplInput<'src, '_>) -> CheckImplOutput<'src> {
     let CheckImplInput {
         schema,
         operations,
         plugins,
     } = input;
 
-    let loaded_schema = {
-        match schema {
-            LoadedSchema::GraphQL(document) => {
-                let resolved = resolve_schema_extensions(document)?;
-                let mut errors = check_type_system_document(&resolved);
-                // If basic schema check fails, we don't need to check with plugins.
-                if errors.is_empty() {
-                    // check schema with plugins
-                    for plugin in plugins {
-                        errors.extend(plugin.check_schema(&resolved).errors.into_iter().map(
-                            |error| {
-                                CheckError {
-                                    position: error.position,
-                                    message: CheckErrorMessage::Plugin {
-                                        message: error.message,
-                                    },
-                                    additional_info: error
-                                        .additional_info
-                                        .into_iter()
-                                        .map(|(pos, message)| {
-                                            (pos, CheckErrorMessage::Plugin { message })
-                                        })
-                                        .collect(),
-                                }
-                            },
-                        ));
-                    }
-                }
-
-                if !errors.is_empty() {
-                    return Ok(CheckImplOutput::Err {
-                        errors: errors
-                            .into_iter()
-                            .map(|err| (InputFileKind::Schema, err.into()))
-                            .collect(),
-                    });
-                }
-                LoadedSchema::GraphQL(resolved)
-            }
-            LoadedSchema::Introspection(schema) => LoadedSchema::Introspection(schema),
+    let loaded_schema = match resolve_schema(schema, plugins) {
+        Ok(schema) => schema,
+        Err(errors) => {
+            return CheckImplOutput::Err {
+                errors: errors
+                    .into_iter()
+                    .map(|err| (InputFileKind::Schema, err))
+                    .collect(),
+            };
         }
     };
     let schema = loaded_schema.map_into(|doc| Cow::Owned(ast_to_type_system(doc)), Cow::Borrowed);
@@ -142,12 +111,12 @@ fn check_impl<'src>(input: CheckImplInput<'src, '_>) -> Result<CheckImplOutput<'
         .partition_result();
 
     if !resolve_errors.is_empty() {
-        return Ok(CheckImplOutput::Err {
+        return CheckImplOutput::Err {
             errors: resolve_errors
                 .into_iter()
                 .map(|err| (InputFileKind::Operation, err))
                 .collect(),
-        });
+        };
     }
 
     let context = OperationCheckContext::new(&schema);
@@ -161,16 +130,59 @@ fn check_impl<'src>(input: CheckImplInput<'src, '_>) -> Result<CheckImplOutput<'
         .collect::<Vec<_>>();
 
     if !errors.is_empty() {
-        Ok(CheckImplOutput::Err {
+        CheckImplOutput::Err {
             errors: errors
                 .into_iter()
                 .map(|(err, _)| (InputFileKind::Operation, err.into()))
                 .collect(),
-        })
+        }
     } else {
-        Ok(CheckImplOutput::Ok {
+        CheckImplOutput::Ok {
             schema: loaded_schema,
             operations,
-        })
+        }
+    }
+}
+
+fn resolve_schema<'src>(
+    schema: LoadedSchema<'src, TypeSystemOrExtensionDocument<'src>>,
+    plugins: &[Plugin<'src>],
+) -> std::result::Result<LoadedSchema<'src, TypeSystemDocument<'src>>, Vec<PositionedError>> {
+    match schema {
+        LoadedSchema::GraphQL(document) => {
+            let resolved = resolve_schema_extensions(document).map_err(|err| vec![err.into()])?;
+            let mut errors = check_type_system_document(&resolved);
+            // If basic schema check fails, we don't need to check with plugins.
+            if errors.is_empty() {
+                // check schema with plugins
+                for plugin in plugins {
+                    errors.extend(
+                        plugin
+                            .check_schema(&resolved)
+                            .errors
+                            .into_iter()
+                            .map(|error| CheckError {
+                                position: error.position,
+                                message: CheckErrorMessage::Plugin {
+                                    message: error.message,
+                                },
+                                additional_info: error
+                                    .additional_info
+                                    .into_iter()
+                                    .map(|(pos, message)| {
+                                        (pos, CheckErrorMessage::Plugin { message })
+                                    })
+                                    .collect(),
+                            }),
+                    );
+                }
+            }
+
+            if !errors.is_empty() {
+                return Err(errors.into_iter().map(|err| err.into()).collect());
+            }
+            Ok(LoadedSchema::GraphQL(resolved))
+        }
+        LoadedSchema::Introspection(schema) => Ok(LoadedSchema::Introspection(schema)),
     }
 }
