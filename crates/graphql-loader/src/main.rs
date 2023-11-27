@@ -1,20 +1,20 @@
 #![cfg_attr(target_family = "wasm", no_main)]
 mod js_printer;
+mod loader;
+mod tasks;
 
 use std::{cell::RefCell, mem::ManuallyDrop, slice};
 
-use js_printer::print_js;
 use log::{debug, error};
 use nitrogql_config_file::Config;
-use nitrogql_error::PositionedError;
-use nitrogql_parser::parse_operation_document;
-use nitrogql_semantics::resolve_operation_extensions;
 
 thread_local! {
     /// Loaded config.
     static CONFIG: RefCell<Config> = RefCell::new(Config::default());
     /// Result of last operation.
     static RESULT: RefCell<Option<String>> = RefCell::new(None);
+    /// Global set of tasks.
+    static TASKS: RefCell<tasks::Tasks> = RefCell::new(tasks::Tasks::new());
 }
 
 #[cfg(not(target_family = "wasm"))]
@@ -57,23 +57,107 @@ pub extern "C" fn load_config(config_file_ptr: *const u8, config_file_len: usize
     load_config_impl(config_file)
 }
 
+/// Initiates a task with given filename and source.
+/// Returns the task id if successful, otherwise 0.
+#[no_mangle]
+pub extern "C" fn initiate_task(
+    file_name_ptr: *const u8,
+    file_name_len: usize,
+    input_source_ptr: *const u8,
+    input_source_len: usize,
+) -> usize {
+    debug!(
+        "initiate_task {file_name_ptr:?} {file_name_len} {input_source_ptr:?} {input_source_len}"
+    );
+    let file_name = read_str_ptr(file_name_ptr, file_name_len);
+    let input_source = read_str_ptr(input_source_ptr, input_source_len);
+    TASKS.with(|tasks| {
+        let mut tasks = tasks.borrow_mut();
+        match loader::initiate_task(&mut tasks, file_name.into(), input_source) {
+            Ok(task_id) => task_id,
+            Err(err) => {
+                error!("{}", err.into_inner());
+                0
+            }
+        }
+    })
+}
+
+/// Get the list of additionally required files for the given task.
+/// Returns true if successful.
+/// Result is stored in `RESULT` and can be accessed by `get_result_ptr` and `get_result_size`.
+#[no_mangle]
+pub extern "C" fn get_required_files(task_id: usize) -> bool {
+    debug!("get_required_files {task_id}");
+    TASKS.with(|tasks| {
+        let mut tasks = tasks.borrow_mut();
+        match loader::get_required_files(&mut tasks, task_id) {
+            Ok(required_files) => {
+                let required_files = required_files
+                    .into_iter()
+                    .map(|p| p.to_string_lossy().into_owned())
+                    .collect::<Vec<_>>()
+                    .join("\n");
+                RESULT.with(|cell| cell.replace(Some(required_files)));
+                true
+            }
+            Err(err) => {
+                error!("{}", err.into_inner());
+                RESULT.with(|cell| cell.replace(None));
+                false
+            }
+        }
+    })
+}
+
+/// Load an additional file.
+/// Returns true if successful.
+#[no_mangle]
+pub extern "C" fn load_file(
+    task_id: usize,
+    file_name_ptr: *const u8,
+    file_name_len: usize,
+    input_source_ptr: *const u8,
+    input_source_len: usize,
+) -> bool {
+    debug!(
+        "load_file {task_id} {file_name_ptr:?} {file_name_len} {input_source_ptr:?} {input_source_len}"
+    );
+    let file_name = read_str_ptr(file_name_ptr, file_name_len);
+    let input_source = read_str_ptr(input_source_ptr, input_source_len);
+    TASKS.with(|tasks| {
+        let mut tasks = tasks.borrow_mut();
+        match loader::load_file(&mut tasks, task_id, file_name.into(), input_source) {
+            Ok(_) => true,
+            Err(err) => {
+                error!("{}", err.into_inner());
+                false
+            }
+        }
+    })
+}
+
 /// Converts given GraphQL string to JS.
 /// Returns true if successful.
 #[no_mangle]
-pub extern "C" fn convert_to_js(source_ptr: *const u8, source_len: usize) -> bool {
-    debug!("convert_to_js {source_ptr:?} {source_len}");
-    let source = read_str_ptr(source_ptr, source_len);
-    match convert_to_js_impl(source) {
-        Ok(res) => {
-            RESULT.with(|cell| cell.replace(Some(res)));
-            true
-        }
-        Err(err) => {
-            error!("{}", err.into_inner());
-            RESULT.with(|cell| cell.replace(None));
-            false
-        }
-    }
+pub extern "C" fn emit_js(task_id: usize) -> bool {
+    debug!("convert_to_js {task_id}");
+    TASKS.with(|tasks| {
+        let tasks = tasks.borrow();
+        CONFIG.with(
+            |config| match loader::emit_js(&tasks, task_id, &config.borrow()) {
+                Ok(js) => {
+                    RESULT.with(|cell| cell.replace(Some(js)));
+                    true
+                }
+                Err(err) => {
+                    error!("{}", err.into_inner());
+                    RESULT.with(|cell| cell.replace(None));
+                    false
+                }
+            },
+        )
+    })
 }
 
 /// Gets the pointer to the last result of operation.
@@ -94,16 +178,6 @@ pub extern "C" fn get_result_size() -> usize {
         let s = r.as_ref().unwrap();
         s.len()
     })
-}
-
-fn convert_to_js_impl(source: &str) -> Result<String, PositionedError> {
-    let document = parse_operation_document(source)?;
-    let (document, _) = resolve_operation_extensions(document)?;
-    let js = CONFIG.with(|cell| {
-        let config = cell.borrow();
-        print_js(&document, &config)
-    });
-    Ok(js)
 }
 
 fn load_config_impl(config_file: &str) -> bool {

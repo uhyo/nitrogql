@@ -17,3 +17,7 @@ nitrogql-printer = { path = "../printer" }
 nitrogql-utils = { path = "../utils" }
 simple_logger = "4.1.0"
 sourcemap-writer = { path = "../sourcemap-writer" }
+thiserror = "1.0.40"
+
+[dev-dependencies]
+insta = "1.28.0"

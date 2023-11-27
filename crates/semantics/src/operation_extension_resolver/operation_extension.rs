@@ -9,6 +9,7 @@ pub struct OperationExtension<'src> {
 
 #[derive(Debug, Clone)]
 pub struct Import<'src> {
+    /// Path to import from. (not resolved)
     pub path: StringValue,
     pub targets: ImportTargets<'src>,
 }

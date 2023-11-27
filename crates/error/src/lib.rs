@@ -8,6 +8,7 @@ use nitrogql_ast::base::Pos;
 use nitrogql_utils::{first_non_space_byte_index, skip_chars};
 
 /// Error that may be positioned.
+#[derive(Debug)]
 pub struct PositionedError {
     inner: anyhow::Error,
     position: Option<Pos>,
