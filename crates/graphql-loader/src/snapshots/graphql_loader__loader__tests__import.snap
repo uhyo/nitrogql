@@ -2,7 +2,7 @@
 source: crates/graphql-loader/src/loader.rs
 expression: js
 ---
-const TestQuery = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"Test"},"variableDefinitions":[],"directives":[],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"test"},"arguments":[],"directives":[]},{"kind":"FragmentSpread","name":{"kind":"Name","value":"Frag1"},"directives":[]}]}},{"kind":"OperationDefinition","kind":"FragmentDefinition","name":{"kind":"Name","value":"Frag1"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"Query"}},"directives":[],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"test2"},"arguments":[],"directives":[]}]}}]};
+const TestQuery = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"Test"},"variableDefinitions":[],"directives":[],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"test"},"arguments":[],"directives":[]},{"kind":"FragmentSpread","name":{"kind":"Name","value":"Frag1"},"directives":[]}]}},{"kind":"FragmentDefinition","name":{"kind":"Name","value":"Frag1"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"Query"}},"directives":[],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"test2"},"arguments":[],"directives":[]}]}}]};
 
 export { TestQuery as default };
 
