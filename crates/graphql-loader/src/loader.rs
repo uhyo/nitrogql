@@ -166,4 +166,59 @@ mod tests {
         let js = emit_js(&tasks, task_id, &Default::default()).unwrap();
         assert_snapshot!(js);
     }
+
+    #[test]
+    fn transitive_import() {
+        let mut tasks = Tasks::new();
+        let task_id = initiate_task(
+            &mut tasks,
+            PathBuf::from("/path/to/op.graphql"),
+            r#"
+            #import Frag1 from "./frag1.graphql"
+            query Test {
+                test
+                ...Frag1
+            }
+            "#,
+        )
+        .unwrap();
+        let required_files = get_required_files(&mut tasks, task_id).unwrap();
+        assert_eq!(
+            required_files,
+            vec![PathBuf::from("/path/to/frag1.graphql"),]
+        );
+        load_file(
+            &mut tasks,
+            task_id,
+            PathBuf::from("/path/to/frag1.graphql"),
+            r#"
+            #import Frag2 from "./frag2.graphql"
+            fragment Frag1 on Query {
+                test2
+                ...Frag2
+            }
+            "#,
+        )
+        .unwrap();
+        let required_files = get_required_files(&mut tasks, task_id).unwrap();
+        assert_eq!(
+            required_files,
+            vec![PathBuf::from("/path/to/frag2.graphql"),]
+        );
+        load_file(
+            &mut tasks,
+            task_id,
+            PathBuf::from("/path/to/frag2.graphql"),
+            r#"
+            fragment Frag2 on Query {
+                test3
+            }
+            "#,
+        )
+        .unwrap();
+        let required_files = get_required_files(&mut tasks, task_id).unwrap();
+        assert_eq!(required_files.len(), 0);
+        let js = emit_js(&tasks, task_id, &Default::default()).unwrap();
+        assert_snapshot!(js);
+    }
 }
