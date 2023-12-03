@@ -36,6 +36,11 @@ impl Tasks {
     pub fn get_task_mut(&mut self, task_id: usize) -> Option<&mut Task> {
         self.tasks.get_mut(&task_id)
     }
+
+    /// Remove a task.
+    pub fn remove_task(&mut self, task_id: usize) -> Option<Task> {
+        self.tasks.remove(&task_id)
+    }
 }
 
 /// One task of printing.

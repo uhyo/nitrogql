@@ -15,7 +15,6 @@ nitrogql-parser = { path = "../parser" }
 nitrogql-semantics = { path = "../semantics" }
 nitrogql-printer = { path = "../printer" }
 nitrogql-utils = { path = "../utils" }
-simple_logger = "4.1.0"
 sourcemap-writer = { path = "../sourcemap-writer" }
 thiserror = "1.0.40"
 

@@ -5,7 +5,7 @@ mod tasks;
 
 use std::{cell::RefCell, mem::ManuallyDrop, slice};
 
-use log::{debug, error};
+use log::debug;
 use nitrogql_config_file::Config;
 
 thread_local! {
@@ -22,13 +22,7 @@ fn main() {}
 
 /// Initialize this reactor
 #[no_mangle]
-pub extern "C" fn init() {
-    simple_logger::SimpleLogger::new()
-        .with_level(log::LevelFilter::Error)
-        .env()
-        .init()
-        .unwrap();
-}
+pub extern "C" fn init() {}
 
 /// Allocate a string buffer of given size.
 ///
@@ -76,7 +70,7 @@ pub extern "C" fn initiate_task(
         match loader::initiate_task(&mut tasks, file_name.into(), input_source) {
             Ok(task_id) => task_id,
             Err(err) => {
-                error!("{}", err.into_inner());
+                RESULT.with(|cell| cell.replace(Some(format!("{}", err.into_inner()))));
                 0
             }
         }
@@ -102,8 +96,7 @@ pub extern "C" fn get_required_files(task_id: usize) -> bool {
                 true
             }
             Err(err) => {
-                error!("{}", err.into_inner());
-                RESULT.with(|cell| cell.replace(None));
+                RESULT.with(|cell| cell.replace(Some(format!("{}", err.into_inner()))));
                 false
             }
         }
@@ -130,7 +123,7 @@ pub extern "C" fn load_file(
         match loader::load_file(&mut tasks, task_id, file_name.into(), input_source) {
             Ok(_) => true,
             Err(err) => {
-                error!("{}", err.into_inner());
+                RESULT.with(|cell| cell.replace(Some(format!("{}", err.into_inner()))));
                 false
             }
         }
@@ -151,12 +144,21 @@ pub extern "C" fn emit_js(task_id: usize) -> bool {
                     true
                 }
                 Err(err) => {
-                    error!("{}", err.into_inner());
-                    RESULT.with(|cell| cell.replace(None));
+                    RESULT.with(|cell| cell.replace(Some(format!("{}", err.into_inner()))));
                     false
                 }
             },
         )
+    })
+}
+
+/// Frees the task with given id.
+#[no_mangle]
+pub extern "C" fn free_task(task_id: usize) {
+    debug!("free_task {task_id}");
+    TASKS.with(|tasks| {
+        let mut tasks = tasks.borrow_mut();
+        tasks.remove_task(task_id);
     })
 }
 
@@ -186,7 +188,6 @@ fn load_config_impl(config_file: &str) -> bool {
         None => false,
         Some(config) => {
             CONFIG.with(|cell| cell.replace(config));
-            debug!("Loaded config from given source");
             true
         }
     }
