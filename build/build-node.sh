@@ -5,16 +5,22 @@ set -eux
 # Expected to be run after `build-rust.sh`
 # Requirements: node
 
+TARGET_DIR=debug
+if [ -n "${OPTIMIZE+x}" ]; then
+  RUSTC_FLAGS="--release"
+  TARGET_DIR=release
+fi
+
 npm run build -w @nitrogql/core -w @nitrogql/wasi-preview1 -w @nitrogql/esbuild-register
 
 mkdir -p packages/cli/wasm
-cp target/wasm32-wasi/release/nitrogql-cli.opt.wasm packages/cli/wasm/nitrogql-cli.wasm
+cp target/wasm32-wasi/$TARGET_DIR/nitrogql-cli.opt.wasm packages/cli/wasm/nitrogql-cli.wasm
 
 mkdir -p packages/graphql-loader/wasm
-cp target/wasm32-unknown-unknown/release/graphql-loader.opt.wasm packages/graphql-loader/wasm/graphql-loader.wasm
+cp target/wasm32-unknown-unknown/$TARGET_DIR/graphql-loader.opt.wasm packages/graphql-loader/wasm/graphql-loader.wasm
 
 mkdir -p packages/rollup-plugin/wasm
-cp target/wasm32-unknown-unknown/release/graphql-loader.opt.wasm packages/rollup-plugin/wasm/graphql-loader.wasm
+cp target/wasm32-unknown-unknown/$TARGET_DIR/graphql-loader.opt.wasm packages/rollup-plugin/wasm/graphql-loader.wasm
 
 current_version=$(npm pkg get version --json)
 npm pkg set version=${current_version} --json --workspaces

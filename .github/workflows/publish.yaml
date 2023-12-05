@@ -28,6 +28,8 @@ jobs:
           OPTIMIZE: "1"
       - name: build node
         run: ./build/build-node.sh
+        env:
+          OPTIMIZE: "1"
       - name: publish to npm (esbuild-register)
         uses: JS-DevTools/npm-publish@v1
         with:
