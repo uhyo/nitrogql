@@ -3,10 +3,7 @@ use std::path::{Path, PathBuf};
 use nitrogql_ast::OperationDocument;
 use nitrogql_config_file::Config;
 use nitrogql_error::{PositionedError, Result};
-use nitrogql_parser::parse_operation_document;
-use nitrogql_semantics::{
-    resolve_operation_extensions, resolve_operation_imports, OperationExtension, OperationResolver,
-};
+use nitrogql_semantics::{resolve_operation_imports, OperationExtension, OperationResolver};
 use nitrogql_utils::resolve_relative_path;
 use thiserror::Error;
 
@@ -23,19 +20,9 @@ pub enum LoaderError {
 
 /// Initiates a task.
 /// Returns the task id.
-pub fn initiate_task(
-    tasks: &mut Tasks,
-    file_name: PathBuf,
-    input_source: &'static str,
-) -> Result<usize> {
-    let document = parse_operation_document(input_source)?;
-    let (document, extensions) = resolve_operation_extensions(document)?;
-    let task = Task {
-        root_file_name: file_name.clone(),
-        loaded_files: vec![(file_name, (document, extensions))]
-            .into_iter()
-            .collect(),
-    };
+pub fn initiate_task(tasks: &mut Tasks, file_name: PathBuf, input_source: String) -> Result<usize> {
+    let mut task = Task::new(file_name.clone());
+    task.register_file(file_name, input_source)?;
     let task_id = tasks.add_task(task);
     Ok(task_id)
 }
@@ -47,11 +34,11 @@ pub fn get_required_files(tasks: &mut Tasks, task_id: usize) -> Result<Vec<PathB
         .ok_or_else(|| PositionedError::new(LoaderError::TaskNotFound.into(), None, vec![]))?;
 
     let mut required_files = vec![];
-    for (from_file, (_, extensions)) in task.loaded_files.iter() {
+    for (from_file, (_, extensions)) in task.iter_loaded_files() {
         for import in extensions.imports.iter() {
             let path = Path::new(import.path.value.as_str());
             let path = resolve_relative_path(from_file, path);
-            if task.loaded_files.contains_key(&path) || required_files.contains(&path) {
+            if task.contains_file(&path) || required_files.contains(&path) {
                 continue;
             }
             required_files.push(path);
@@ -65,14 +52,12 @@ pub fn load_file(
     tasks: &mut Tasks,
     task_id: usize,
     file_name: PathBuf,
-    input_source: &'static str,
+    input_source: String,
 ) -> Result<()> {
     let task = tasks
         .get_task_mut(task_id)
         .ok_or_else(|| PositionedError::new(LoaderError::TaskNotFound.into(), None, vec![]))?;
-    let document = parse_operation_document(input_source)?;
-    let (document, extensions) = resolve_operation_extensions(document)?;
-    task.loaded_files.insert(file_name, (document, extensions));
+    task.register_file(file_name, input_source)?;
     Ok(())
 }
 
@@ -92,13 +77,10 @@ pub fn emit_js(tasks: &Tasks, task_id: usize, config: &Config) -> Result<String>
 
 struct TaskOperationResolver<'a>(&'a Task);
 
-impl<'a> OperationResolver<'static> for TaskOperationResolver<'a> {
-    fn resolve(
-        &self,
-        path: &Path,
-    ) -> Option<(&OperationDocument<'static>, &OperationExtension<'static>)> {
+impl<'a> OperationResolver<'a> for TaskOperationResolver<'a> {
+    fn resolve(&self, path: &Path) -> Option<(&OperationDocument<'a>, &OperationExtension<'a>)> {
         let task = self.0;
-        let (document, extension) = task.loaded_files.get(path)?;
+        let (document, extension) = task.get_file(path)?;
         Some((document, extension))
     }
 }
@@ -119,7 +101,8 @@ mod tests {
             query Test {
                 test
             }
-            "#,
+            "#
+            .to_string(),
         )
         .unwrap();
         // no imports
@@ -141,7 +124,8 @@ mod tests {
                 test
                 ...Frag1
             }
-            "#,
+            "#
+            .to_string(),
         )
         .unwrap();
         let required_files = get_required_files(&mut tasks, task_id).unwrap();
@@ -157,7 +141,8 @@ mod tests {
             fragment Frag1 on Query {
                 test2
             }
-            "#,
+            "#
+            .to_string(),
         )
         .unwrap();
         let required_files = get_required_files(&mut tasks, task_id).unwrap();
@@ -178,7 +163,8 @@ mod tests {
                 test
                 ...Frag1
             }
-            "#,
+            "#
+            .to_string(),
         )
         .unwrap();
         let required_files = get_required_files(&mut tasks, task_id).unwrap();
@@ -196,7 +182,8 @@ mod tests {
                 test2
                 ...Frag2
             }
-            "#,
+            "#
+            .to_string(),
         )
         .unwrap();
         let required_files = get_required_files(&mut tasks, task_id).unwrap();
@@ -212,7 +199,8 @@ mod tests {
             fragment Frag2 on Query {
                 test3
             }
-            "#,
+            "#
+            .to_string(),
         )
         .unwrap();
         let required_files = get_required_files(&mut tasks, task_id).unwrap();

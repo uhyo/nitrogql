@@ -4,7 +4,7 @@ mod loader;
 mod logger;
 mod tasks;
 
-use std::{cell::RefCell, mem::ManuallyDrop, slice};
+use std::{cell::RefCell, slice};
 
 use log::debug;
 use nitrogql_config_file::Config;
@@ -78,7 +78,7 @@ pub extern "C" fn initiate_task(
     let input_source = read_str_ptr(input_source_ptr, input_source_len);
     TASKS.with(|tasks| {
         let mut tasks = tasks.borrow_mut();
-        match loader::initiate_task(&mut tasks, file_name.into(), &input_source) {
+        match loader::initiate_task(&mut tasks, file_name.into(), input_source) {
             Ok(task_id) => task_id,
             Err(err) => {
                 RESULT.with(|cell| cell.replace(Some(format!("{}", err.into_inner()))));
@@ -131,7 +131,7 @@ pub extern "C" fn load_file(
     let input_source = read_str_ptr(input_source_ptr, input_source_len);
     TASKS.with(|tasks| {
         let mut tasks = tasks.borrow_mut();
-        match loader::load_file(&mut tasks, task_id, file_name.into(), &input_source) {
+        match loader::load_file(&mut tasks, task_id, file_name.into(), input_source) {
             Ok(_) => true,
             Err(err) => {
                 RESULT.with(|cell| cell.replace(Some(format!("{}", err.into_inner()))));
