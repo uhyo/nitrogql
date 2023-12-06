@@ -3,6 +3,7 @@ use std::{
     path::{Path, PathBuf},
 };
 
+use log::debug;
 use nitrogql_ast::{base::Pos, operation::ExecutableDefinition, OperationDocument};
 use nitrogql_error::PositionedError;
 use nitrogql_utils::resolve_relative_path;
@@ -79,6 +80,8 @@ fn resolve_operation_imports_rec<'src>(
                     .iter()
                     .filter(|def| match def {
                         ExecutableDefinition::FragmentDefinition(def) => {
+                            debug!("targets: {:?} def.name.name: {}", targets, def.name.name);
+                            debug!("def: {:?}", def);
                             targets.iter().any(|target| target.name == def.name.name)
                         }
                         _ => false,

@@ -98,8 +98,7 @@ impl<'a> OperationResolver<'static> for TaskOperationResolver<'a> {
         path: &Path,
     ) -> Option<(&OperationDocument<'static>, &OperationExtension<'static>)> {
         let task = self.0;
-        let path = resolve_relative_path(&task.root_file_name, path);
-        let (document, extension) = task.loaded_files.get(&path)?;
+        let (document, extension) = task.loaded_files.get(path)?;
         Some((document, extension))
     }
 }

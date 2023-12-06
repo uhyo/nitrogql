@@ -1,12 +1,15 @@
 #![cfg_attr(target_family = "wasm", no_main)]
 mod js_printer;
 mod loader;
+mod logger;
 mod tasks;
 
 use std::{cell::RefCell, mem::ManuallyDrop, slice};
 
 use log::debug;
 use nitrogql_config_file::Config;
+
+use crate::logger::StringLogger;
 
 thread_local! {
     /// Loaded config.
@@ -17,12 +20,20 @@ thread_local! {
     static TASKS: RefCell<tasks::Tasks> = RefCell::new(tasks::Tasks::new());
 }
 
+/// Logger.
+static LOGGER: StringLogger = StringLogger::new();
+
 #[cfg(not(target_family = "wasm"))]
 fn main() {}
 
 /// Initialize this reactor
 #[no_mangle]
-pub extern "C" fn init() {}
+pub extern "C" fn init(debug: usize) {
+    log::set_logger(&LOGGER).expect("failed to set logger");
+    if debug != 0 {
+        log::set_max_level(log::LevelFilter::Debug);
+    }
+}
 
 /// Allocate a string buffer of given size.
 ///
@@ -30,8 +41,8 @@ pub extern "C" fn init() {}
 /// Caller should guarantee that the contents of returned buffer should be valid UTF-8 strings.
 #[no_mangle]
 pub extern "C" fn alloc_string(len_bytes: usize) -> *mut u8 {
-    let str = String::with_capacity(len_bytes);
-    let mut str = ManuallyDrop::new(str);
+    let str = Box::new(String::with_capacity(len_bytes));
+    let str = Box::leak(str);
     str.as_mut_ptr()
 }
 
@@ -48,7 +59,7 @@ pub unsafe extern "C" fn free_string(ptr: *mut u8, len_bytes: usize) {
 #[no_mangle]
 pub extern "C" fn load_config(config_file_ptr: *const u8, config_file_len: usize) -> bool {
     let config_file = read_str_ptr(config_file_ptr, config_file_len);
-    load_config_impl(config_file)
+    load_config_impl(&config_file)
 }
 
 /// Initiates a task with given filename and source.
@@ -67,7 +78,7 @@ pub extern "C" fn initiate_task(
     let input_source = read_str_ptr(input_source_ptr, input_source_len);
     TASKS.with(|tasks| {
         let mut tasks = tasks.borrow_mut();
-        match loader::initiate_task(&mut tasks, file_name.into(), input_source) {
+        match loader::initiate_task(&mut tasks, file_name.into(), &input_source) {
             Ok(task_id) => task_id,
             Err(err) => {
                 RESULT.with(|cell| cell.replace(Some(format!("{}", err.into_inner()))));
@@ -120,7 +131,7 @@ pub extern "C" fn load_file(
     let input_source = read_str_ptr(input_source_ptr, input_source_len);
     TASKS.with(|tasks| {
         let mut tasks = tasks.borrow_mut();
-        match loader::load_file(&mut tasks, task_id, file_name.into(), input_source) {
+        match loader::load_file(&mut tasks, task_id, file_name.into(), &input_source) {
             Ok(_) => true,
             Err(err) => {
                 RESULT.with(|cell| cell.replace(Some(format!("{}", err.into_inner()))));
@@ -182,6 +193,13 @@ pub extern "C" fn get_result_size() -> usize {
     })
 }
 
+/// Writes the log to the result buffer.
+#[no_mangle]
+pub extern "C" fn get_log() {
+    let log = LOGGER.take_log();
+    RESULT.with(|cell| cell.replace(Some(log)));
+}
+
 fn load_config_impl(config_file: &str) -> bool {
     let config = nitrogql_config_file::parse_config(config_file);
     match config {
@@ -193,7 +211,7 @@ fn load_config_impl(config_file: &str) -> bool {
     }
 }
 
-fn read_str_ptr(ptr: *const u8, len: usize) -> &'static str {
+fn read_str_ptr(ptr: *const u8, len: usize) -> String {
     let slice = unsafe { slice::from_raw_parts(ptr, len) };
-    std::str::from_utf8(slice).unwrap()
+    String::from_utf8(slice.to_vec()).unwrap()
 }

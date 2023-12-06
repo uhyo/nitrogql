@@ -570,6 +570,7 @@ dependencies = [
  "graphql-type-system",
  "indexmap 2.0.0",
  "insta",
+ "log",
  "nitrogql-ast",
  "nitrogql-error",
  "nitrogql-introspection",
