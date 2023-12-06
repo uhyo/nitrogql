@@ -14,7 +14,9 @@ const instance = await WebAssembly.instantiate(wasm);
 
 const alloc = new StringAllocator(instance);
 
-instance.exports.init(1);
+const debugFlag = !!process.env.NITROGQL_DEBUG;
+
+instance.exports.init(+debugFlag);
 
 let lastLoadedConfigPath = undefined;
 
@@ -53,7 +55,6 @@ export default function graphQLLoader(source) {
       inputString.ptr,
       inputString.size
     );
-    console.debug(taskId, "initialize_task", this.resourcePath);
     if (taskId === 0) {
       throw new WasmError("graphql-loader failed to initiate task");
     }
@@ -76,7 +77,6 @@ export default function graphQLLoader(source) {
           const requiredFileString = alloc.allocString(requiredFile);
           const requiredFileSourceString =
             alloc.allocString(requiredFileSource);
-          console.debug(taskId, "load_file", requiredFile);
           const loadFileResult = instance.exports.load_file(
             taskId,
             requiredFileString.ptr,
@@ -95,13 +95,11 @@ export default function graphQLLoader(source) {
       );
     }
 
-    console.debug(taskId, "emit_js");
     const emitResult = instance.exports.emit_js(taskId);
     filenameString.free();
     inputString.free();
     instance.exports.free_task(taskId);
     if (emitResult) {
-      console.debug(taskId, "emit_js result");
       const result = readResult();
       return result;
     } else {
@@ -133,6 +131,9 @@ function readResult() {
 }
 
 function printLog() {
+  if (!debugFlag) {
+    return;
+  }
   instance.exports.get_log();
-  console.debug("printLog " + readResult());
+  console.debug(readResult());
 }
