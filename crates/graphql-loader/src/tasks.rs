@@ -112,6 +112,9 @@ impl Task {
 
 impl Drop for Task {
     fn drop(&mut self) {
+        // need to drop loaded_files first
+        self.loaded_files.clear();
+        // then drop sources
         for (ptr, len, capacity) in self.source_drop_list.drain(..) {
             let _ = unsafe { String::from_raw_parts(ptr, len, capacity) };
         }
