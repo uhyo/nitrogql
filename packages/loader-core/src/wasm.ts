@@ -8,6 +8,7 @@ export type WASMInterface = {
   free_string(ptr: number, size: number): void;
   get_result_ptr(): number;
   get_result_size(): number;
+  load_config(input_ptr: number, input_size: number): number;
   initiate_task(
     filename_ptr: number,
     filename_size: number,

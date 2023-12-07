@@ -24,6 +24,19 @@ export class Task {
   }
 
   /**
+   * Load configuration from given JSON string.
+   * TODO: in current implementation config is internally shared among all tasks.
+   */
+  loadConfig(configString: string) {
+    const configFilePathString = this.#bin.alloc.allocString(configString);
+    this.#bin.exports.load_config(
+      configFilePathString.ptr,
+      configFilePathString.size
+    );
+    configFilePathString.free();
+  }
+
+  /**
    * Returns the current status of the task.
    */
   status(): TaskStatus {
