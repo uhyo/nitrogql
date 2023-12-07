@@ -44,6 +44,13 @@ jobs:
           package: "./packages/core/package.json"
           access: public
           greater-version-only: true
+      - name: publish to npm (loader-core)
+        uses: JS-DevTools/npm-publish@v1
+        with:
+          token: ${{ secrets.NPM_TOKEN }}
+          package: "./packages/loader-core/package.json"
+          access: public
+          greater-version-only: true
       - name: publish to npm (wasi-preview1)
         uses: JS-DevTools/npm-publish@v1
         with:
