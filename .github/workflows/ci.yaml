@@ -33,7 +33,7 @@ jobs:
     name: unit-test-js (Node ${{ matrix.node-version }})
     strategy:
       matrix:
-        node-version: [18, 20.5, 20]
+        node-version: [18.18, 18, 20.5, 20]
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3

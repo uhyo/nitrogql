@@ -11,10 +11,13 @@ const nodeVersion = process.versions.node.split(".").map((x) => Number(x)) as [
   number,
   number
 ];
+const nodeSupportsModuleRegisterAPI =
+  nodeVersion[0] > 20 ||
+  (nodeVersion[0] === 20 && nodeVersion[1] >= 6) ||
+  (nodeVersion[0] === 18 && nodeVersion[1] >= 19);
 
 export async function runNode(path: string): Promise<string> {
-  // >= Node 20.6.0
-  if (nodeVersion[0] > 20 || (nodeVersion[0] === 20 && nodeVersion[1] >= 6)) {
+  if (nodeSupportsModuleRegisterAPI) {
     const { stdout } = await promisify(execFile)(
       process.execPath,
       ["--import", registerMJS.toString(), path],
