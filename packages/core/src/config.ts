@@ -13,13 +13,14 @@ import { getMemory, readString } from "./memory.js";
 export function executeNodeSync(code: string): string {
   const nodeVersion = process.versions.node;
   // @nitrogql/esbuild-register requires different usage
-  // depending on whether Node.js >= 20.6.0 or not.
+  // depending on whether Node.js supports the `register` API from `node:module`.
   const [major, minor] = nodeVersion.split(".").map((x) => Number(x)) as [
     number,
     number
   ];
-  const isNode2060OrLater = major > 20 || (major === 20 && minor >= 6);
-  if (isNode2060OrLater) {
+  const nodeHasModuleRegisterAPI =
+    major > 20 || (major === 20 && minor >= 6) || (major === 18 && minor >= 19);
+  if (nodeHasModuleRegisterAPI) {
     return execFileSync(
       process.execPath,
       [

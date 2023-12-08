@@ -8,7 +8,7 @@ import { cjsHook } from "./legacy.js";
  * Registers the esbuild hook.
  */
 export function register() {
-  // ESM loader (>= Node 20.6.0)
+  // ESM loader (>= Node 20.6.0 or >= 18.19.0)
   // @ts-expect-error
   if (nodeModule.register) {
     const hookUrl = new URL("hook.mjs", pathToFileURL(__filename));
@@ -16,7 +16,7 @@ export function register() {
     nodeModule.register(hookUrl);
   }
 
-  // Node.js' loader (>= Node 20.6.0) still depends on Module._resolveFilename,
+  // Node.js' loader (>= Node 20.6.0 or >= Node 18.19.0) still depends on Module._resolveFilename,
   // so we need to patch it as well.
   {
     const { Module } = nodeModule;
