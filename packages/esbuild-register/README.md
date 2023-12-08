@@ -6,13 +6,13 @@ This package contains an implementation similar to [egoist/esbuild-register](htt
 
 Usage depends on your Node.js version.
 
-### Node.js >= 20.6.0
+### Node.js >= 20.6.0 or >= 18.19.0
 
 ```sh
 node --import=@nitrogql/esbuild-register
 ```
 
-### Node.js < 20.6.0
+### Node.js < 20.6.0 and < 18.19.0
 
 ```sh
 node --import=@nitrogql/esbuild-register --experimental-loader=@nitrogql/esbuild-register/hook

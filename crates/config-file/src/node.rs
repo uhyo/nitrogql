@@ -8,8 +8,8 @@ use std::{
 use once_cell::sync::Lazy;
 
 // @nitrogql/esbuild-register requires different usage
-// depending on whether Node.js >= 20.6.0 or not.
-static NODE_VERSION_IS_20_6_0_OR_LATER: Lazy<bool> = Lazy::new(|| {
+// depending on Node.js version.
+static NODE_SUPPORTS_MODULE_REGISTER_API: Lazy<bool> = Lazy::new(|| {
     let command = Command::new("node")
         .arg("--version")
         .stdin(Stdio::null())
@@ -31,7 +31,7 @@ static NODE_VERSION_IS_20_6_0_OR_LATER: Lazy<bool> = Lazy::new(|| {
         version[0].parse::<u32>().unwrap(),
         version[1].parse::<u32>().unwrap(),
     );
-    version >= (20, 6)
+    version >= (20, 6) || (version.0 == 18 && version.1 >= 19)
 });
 
 /// Runs given string as JavaScript code, and returns string written to stdout.
@@ -41,7 +41,7 @@ pub fn run_node(code: &str) -> io::Result<String> {
         let mut command = Command::new("node");
         command.arg("--no-warnings");
         command.arg("--input-type=module");
-        if *NODE_VERSION_IS_20_6_0_OR_LATER {
+        if *NODE_SUPPORTS_MODULE_REGISTER_API {
             command.arg("--import=@nitrogql/esbuild-register");
         } else {
             command.arg("--require=@nitrogql/esbuild-register");
