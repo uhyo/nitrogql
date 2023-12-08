@@ -48,7 +48,8 @@ jobs:
       matrix:
         # 20.5 is added because @nitrogql/esbuild-register behaves differently
         # before and after 20.6
-        node-version: [18, 20.5, 20]
+        # 18.18 is added for the same reason
+        node-version: [18.18, 18, 20.5, 20]
     name: e2e-test (Node ${{ matrix.node-version }})
     steps:
       - uses: actions/checkout@v3
