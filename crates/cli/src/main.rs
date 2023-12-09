@@ -16,8 +16,7 @@ use graphql_type_system::Schema;
 use itertools::Itertools;
 use log::info;
 use nitrogql_ast::{
-    operation::OperationDocument, set_current_file_of_pos,
-    type_system::TypeSystemOrExtensionDocument,
+    set_current_file_of_pos, type_system::TypeSystemOrExtensionDocument, OperationDocumentExt,
 };
 use nitrogql_introspection::schema_from_introspection_json;
 use nitrogql_plugin::{Plugin, PluginSchemaExtensions};
@@ -218,7 +217,7 @@ fn run_cli_impl(
     let (operation_docs, operation_errors): (Vec<_>, Vec<_>) = operation_files
         .into_iter()
         .map(
-            |(path, buf)| -> Result<(PathBuf, OperationDocument, usize), CommandError> {
+            |(path, buf)| -> Result<(PathBuf, OperationDocumentExt, usize), CommandError> {
                 info!("parsing(operation) {}", path.to_string_lossy());
                 let file_idx = file_store.add_file(path.clone(), buf, FileKind::Operation);
                 let (_, buf, _) = file_store.get_file(file_idx).unwrap();

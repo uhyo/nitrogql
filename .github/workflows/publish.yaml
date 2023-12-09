@@ -28,6 +28,8 @@ jobs:
           OPTIMIZE: "1"
       - name: build node
         run: ./build/build-node.sh
+        env:
+          OPTIMIZE: "1"
       - name: publish to npm (esbuild-register)
         uses: JS-DevTools/npm-publish@v1
         with:
@@ -40,6 +42,13 @@ jobs:
         with:
           token: ${{ secrets.NPM_TOKEN }}
           package: "./packages/core/package.json"
+          access: public
+          greater-version-only: true
+      - name: publish to npm (loader-core)
+        uses: JS-DevTools/npm-publish@v1
+        with:
+          token: ${{ secrets.NPM_TOKEN }}
+          package: "./packages/loader-core/package.json"
           access: public
           greater-version-only: true
       - name: publish to npm (wasi-preview1)

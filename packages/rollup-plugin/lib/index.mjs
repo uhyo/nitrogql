@@ -3,17 +3,10 @@
 import path from "node:path";
 import { readFile } from "node:fs/promises";
 import { executeConfigFileSync } from "@nitrogql/core";
+import { init } from "@nitrogql/loader-core";
 import { createFilter } from "@rollup/pluginutils";
-import { StringAllocator } from "./alloc.mjs";
 
-const wasm = await WebAssembly.compile(
-  await readFile(new URL("../wasm/graphql-loader.wasm", import.meta.url))
-);
-const instance = await WebAssembly.instantiate(wasm);
-
-const alloc = new StringAllocator(instance);
-
-instance.exports.init();
+const { initiateTask, getLog } = await init();
 
 let lastLoadedConfigPath = undefined;
 
@@ -46,33 +39,39 @@ export default function NitrogqlRollupPlugin(options) {
         this.addWatchFile(configFilePath);
       }
 
+      const task = initiateTask(id, source);
+
       if (lastLoadedConfigPath !== configFilePath && configFilePath) {
         const configFileSource = configFileIsJS(configFilePath)
           ? executeConfigFileSync(configFilePath)
           : await readFile(configFilePath, "utf-8");
-        const configFilePathString = alloc.allocString(configFileSource);
-        instance.exports.load_config(
-          configFilePathString.ptr,
-          configFilePathString.size
-        );
-        configFilePathString.free();
+        task.loadConfig(configFileSource);
       }
       lastLoadedConfigPath = configFilePath;
 
-      const inputString = alloc.allocString(source);
-
-      const convertResult = instance.exports.convert_to_js(
-        inputString.ptr,
-        inputString.size
-      );
-      inputString.free();
-      if (convertResult) {
-        const ptr = instance.exports.get_result_ptr();
-        const size = instance.exports.get_result_size();
-        const result = alloc.readString(ptr, size);
-        return result;
-      } else {
-        throw new Error("graphql-loader failed to convert");
+      while (true) {
+        const status = task.status();
+        switch (status.status) {
+          case "fileRequired": {
+            const requiredFiles = status.files;
+            await Promise.all(
+              requiredFiles.map(async (requiredFile) => {
+                this.addWatchFile(requiredFile);
+                const requiredFileSource = await readFile(
+                  requiredFile,
+                  "utf-8"
+                );
+                task.supplyFile(requiredFile, requiredFileSource);
+              })
+            );
+            break;
+          }
+          case "ready": {
+            const result = task.emit();
+            task.free();
+            return result;
+          }
+        }
       }
     },
   };

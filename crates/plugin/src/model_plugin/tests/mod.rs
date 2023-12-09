@@ -3,7 +3,7 @@
 use graphql_builtins::generate_builtins;
 use nitrogql_ast::TypeSystemDocument;
 use nitrogql_parser::parse_type_system_document;
-use nitrogql_semantics::resolve_extensions;
+use nitrogql_semantics::resolve_schema_extensions;
 
 use crate::{ModelPlugin, Plugin, PluginHost};
 
@@ -202,7 +202,7 @@ fn parse_to_type_system_document(source: &str) -> TypeSystemDocument {
             .flat_map(|d| d.definitions),
     );
 
-    let doc = resolve_extensions(doc).unwrap();
+    let doc = resolve_schema_extensions(doc).unwrap();
     doc
 }
 

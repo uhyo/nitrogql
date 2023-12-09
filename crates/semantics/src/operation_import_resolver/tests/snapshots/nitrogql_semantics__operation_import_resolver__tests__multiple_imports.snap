@@ -1,0 +1,17 @@
+---
+source: crates/semantics/src/operation_import_resolver/tests/mod.rs
+expression: print_document(&resolved)
+---
+query Foo {
+  foo {
+    ... Frag1
+    ... Frag3
+  }
+}
+fragment Frag1 on Foo {
+  bar
+}
+fragment Frag3 on Foo {
+  baz
+}
+

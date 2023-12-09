@@ -1,13 +1,7 @@
+#import TodoItemFragment from "./TodoItem/TodoItemFragment.graphql"
 query ($unfinishedOnly: Boolean) {
   todos(filter: { unfinishedOnly: $unfinishedOnly }) {
     id
-    body
-    createdAt
-    finishedAt
-    tags {
-      id
-      label
-      color
-    }
+    ...TodoItemFragment
   }
 }

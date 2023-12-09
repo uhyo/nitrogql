@@ -1,0 +1,10 @@
+fragment TodoItemFragment on Todo {
+  body
+  createdAt
+  finishedAt
+  tags {
+    id
+    label
+    color
+  }
+}

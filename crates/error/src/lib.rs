@@ -8,6 +8,7 @@ use nitrogql_ast::base::Pos;
 use nitrogql_utils::{first_non_space_byte_index, skip_chars};
 
 /// Error that may be positioned.
+#[derive(Debug)]
 pub struct PositionedError {
     inner: anyhow::Error,
     position: Option<Pos>,
@@ -31,6 +32,10 @@ impl PositionedError {
 
     pub fn has_position(&self) -> bool {
         self.position.is_some()
+    }
+
+    pub fn position(&self) -> Option<Pos> {
+        self.position
     }
 
     pub fn into_inner(self) -> anyhow::Error {

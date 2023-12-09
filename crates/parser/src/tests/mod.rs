@@ -89,6 +89,167 @@ mod operation {
             .unwrap()
         ));
     }
+    #[test]
+    fn comments() {
+        assert_snapshot!(print_graphql(
+            parse_operation_document(
+                "# Comment
+query #comment
+sample#comment
+($foo: Int!, #comment
+# # # # #
+     $bar: Int!) {
+    # comment
+    foo
+    # comment
+    bar
+} # comment
+"
+            )
+            .unwrap()
+        ));
+    }
+
+    fn print_graphql<T: GraphQLPrinter>(value: T) -> String {
+        let mut result = String::new();
+        let mut writer = JustWriter::new(&mut result);
+        value.print_graphql(&mut writer);
+        result
+    }
+}
+
+#[cfg(test)]
+mod import_syntax {
+    use insta::assert_snapshot;
+
+    use crate::parser::parse_operation_document;
+    use nitrogql_printer::GraphQLPrinter;
+    use sourcemap_writer::JustWriter;
+
+    #[test]
+    fn specific_import() {
+        assert_snapshot!(print_graphql(
+            parse_operation_document(
+                r#"
+                #import Frag1 from "./frag1.graphql"
+                query Foo {
+                    foo {
+                        ...Frag1
+                    }
+                }
+                "#
+            )
+            .unwrap()
+        ));
+    }
+
+    #[test]
+    fn wildcard_import() {
+        assert_snapshot!(print_graphql(
+            parse_operation_document(
+                r#"
+                #import * from "./frag1.graphql"
+                query Foo {
+                    foo {
+                        ...Frag1
+                    }
+                }
+                "#
+            )
+            .unwrap()
+        ));
+    }
+
+    #[test]
+    fn multiple_imports() {
+        assert_snapshot!(print_graphql(
+            parse_operation_document(
+                r#"
+                #import Frag1, Frag2 from "./frag1.graphql"
+                query Foo {
+                    foo {
+                        ...Frag1
+                        ...Frag2
+                    }
+                }
+                "#
+            )
+            .unwrap()
+        ));
+    }
+
+    #[test]
+    fn multiple_imports_with_wildcard() {
+        assert_snapshot!(print_graphql(
+            parse_operation_document(
+                r#"
+                #import Frag1, * from "./frag1.graphql"
+                query Foo {
+                    foo {
+                        ...Frag1
+                        ...Frag2
+                    }
+                }
+                "#
+            )
+            .unwrap()
+        ));
+    }
+    #[test]
+    fn multiple_import_statements() {
+        assert_snapshot!(print_graphql(
+            parse_operation_document(
+                r#"
+                #import Frag1 from "./frag1.graphql"
+                #import Frag2 from "./frag2.graphql"
+                query Foo {
+                    foo {
+                        ...Frag1
+                        ...Frag2
+                    }
+                }
+                "#
+            )
+            .unwrap()
+        ));
+    }
+
+    #[test]
+    fn space_before_import() {
+        assert_snapshot!(print_graphql(
+            parse_operation_document(
+                r#"
+                # import Frag1 from "./frag1.graphql"
+                query Foo {
+                    foo {
+                        ...Frag1
+                    }
+                }
+                "#
+            )
+            .unwrap()
+        ));
+    }
+
+    #[test]
+    fn resembling_comments() {
+        assert_snapshot!(print_graphql(
+            parse_operation_document(
+                r#"
+                #IMPORT * from "./frag1.graphql"
+                #import Frag2 from './frag2.graphql'
+                # import something!
+                #import * from
+                query Foo {
+                    foo {
+                        id
+                    }
+                }
+                "#
+            )
+            .unwrap()
+        ));
+    }
 
     fn print_graphql<T: GraphQLPrinter>(value: T) -> String {
         let mut result = String::new();
@@ -255,6 +416,30 @@ mod definition {
                 directive @bar repeatable on INPUT_FIELD_DEFINITION
                 directive @baz(arg1: Int! @arg, arg2: Int! @arg) on INPUT_OBJECT
                 "
+            )
+            .unwrap()
+        ));
+    }
+
+    #[test]
+    fn comments() {
+        assert_snapshot!(print_graphql(
+            parse_type_system_document(
+                "# Comment
+scalar Date # Comment
+# Comment
+# comment # comment ### comment
+
+type #comment
+Foo # comment
+# comment
+{
+    # comment
+    foo: String! # comment
+    # comment
+    bar: String! # comment
+}
+"
             )
             .unwrap()
         ));

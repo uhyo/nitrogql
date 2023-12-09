@@ -1,0 +1,9 @@
+---
+source: crates/parser/src/tests/mod.rs
+expression: "print_graphql(parse_operation_document(r#\"\n                #IMPORT * from \"./frag1.graphql\"\n                #import Frag2 from './frag2.graphql'\n                # import something!\n                #import * from\n                query Foo {\n                    foo {\n                        id\n                    }\n                }\n                \"#).unwrap())"
+---
+query Foo {
+  foo {
+    id
+  }
+}

@@ -10,8 +10,13 @@ anyhow = "1.0.70"
 log = "0.4.17"
 nitrogql-ast = { path = "../ast" }
 nitrogql-config-file = { path = "../config-file" }
+nitrogql-error = { path = "../error" }
 nitrogql-parser = { path = "../parser" }
+nitrogql-semantics = { path = "../semantics" }
 nitrogql-printer = { path = "../printer" }
 nitrogql-utils = { path = "../utils" }
-simple_logger = "4.1.0"
 sourcemap-writer = { path = "../sourcemap-writer" }
+thiserror = "1.0.40"
+
+[dev-dependencies]
+insta = "1.28.0"

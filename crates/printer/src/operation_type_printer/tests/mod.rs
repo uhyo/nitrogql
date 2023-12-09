@@ -1,10 +1,15 @@
+use std::path::Path;
+
 use insta::assert_snapshot;
 
 use graphql_builtins::generate_builtins;
+use nitrogql_ast::{set_current_file_of_pos, OperationDocumentExt};
 use nitrogql_ast::{OperationDocument, TypeSystemDocument};
 use nitrogql_parser::{parse_operation_document, parse_type_system_document};
-use nitrogql_semantics::ast_to_type_system;
-use nitrogql_semantics::resolve_extensions;
+use nitrogql_semantics::{
+    ast_to_type_system, resolve_operation_extensions, OperationExtension, OperationResolver,
+};
+use nitrogql_semantics::{resolve_operation_imports, resolve_schema_extensions};
 use sourcemap_writer::JustWriter;
 
 use crate::operation_base_printer::options::OperationBasePrinterOptions;
@@ -57,7 +62,7 @@ fn type_system() -> TypeSystemDocument<'static> {
     )
     .unwrap();
     doc.extend(generate_builtins());
-    let doc = resolve_extensions(doc).unwrap();
+    let doc = resolve_schema_extensions(doc).unwrap();
     doc
 }
 
@@ -89,6 +94,7 @@ fn export_input_and_result_type() {
         ",
     )
     .unwrap();
+    let (doc, _) = resolve_operation_extensions(doc).unwrap();
     let printed = print_document(
         &doc,
         OperationTypePrinterOptions {
@@ -203,6 +209,7 @@ fn variable_disallow_undefined() {
         ",
     )
     .unwrap();
+    let (doc, _) = resolve_operation_extensions(doc).unwrap();
     let printed = print_document(
         &doc,
         OperationTypePrinterOptions {
@@ -226,6 +233,7 @@ fn print_values() {
         ",
     )
     .unwrap();
+    let (doc, _) = resolve_operation_extensions(doc).unwrap();
     let mut result = String::new();
     let mut writer = JustWriter::new(&mut result);
     let schema = type_system();
@@ -598,8 +606,78 @@ mod skip_include {
     }
 }
 
-fn print_document_default(document: &OperationDocument) -> String {
-    print_document(document, OperationTypePrinterOptions::default())
+mod import_fragments {
+    use super::*;
+
+    #[test]
+    fn import_fragment() {
+        let doc = parse_operation_document(
+            "
+            #import UserProfile from \"./user-profile.graphql\"
+            query myQuery {
+                me {
+                    id 
+                    ...UserProfile
+                }
+            }
+            ",
+        )
+        .unwrap();
+        let (doc, extensions) = resolve_operation_extensions(doc).unwrap();
+        let doc = (Path::new("/path/to/main.graphql"), &doc, &extensions);
+        let resolved = resolve_operation_imports(doc, &TestOperationResolver).unwrap();
+        let printed = print_document(&resolved, OperationTypePrinterOptions::default());
+        assert_snapshot!(printed);
+    }
+}
+
+struct TestOperationResolver;
+impl<'src> OperationResolver<'src> for TestOperationResolver {
+    fn resolve(
+        &self,
+        path: &Path,
+    ) -> Option<(
+        &OperationDocument<'src>,
+        &nitrogql_semantics::OperationExtension<'src>,
+    )> {
+        match path.to_str().unwrap() {
+            "/path/to/user-profile.graphql" => Some(static_parse(
+                r#"
+fragment UserProfile on User {
+    name
+    age
+}
+"#,
+                1,
+            )),
+            _ => None,
+        }
+    }
+}
+
+fn static_parse(
+    code: &'static str,
+    file_id: usize,
+) -> (
+    &'static OperationDocument<'static>,
+    &'static OperationExtension<'static>,
+) {
+    set_current_file_of_pos(file_id);
+    let doc = parse_operation_document(code).unwrap();
+    let (doc, extensions) = resolve_operation_extensions(doc).unwrap();
+    let (doc, extensions) = (Box::leak(Box::new(doc)), Box::leak(Box::new(extensions)));
+    (doc, extensions)
+}
+
+fn print_document_default(document: &OperationDocumentExt) -> String {
+    set_current_file_of_pos(0);
+    let (document, extensions) = resolve_operation_extensions(document.clone()).unwrap();
+    let document = resolve_operation_imports(
+        (Path::new("/path/to/main.graphql"), &document, &extensions),
+        &TestOperationResolver,
+    )
+    .unwrap();
+    print_document(&document, OperationTypePrinterOptions::default())
 }
 
 fn print_document(document: &OperationDocument, options: OperationTypePrinterOptions) -> String {

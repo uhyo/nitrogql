@@ -1,0 +1,27 @@
+---
+source: crates/printer/src/operation_type_printer/tests/mod.rs
+expression: printed
+---
+import type { TypedDocumentNode } from "@graphql-typed-document-node/core";
+import type * as Schema from "";
+
+type MyQueryResult = Schema.__SelectionSet<Schema.Query, {
+  me: Schema.__SelectionSet<Schema.User, {
+    id: Schema.ID;
+    name: Schema.String;
+    age: Schema.Int | null;
+  }, {}>;
+}, {}>;
+
+type MyQueryVariables = {};
+
+declare const MyQueryQuery: TypedDocumentNode<MyQueryResult, MyQueryVariables>;
+
+export { MyQueryQuery as default };
+
+type UserProfile = Schema.__SelectionSet<Schema.User, {
+  name: Schema.String;
+  age: Schema.Int | null;
+}, {}>;
+
+

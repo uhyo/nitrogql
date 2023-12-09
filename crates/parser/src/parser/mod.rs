@@ -1,4 +1,4 @@
-use nitrogql_ast::{base::Pos, OperationDocument, TypeSystemOrExtensionDocument};
+use nitrogql_ast::{base::Pos, operation_ext::OperationDocumentExt, TypeSystemOrExtensionDocument};
 use nitrogql_error::PositionedError;
 use pest::Parser;
 use pest_derive::Parser;
@@ -54,7 +54,7 @@ impl From<ParseError> for PositionedError {
     }
 }
 
-pub fn parse_operation_document(document: &str) -> Result<OperationDocument, ParseError> {
+pub fn parse_operation_document(document: &str) -> Result<OperationDocumentExt, ParseError> {
     let res = RawParser::parse(Rule::ExecutableDocument, document)?;
 
     Ok(build_operation_document(res))

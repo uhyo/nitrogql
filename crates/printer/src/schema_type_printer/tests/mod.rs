@@ -8,7 +8,7 @@ use crate::schema_type_printer::{
     printer::{SchemaTypePrinter, SchemaTypePrinterOptions},
 };
 use nitrogql_parser::parse_type_system_document;
-use nitrogql_semantics::resolve_extensions;
+use nitrogql_semantics::resolve_schema_extensions;
 use sourcemap_writer::JustWriter;
 
 #[test]
@@ -56,7 +56,7 @@ fn type_printing() {
             ",
     )
     .unwrap();
-    let doc = resolve_extensions(doc).unwrap();
+    let doc = resolve_schema_extensions(doc).unwrap();
     let printed = print_document(&doc, Default::default()).unwrap();
     assert_snapshot!(printed);
 }
@@ -118,7 +118,7 @@ fn type_printing_with_desc() {
             "#,
     )
     .unwrap();
-    let doc = resolve_extensions(doc).unwrap();
+    let doc = resolve_schema_extensions(doc).unwrap();
     let printed = print_document(&doc, Default::default()).unwrap();
     assert_snapshot!(printed);
 }
@@ -132,7 +132,7 @@ fn scalar_printing() {
         ",
     )
     .unwrap();
-    let doc = resolve_extensions(doc).unwrap();
+    let doc = resolve_schema_extensions(doc).unwrap();
     let mut options = SchemaTypePrinterOptions::default();
     options.scalar_types.extend(vec![
         ("BigInt".to_owned(), "bigint".to_owned()),
@@ -155,7 +155,7 @@ fn avoid_circular_reference_1() {
         ",
     )
     .unwrap();
-    let doc = resolve_extensions(doc).unwrap();
+    let doc = resolve_schema_extensions(doc).unwrap();
     let mut options = SchemaTypePrinterOptions::default();
     options.scalar_types.extend(vec![
         ("BigInt".to_owned(), "bigint".to_owned()),
@@ -179,7 +179,7 @@ fn avoid_circular_reference_2() {
         ",
     )
     .unwrap();
-    let doc = resolve_extensions(doc).unwrap();
+    let doc = resolve_schema_extensions(doc).unwrap();
     let mut options = SchemaTypePrinterOptions::default();
     options.scalar_types.extend(vec![
         ("BigInt".to_owned(), "bigint".to_owned()),
@@ -203,7 +203,7 @@ fn avoid_circular_reference_3() {
         ",
     )
     .unwrap();
-    let doc = resolve_extensions(doc).unwrap();
+    let doc = resolve_schema_extensions(doc).unwrap();
     let mut options = SchemaTypePrinterOptions::default();
     options.scalar_types.extend(vec![
         ("Rec1".to_owned(), "string | Rec2".to_owned()),
@@ -240,7 +240,7 @@ fn deprecated_items() {
         "#,
     )
     .unwrap();
-    let doc = resolve_extensions(doc).unwrap();
+    let doc = resolve_schema_extensions(doc).unwrap();
     let options = SchemaTypePrinterOptions::default();
     let printed = print_document(&doc, options).unwrap();
     assert_snapshot!(printed);
@@ -258,7 +258,7 @@ fn enum_runtime() {
         "#,
     )
     .unwrap();
-    let doc = resolve_extensions(doc).unwrap();
+    let doc = resolve_schema_extensions(doc).unwrap();
     let options = SchemaTypePrinterOptions {
         emit_schema_runtime: true,
         ..SchemaTypePrinterOptions::default()

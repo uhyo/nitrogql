@@ -40,9 +40,9 @@ impl JsonPrintable for [&ExecutableDefinition<'_>] {
 
 impl JsonPrintable for ExecutableDefinition<'_> {
     fn print_json(&self, writer: &mut JSONObjectWriter) {
-        writer.value("kind", "OperationDefinition");
         match self {
             ExecutableDefinition::OperationDefinition(op) => {
+                writer.value("kind", "OperationDefinition");
                 writer.value("operation", op.operation_type.as_str());
                 if let Some(name) = &op.name {
                     writer.value("name", JSONValue(&Name(name.name)));

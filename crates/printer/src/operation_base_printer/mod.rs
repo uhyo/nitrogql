@@ -63,9 +63,11 @@ where
                     }
                 }
                 ExecutableDefinition::FragmentDefinition(ref def) => {
+                    // do not export fragment definitions imported from other files.
+                    let exported = document.position.file == def.position.file;
                     let context = PrintFragmentContext {
                         var_name: def.name.name,
-                        exported: true,
+                        exported,
                         fragment: def,
                     };
                     self.visitor.print_fragment_definition(context, self.writer);

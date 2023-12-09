@@ -3,7 +3,7 @@
 use insta::assert_snapshot;
 use nitrogql_ast::TypeSystemDocument;
 use nitrogql_parser::parse_type_system_document;
-use nitrogql_semantics::resolve_extensions;
+use nitrogql_semantics::resolve_schema_extensions;
 use sourcemap_writer::JustWriter;
 
 use crate::GraphQLPrinter;
@@ -62,7 +62,7 @@ fn schema_printing() {
             "#,
     )
     .unwrap();
-    let doc = resolve_extensions(doc).unwrap();
+    let doc = resolve_schema_extensions(doc).unwrap();
     let printed = print_document(&doc);
     assert_snapshot!(printed);
 }

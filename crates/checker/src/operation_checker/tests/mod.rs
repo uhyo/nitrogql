@@ -1,20 +1,25 @@
+use std::borrow::Cow;
+
 use graphql_builtins::generate_builtins;
-use nitrogql_ast::TypeSystemDocument;
+use graphql_type_system::Schema;
+use nitrogql_ast::{base::Pos, OperationDocumentExt, TypeSystemDocument};
 use nitrogql_parser::parse_type_system_document;
-use nitrogql_semantics::resolve_extensions;
+use nitrogql_semantics::{resolve_operation_extensions, resolve_schema_extensions};
+
+use crate::{check_operation_document, CheckError, OperationCheckContext};
 
 mod operations {
     use std::borrow::Cow;
 
     use graphql_type_system::Schema;
     use insta::assert_debug_snapshot;
-    use nitrogql_semantics::ast_to_type_system;
+    use nitrogql_semantics::{ast_to_type_system, resolve_operation_extensions};
 
     use crate::operation_checker::check_operation_document;
     use nitrogql_ast::base::Pos;
     use nitrogql_parser::parse_operation_document;
 
-    use super::parse_to_type_system_document;
+    use super::{parse_to_type_system_document, test_check};
 
     fn type_system() -> Schema<Cow<'static, str>, Pos> {
         let doc = parse_to_type_system_document(
@@ -47,7 +52,7 @@ mod operations {
         )
         .unwrap();
 
-        assert_debug_snapshot!(check_operation_document(&schema, &doc));
+        assert_debug_snapshot!(test_check(schema, doc));
     }
 
     #[test]
@@ -63,7 +68,7 @@ mod operations {
         )
         .unwrap();
 
-        assert_debug_snapshot!(check_operation_document(&schema, &doc));
+        assert_debug_snapshot!(test_check(schema, doc));
     }
 }
 
@@ -74,11 +79,10 @@ mod operation_directives {
     use insta::assert_debug_snapshot;
     use nitrogql_semantics::ast_to_type_system;
 
-    use crate::operation_checker::check_operation_document;
     use nitrogql_ast::base::Pos;
     use nitrogql_parser::parse_operation_document;
 
-    use super::parse_to_type_system_document;
+    use super::{parse_to_type_system_document, test_check};
 
     fn type_system() -> Schema<Cow<'static, str>, Pos> {
         let doc = parse_to_type_system_document(
@@ -115,7 +119,7 @@ mod operation_directives {
         )
         .unwrap();
 
-        assert_debug_snapshot!(check_operation_document(&schema, &doc));
+        assert_debug_snapshot!(test_check(schema, doc));
     }
     #[test]
     fn wrong_location() {
@@ -129,7 +133,7 @@ mod operation_directives {
         )
         .unwrap();
 
-        assert_debug_snapshot!(check_operation_document(&schema, &doc));
+        assert_debug_snapshot!(test_check(schema, doc));
     }
 
     #[test]
@@ -144,7 +148,7 @@ mod operation_directives {
         )
         .unwrap();
 
-        assert_debug_snapshot!(check_operation_document(&schema, &doc));
+        assert_debug_snapshot!(test_check(schema, doc));
     }
 
     #[test]
@@ -159,7 +163,7 @@ mod operation_directives {
         )
         .unwrap();
 
-        assert_debug_snapshot!(check_operation_document(&schema, &doc));
+        assert_debug_snapshot!(test_check(schema, doc));
     }
 
     #[test]
@@ -180,7 +184,7 @@ mod operation_directives {
         )
         .unwrap();
 
-        assert_debug_snapshot!(check_operation_document(&schema, &doc));
+        assert_debug_snapshot!(test_check(schema, doc));
     }
 
     #[test]
@@ -201,7 +205,7 @@ mod operation_directives {
         )
         .unwrap();
 
-        assert_debug_snapshot!(check_operation_document(&schema, &doc))
+        assert_debug_snapshot!(test_check(schema, doc));
     }
 
     #[test]
@@ -220,7 +224,7 @@ mod operation_directives {
         )
         .unwrap();
 
-        assert_debug_snapshot!(check_operation_document(&schema, &doc))
+        assert_debug_snapshot!(test_check(schema, doc));
     }
 
     #[test]
@@ -237,7 +241,7 @@ mod operation_directives {
         )
         .unwrap();
 
-        assert_debug_snapshot!(check_operation_document(&schema, &doc))
+        assert_debug_snapshot!(test_check(schema, doc));
     }
 
     #[test]
@@ -254,7 +258,7 @@ mod operation_directives {
         )
         .unwrap();
 
-        assert_debug_snapshot!(check_operation_document(&schema, &doc))
+        assert_debug_snapshot!(test_check(schema, doc));
     }
 
     #[test]
@@ -271,7 +275,7 @@ mod operation_directives {
         )
         .unwrap();
 
-        assert_debug_snapshot!(check_operation_document(&schema, &doc))
+        assert_debug_snapshot!(test_check(schema, doc));
     }
 
     #[test]
@@ -288,7 +292,7 @@ mod operation_directives {
         )
         .unwrap();
 
-        assert_debug_snapshot!(check_operation_document(&schema, &doc))
+        assert_debug_snapshot!(test_check(schema, doc));
     }
 }
 
@@ -297,13 +301,13 @@ mod selection_set {
 
     use graphql_type_system::Schema;
     use insta::assert_debug_snapshot;
-    use nitrogql_semantics::ast_to_type_system;
+    use nitrogql_semantics::{ast_to_type_system, resolve_operation_extensions};
 
     use crate::operation_checker::check_operation_document;
     use nitrogql_ast::base::Pos;
     use nitrogql_parser::parse_operation_document;
 
-    use super::parse_to_type_system_document;
+    use super::{parse_to_type_system_document, test_check};
 
     fn type_system() -> Schema<Cow<'static, str>, Pos> {
         let doc = parse_to_type_system_document(
@@ -348,7 +352,7 @@ mod selection_set {
         )
         .unwrap();
 
-        assert_debug_snapshot!(check_operation_document(&schema, &doc))
+        assert_debug_snapshot!(test_check(schema, doc));
     }
 
     #[test]
@@ -368,7 +372,7 @@ mod selection_set {
         )
         .unwrap();
 
-        assert_debug_snapshot!(check_operation_document(&schema, &doc))
+        assert_debug_snapshot!(test_check(schema, doc));
     }
 
     #[test]
@@ -385,7 +389,7 @@ mod selection_set {
         )
         .unwrap();
 
-        assert_debug_snapshot!(check_operation_document(&schema, &doc))
+        assert_debug_snapshot!(test_check(schema, doc));
     }
 
     #[test]
@@ -400,7 +404,7 @@ mod selection_set {
         )
         .unwrap();
 
-        assert_debug_snapshot!(check_operation_document(&schema, &doc))
+        assert_debug_snapshot!(test_check(schema, doc));
     }
 
     #[test]
@@ -416,7 +420,7 @@ mod selection_set {
         )
         .unwrap();
 
-        assert_debug_snapshot!(check_operation_document(&schema, &doc))
+        assert_debug_snapshot!(test_check(schema, doc));
     }
 
     #[test]
@@ -433,7 +437,7 @@ mod selection_set {
         )
         .unwrap();
 
-        assert_debug_snapshot!(check_operation_document(&schema, &doc))
+        assert_debug_snapshot!(test_check(schema, doc));
     }
 
     #[test]
@@ -459,7 +463,7 @@ mod selection_set {
         )
         .unwrap();
 
-        assert_debug_snapshot!(check_operation_document(&schema, &doc))
+        assert_debug_snapshot!(test_check(schema, doc));
     }
 
     #[test]
@@ -482,7 +486,7 @@ mod selection_set {
         )
         .unwrap();
 
-        assert_debug_snapshot!(check_operation_document(&schema, &doc))
+        assert_debug_snapshot!(test_check(schema, doc));
     }
 }
 
@@ -491,13 +495,13 @@ mod fragments {
 
     use graphql_type_system::Schema;
     use insta::assert_debug_snapshot;
-    use nitrogql_semantics::ast_to_type_system;
+    use nitrogql_semantics::{ast_to_type_system, resolve_operation_extensions};
 
-    use crate::operation_checker::check_operation_document;
+    use crate::{operation_checker::check_operation_document, OperationCheckContext};
     use nitrogql_ast::base::Pos;
     use nitrogql_parser::parse_operation_document;
 
-    use super::parse_to_type_system_document;
+    use super::{parse_to_type_system_document, test_check};
 
     fn type_system() -> Schema<Cow<'static, str>, Pos> {
         let doc = parse_to_type_system_document(
@@ -565,7 +569,7 @@ mod fragments {
         )
         .unwrap();
 
-        assert_debug_snapshot!(check_operation_document(&schema, &doc))
+        assert_debug_snapshot!(test_check(schema, doc));
     }
 
     #[test]
@@ -587,7 +591,7 @@ mod fragments {
         )
         .unwrap();
 
-        assert_debug_snapshot!(check_operation_document(&schema, &doc))
+        assert_debug_snapshot!(test_check(schema, doc));
     }
 
     #[test]
@@ -606,7 +610,7 @@ mod fragments {
         )
         .unwrap();
 
-        assert_debug_snapshot!(check_operation_document(&schema, &doc))
+        assert_debug_snapshot!(test_check(schema, doc));
     }
 
     #[test]
@@ -624,7 +628,7 @@ mod fragments {
         )
         .unwrap();
 
-        assert_debug_snapshot!(check_operation_document(&schema, &doc))
+        assert_debug_snapshot!(test_check(schema, doc));
     }
 
     #[test]
@@ -647,7 +651,7 @@ mod fragments {
         )
         .unwrap();
 
-        assert_debug_snapshot!(check_operation_document(&schema, &doc))
+        assert_debug_snapshot!(test_check(schema, doc));
     }
 
     #[test]
@@ -673,7 +677,7 @@ mod fragments {
         )
         .unwrap();
 
-        assert_debug_snapshot!(check_operation_document(&schema, &doc))
+        assert_debug_snapshot!(test_check(schema, doc));
     }
 
     #[test]
@@ -705,7 +709,7 @@ mod fragments {
         )
         .unwrap();
 
-        assert_debug_snapshot!(check_operation_document(&schema, &doc))
+        assert_debug_snapshot!(test_check(schema, doc));
     }
 
     #[test]
@@ -737,7 +741,7 @@ mod fragments {
         )
         .unwrap();
 
-        assert_debug_snapshot!(check_operation_document(&schema, &doc));
+        assert_debug_snapshot!(test_check(schema, doc));
     }
 
     #[test]
@@ -756,7 +760,7 @@ mod fragments {
         )
         .unwrap();
 
-        assert_debug_snapshot!(check_operation_document(&schema, &doc));
+        assert_debug_snapshot!(test_check(schema, doc));
     }
 
     #[test]
@@ -778,7 +782,7 @@ mod fragments {
         )
         .unwrap();
 
-        assert_debug_snapshot!(check_operation_document(&schema, &doc));
+        assert_debug_snapshot!(test_check(schema, doc));
     }
 
     #[test]
@@ -796,7 +800,7 @@ mod fragments {
         )
         .unwrap();
 
-        assert_debug_snapshot!(check_operation_document(&schema, &doc))
+        assert_debug_snapshot!(test_check(schema, doc));
     }
 
     #[test]
@@ -820,7 +824,7 @@ mod fragments {
         )
         .unwrap();
 
-        assert_debug_snapshot!(check_operation_document(&schema, &doc))
+        assert_debug_snapshot!(test_check(schema, doc));
     }
 
     #[test]
@@ -844,7 +848,7 @@ mod fragments {
         )
         .unwrap();
 
-        assert_debug_snapshot!(check_operation_document(&schema, &doc))
+        assert_debug_snapshot!(test_check(schema, doc));
     }
 
     #[test]
@@ -865,7 +869,7 @@ mod fragments {
         )
         .unwrap();
 
-        assert_debug_snapshot!(check_operation_document(&schema, &doc))
+        assert_debug_snapshot!(test_check(schema, doc));
     }
 
     #[test]
@@ -890,7 +894,7 @@ mod fragments {
         )
         .unwrap();
 
-        assert_debug_snapshot!(check_operation_document(&schema, &doc))
+        assert_debug_snapshot!(test_check(schema, doc));
     }
 
     #[test]
@@ -913,13 +917,111 @@ mod fragments {
         )
         .unwrap();
 
-        assert_debug_snapshot!(check_operation_document(&schema, &doc))
+        let (doc, _) = resolve_operation_extensions(doc).unwrap();
+        let context = OperationCheckContext::new(&schema);
+        assert_debug_snapshot!(check_operation_document(&doc, &context));
+    }
+}
+
+mod imports {
+    use std::borrow::Cow;
+
+    use graphql_type_system::Schema;
+    use insta::assert_debug_snapshot;
+    use nitrogql_semantics::{ast_to_type_system, resolve_operation_extensions};
+
+    use crate::{
+        operation_checker::{check_operation_document, tests::test_check},
+        OperationCheckContext,
+    };
+    use nitrogql_ast::base::Pos;
+    use nitrogql_parser::parse_operation_document;
+
+    use super::parse_to_type_system_document;
+
+    fn type_system() -> Schema<Cow<'static, str>, Pos> {
+        let doc = parse_to_type_system_document(
+            "
+            directive @dir_bool(bool: Boolean!) on FIELD
+            scalar CustomScalar
+            
+            type Query {
+                foo: Int!
+                user: User
+                users(name: String): [User!]!
+                hasTitle: HasTitle!
+                postOrTag: PostOrTag
+                userOrSchedule: UserOrSchedule
+            }
+            type User {
+                id: ID!
+                name: String!
+                age: Int
+                userKind: UserKind
+                followers: [User!]!
+            }
+            enum UserKind { NormalUser PremiumUser }
+            input MyInput {
+                arg: String! = \"\"
+            }
+
+            type Post implements HasTitle {
+                id: ID!
+                title: String!
+                body: String!
+            }
+            interface HasTitle {
+                title: String!
+            }
+            interface HasLabel {
+                label: String!
+            }
+
+            type Tag implements HasLabel {
+                id: ID!
+                label: String!
+            }
+            type Schedule {
+                id: ID!
+            }
+            union UserOrTag = User | Tag
+            union PostOrTag = Post | Tag
+            union UserOrSchedule = User | Schedule
+        ",
+        );
+        ast_to_type_system(&doc)
+    }
+
+    #[test]
+    fn import() {
+        let schema = type_system();
+        let doc = parse_operation_document(
+            "#import F, \"./other.graphql\"
+            query {
+                user {
+                    ...F
+                }
+            }
+        ",
+        )
+        .unwrap();
+
+        assert_debug_snapshot!(test_check(schema, doc));
     }
 }
 
 fn parse_to_type_system_document(source: &str) -> TypeSystemDocument {
     let mut doc = parse_type_system_document(source).unwrap();
     doc.extend(generate_builtins());
-    let doc = resolve_extensions(doc).unwrap();
+    let doc = resolve_schema_extensions(doc).unwrap();
     doc
+}
+
+fn test_check(
+    schema: Schema<Cow<'static, str>, Pos>,
+    doc: OperationDocumentExt,
+) -> Vec<CheckError> {
+    let (doc, _) = resolve_operation_extensions(doc).unwrap();
+    let context = OperationCheckContext::new(&schema);
+    check_operation_document(&doc, &context)
 }

@@ -260,14 +260,17 @@ name = "graphql-loader"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "insta",
  "log",
  "nitrogql-ast",
  "nitrogql-config-file",
+ "nitrogql-error",
  "nitrogql-parser",
  "nitrogql-printer",
+ "nitrogql-semantics",
  "nitrogql-utils",
- "simple_logger",
  "sourcemap-writer",
+ "thiserror",
 ]
 
 [[package]]
@@ -567,11 +570,13 @@ dependencies = [
  "graphql-type-system",
  "indexmap 2.0.0",
  "insta",
+ "log",
  "nitrogql-ast",
  "nitrogql-error",
  "nitrogql-introspection",
  "nitrogql-parser",
  "nitrogql-printer",
+ "nitrogql-utils",
  "sourcemap-writer",
  "thiserror",
 ]
