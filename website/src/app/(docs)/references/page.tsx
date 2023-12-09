@@ -10,6 +10,22 @@ export default function References() {
     <Toc>
       <main>
         <h2>References</h2>
+        <h3>Supported Syntax</h3>
+        <p>
+          nitrogql supports all GraphQL features from the{" "}
+          <a href="https://spec.graphql.org/October2021/" target="_blank">
+            October 2021 specification
+          </a>
+          . In addition, it supports the following syntax extension:
+        </p>
+        <ul>
+          <li>
+            <Link href="/references/syntax-import">
+              <code>#import</code> syntax
+            </Link>
+          </li>
+        </ul>
+
         <h3>Packages</h3>
         <ul>
           <li>
