@@ -10,6 +10,7 @@ import figurePeekDescription from "./figures/screenshot-peek-description.png";
 import { Highlight } from "../_utils/Highlight";
 import { HeadNav } from "../_utils/Header";
 import { Footer } from "../_utils/Footer";
+import Link from "next/link";
 
 export default function Home() {
   return (
@@ -155,6 +156,22 @@ export default function Home() {
             Next.js, turbopack and others. The rollup plugin can cover rollup
             and compatible tools, including Vite.
           </p>
+
+          <h3>Fragment Colocation</h3>
+          <p>
+            Currently, there is partial support of Fragment Colocation by
+            nitrogql. Fragments can be defined separately from operation
+            documents and they can be imported using the{" "}
+            <Link href="/references/syntax-import">
+              <code>#import</code> syntax
+            </Link>
+            .
+          </p>
+          <p>
+            However, current implementation does not cover all use cases of
+            Fragment Colocation. We are still investigating what is the best
+            developer experience regarding fragment colocation.
+          </p>
         </section>
 
         <section className={styles.features}>
@@ -169,23 +186,13 @@ export default function Home() {
         <section className={styles.features}>
           <h2>🤔 Under Consideration</h2>
 
-          <h3>Fragment Colocation</h3>
-          <p>
-            Currently nitrogql CLI does not support fragment colocation.
-            Fragments must be defined in the same file as the operation that
-            uses them.
-          </p>
-          <p>
-            We are still investigating what is the best developer experience
-            regarding fragment colocation.
-          </p>
-
           <h3>Plugin System</h3>
           <p>
-            We are considering adding a plugin system to nitrogql CLI. We are
-            planning to add more opinionated features to nitrogql, so these
-            features are good to be implemented as plugins. Also, plugins will
-            be helpful for extending nitrogql to support more use cases.
+            We are considering adding a third-party plugin system to nitrogql
+            CLI. We are planning to add more opinionated features to nitrogql,
+            so these features are good to be implemented as plugins. Also,
+            plugins will be helpful for extending nitrogql to support more use
+            cases.
           </p>
 
           <h3>Watch Mode</h3>
