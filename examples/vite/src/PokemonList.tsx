@@ -1,6 +1,7 @@
 import { useQuery } from "@apollo/client";
 import { useState } from "react";
 import Query from "./pokemonList.graphql";
+import { PokemonCell } from "./PokemonCell";
 
 const pageSize = 50;
 
@@ -38,15 +39,9 @@ export const PokemonList: React.FC = () => {
         </button>
       </div>
       <ul className="pokemonList">
-        {data.species.map((pokemon) => {
-          const ja = pokemon.names.find((name) => name.language_id === 1);
-          const en = pokemon.names.find((name) => name.language_id === 9);
-          return (
-            <li key={pokemon.id}>
-              #{pokemon.id} <b>{ja?.name}</b> {en?.name}
-            </li>
-          );
-        })}
+        {data.species.map((pokemon) => (
+          <PokemonCell key={pokemon.id} pokemon={pokemon} />
+        ))}
       </ul>
     </div>
   );

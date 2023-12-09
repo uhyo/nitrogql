@@ -1,0 +1,9 @@
+fragment PokemonCell on pokemon_v2_pokemonspecies {
+  id
+  names: pokemon_v2_pokemonspeciesnames(
+    where: { language_id: { _in: [1, 9] } }
+  ) {
+    language_id
+    name
+  }
+}
