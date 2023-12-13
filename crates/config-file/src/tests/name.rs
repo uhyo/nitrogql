@@ -9,6 +9,7 @@ schema: schema.graphql
     let name = config.generate.name;
     assert_eq!(name.operation_result_type_suffix, None);
     assert_eq!(name.variables_type_suffix, None);
+    assert_eq!(name.fragment_type_suffix, None);
     assert_eq!(name.capitalize_operation_names, None);
     assert_eq!(name.query_variable_suffix, None);
     assert_eq!(name.mutation_variable_suffix, None);
@@ -28,6 +29,7 @@ extensions:
     let name = config.generate.name;
     assert_eq!(name.operation_result_type_suffix, None);
     assert_eq!(name.variables_type_suffix, None);
+    assert_eq!(name.fragment_type_suffix, None);
     assert_eq!(name.capitalize_operation_names, None);
     assert_eq!(name.query_variable_suffix, None);
     assert_eq!(name.mutation_variable_suffix, None);
@@ -44,6 +46,7 @@ extensions:
             name:
                 operationResultTypeSuffix: Result
                 variablesTypeSuffix: Variables
+                fragmentTypeSuffix: Fragment
                 capitalizeOperationNames: true
                 queryVariableSuffix: Query
                 mutationVariableSuffix: Mutation
@@ -56,6 +59,7 @@ extensions:
         Some("Result".to_string())
     );
     assert_eq!(name.variables_type_suffix, Some("Variables".to_string()));
+    assert_eq!(name.fragment_type_suffix, Some("Fragment".to_string()));
     assert_eq!(name.capitalize_operation_names, Some(true));
     assert_eq!(name.query_variable_suffix, Some("Query".to_string()));
     assert_eq!(name.mutation_variable_suffix, Some("Mutation".to_string()));

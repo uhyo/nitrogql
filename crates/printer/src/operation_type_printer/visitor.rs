@@ -38,6 +38,8 @@ pub struct OperationTypePrinterOptions {
     pub variables_type_suffix: String,
     /// Suffix for type of operation result.
     pub operation_result_type_suffix: String,
+    /// Suffix for type of fragment.
+    pub fragment_type_suffix: String,
     /// Whether to allow undefined as input value.
     pub allow_undefined_as_optional_input: bool,
 }
@@ -52,6 +54,7 @@ impl Default for OperationTypePrinterOptions {
             typed_document_node_source: "@graphql-typed-document-node/core".to_owned(),
             variables_type_suffix: "Variables".to_owned(),
             operation_result_type_suffix: "Result".to_owned(),
+            fragment_type_suffix: "".to_owned(),
             allow_undefined_as_optional_input: true,
         }
     }
@@ -74,6 +77,10 @@ impl OperationTypePrinterOptions {
         clone_into(
             &config.generate.name.variables_type_suffix,
             &mut result.variables_type_suffix,
+        );
+        clone_into(
+            &config.generate.name.fragment_type_suffix,
+            &mut result.fragment_type_suffix,
         );
         result
     }
@@ -241,7 +248,14 @@ impl<'a, 'src> OperationPrinterVisitor for OperationTypePrinterVisitor<'a, 'src>
             writer.write("export ");
         }
         writer.write("type ");
-        writer.write_for(fragment.name.name, fragment);
+
+        let fragment_name = format!(
+            "{}{}",
+            fragment.name.name, self.options.fragment_type_suffix
+        );
+
+        writer.write_for(&fragment_name, fragment);
+
         writer.write(" = ");
 
         let parent_type = NamedType::from(Node::from(
