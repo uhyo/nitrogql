@@ -439,6 +439,7 @@ export const UserType = {
         capitalizeOperationNames: true
         operationResultTypeSuffix: Result
         variablesTypeSuffix: Variables
+        fragmentTypeSuffix: ''
         queryVariableSuffix: Query
         mutationVariableSuffix: Mutation
         subscriptionVariableSuffix: Subscription`}
@@ -497,6 +498,17 @@ export const UserType = {
           💡 Operation variables type is not visible unless you set{" "}
           <code>export.operationResultType</code> to <code>true</code>.
         </Hint>
+
+        <h4 id="generate.name.fragmentTypeSuffix">fragmentTypeSuffix</h4>
+        <p>
+          Suffix of the fragment type. Default is{" "}
+          <code>&quot;&quot;</code>.
+        </p>
+        <p>
+          For example, if you have <code>fragment PartialUser</code> in your schema,
+          the generated fragment type will be{" "}
+          <code>PartialUserFragment</code>.
+        </p>
 
         <h4 id="generate.name.queryVariableSuffix">queryVariableSuffix</h4>
         <p>
