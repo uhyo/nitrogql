@@ -89,6 +89,10 @@ export type NitrogqlExtension = {
                */
               variablesTypeSuffix?: string | undefined;
               /**
+               * Suffix for type of fragment.
+               */
+              fragmentTypeSuffix?: string | undefined;
+              /**
                * Whether operation name should be capitalized.
                * @default true
                */

@@ -96,6 +96,8 @@ pub struct GenerateNameConfig {
     pub operation_result_type_suffix: Option<String>,
     /// Suffix for type of variables for an operation.
     pub variables_type_suffix: Option<String>,
+    /// Suffix for type of fragment.
+    pub fragment_type_suffix: Option<String>,
     /// Whether operation name should be capitalized.
     pub capitalize_operation_names: Option<bool>,
     /// Suffix for variable of query.
