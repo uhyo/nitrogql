@@ -60,9 +60,33 @@ impl<'a, 'src> OperationPrinterVisitor for OperationJSPrinterVisitor<'a, 'src> {
 
     fn print_fragment_definition(
         &self,
-        _context: PrintFragmentContext,
-        _writer: &mut impl SourceMapWriter,
+        context: PrintFragmentContext,
+        writer: &mut impl SourceMapWriter,
     ) {
+        let fragment = context.fragment;
+        // TODO: implementation is duplicated from operation_type_printer
+        if context.exported {
+            writer.write("export ");
+        }
+        writer.write("const ");
+
+        writer.write_for(context.var_name, fragment);
+        writer.write(" = ");
+
+        // Generated document is the collection of all fragments,
+        // and the fragment we are currently processing
+        // comes first in the list
+        let mut this_document = vec![fragment];
+        this_document.extend(self.context.operation.definitions.iter().filter_map(
+            |def| match def {
+                ExecutableDefinition::FragmentDefinition(def) => {
+                    (def.name.name != fragment.name.name).then_some(def)
+                }
+                ExecutableDefinition::OperationDefinition(_) => None,
+            },
+        ));
+        writer.write(&print_to_json_string(&this_document[..]));
+        writer.write(";\n\n");
     }
     fn print_default_exported_operation_definition(
         &self,
