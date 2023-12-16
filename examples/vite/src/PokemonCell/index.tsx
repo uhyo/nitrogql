@@ -1,8 +1,19 @@
-import type { PokemonCell as PokemonCellFragment } from "./PokemonCell.graphql";
+import { useFragment } from "@apollo/client";
+import { PokemonCellFragment } from "./PokemonCell.graphql";
 
 export const PokemonCell: React.FC<{
-  pokemon: PokemonCellFragment;
-}> = ({ pokemon }) => {
+  id: number;
+}> = ({ id }) => {
+  const { complete, data: pokemon } = useFragment({
+    from: {
+      __typename: "pokemon_v2_pokemonspecies",
+      id,
+    },
+    fragment: PokemonCellFragment,
+  });
+  if (!complete) {
+    throw new Error("Data is not complete");
+  }
   const ja = pokemon.names.find((name) => name.language_id === 1);
   const en = pokemon.names.find((name) => name.language_id === 9);
   return (

@@ -4,6 +4,10 @@ const nitrogql: NitrogqlExtension = {
   generate: {
     mode: "with-loader-ts-5.0",
     schemaOutput: "./src/generated/schema.d.ts",
+    name: {
+      fragmentTypeSuffix: "Fragment",
+      fragmentVariableSuffix: "Fragment",
+    },
   },
 };
 

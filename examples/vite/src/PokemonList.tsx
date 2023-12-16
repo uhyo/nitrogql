@@ -40,7 +40,7 @@ export const PokemonList: React.FC = () => {
       </div>
       <ul className="pokemonList">
         {data.species.map((pokemon) => (
-          <PokemonCell key={pokemon.id} pokemon={pokemon} />
+          <PokemonCell key={pokemon.id} id={pokemon.id} />
         ))}
       </ul>
     </div>
