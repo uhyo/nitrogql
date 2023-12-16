@@ -24,4 +24,6 @@ type UserProfile = Schema.__SelectionSet<Schema.User, {
   age: Schema.Int | null;
 }, {}>;
 
+declare const UserProfile: TypedDocumentNode<UserProfile, never>;
+
 

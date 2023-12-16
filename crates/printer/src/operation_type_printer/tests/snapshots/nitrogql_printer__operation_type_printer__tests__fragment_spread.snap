@@ -38,4 +38,6 @@ export type F = Schema.__SelectionSet<Schema.User, {
   id: Schema.ID;
 }, {}>;
 
+export const F: TypedDocumentNode<F, never>;
+
 

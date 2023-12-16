@@ -31,4 +31,6 @@ export type F = Schema.__SelectionSet<Schema.User, {
   age: Schema.Int | null;
 }, {}>;
 
+export const F: TypedDocumentNode<F, never>;
+
 

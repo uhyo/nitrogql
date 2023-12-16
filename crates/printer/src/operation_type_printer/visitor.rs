@@ -244,17 +244,18 @@ impl<'a, 'src> OperationPrinterVisitor for OperationTypePrinterVisitor<'a, 'src>
         writer: &mut impl SourceMapWriter,
     ) {
         let fragment = context.fragment;
+        // type of fragment
         if context.exported {
             writer.write("export ");
         }
         writer.write("type ");
 
-        let fragment_name = format!(
+        let fragment_type_name = format!(
             "{}{}",
             fragment.name.name, self.options.fragment_type_suffix
         );
 
-        writer.write_for(&fragment_name, fragment);
+        writer.write_for(&fragment_type_name, fragment);
 
         writer.write(" = ");
 
@@ -277,6 +278,46 @@ impl<'a, 'src> OperationPrinterVisitor for OperationTypePrinterVisitor<'a, 'src>
         );
         fragment_type.print_type(writer);
         writer.write(";\n\n");
+
+        // runtime value
+        if context.exported {
+            writer.write("export ");
+        } else if !self.options.print_values {
+            writer.write("declare ");
+        }
+        writer.write("const ");
+
+        let fragment_variable_name = format!(
+            "{}{}",
+            fragment.name.name, self.options.base_options.fragment_variable_suffix
+        );
+        writer.write_for(&fragment_variable_name, fragment);
+        writer.write(": ");
+        writer.write("TypedDocumentNode<");
+        writer.write_for(&fragment_type_name, fragment);
+        writer.write(", never>");
+        if !self.options.print_values {
+            writer.write(";\n\n");
+            return;
+        }
+        writer.write(" = ");
+
+        // Generated document is the collection of all fragments,
+        // and the fragment we are currently processing
+        // comes first in the list
+        let mut this_document = vec![fragment];
+        this_document.extend(self.context.operation.definitions.iter().filter_map(
+            |def| match def {
+                ExecutableDefinition::FragmentDefinition(def) => {
+                    (def.name.name != fragment.name.name).then_some(def)
+                }
+                ExecutableDefinition::OperationDefinition(_) => None,
+            },
+        ));
+        writer.write(&print_to_json_string(&this_document[..]));
+        writer.write(" as unknown as TypedDocumentNode<");
+        writer.write_for(&fragment_type_name, fragment);
+        writer.write(", never>;\n\n");
     }
     fn print_default_exported_operation_definition(
         &self,

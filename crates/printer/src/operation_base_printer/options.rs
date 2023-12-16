@@ -20,6 +20,8 @@ pub struct OperationBasePrinterOptions {
     pub mutation_variable_suffix: String,
     /// Suffix for variable of subscription.
     pub subscription_variable_suffix: String,
+    /// Suffix for variable of fragment.
+    pub fragment_variable_suffix: String,
 }
 
 impl Default for OperationBasePrinterOptions {
@@ -33,6 +35,7 @@ impl Default for OperationBasePrinterOptions {
             query_variable_suffix: "Query".to_owned(),
             mutation_variable_suffix: "Mutation".to_owned(),
             subscription_variable_suffix: "Subscription".to_owned(),
+            fragment_variable_suffix: "".to_owned(),
         }
     }
 }
@@ -63,6 +66,10 @@ impl OperationBasePrinterOptions {
         clone_into(
             &config.generate.name.subscription_variable_suffix,
             &mut result.subscription_variable_suffix,
+        );
+        clone_into(
+            &config.generate.name.fragment_variable_suffix,
+            &mut result.fragment_variable_suffix,
         );
         result
     }
