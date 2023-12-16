@@ -442,7 +442,8 @@ export const UserType = {
         fragmentTypeSuffix: ''
         queryVariableSuffix: Query
         mutationVariableSuffix: Mutation
-        subscriptionVariableSuffix: Subscription`}
+        subscriptionVariableSuffix: Subscription
+        fragmentVariableSuffix: ''`}
         </Highlight>
 
         <h4 id="generate.name.capitalizeOperationNames">
@@ -501,12 +502,11 @@ export const UserType = {
 
         <h4 id="generate.name.fragmentTypeSuffix">fragmentTypeSuffix</h4>
         <p>
-          Suffix of the fragment type. Default is{" "}
-          <code>&quot;&quot;</code>.
+          Suffix of the fragment type. Default is <code>&quot;&quot;</code>.
         </p>
         <p>
-          For example, if you have <code>fragment PartialUser</code> in your schema,
-          the generated fragment type will be{" "}
+          For example, if you have <code>fragment PartialUser</code> in your
+          schema, the generated fragment type will be{" "}
           <code>PartialUserFragment</code>.
         </p>
 
@@ -544,6 +544,13 @@ export const UserType = {
           For example, if you have <code>subscription onUserCreated</code> in
           your schema, the generated subscription variable will be{" "}
           <code>OnUserCreatedSubscription</code>.
+        </p>
+
+        <h4 id="generate.name.fragmentVariableSuffix">
+          fragmentVariableSuffix
+        </h4>
+        <p>
+          Suffix of the fragment variable. Default is <code>&quot;&quot;</code>.
         </p>
 
         <h3 id="generate.export">generate.export</h3>
