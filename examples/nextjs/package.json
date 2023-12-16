@@ -26,8 +26,8 @@
   },
   "devDependencies": {
     "@graphql-typed-document-node/core": "^3.2.0",
-    "@nitrogql/cli": "^1.0.0",
-    "@nitrogql/graphql-loader": "^1.0.0",
+    "@nitrogql/cli": "*",
+    "@nitrogql/graphql-loader": "*",
     "@types/react": "^18.2.22",
     "@types/react-dom": "^18.2.7",
     "typescript": "^5.2.2"
