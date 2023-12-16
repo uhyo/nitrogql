@@ -106,6 +106,8 @@ pub struct GenerateNameConfig {
     pub mutation_variable_suffix: Option<String>,
     /// Suffix for variable of subscription.
     pub subscription_variable_suffix: Option<String>,
+    /// Suffix for variable of fragment.
+    pub fragment_variable_suffix: Option<String>,
 }
 
 /// Config related to exported names.
