@@ -6,4 +6,6 @@ const TestQuery = {"kind":"Document","definitions":[{"kind":"OperationDefinition
 
 export { TestQuery as default };
 
+export const Frag1 = {"kind":"Document","definitions":[{"kind":"FragmentDefinition","name":{"kind":"Name","value":"Frag1"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"Query"}},"directives":[],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"test2"},"arguments":[],"directives":[]}]}}]};
+
 
