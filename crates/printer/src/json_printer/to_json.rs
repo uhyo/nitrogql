@@ -2,7 +2,7 @@ use json_writer::JSONObjectWriter;
 
 use nitrogql_ast::{
     directive::Directive,
-    operation::{ExecutableDefinition, OperationDocument},
+    operation::{ExecutableDefinition, FragmentDefinition, OperationDefinition, OperationDocument},
     r#type::{NamedType, Type},
     selection_set::{Field, FragmentSpread, InlineFragment, Selection, SelectionSet},
     value::Value,
@@ -38,44 +38,67 @@ impl JsonPrintable for [&ExecutableDefinition<'_>] {
     }
 }
 
+impl JsonPrintable for [&FragmentDefinition<'_>] {
+    fn print_json(&self, writer: &mut JSONObjectWriter) {
+        writer.value("kind", "Document");
+
+        let mut definitions_writer = writer.array("definitions");
+        for d in self {
+            d.print_json(&mut definitions_writer.object());
+        }
+    }
+}
+
 impl JsonPrintable for ExecutableDefinition<'_> {
     fn print_json(&self, writer: &mut JSONObjectWriter) {
         match self {
             ExecutableDefinition::OperationDefinition(op) => {
-                writer.value("kind", "OperationDefinition");
-                writer.value("operation", op.operation_type.as_str());
-                if let Some(name) = &op.name {
-                    writer.value("name", JSONValue(&Name(name.name)));
-                }
-                let mut variable_definitions_writer = writer.array("variableDefinitions");
-                if let Some(ref def) = op.variables_definition {
-                    for v in def.definitions.iter() {
-                        v.print_json(&mut variable_definitions_writer.object());
-                    }
-                }
-                variable_definitions_writer.end();
-                let mut directives_writer = writer.array("directives");
-                for v in &op.directives {
-                    v.print_json(&mut directives_writer.object());
-                }
-                directives_writer.end();
-                write_selection_set(&op.selection_set, writer);
+                op.print_json(writer);
             }
             ExecutableDefinition::FragmentDefinition(fragment) => {
-                writer.value("kind", "FragmentDefinition");
-                writer.value("name", JSONValue(&Name(fragment.name.name)));
-                Type::Named(NamedType {
-                    name: fragment.type_condition,
-                })
-                .print_json(&mut writer.object("typeCondition"));
-                let mut directives_writer = writer.array("directives");
-                for d in fragment.directives.iter() {
-                    d.print_json(&mut directives_writer.object());
-                }
-                directives_writer.end();
-                write_selection_set(&fragment.selection_set, writer);
+                fragment.print_json(writer);
             }
         }
+    }
+}
+
+impl JsonPrintable for OperationDefinition<'_> {
+    fn print_json(&self, writer: &mut JSONObjectWriter) {
+        writer.value("kind", "OperationDefinition");
+        writer.value("operation", self.operation_type.as_str());
+        if let Some(name) = &self.name {
+            writer.value("name", JSONValue(&Name(name.name)));
+        }
+        let mut variable_definitions_writer = writer.array("variableDefinitions");
+        if let Some(ref def) = self.variables_definition {
+            for v in def.definitions.iter() {
+                v.print_json(&mut variable_definitions_writer.object());
+            }
+        }
+        variable_definitions_writer.end();
+        let mut directives_writer = writer.array("directives");
+        for v in &self.directives {
+            v.print_json(&mut directives_writer.object());
+        }
+        directives_writer.end();
+        write_selection_set(&self.selection_set, writer);
+    }
+}
+
+impl JsonPrintable for FragmentDefinition<'_> {
+    fn print_json(&self, writer: &mut JSONObjectWriter) {
+        writer.value("kind", "FragmentDefinition");
+        writer.value("name", JSONValue(&Name(self.name.name)));
+        Type::Named(NamedType {
+            name: self.type_condition,
+        })
+        .print_json(&mut writer.object("typeCondition"));
+        let mut directives_writer = writer.array("directives");
+        for d in self.directives.iter() {
+            d.print_json(&mut directives_writer.object());
+        }
+        directives_writer.end();
+        write_selection_set(&self.selection_set, writer);
     }
 }
 

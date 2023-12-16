@@ -40,9 +40,13 @@ export type F = Schema.__SelectionSet<Schema.User, {
   id: Schema.ID;
 }, {}>;
 
+export const F: TypedDocumentNode<F, never>;
+
 export type P = Schema.__SelectionSet<Schema.Post, {
   title: Schema.String;
   body: Schema.String;
 }, {}>;
+
+export const P: TypedDocumentNode<P, never>;
 
 

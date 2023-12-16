@@ -98,20 +98,24 @@ export type NitrogqlExtension = {
                */
               capitalizeOperationNames?: boolean | undefined;
               /**
-               * Suffix for variable of query.
+               * Suffix for variable (runtime representation) of query.
                * @default "Query"
                */
               queryVariableSuffix?: string | undefined;
               /**
-               * Suffix for variable of mutation.
+               * Suffix for variable (runtime representation) of mutation.
                * @default "Mutation"
                */
               mutationVariableSuffix?: string | undefined;
               /**
-               * Suffix for variable of subscription.
+               * Suffix for variable (runtime representation) of subscription.
                * @default "Subscription"
                */
               subscriptionVariableSuffix?: string | undefined;
+              /**
+               * Suffix for variable (runtime representation) of fragment.
+               */
+              fragmentVariableSuffix?: string | undefined;
             }
           | undefined;
         /**

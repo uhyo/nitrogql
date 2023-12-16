@@ -51,6 +51,7 @@ extensions:
                 queryVariableSuffix: Query
                 mutationVariableSuffix: Mutation
                 subscriptionVariableSuffix: Subscription
+                fragmentVariableSuffix: Fragment
 "#;
     let config = parse_config(config).unwrap();
     let name = config.generate.name;
@@ -67,4 +68,5 @@ extensions:
         name.subscription_variable_suffix,
         Some("Subscription".to_string())
     );
+    assert_eq!(name.fragment_variable_suffix, Some("Fragment".to_string()));
 }
