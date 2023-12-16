@@ -16,12 +16,6 @@ npm run build -w @nitrogql/core -w @nitrogql/loader-core -w @nitrogql/wasi-previ
 mkdir -p packages/cli/wasm
 cp target/wasm32-wasi/$TARGET_DIR/nitrogql-cli.opt.wasm packages/cli/wasm/nitrogql-cli.wasm
 
-mkdir -p packages/graphql-loader/wasm
-cp target/wasm32-unknown-unknown/$TARGET_DIR/graphql-loader.opt.wasm packages/graphql-loader/wasm/graphql-loader.wasm
-
-mkdir -p packages/rollup-plugin/wasm
-cp target/wasm32-unknown-unknown/$TARGET_DIR/graphql-loader.opt.wasm packages/rollup-plugin/wasm/graphql-loader.wasm
-
 mkdir -p packages/loader-core/wasm
 cp target/wasm32-unknown-unknown/$TARGET_DIR/graphql-loader.opt.wasm packages/loader-core/wasm/graphql-loader.wasm
 
