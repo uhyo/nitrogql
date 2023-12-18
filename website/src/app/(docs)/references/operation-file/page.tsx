@@ -33,7 +33,7 @@ export default function OperationFile() {
           file.
         </p>
 
-        <h3>Operation Object</h3>
+        <h3 id="operation-object">Operation Object</h3>
         <p>
           The operation object is the type of the object you can pass to a
           GraphQL client to execute the operation. It has the type{" "}
@@ -70,17 +70,32 @@ export default function OperationFile() {
 
         <h3 id="results-and-variables">Results and Variables</h3>
         <p>
-          By default, the operation object is the only thing exported from the
-          file. However, you can configure the{" "}
+          By default, <code>Result</code> and <code>Variables</code> types are
+          not exported. However, you can configure the{" "}
           <Link href="/configuration/options#generate.export">
             <code>generate.export</code>
           </Link>{" "}
-          option to export other things as well.
+          option to export those as well.
         </p>
         <p>
           If you configure the option to export results and variables, they are
-          exported as named exports.
+          exported as named exports. Example usage:
         </p>
+        <Highlight language="typescript">
+          {`import { getTodosQuery, type GetTodosQueryResult, type GetTodosQueryVariables } from "./operation.graphql";`}
+        </Highlight>
+
+        <h3 id="fragment-object">Fragment Object</h3>
+        <p>
+          A fragment definition also generates a fragment object. It has the
+          type <code>TypedDocumentNode&lt;Result, never&gt;</code>, where{" "}
+          <code>Result</code> is the shape of a query response that matches the
+          fragment.
+        </p>
+        <p>The fragment object is exported as a named export. Example usage:</p>
+        <Highlight language="typescript">
+          {`import { todoFragment } from "./todo.graphql";`}
+        </Highlight>
       </main>
     </Toc>
   );
