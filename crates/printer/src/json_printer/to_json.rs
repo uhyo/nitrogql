@@ -27,7 +27,7 @@ impl JsonPrintable for OperationDocument<'_> {
     }
 }
 
-impl JsonPrintable for [&ExecutableDefinition<'_>] {
+impl JsonPrintable for [ExecutableDefinitionRef<'_>] {
     fn print_json(&self, writer: &mut JSONObjectWriter) {
         writer.value("kind", "Document");
 
@@ -56,6 +56,24 @@ impl JsonPrintable for ExecutableDefinition<'_> {
                 op.print_json(writer);
             }
             ExecutableDefinition::FragmentDefinition(fragment) => {
+                fragment.print_json(writer);
+            }
+        }
+    }
+}
+
+pub enum ExecutableDefinitionRef<'a> {
+    OperationDefinition(&'a OperationDefinition<'a>),
+    FragmentDefinition(&'a FragmentDefinition<'a>),
+}
+
+impl JsonPrintable for ExecutableDefinitionRef<'_> {
+    fn print_json(&self, writer: &mut JSONObjectWriter) {
+        match self {
+            ExecutableDefinitionRef::OperationDefinition(op) => {
+                op.print_json(writer);
+            }
+            ExecutableDefinitionRef::FragmentDefinition(fragment) => {
                 fragment.print_json(writer);
             }
         }

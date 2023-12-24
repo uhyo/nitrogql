@@ -1,29 +1,22 @@
-use nitrogql_ast::{operation::ExecutableDefinition, OperationDocument};
 use sourcemap_writer::SourceMapWriter;
 
 use crate::{
-    json_printer::print_to_json_string,
+    json_printer::{print_to_json_string, ExecutableDefinitionRef},
     operation_base_printer::{
         OperationPrinterVisitor, PrintFragmentContext, PrintOperationContext,
     },
+    utils::fragment_names_in_selection_set,
 };
 
-pub struct OperationJSPrinterVisitor<'a, 'src> {
-    context: OperationJSPrinterContext<'a, 'src>,
-}
+pub struct OperationJSPrinterVisitor {}
 
-impl<'a, 'src> OperationJSPrinterVisitor<'a, 'src> {
-    pub fn new(operation: &'a OperationDocument<'src>) -> Self {
-        let context = OperationJSPrinterContext { operation };
-        Self { context }
+impl OperationJSPrinterVisitor {
+    pub fn new() -> Self {
+        Self {}
     }
 }
 
-pub struct OperationJSPrinterContext<'a, 'src> {
-    operation: &'a OperationDocument<'src>,
-}
-
-impl<'a, 'src> OperationPrinterVisitor for OperationJSPrinterVisitor<'a, 'src> {
+impl OperationPrinterVisitor for OperationJSPrinterVisitor {
     fn print_header(&self, _writer: &mut impl SourceMapWriter) {}
     fn print_trailer(&self, _writer: &mut impl SourceMapWriter) {}
     fn print_operation_definition(
@@ -41,19 +34,23 @@ impl<'a, 'src> OperationPrinterVisitor for OperationJSPrinterVisitor<'a, 'src> {
             &operation.name_pos(),
         );
         writer.write(" = ");
-        // To follow the community conventions, generated JSON has only one operation in it
-        let this_document = self
-            .context
-            .operation
-            .definitions
-            .iter()
-            .filter(|def| match def {
-                ExecutableDefinition::FragmentDefinition(_) => true,
-                ExecutableDefinition::OperationDefinition(op) => {
-                    op.name.map(|ident| ident.name) == operation.name.map(|ident| ident.name)
-                }
+        let fragments_to_include =
+            fragment_names_in_selection_set(&operation.selection_set, |name| {
+                context.fragments.get(name).copied()
             })
-            .collect::<Vec<_>>();
+            .into_iter()
+            .map(|name| {
+                ExecutableDefinitionRef::FragmentDefinition(
+                    context.fragments.get(name).expect("fragment not found"),
+                )
+            });
+        // To follow the community conventions, generated JSON has only one operation in it
+        let this_document = vec![ExecutableDefinitionRef::OperationDefinition(
+            context.operation,
+        )]
+        .into_iter()
+        .chain(fragments_to_include)
+        .collect::<Vec<_>>();
         writer.write(&print_to_json_string(&this_document[..]));
         writer.write(";\n\n");
     }
@@ -73,18 +70,28 @@ impl<'a, 'src> OperationPrinterVisitor for OperationJSPrinterVisitor<'a, 'src> {
         writer.write_for(context.var_name, fragment);
         writer.write(" = ");
 
-        // Generated document is the collection of all fragments,
+        let fragments_to_include =
+            fragment_names_in_selection_set(&fragment.selection_set, |name| {
+                context.fragments.get(name).copied()
+            })
+            .into_iter()
+            .filter(|f| {
+                // Filter out the fragment we are currently processing
+                *f != fragment.name.name
+            })
+            .map(|name| {
+                ExecutableDefinitionRef::FragmentDefinition(
+                    context.fragments.get(name).expect("fragment not found"),
+                )
+            });
+
+        // Generated document is the collection of all relevant fragments,
         // and the fragment we are currently processing
         // comes first in the list
-        let mut this_document = vec![fragment];
-        this_document.extend(self.context.operation.definitions.iter().filter_map(
-            |def| match def {
-                ExecutableDefinition::FragmentDefinition(def) => {
-                    (def.name.name != fragment.name.name).then_some(def)
-                }
-                ExecutableDefinition::OperationDefinition(_) => None,
-            },
-        ));
+        let this_document = vec![ExecutableDefinitionRef::FragmentDefinition(fragment)]
+            .into_iter()
+            .chain(fragments_to_include)
+            .collect::<Vec<_>>();
         writer.write(&print_to_json_string(&this_document[..]));
         writer.write(";\n\n");
     }

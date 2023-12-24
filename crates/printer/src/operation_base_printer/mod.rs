@@ -42,6 +42,14 @@ where
             .iter()
             .filter(|def| matches!(def, ExecutableDefinition::OperationDefinition(_)))
             .count();
+        let fragments = document
+            .definitions
+            .iter()
+            .filter_map(|def| match def {
+                ExecutableDefinition::FragmentDefinition(def) => Some((def.name.name, def)),
+                _ => None,
+            })
+            .collect();
 
         for d in document.definitions.iter() {
             match d {
@@ -53,6 +61,7 @@ where
                         export_input_type: self.options.export_input_type,
                         export_result_type: self.options.export_result_type,
                         operation: def,
+                        fragments: &fragments,
                     };
                     self.visitor
                         .print_operation_definition(context, self.writer);
@@ -71,6 +80,7 @@ where
                         var_name: &var_name,
                         exported,
                         fragment: def,
+                        fragments: &fragments,
                     };
                     self.visitor.print_fragment_definition(context, self.writer);
                 }

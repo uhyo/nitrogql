@@ -16,7 +16,7 @@ pub fn print_js_for_operation_document(
     writer: &mut impl SourceMapWriter,
 ) {
     let base_options = options.base_options;
-    let visitor = OperationJSPrinterVisitor::new(operation);
+    let visitor = OperationJSPrinterVisitor::new();
     let mut printer = OperationPrinter::new(base_options, visitor, writer);
     printer.print_document(operation);
 }

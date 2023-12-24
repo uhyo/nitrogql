@@ -128,14 +128,7 @@ type User @model(type: "string") {
                     additional_info: error
                         .additional_info
                         .into_iter()
-                        .map(|(pos, message)| {
-                            (
-                                pos,
-                                CheckErrorMessage::Plugin {
-                                    message: message.into(),
-                                },
-                            )
-                        })
+                        .map(|(pos, message)| (pos, CheckErrorMessage::Plugin { message }))
                         .collect(),
                 }),
         );

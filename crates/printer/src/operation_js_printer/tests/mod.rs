@@ -96,6 +96,77 @@ fn print_nested_fragments() {
     assert_snapshot!(print_js(&document));
 }
 
+#[test]
+fn omit_unused_fragment() {
+    let document = parse(
+        r#"
+        query MyQuery {
+            user {
+                id
+            }
+        }
+
+        fragment Foo on User {
+            id
+            name
+        }
+    "#,
+    );
+
+    assert_snapshot!(print_js(&document));
+}
+
+#[test]
+fn can_print_recursive_fragments() {
+    let document = parse(
+        r#"
+        query MyQuery {
+            user {
+                ...Foo
+            }
+        }
+
+        fragment Foo on User {
+            id
+            user {
+                ...Foo
+            }
+        }
+    "#,
+    );
+
+    assert_snapshot!(print_js(&document));
+}
+
+#[test]
+fn can_print_mutually_recursive_fragments() {
+    let document = parse(
+        r#"
+        query MyQuery {
+            user {
+                ...Foo
+            }
+        }
+
+        fragment Foo on User {
+            id
+            user {
+                ...Bar
+            }
+        }
+
+        fragment Bar on User {
+            name
+            user {
+                ...Foo
+            }
+        }
+    "#,
+    );
+
+    assert_snapshot!(print_js(&document));
+}
+
 fn parse(str: &str) -> OperationDocument {
     let doc = parse_operation_document(str).unwrap();
     let (document, _) = resolve_operation_extensions(doc).unwrap();

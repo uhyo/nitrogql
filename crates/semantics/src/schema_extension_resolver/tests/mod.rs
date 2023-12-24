@@ -1,15 +1,15 @@
-#[cfg(test)]
-mod tests {
-    use crate::resolve_schema_extensions;
-    use insta::assert_snapshot;
-    use nitrogql_parser::parse_type_system_document;
-    use nitrogql_printer::GraphQLPrinter;
-    use sourcemap_writer::JustWriter;
+#![cfg(test)]
 
-    #[test]
-    fn resolve() {
-        let doc = parse_type_system_document(
-            "
+use crate::resolve_schema_extensions;
+use insta::assert_snapshot;
+use nitrogql_parser::parse_type_system_document;
+use nitrogql_printer::GraphQLPrinter;
+use sourcemap_writer::JustWriter;
+
+#[test]
+fn resolve() {
+    let doc = parse_type_system_document(
+        "
             schema { query: Query }
 
             extend schema { mutation: Mutation }
@@ -50,45 +50,44 @@ mod tests {
             }
 
             ",
-        )
-        .unwrap();
-        let resolved = resolve_schema_extensions(doc).unwrap();
+    )
+    .unwrap();
+    let resolved = resolve_schema_extensions(doc).unwrap();
 
-        assert_snapshot!(print_graphql(resolved));
-    }
+    assert_snapshot!(print_graphql(resolved));
+}
 
-    #[test]
-    fn error_handling() {
-        let doc = parse_type_system_document(
-            "
+#[test]
+fn error_handling() {
+    let doc = parse_type_system_document(
+        "
             extend schema { mutation: Mutation }
             type A { foo: Int! }
             ",
-        )
-        .unwrap();
+    )
+    .unwrap();
 
-        let resolved = resolve_schema_extensions(doc).unwrap_err();
-        assert_snapshot!(resolved.message.to_string());
-    }
+    let resolved = resolve_schema_extensions(doc).unwrap_err();
+    assert_snapshot!(resolved.message.to_string());
+}
 
-    #[test]
-    fn error_handling2() {
-        let doc = parse_type_system_document(
-            "
+#[test]
+fn error_handling2() {
+    let doc = parse_type_system_document(
+        "
             type A { foo: Int! }
             type A { bar: Int! }
             ",
-        )
-        .unwrap();
+    )
+    .unwrap();
 
-        let resolved = resolve_schema_extensions(doc).unwrap_err();
-        assert_snapshot!(resolved.message.to_string());
-    }
+    let resolved = resolve_schema_extensions(doc).unwrap_err();
+    assert_snapshot!(resolved.message.to_string());
+}
 
-    fn print_graphql<T: GraphQLPrinter>(value: T) -> String {
-        let mut result = String::new();
-        let mut writer = JustWriter::new(&mut result);
-        value.print_graphql(&mut writer);
-        result
-    }
+fn print_graphql<T: GraphQLPrinter>(value: T) -> String {
+    let mut result = String::new();
+    let mut writer = JustWriter::new(&mut result);
+    value.print_graphql(&mut writer);
+    result
 }

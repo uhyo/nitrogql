@@ -13,9 +13,8 @@ mod operations {
 
     use graphql_type_system::Schema;
     use insta::assert_debug_snapshot;
-    use nitrogql_semantics::{ast_to_type_system, resolve_operation_extensions};
+    use nitrogql_semantics::ast_to_type_system;
 
-    use crate::operation_checker::check_operation_document;
     use nitrogql_ast::base::Pos;
     use nitrogql_parser::parse_operation_document;
 
@@ -301,9 +300,8 @@ mod selection_set {
 
     use graphql_type_system::Schema;
     use insta::assert_debug_snapshot;
-    use nitrogql_semantics::{ast_to_type_system, resolve_operation_extensions};
+    use nitrogql_semantics::ast_to_type_system;
 
-    use crate::operation_checker::check_operation_document;
     use nitrogql_ast::base::Pos;
     use nitrogql_parser::parse_operation_document;
 
@@ -928,12 +926,9 @@ mod imports {
 
     use graphql_type_system::Schema;
     use insta::assert_debug_snapshot;
-    use nitrogql_semantics::{ast_to_type_system, resolve_operation_extensions};
+    use nitrogql_semantics::ast_to_type_system;
 
-    use crate::{
-        operation_checker::{check_operation_document, tests::test_check},
-        OperationCheckContext,
-    };
+    use crate::operation_checker::tests::test_check;
     use nitrogql_ast::base::Pos;
     use nitrogql_parser::parse_operation_document;
 

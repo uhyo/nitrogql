@@ -5,6 +5,8 @@ mod helpers;
 mod tests;
 mod to_json;
 
+pub use to_json::ExecutableDefinitionRef;
+
 pub fn print_to_json_string<T: JsonPrintable + ?Sized>(ast: &T) -> String {
     let mut buf = String::new();
     ast.print_json(&mut JSONObjectWriter::new(&mut buf));
