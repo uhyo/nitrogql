@@ -1,4 +1,4 @@
-use nitrogql_ast::{operation::ExecutableDefinition, OperationDocument};
+use nitrogql_ast::OperationDocument;
 use sourcemap_writer::SourceMapWriter;
 
 use crate::{
@@ -78,18 +78,28 @@ impl<'a, 'src> OperationPrinterVisitor for OperationJSPrinterVisitor<'a, 'src> {
         writer.write_for(context.var_name, fragment);
         writer.write(" = ");
 
-        // Generated document is the collection of all fragments,
+        let fragments_to_include =
+            fragment_names_in_selection_set(&fragment.selection_set, |name| {
+                context.fragments.get(name).copied()
+            })
+            .into_iter()
+            .filter(|f| {
+                // Filter out the fragment we are currently processing
+                *f != fragment.name.name
+            })
+            .map(|name| {
+                ExecutableDefinitionRef::FragmentDefinition(
+                    context.fragments.get(name).expect("fragment not found"),
+                )
+            });
+
+        // Generated document is the collection of all relevant fragments,
         // and the fragment we are currently processing
         // comes first in the list
-        let mut this_document = vec![fragment];
-        this_document.extend(self.context.operation.definitions.iter().filter_map(
-            |def| match def {
-                ExecutableDefinition::FragmentDefinition(def) => {
-                    (def.name.name != fragment.name.name).then_some(def)
-                }
-                ExecutableDefinition::OperationDefinition(_) => None,
-            },
-        ));
+        let this_document = vec![ExecutableDefinitionRef::FragmentDefinition(fragment)]
+            .into_iter()
+            .chain(fragments_to_include)
+            .collect::<Vec<_>>();
         writer.write(&print_to_json_string(&this_document[..]));
         writer.write(";\n\n");
     }

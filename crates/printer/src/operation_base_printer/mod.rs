@@ -80,6 +80,7 @@ where
                         var_name: &var_name,
                         exported,
                         fragment: def,
+                        fragments: &fragments,
                     };
                     self.visitor.print_fragment_definition(context, self.writer);
                 }

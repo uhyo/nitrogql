@@ -54,4 +54,6 @@ pub struct PrintFragmentContext<'a> {
     pub exported: bool,
     /// Fragment definition.
     pub fragment: &'a FragmentDefinition<'a>,
+    /// Map from fragment names to fragment definitions.
+    pub fragments: &'a HashMap<&'a str, &'a FragmentDefinition<'a>>,
 }
