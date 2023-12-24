@@ -2,10 +2,11 @@ use nitrogql_ast::{operation::ExecutableDefinition, OperationDocument};
 use sourcemap_writer::SourceMapWriter;
 
 use crate::{
-    json_printer::print_to_json_string,
+    json_printer::{print_to_json_string, ExecutableDefinitionRef},
     operation_base_printer::{
         OperationPrinterVisitor, PrintFragmentContext, PrintOperationContext,
     },
+    utils::fragment_names_in_selection_set,
 };
 
 pub struct OperationJSPrinterVisitor<'a, 'src> {
@@ -41,19 +42,23 @@ impl<'a, 'src> OperationPrinterVisitor for OperationJSPrinterVisitor<'a, 'src> {
             &operation.name_pos(),
         );
         writer.write(" = ");
-        // To follow the community conventions, generated JSON has only one operation in it
-        let this_document = self
-            .context
-            .operation
-            .definitions
-            .iter()
-            .filter(|def| match def {
-                ExecutableDefinition::FragmentDefinition(_) => true,
-                ExecutableDefinition::OperationDefinition(op) => {
-                    op.name.map(|ident| ident.name) == operation.name.map(|ident| ident.name)
-                }
+        let fragments_to_include =
+            fragment_names_in_selection_set(&operation.selection_set, |name| {
+                context.fragments.get(name).copied()
             })
-            .collect::<Vec<_>>();
+            .into_iter()
+            .map(|name| {
+                ExecutableDefinitionRef::FragmentDefinition(
+                    context.fragments.get(name).expect("fragment not found"),
+                )
+            });
+        // To follow the community conventions, generated JSON has only one operation in it
+        let this_document = vec![ExecutableDefinitionRef::OperationDefinition(
+            context.operation,
+        )]
+        .into_iter()
+        .chain(fragments_to_include)
+        .collect::<Vec<_>>();
         writer.write(&print_to_json_string(&this_document[..]));
         writer.write(";\n\n");
     }

@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use nitrogql_ast::operation::{FragmentDefinition, OperationDefinition};
 use sourcemap_writer::SourceMapWriter;
 
@@ -40,6 +42,8 @@ pub struct PrintOperationContext<'a> {
     pub export_result_type: bool,
     /// Operation definition.
     pub operation: &'a OperationDefinition<'a>,
+    /// Map from fragment names to fragment definitions.
+    pub fragments: &'a HashMap<&'a str, &'a FragmentDefinition<'a>>,
 }
 
 #[derive(Copy, Clone, Debug)]
