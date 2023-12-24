@@ -1,4 +1,3 @@
-use nitrogql_ast::OperationDocument;
 use sourcemap_writer::SourceMapWriter;
 
 use crate::{
@@ -9,22 +8,15 @@ use crate::{
     utils::fragment_names_in_selection_set,
 };
 
-pub struct OperationJSPrinterVisitor<'a, 'src> {
-    context: OperationJSPrinterContext<'a, 'src>,
-}
+pub struct OperationJSPrinterVisitor {}
 
-impl<'a, 'src> OperationJSPrinterVisitor<'a, 'src> {
-    pub fn new(operation: &'a OperationDocument<'src>) -> Self {
-        let context = OperationJSPrinterContext { operation };
-        Self { context }
+impl OperationJSPrinterVisitor {
+    pub fn new() -> Self {
+        Self {}
     }
 }
 
-pub struct OperationJSPrinterContext<'a, 'src> {
-    operation: &'a OperationDocument<'src>,
-}
-
-impl<'a, 'src> OperationPrinterVisitor for OperationJSPrinterVisitor<'a, 'src> {
+impl OperationPrinterVisitor for OperationJSPrinterVisitor {
     fn print_header(&self, _writer: &mut impl SourceMapWriter) {}
     fn print_trailer(&self, _writer: &mut impl SourceMapWriter) {}
     fn print_operation_definition(
