@@ -11,13 +11,12 @@ use nitrogql_utils::clone_into;
 use sourcemap_writer::SourceMapWriter;
 
 use crate::{
-    json_printer::{print_to_json_string, ExecutableDefinitionRef},
     operation_base_printer::{
         options::OperationBasePrinterOptions, OperationPrinterVisitor, PrintFragmentContext,
         PrintOperationContext,
     },
+    operation_js_printer::{print_fragment_runtime, print_operation_runtime},
     ts_types::TSType,
-    utils::fragment_names_in_selection_set,
 };
 
 use super::type_printer::{
@@ -215,24 +214,7 @@ impl<'a, 'src> OperationPrinterVisitor for OperationTypePrinterVisitor<'a, 'src>
             return;
         }
         writer.write("> = ");
-        let fragments_to_include =
-            fragment_names_in_selection_set(&operation.selection_set, |name| {
-                context.fragments.get(name).copied()
-            })
-            .into_iter()
-            .map(|name| {
-                ExecutableDefinitionRef::FragmentDefinition(
-                    context.fragments.get(name).expect("fragment not found"),
-                )
-            });
-        // To follow the community conventions, generated JSON has only one operation in it
-        let this_document = vec![ExecutableDefinitionRef::OperationDefinition(
-            context.operation,
-        )]
-        .into_iter()
-        .chain(fragments_to_include)
-        .collect::<Vec<_>>();
-        writer.write(&print_to_json_string(&this_document[..]));
+        print_operation_runtime(writer, operation, context.fragments);
         // Use the `as unknown as` technique to avoid the type system complaining about
         // the type of the JSON object not matching the type of the TypedDocumentNode
         // (because of the use of enums in the TypedDocumentNode type)
@@ -306,30 +288,7 @@ impl<'a, 'src> OperationPrinterVisitor for OperationTypePrinterVisitor<'a, 'src>
             return;
         }
         writer.write(" = ");
-
-        let fragments_to_include =
-            fragment_names_in_selection_set(&fragment.selection_set, |name| {
-                context.fragments.get(name).copied()
-            })
-            .into_iter()
-            .filter(|f| {
-                // Filter out the fragment we are currently processing
-                *f != fragment.name.name
-            })
-            .map(|name| {
-                ExecutableDefinitionRef::FragmentDefinition(
-                    context.fragments.get(name).expect("fragment not found"),
-                )
-            });
-
-        // Generated document is the collection of all relevant fragments,
-        // and the fragment we are currently processing
-        // comes first in the list
-        let this_document = vec![ExecutableDefinitionRef::FragmentDefinition(fragment)]
-            .into_iter()
-            .chain(fragments_to_include)
-            .collect::<Vec<_>>();
-        writer.write(&print_to_json_string(&this_document[..]));
+        print_fragment_runtime(writer, fragment, context.fragments);
         writer.write(" as unknown as TypedDocumentNode<");
         writer.write_for(&fragment_type_name, fragment);
         writer.write(", never>;\n\n");

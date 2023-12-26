@@ -6,8 +6,11 @@ use crate::{operation_base_printer::OperationPrinter, OperationJSPrinterOptions}
 use self::visitor::OperationJSPrinterVisitor;
 
 pub mod options;
+mod printers;
 mod tests;
 pub mod visitor;
+
+pub use printers::{print_fragment_runtime, print_operation_runtime};
 
 /// Print a JavaScript module for given operation document.
 pub fn print_js_for_operation_document(
