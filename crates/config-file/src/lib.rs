@@ -8,6 +8,7 @@ mod load_config;
 mod node;
 mod parse_config;
 mod parsing_utils;
+mod scalar_type;
 #[cfg(test)]
 mod tests;
 
