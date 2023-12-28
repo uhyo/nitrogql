@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use nitrogql_ast::type_system::TypeSystemDocument;
-use nitrogql_config_file::Config;
+use nitrogql_config_file::{Config, ScalarTypeConfig};
 use nitrogql_semantics::ast_to_type_system;
 use sourcemap_writer::SourceMapWriter;
 
@@ -13,7 +13,7 @@ use super::{
 
 pub struct SchemaTypePrinterOptions {
     /// Type of each scalar. Provided as raw TypeScript code.
-    pub scalar_types: HashMap<String, String>,
+    pub scalar_types: HashMap<String, ScalarTypeConfig>,
     /// Special type name for types that includes schema metadata
     pub schema_metadata_type: String,
     /// Whether to make input nullable fields optional.
@@ -50,7 +50,7 @@ impl SchemaTypePrinterOptions {
                 .r#type
                 .scalar_types
                 .iter()
-                .map(|(key, value)| (key.to_owned(), value.to_owned())),
+                .map(|(key, value)| (key.to_owned(), value.clone())),
         );
         result
     }

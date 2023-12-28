@@ -9,6 +9,7 @@ use nitrogql_ast::{
     type_system::{TypeDefinition, TypeSystemDefinition},
     TypeSystemDocument,
 };
+use nitrogql_config_file::ScalarTypeConfig;
 
 use crate::SchemaTypePrinterOptions;
 
@@ -17,7 +18,7 @@ pub struct SchemaTypePrinterContext<'src> {
     pub document: &'src TypeSystemDocument<'src>,
     pub schema: &'src Schema<Cow<'src, str>, Pos>,
     // Mapping from Scalar name to TypeScript types.
-    pub scalar_types: HashMap<String, String>,
+    pub scalar_types: HashMap<String, ScalarTypeConfig>,
     /// Mapping from schema type name to local type name.
     pub local_type_names: HashMap<String, String>,
 }
@@ -44,7 +45,7 @@ impl SchemaTypePrinterContext<'_> {
 fn get_scalar_types(
     document: &TypeSystemDocument,
     options: &SchemaTypePrinterOptions,
-) -> HashMap<String, String> {
+) -> HashMap<String, ScalarTypeConfig> {
     document
         .definitions
         .iter()
@@ -71,16 +72,16 @@ fn get_scalar_types(
                             .and_then(|v| v.as_string())
                     })
                 })
-                .map(|v| &v.value);
-            let scalar_ts_type = scalar_type_from_config.or(directive_ts_type);
-            scalar_ts_type.map(|ty| (definition.name.name.to_owned(), ty.to_owned()))
+                .map(|v| ScalarTypeConfig::Single(v.value.clone()));
+            let scalar_ts_type = scalar_type_from_config.cloned().or(directive_ts_type);
+            scalar_ts_type.map(|ty| (definition.name.name.to_owned(), ty))
         })
         .collect()
 }
 
-fn get_bag_of_identifiers(scalar_types: &HashMap<String, String>) -> HashSet<&str> {
+fn get_bag_of_identifiers(scalar_types: &HashMap<String, ScalarTypeConfig>) -> HashSet<&str> {
     let mut result = vec![];
-    for value in scalar_types.values() {
+    for value in scalar_types.values().flat_map(|v| v.type_names()) {
         let mut start_index = 0;
         let mut in_identifier = false;
         for (index, c) in value.char_indices() {
@@ -104,7 +105,7 @@ fn get_bag_of_identifiers(scalar_types: &HashMap<String, String>) -> HashSet<&st
 
 fn make_local_type_names(
     document: &TypeSystemDocument,
-    scalar_types: &HashMap<String, String>,
+    scalar_types: &HashMap<String, ScalarTypeConfig>,
 ) -> HashMap<String, String> {
     // The bag is the set of identifiers that appear in TypeScript types of scalars.
     // We will use this to avoid name collisions.

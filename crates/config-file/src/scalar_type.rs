@@ -1,6 +1,8 @@
+use serde::Deserialize;
+
 /// Representation of a scalar type's TypeScript type
 /// as defined in the config file.
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum ScalarTypeConfig {
     /// Single specification for use in all situations.
     Single(String),
@@ -30,5 +32,21 @@ impl ScalarTypeConfig {
         match self {
             ScalarTypeConfig::Single(type_name) => type_name,
         }
+    }
+    /// Returns an Iterator over all type names used in this config.
+    pub fn type_names(&self) -> impl Iterator<Item = &str> {
+        match self {
+            ScalarTypeConfig::Single(type_name) => std::iter::once(type_name.as_str()),
+        }
+    }
+}
+
+impl<'de> Deserialize<'de> for ScalarTypeConfig {
+    fn deserialize<D>(deserializer: D) -> Result<ScalarTypeConfig, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        let s = String::deserialize(deserializer)?;
+        Ok(ScalarTypeConfig::Single(s))
     }
 }

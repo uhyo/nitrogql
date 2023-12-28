@@ -2,7 +2,7 @@ use std::{collections::HashMap, path::PathBuf, str::FromStr};
 
 use serde::Deserialize;
 
-use crate::parsing_utils::deserialize_fromstr;
+use crate::{parsing_utils::deserialize_fromstr, scalar_type::ScalarTypeConfig};
 
 #[derive(Debug, Default)]
 pub struct Config {
@@ -73,7 +73,7 @@ impl FromStr for GenerateMode {
 #[serde(default, rename_all = "camelCase")]
 pub struct GenerateTypeConfig {
     /// Type of scalars.
-    pub scalar_types: HashMap<String, String>,
+    pub scalar_types: HashMap<String, ScalarTypeConfig>,
     /// Whether to allow undefined as input value
     /// for nullable input fields.
     pub allow_undefined_as_optional_input: bool,
