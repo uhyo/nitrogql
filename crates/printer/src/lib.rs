@@ -8,7 +8,6 @@ mod resolver_type_printer;
 mod schema;
 mod schema_type_printer;
 pub mod ts_types;
-mod type_target;
 mod utils;
 
 pub use graphql_printer::GraphQLPrinter;

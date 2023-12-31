@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use nitrogql_ast::type_system::{TypeDefinition, TypeSystemDefinition, TypeSystemDocument};
-use nitrogql_config_file::{Config, ScalarTypeConfig};
+use nitrogql_config_file::{Config, ScalarTypeConfig, TypeTarget};
 use nitrogql_semantics::ast_to_type_system;
 use sourcemap_writer::SourceMapWriter;
 
@@ -72,7 +72,12 @@ where
     pub fn print_document(&mut self, document: &TypeSystemDocument) -> SchemaTypePrinterResult<()> {
         let schema = ast_to_type_system(document);
         self.print_prelude(document);
-        let context = SchemaTypePrinterContext::new(&self.options, document, &schema);
+        let context = SchemaTypePrinterContext::new(
+            &self.options,
+            document,
+            &schema,
+            TypeTarget::OperationOutput,
+        );
         for def in document.definitions.iter() {
             def.print_type(&context, self.writer)?;
             self.writer.write("\n");

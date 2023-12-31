@@ -11,6 +11,7 @@ mod parsing_utils;
 mod scalar_type;
 #[cfg(test)]
 mod tests;
+mod type_target;
 
 pub use config::{Config, GenerateConfig, GenerateMode};
 #[cfg(feature = "execute_js")]
@@ -21,3 +22,4 @@ pub use load_config::load_config;
 pub use node::{load_default_from_js_file, run_node};
 pub use parse_config::parse_config;
 pub use scalar_type::ScalarTypeConfig;
+pub use type_target::TypeTarget;

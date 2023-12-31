@@ -9,7 +9,7 @@ use nitrogql_ast::{
     type_system::{TypeDefinition, TypeSystemDefinition},
     TypeSystemDocument,
 };
-use nitrogql_config_file::ScalarTypeConfig;
+use nitrogql_config_file::{ScalarTypeConfig, TypeTarget};
 
 use crate::SchemaTypePrinterOptions;
 
@@ -21,6 +21,8 @@ pub struct SchemaTypePrinterContext<'src> {
     pub scalar_types: HashMap<String, ScalarTypeConfig>,
     /// Mapping from schema type name to local type name.
     pub local_type_names: HashMap<String, String>,
+    /// Current output type target.
+    pub type_target: TypeTarget,
 }
 
 impl SchemaTypePrinterContext<'_> {
@@ -28,6 +30,7 @@ impl SchemaTypePrinterContext<'_> {
         options: &'src SchemaTypePrinterOptions,
         document: &'src TypeSystemDocument<'src>,
         schema: &'src Schema<Cow<'src, str>, Pos>,
+        type_target: TypeTarget,
     ) -> SchemaTypePrinterContext<'src> {
         let scalar_types = get_scalar_types(document, options);
         let local_type_names = make_local_type_names(document, &scalar_types);
@@ -37,6 +40,7 @@ impl SchemaTypePrinterContext<'_> {
             schema,
             scalar_types,
             local_type_names,
+            type_target,
         }
     }
 }

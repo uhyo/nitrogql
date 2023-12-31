@@ -89,8 +89,7 @@ impl TypePrinter for ScalarTypeDefinition<'_> {
             &self.name,
             local_name,
             |writer| {
-                // TODO: vary on target type
-                writer.write(scalar_type_str.as_operation_output_type());
+                writer.write(scalar_type_str.get_type(context.type_target));
             },
         );
         Ok(())

@@ -1,5 +1,7 @@
 use serde::Deserialize;
 
+use crate::TypeTarget;
+
 /// Representation of a scalar type's TypeScript type
 /// as defined in the config file.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -9,6 +11,12 @@ pub enum ScalarTypeConfig {
 }
 
 impl ScalarTypeConfig {
+    /// Get the TypeScript type for given target.
+    pub fn get_type(&self, _target: TypeTarget) -> &str {
+        match self {
+            ScalarTypeConfig::Single(type_name) => type_name,
+        }
+    }
     /// Get the TypeScript type as a resolver output type.
     pub fn as_resolver_output_type(&self) -> &str {
         match self {
