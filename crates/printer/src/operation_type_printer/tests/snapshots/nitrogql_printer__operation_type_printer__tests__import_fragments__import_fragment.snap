@@ -5,11 +5,11 @@ expression: printed
 import type { TypedDocumentNode } from "@graphql-typed-document-node/core";
 import type * as Schema from "";
 
-type MyQueryResult = Schema.__SelectionSet<Schema.Query, {
-  me: Schema.__SelectionSet<Schema.User, {
-    id: Schema.ID;
-    name: Schema.String;
-    age: Schema.Int | null;
+type MyQueryResult = Schema.__SelectionSet<Schema.__OperationOutput.Query, {
+  me: Schema.__SelectionSet<Schema.__OperationOutput.User, {
+    id: Schema.__OperationOutput.ID;
+    name: Schema.__OperationOutput.String;
+    age: Schema.__OperationOutput.Int | null;
   }, {}>;
 }, {}>;
 
@@ -19,9 +19,9 @@ declare const MyQueryQuery: TypedDocumentNode<MyQueryResult, MyQueryVariables>;
 
 export { MyQueryQuery as default };
 
-type UserProfile = Schema.__SelectionSet<Schema.User, {
-  name: Schema.String;
-  age: Schema.Int | null;
+type UserProfile = Schema.__SelectionSet<Schema.__OperationOutput.User, {
+  name: Schema.__OperationOutput.String;
+  age: Schema.__OperationOutput.Int | null;
 }, {}>;
 
 declare const UserProfile: TypedDocumentNode<UserProfile, never>;
