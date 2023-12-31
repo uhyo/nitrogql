@@ -1,11 +1,11 @@
 use std::collections::HashMap;
 
-use nitrogql_ast::type_system::TypeSystemDocument;
+use nitrogql_ast::type_system::{TypeDefinition, TypeSystemDefinition, TypeSystemDocument};
 use nitrogql_config_file::{Config, ScalarTypeConfig};
 use nitrogql_semantics::ast_to_type_system;
 use sourcemap_writer::SourceMapWriter;
 
-use crate::schema::get_builtin_scalar_types;
+use crate::{schema::get_builtin_scalar_types, ts_types::TSType};
 
 use super::{
     context::SchemaTypePrinterContext, error::SchemaTypePrinterResult, type_printer::TypePrinter,
@@ -71,8 +71,74 @@ where
 
     pub fn print_document(&mut self, document: &TypeSystemDocument) -> SchemaTypePrinterResult<()> {
         let schema = ast_to_type_system(document);
+        self.print_prelude(document);
         let context = SchemaTypePrinterContext::new(&self.options, document, &schema);
-        document.print_type(&context, self.writer)?;
+        for def in document.definitions.iter() {
+            def.print_type(&context, self.writer)?;
+            self.writer.write("\n");
+        }
         Ok(())
     }
+
+    fn print_prelude(&mut self, document: &TypeSystemDocument) {
+        self.writer.write("export type ");
+        self.writer.write(&self.options.schema_metadata_type);
+        self.writer.write(" = ");
+        let schema_metadata_type = get_schema_metadata_type(document);
+        schema_metadata_type.print_type(self.writer);
+        self.writer.write(";\n\n");
+        // Print utility types
+        self.writer.write(
+            "type __Beautify<Obj> = { [K in keyof Obj]: Obj[K] } & {};
+export type __SelectionSet<Orig, Obj, Others> =
+  __Beautify<Pick<{
+    [K in keyof Orig]: Obj extends { [P in K]?: infer V } ? V : unknown
+  }, Extract<keyof Orig, keyof Obj>> & Others>;
+",
+        );
+    }
+}
+fn get_schema_metadata_type(document: &TypeSystemDocument) -> TSType {
+    let schema_definition = document.definitions.iter().find_map(|def| match def {
+        TypeSystemDefinition::SchemaDefinition(def) => Some(def),
+        _ => None,
+    });
+    if let Some(schema_def) = schema_definition {
+        return TSType::object(schema_def.definitions.iter().map(|(op, ty)| {
+            (
+                op.as_str(),
+                TSType::TypeVariable(ty.into()),
+                schema_def.description.as_ref().map(|d| d.value.clone()),
+            )
+        }));
+    }
+    // If there is no schema definition, use default root type names.
+    let mut operations = vec![];
+    for d in document.definitions.iter() {
+        let TypeSystemDefinition::TypeDefinition(ref def) = d else {
+            continue;
+        };
+        let TypeDefinition::Object(ref def) = def else {
+            continue;
+        };
+
+        match def.name.name {
+            "Query" => {
+                operations.push(("query", (&def.name).into()));
+            }
+            "Mutation" => {
+                operations.push(("mutation", (&def.name).into()));
+            }
+            "Subscription" => {
+                operations.push(("subscription", (&def.name).into()));
+            }
+            _ => {}
+        }
+    }
+
+    TSType::object(
+        operations
+            .into_iter()
+            .map(|(op, ty)| (op, TSType::TypeVariable(ty), None)),
+    )
 }
