@@ -485,6 +485,7 @@ dependencies = [
  "log",
  "once_cell",
  "serde",
+ "serde_json",
  "serde_yaml",
  "thiserror",
 ]
