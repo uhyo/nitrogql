@@ -45,7 +45,7 @@ pub fn run_node(code: &str) -> io::Result<String> {
             command.arg("--import=@nitrogql/esbuild-register");
         } else {
             command.arg("--require=@nitrogql/esbuild-register");
-            command.arg("--experimenta-loader=@nitrogql/esbuild-register/hook");
+            command.arg("--experimental-loader=@nitrogql/esbuild-register/hook");
         }
         let mut command = command
             .stdin(Stdio::piped())
