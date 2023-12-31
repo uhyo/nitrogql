@@ -72,16 +72,36 @@ where
     pub fn print_document(&mut self, document: &TypeSystemDocument) -> SchemaTypePrinterResult<()> {
         let schema = ast_to_type_system(document);
         self.print_prelude(document);
+
+        for target in [
+            TypeTarget::OperationInput,
+            TypeTarget::OperationOutput,
+            TypeTarget::ResolverInput,
+            TypeTarget::ResolverOutput,
+        ] {
+            writeln!(self.writer, "export declare namespace {target} {{");
+            self.writer.indent();
+            let context = SchemaTypePrinterContext::new(&self.options, document, &schema, target);
+            for def in document.definitions.iter() {
+                def.print_type(&context, self.writer)?;
+                self.writer.write("\n");
+            }
+            self.writer.dedent();
+            writeln!(self.writer, "}}\n");
+        }
+
         let context = SchemaTypePrinterContext::new(
             &self.options,
             document,
             &schema,
+            // target is dummy
             TypeTarget::OperationOutput,
         );
         for def in document.definitions.iter() {
-            def.print_type(&context, self.writer)?;
+            def.print_representative(&context, self.writer)?;
             self.writer.write("\n");
         }
+
         Ok(())
     }
 
@@ -99,6 +119,7 @@ export type __SelectionSet<Orig, Obj, Others> =
   __Beautify<Pick<{
     [K in keyof Orig]: Obj extends { [P in K]?: infer V } ? V : unknown
   }, Extract<keyof Orig, keyof Obj>> & Others>;
+
 ",
         );
     }

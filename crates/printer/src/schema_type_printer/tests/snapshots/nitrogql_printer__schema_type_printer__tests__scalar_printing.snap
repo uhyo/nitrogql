@@ -9,8 +9,37 @@ export type __SelectionSet<Orig, Obj, Others> =
   __Beautify<Pick<{
     [K in keyof Orig]: Obj extends { [P in K]?: infer V } ? V : unknown
   }, Extract<keyof Orig, keyof Obj>> & Others>;
-export type BigInt = bigint;
 
-export type URL = string;
+export declare namespace __OperationInput {
+  export type BigInt = bigint;
+
+  export type URL = string;
+
+}
+
+export declare namespace __OperationOutput {
+  export type BigInt = bigint;
+
+  export type URL = string;
+
+}
+
+export declare namespace __ResolverInput {
+  export type BigInt = bigint;
+
+  export type URL = string;
+
+}
+
+export declare namespace __ResolverOutput {
+  export type BigInt = bigint;
+
+  export type URL = string;
+
+}
+
+export type BigInt = __OperationOutput.BigInt;
+
+export type URL = __OperationOutput.URL;
 
 

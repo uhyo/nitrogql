@@ -9,16 +9,73 @@ export type __SelectionSet<Orig, Obj, Others> =
   __Beautify<Pick<{
     [K in keyof Orig]: Obj extends { [P in K]?: infer V } ? V : unknown
   }, Extract<keyof Orig, keyof Obj>> & Others>;
-type __tmp_Rec1 = string | Rec2;
-export type { __tmp_Rec1 as Rec1};
 
-type __tmp_Rec2 = Rec1 | number;
-export type { __tmp_Rec2 as Rec2};
+export declare namespace __OperationInput {
+  type __tmp_Rec1 = string | Rec2;
+  export type { __tmp_Rec1 as Rec1};
 
-export type Obj = {
-  __typename: "Obj";
-  rec1: __tmp_Rec1;
-  rec2: __tmp_Rec2;
-};
+  type __tmp_Rec2 = Rec1 | number;
+  export type { __tmp_Rec2 as Rec2};
+
+  export type Obj = {
+    __typename: "Obj";
+    rec1: __tmp_Rec1;
+    rec2: __tmp_Rec2;
+  };
+
+}
+
+export declare namespace __OperationOutput {
+  type __tmp_Rec1 = string | Rec2;
+  export type { __tmp_Rec1 as Rec1};
+
+  type __tmp_Rec2 = Rec1 | number;
+  export type { __tmp_Rec2 as Rec2};
+
+  export type Obj = {
+    __typename: "Obj";
+    rec1: __tmp_Rec1;
+    rec2: __tmp_Rec2;
+  };
+
+}
+
+export declare namespace __ResolverInput {
+  type __tmp_Rec1 = string | Rec2;
+  export type { __tmp_Rec1 as Rec1};
+
+  type __tmp_Rec2 = Rec1 | number;
+  export type { __tmp_Rec2 as Rec2};
+
+  export type Obj = {
+    __typename: "Obj";
+    rec1: __tmp_Rec1;
+    rec2: __tmp_Rec2;
+  };
+
+}
+
+export declare namespace __ResolverOutput {
+  type __tmp_Rec1 = string | Rec2;
+  export type { __tmp_Rec1 as Rec1};
+
+  type __tmp_Rec2 = Rec1 | number;
+  export type { __tmp_Rec2 as Rec2};
+
+  export type Obj = {
+    __typename: "Obj";
+    rec1: __tmp_Rec1;
+    rec2: __tmp_Rec2;
+  };
+
+}
+
+type __tmp_Rec1 = __OperationOutput.Rec1;
+export type { __tmp_Rec1 as Rec1 };
+
+type __tmp_Rec2 = __OperationOutput.Rec2;
+export type { __tmp_Rec2 as Rec2 };
+
+export type Obj = __OperationOutput.Obj;
 
 

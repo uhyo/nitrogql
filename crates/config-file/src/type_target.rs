@@ -10,12 +10,13 @@ pub enum TypeTarget {
 
 impl TypeTarget {
     /// Returns the string representation of self.
+    /// String representation is prefixed with `__` for use in type definitions.
     pub fn as_str(&self) -> &'static str {
         match self {
-            TypeTarget::OperationInput => "OperationInput",
-            TypeTarget::OperationOutput => "OperationOutput",
-            TypeTarget::ResolverInput => "ResolverInput",
-            TypeTarget::ResolverOutput => "ResolverOutput",
+            TypeTarget::OperationInput => "__OperationInput",
+            TypeTarget::OperationOutput => "__OperationOutput",
+            TypeTarget::ResolverInput => "__ResolverInput",
+            TypeTarget::ResolverOutput => "__ResolverOutput",
         }
     }
 }

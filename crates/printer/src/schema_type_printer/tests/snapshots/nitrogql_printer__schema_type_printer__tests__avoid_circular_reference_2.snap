@@ -9,15 +9,68 @@ export type __SelectionSet<Orig, Obj, Others> =
   __Beautify<Pick<{
     [K in keyof Orig]: Obj extends { [P in K]?: infer V } ? V : unknown
   }, Extract<keyof Orig, keyof Obj>> & Others>;
-export type BigInt = bigint;
 
-type __tmp_Date = Date | string;
-export type { __tmp_Date as Date};
+export declare namespace __OperationInput {
+  export type BigInt = bigint;
 
-export type Obj = {
-  __typename: "Obj";
-  bigint: BigInt | null;
-  date: __tmp_Date;
-};
+  type __tmp_Date = Date | string;
+  export type { __tmp_Date as Date};
+
+  export type Obj = {
+    __typename: "Obj";
+    bigint: BigInt | null;
+    date: __tmp_Date;
+  };
+
+}
+
+export declare namespace __OperationOutput {
+  export type BigInt = bigint;
+
+  type __tmp_Date = Date | string;
+  export type { __tmp_Date as Date};
+
+  export type Obj = {
+    __typename: "Obj";
+    bigint: BigInt | null;
+    date: __tmp_Date;
+  };
+
+}
+
+export declare namespace __ResolverInput {
+  export type BigInt = bigint;
+
+  type __tmp_Date = Date | string;
+  export type { __tmp_Date as Date};
+
+  export type Obj = {
+    __typename: "Obj";
+    bigint: BigInt | null;
+    date: __tmp_Date;
+  };
+
+}
+
+export declare namespace __ResolverOutput {
+  export type BigInt = bigint;
+
+  type __tmp_Date = Date | string;
+  export type { __tmp_Date as Date};
+
+  export type Obj = {
+    __typename: "Obj";
+    bigint: BigInt | null;
+    date: __tmp_Date;
+  };
+
+}
+
+export type BigInt = __OperationOutput.BigInt;
+
+type __tmp_Date = __OperationOutput.Date;
+export type { __tmp_Date as Date };
+
+export type Obj = __OperationOutput.Obj;
 
 

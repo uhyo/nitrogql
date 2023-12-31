@@ -15,6 +15,7 @@ use nitrogql_ast::{
     },
     value::StringValue,
 };
+use nitrogql_config_file::TypeTarget;
 use sourcemap_writer::SourceMapWriter;
 
 use crate::jsdoc::print_description as jsdoc_print_description;
@@ -26,6 +27,11 @@ use super::{
 
 pub trait TypePrinter {
     fn print_type(
+        &self,
+        context: &SchemaTypePrinterContext,
+        writer: &mut impl SourceMapWriter,
+    ) -> SchemaTypePrinterResult<()>;
+    fn print_representative(
         &self,
         context: &SchemaTypePrinterContext,
         writer: &mut impl SourceMapWriter,
@@ -44,6 +50,17 @@ impl TypePrinter for TypeSystemDefinition<'_> {
             TypeSystemDefinition::DirectiveDefinition(_) => Ok(()),
         }
     }
+    fn print_representative(
+        &self,
+        context: &SchemaTypePrinterContext,
+        writer: &mut impl SourceMapWriter,
+    ) -> SchemaTypePrinterResult<()> {
+        match self {
+            TypeSystemDefinition::SchemaDefinition(_) => Ok(()),
+            TypeSystemDefinition::TypeDefinition(def) => def.print_representative(context, writer),
+            TypeSystemDefinition::DirectiveDefinition(_) => Ok(()),
+        }
+    }
 }
 
 impl TypePrinter for TypeDefinition<'_> {
@@ -59,6 +76,20 @@ impl TypePrinter for TypeDefinition<'_> {
             TypeDefinition::Union(def) => def.print_type(context, writer),
             TypeDefinition::Enum(def) => def.print_type(context, writer),
             TypeDefinition::InputObject(def) => def.print_type(context, writer),
+        }
+    }
+    fn print_representative(
+        &self,
+        context: &SchemaTypePrinterContext,
+        writer: &mut impl SourceMapWriter,
+    ) -> SchemaTypePrinterResult<()> {
+        match self {
+            TypeDefinition::Scalar(def) => def.print_representative(context, writer),
+            TypeDefinition::Object(def) => def.print_representative(context, writer),
+            TypeDefinition::Interface(def) => def.print_representative(context, writer),
+            TypeDefinition::Union(def) => def.print_representative(context, writer),
+            TypeDefinition::Enum(def) => def.print_representative(context, writer),
+            TypeDefinition::InputObject(def) => def.print_representative(context, writer),
         }
     }
 }
@@ -91,6 +122,24 @@ impl TypePrinter for ScalarTypeDefinition<'_> {
             |writer| {
                 writer.write(scalar_type_str.get_type(context.type_target));
             },
+        );
+        Ok(())
+    }
+    fn print_representative(
+        &self,
+        context: &SchemaTypePrinterContext,
+        writer: &mut impl SourceMapWriter,
+    ) -> SchemaTypePrinterResult<()> {
+        let local_name = context
+            .local_type_names
+            .get(self.name.name)
+            .expect("Local type name not generated");
+        export_representative(
+            writer,
+            &self.scalar_keyword,
+            &self.name,
+            local_name,
+            TypeTarget::OperationOutput,
         );
         Ok(())
     }
@@ -152,6 +201,24 @@ impl TypePrinter for ObjectTypeDefinition<'_> {
         );
         Ok(())
     }
+    fn print_representative(
+        &self,
+        context: &SchemaTypePrinterContext,
+        writer: &mut impl SourceMapWriter,
+    ) -> SchemaTypePrinterResult<()> {
+        let local_name = context
+            .local_type_names
+            .get(self.name.name)
+            .expect("Local type name not generated");
+        export_representative(
+            writer,
+            &self.type_keyword,
+            &self.name,
+            local_name,
+            TypeTarget::OperationOutput,
+        );
+        Ok(())
+    }
 }
 
 impl TypePrinter for InterfaceTypeDefinition<'_> {
@@ -186,6 +253,24 @@ impl TypePrinter for InterfaceTypeDefinition<'_> {
         );
         Ok(())
     }
+    fn print_representative(
+        &self,
+        context: &SchemaTypePrinterContext,
+        writer: &mut impl SourceMapWriter,
+    ) -> SchemaTypePrinterResult<()> {
+        let local_name = context
+            .local_type_names
+            .get(self.name.name)
+            .expect("Local type name not generated");
+        export_representative(
+            writer,
+            &self.interface_keyword,
+            &self.name,
+            local_name,
+            TypeTarget::OperationOutput,
+        );
+        Ok(())
+    }
 }
 
 impl TypePrinter for UnionTypeDefinition<'_> {
@@ -213,6 +298,24 @@ impl TypePrinter for UnionTypeDefinition<'_> {
             |writer| {
                 union_type.print_type(writer);
             },
+        );
+        Ok(())
+    }
+    fn print_representative(
+        &self,
+        context: &SchemaTypePrinterContext,
+        writer: &mut impl SourceMapWriter,
+    ) -> SchemaTypePrinterResult<()> {
+        let local_name = context
+            .local_type_names
+            .get(self.name.name)
+            .expect("Local type name not generated");
+        export_representative(
+            writer,
+            &self.union_keyword,
+            &self.name,
+            local_name,
+            TypeTarget::OperationOutput,
         );
         Ok(())
     }
@@ -245,17 +348,36 @@ impl TypePrinter for EnumTypeDefinition<'_> {
                 enum_type.print_type(writer);
             },
         );
-
+        Ok(())
+    }
+    fn print_representative(
+        &self,
+        context: &SchemaTypePrinterContext,
+        writer: &mut impl SourceMapWriter,
+    ) -> SchemaTypePrinterResult<()> {
+        let local_name = context
+            .local_type_names
+            .get(self.name.name)
+            .expect("Local type name not generated");
+        export_representative(
+            writer,
+            &self.enum_keyword,
+            &self.name,
+            local_name,
+            TypeTarget::OperationOutput,
+        );
         if context.options.emit_schema_runtime {
             writer.write_for("export const ", &self.enum_keyword);
             writer.write_for(self.name.name, &self.name);
             writer.write(" = {\n");
+            writer.indent();
             for value in &self.values {
                 writer.write_for(value.name.name, &value.name);
                 writer.write(": \"");
                 writer.write_for(value.name.name, &value.name);
                 writer.write("\",\n");
             }
+            writer.dedent();
             writer.write("} as const;\n")
         }
         Ok(())
@@ -323,6 +445,24 @@ impl TypePrinter for InputObjectTypeDefinition<'_> {
         );
         Ok(())
     }
+    fn print_representative(
+        &self,
+        context: &SchemaTypePrinterContext,
+        writer: &mut impl SourceMapWriter,
+    ) -> SchemaTypePrinterResult<()> {
+        let local_name = context
+            .local_type_names
+            .get(self.name.name)
+            .expect("Local type name not generated");
+        export_representative(
+            writer,
+            &self.input_keyword,
+            &self.name,
+            local_name,
+            TypeTarget::ResolverInput,
+        );
+        Ok(())
+    }
 }
 
 fn export_type<Writer: SourceMapWriter>(
@@ -348,6 +488,29 @@ fn export_type<Writer: SourceMapWriter>(
         writer.write(" as ");
         writer.write(schema_name.name);
         writer.write("};\n");
+    }
+}
+
+fn export_representative(
+    writer: &mut impl SourceMapWriter,
+    type_keyword: &impl HasPos,
+    schema_name: &Ident,
+    local_name: &str,
+    target: TypeTarget,
+) {
+    if schema_name.name == local_name {
+        writer.write_for("export type ", type_keyword);
+        writer.write_for(local_name, schema_name);
+        writeln!(writer, " = {target}.{local_name};");
+    } else {
+        writer.write_for("type ", type_keyword);
+        writer.write_for(local_name, schema_name);
+        writeln!(writer, " = {target}.{schema_name};");
+        writeln!(
+            writer,
+            "export type {{ {local_name} as {} }};",
+            schema_name.name
+        );
     }
 }
 
