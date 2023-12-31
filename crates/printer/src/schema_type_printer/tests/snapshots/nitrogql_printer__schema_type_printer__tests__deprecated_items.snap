@@ -19,25 +19,7 @@ export declare namespace __OperationInput {
 
   export type Int = number;
 
-  export type User = {
-    __typename: "User";
-    id: ID;
-    name: String;
-    /**
-     * Age of user.
-     * @deprecated No longer supported
-     */
-    age: Int | null;
-    /**
-     * @deprecated Deprecated for political reasons
-     */
-    gender: String | null;
-  };
 
-  export type Query = {
-    __typename: "Query";
-    me: User;
-  };
 
   export type UserSearchQuery = {
     /**
@@ -76,13 +58,6 @@ export declare namespace __OperationOutput {
     me: User;
   };
 
-  export type UserSearchQuery = {
-    /**
-     * @deprecated No longer supported
-     */
-    readonly age?: Int | null | undefined;
-    readonly name?: String | null | undefined;
-  };
 
 }
 
@@ -93,25 +68,7 @@ export declare namespace __ResolverInput {
 
   export type Int = number;
 
-  export type User = {
-    __typename: "User";
-    id: ID;
-    name: String;
-    /**
-     * Age of user.
-     * @deprecated No longer supported
-     */
-    age: Int | null;
-    /**
-     * @deprecated Deprecated for political reasons
-     */
-    gender: String | null;
-  };
 
-  export type Query = {
-    __typename: "Query";
-    me: User;
-  };
 
   export type UserSearchQuery = {
     /**
@@ -150,13 +107,6 @@ export declare namespace __ResolverOutput {
     me: User;
   };
 
-  export type UserSearchQuery = {
-    /**
-     * @deprecated No longer supported
-     */
-    readonly age?: Int | null | undefined;
-    readonly name?: String | null | undefined;
-  };
 
 }
 

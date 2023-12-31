@@ -19,50 +19,10 @@ export declare namespace __OperationInput {
 
   export type Int = number;
 
-  /**
-   * This is User.
-   */
-  export type User = {
-    __typename: "User";
-    id: ID;
-    /**
-     * Name of user.
-     */
-    name: String;
-    type: UserType;
-    /**
-     * Age of user. User may choose to not register their age.
-     */
-    age: Int | null;
-    posts: (Post)[];
-  };
 
-  export type Bot = {
-    __typename: "Bot";
-    id: ID;
-  };
 
-  export type Post = {
-    __typename: "Post";
-    id: ID;
-    title: String;
-    tags: (String)[] | null;
-    body: String;
-  };
 
-  export type Query = {
-    __typename: "Query";
-    /**
-     * Returns my account.
-     * Note that query without authorization header results in a error.
-     */
-    me: User;
-  };
 
-  /**
-   * Node that has an id field.
-   */
-  export type HasID = User | Bot;
 
   export type UserType = "NormalUser" | "PremiumUser";
 
@@ -127,10 +87,6 @@ export declare namespace __OperationOutput {
 
   export type UserType = "NormalUser" | "PremiumUser";
 
-  export type UserSearchQuery = {
-    readonly age?: Int | null | undefined;
-    readonly name?: String | null | undefined;
-  };
 
 }
 
@@ -141,50 +97,10 @@ export declare namespace __ResolverInput {
 
   export type Int = number;
 
-  /**
-   * This is User.
-   */
-  export type User = {
-    __typename: "User";
-    id: ID;
-    /**
-     * Name of user.
-     */
-    name: String;
-    type: UserType;
-    /**
-     * Age of user. User may choose to not register their age.
-     */
-    age: Int | null;
-    posts: (Post)[];
-  };
 
-  export type Bot = {
-    __typename: "Bot";
-    id: ID;
-  };
 
-  export type Post = {
-    __typename: "Post";
-    id: ID;
-    title: String;
-    tags: (String)[] | null;
-    body: String;
-  };
 
-  export type Query = {
-    __typename: "Query";
-    /**
-     * Returns my account.
-     * Note that query without authorization header results in a error.
-     */
-    me: User;
-  };
 
-  /**
-   * Node that has an id field.
-   */
-  export type HasID = User | Bot;
 
   export type UserType = "NormalUser" | "PremiumUser";
 
@@ -249,10 +165,6 @@ export declare namespace __ResolverOutput {
 
   export type UserType = "NormalUser" | "PremiumUser";
 
-  export type UserSearchQuery = {
-    readonly age?: Int | null | undefined;
-    readonly name?: String | null | undefined;
-  };
 
 }
 

@@ -151,6 +151,10 @@ impl TypePrinter for ObjectTypeDefinition<'_> {
         context: &SchemaTypePrinterContext,
         writer: &mut impl SourceMapWriter,
     ) -> SchemaTypePrinterResult<()> {
+        if context.type_target.is_input() {
+            // Object type is not used as input type.
+            return Ok(());
+        }
         let type_name_ident = Ident {
             name: "__typename",
             position: Pos::builtin(),
@@ -227,6 +231,10 @@ impl TypePrinter for InterfaceTypeDefinition<'_> {
         context: &SchemaTypePrinterContext,
         writer: &mut impl SourceMapWriter,
     ) -> SchemaTypePrinterResult<()> {
+        if context.type_target.is_input() {
+            // Interface is not used as input type.
+            return Ok(());
+        }
         // In generated type definitions, an interface is expressed as a union of all possible concrete types.
         let union_constituents =
             interface_implementers(context.schema, self.name.name).map(|obj| {
@@ -279,6 +287,10 @@ impl TypePrinter for UnionTypeDefinition<'_> {
         context: &SchemaTypePrinterContext,
         writer: &mut impl SourceMapWriter,
     ) -> SchemaTypePrinterResult<()> {
+        if context.type_target.is_input() {
+            // Union is not used as input type.
+            return Ok(());
+        }
         let union_type = ts_union(
             self.members
                 .iter()
@@ -390,6 +402,10 @@ impl TypePrinter for InputObjectTypeDefinition<'_> {
         context: &SchemaTypePrinterContext,
         writer: &mut impl SourceMapWriter,
     ) -> SchemaTypePrinterResult<()> {
+        if context.type_target.is_output() {
+            // Input object is not used as output type.
+            return Ok(());
+        }
         let schema_type = context.schema.get_type(self.name.name);
         let obj_type = TSType::Object(
             self.fields

@@ -16,11 +16,6 @@ export declare namespace __OperationInput {
   type __tmp_Date = Date | string;
   export type { __tmp_Date as Date};
 
-  export type Obj = {
-    __typename: "Obj";
-    bigint: BigInt | null;
-    date: __tmp_Date;
-  };
 
 }
 
@@ -44,11 +39,6 @@ export declare namespace __ResolverInput {
   type __tmp_Date = Date | string;
   export type { __tmp_Date as Date};
 
-  export type Obj = {
-    __typename: "Obj";
-    bigint: BigInt | null;
-    date: __tmp_Date;
-  };
 
 }
 

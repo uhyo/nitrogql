@@ -19,6 +19,18 @@ impl TypeTarget {
             TypeTarget::ResolverOutput => "__ResolverOutput",
         }
     }
+
+    /// Returns whether self is an output target.
+    pub fn is_output(&self) -> bool {
+        matches!(
+            self,
+            TypeTarget::OperationOutput | TypeTarget::ResolverOutput
+        )
+    }
+    /// Returns whether self is an input target.
+    pub fn is_input(&self) -> bool {
+        !self.is_output()
+    }
 }
 
 impl Display for TypeTarget {
