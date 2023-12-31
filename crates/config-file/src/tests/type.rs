@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use crate::parse_config;
+use crate::{parse_config, ScalarTypeConfig};
 
 #[test]
 fn default_config() {
@@ -47,8 +47,14 @@ extensions:
     let config = parse_config(config).unwrap();
     let ty = config.generate.r#type;
     let mut expected = HashMap::new();
-    expected.insert("DateTime".to_string(), "Date".to_string());
-    expected.insert("JSON".to_string(), "any".to_string());
+    expected.insert(
+        "DateTime".to_string(),
+        ScalarTypeConfig::Single("Date".to_string()),
+    );
+    expected.insert(
+        "JSON".to_string(),
+        ScalarTypeConfig::Single("any".to_string()),
+    );
     assert_eq!(ty.scalar_types, expected);
     assert!(!ty.allow_undefined_as_optional_input);
 }

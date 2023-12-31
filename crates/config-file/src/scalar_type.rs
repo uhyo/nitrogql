@@ -2,7 +2,7 @@ use serde::Deserialize;
 
 /// Representation of a scalar type's TypeScript type
 /// as defined in the config file.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum ScalarTypeConfig {
     /// Single specification for use in all situations.
     Single(String),
