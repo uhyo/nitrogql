@@ -1,12 +1,16 @@
 use std::{borrow::Cow, collections::HashMap};
 
 use graphql_type_system::Schema;
-use nitrogql_ast::{base::Pos, type_system::TypeSystemDefinition, TypeSystemDocument};
+use nitrogql_ast::{
+    base::Pos,
+    type_system::{TypeDefinition, TypeSystemDefinition},
+    TypeSystemDocument,
+};
 use nitrogql_semantics::ast_to_type_system;
 use sourcemap_writer::SourceMapWriter;
 
 use crate::{
-    resolver_type_printer::visitor::{get_resolver_type, get_ts_type_for_resolver},
+    resolver_type_printer::visitor::{get_resolver_type, get_ts_type_for_resolver_output},
     ts_types::{ts_types_util::ts_union, ObjectField, ObjectKey, TSType},
 };
 
@@ -69,7 +73,7 @@ where
             .iter()
             .filter_map(|type_definition| match type_definition {
                 TypeSystemDefinition::TypeDefinition(type_definition) => {
-                    let resolver_type = get_ts_type_for_resolver(type_definition, &context);
+                    let resolver_type = get_ts_type_for_resolver_output(type_definition, &context);
                     Some((type_definition.name().name, resolver_type))
                 }
                 _ => None,
@@ -86,8 +90,14 @@ where
             }
         });
 
+        // Emit each schema type (resolver output variant) as a local type alias.
+        // This helps users to read generated types.
         for type_definition in &document_for_resolvers.definitions {
             if let TypeSystemDefinition::TypeDefinition(def) = type_definition {
+                if matches!(def, TypeDefinition::InputObject(_)) {
+                    // input types can never be resolver outputs.
+                    continue;
+                }
                 let ts_type = ts_types.get(def.name().name).unwrap();
 
                 self.writer.write("type ");
@@ -121,7 +131,9 @@ where
 
         let type_names_type = ts_union(document_for_resolvers.definitions.iter().filter_map(
             |type_definition| match type_definition {
-                TypeSystemDefinition::TypeDefinition(type_definition) => {
+                TypeSystemDefinition::TypeDefinition(type_definition)
+                    if !matches!(type_definition, TypeDefinition::InputObject(_)) =>
+                {
                     Some(TSType::StringLiteral(type_definition.name().to_string()))
                 }
                 _ => None,
@@ -132,13 +144,17 @@ where
                 .definitions
                 .iter()
                 .filter_map(|type_definition| match type_definition {
-                    TypeSystemDefinition::TypeDefinition(type_definition) => Some(ObjectField {
-                        key: ObjectKey::from(type_definition.name()),
-                        r#type: TSType::TypeVariable(type_definition.name().into()),
-                        description: None,
-                        readonly: false,
-                        optional: false,
-                    }),
+                    TypeSystemDefinition::TypeDefinition(type_definition)
+                        if !matches!(type_definition, TypeDefinition::InputObject(_)) =>
+                    {
+                        Some(ObjectField {
+                            key: ObjectKey::from(type_definition.name()),
+                            r#type: TSType::TypeVariable(type_definition.name().into()),
+                            description: None,
+                            readonly: false,
+                            optional: false,
+                        })
+                    }
                     _ => None,
                 })
                 .collect(),

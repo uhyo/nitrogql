@@ -9,6 +9,7 @@ edition = "2021"
 nitrogql-ast = { path = "../ast" }
 graphql-builtins = { path = "../builtins" }
 nitrogql-checker = { path = "../checker" }
+nitrogql-config-file = { path = "../config-file" }
 nitrogql-error = { path = "../error" }
 nitrogql-parser = { path = "../parser" }
 nitrogql-printer = { path = "../printer" }

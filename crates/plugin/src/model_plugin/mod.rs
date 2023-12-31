@@ -5,6 +5,7 @@ use nitrogql_ast::{
     value::Value,
     TypeSystemDocument,
 };
+use nitrogql_config_file::TypeTarget;
 use nitrogql_printer::{
     ts_types::{ts_types_util::ts_union, TSType},
     ResolverTypePrinterOptions,
@@ -167,8 +168,9 @@ directive @model(
                 let obj_type = TSType::TypeFunc(
                     Box::new(TSType::TypeVariable("Pick".into())),
                     vec![
-                        TSType::NamespaceMember(
+                        TSType::NamespaceMember3(
                             options.schema_root_namespace.clone(),
+                            TypeTarget::ResolverOutput.to_string(),
                             def.name.name.into(),
                         ),
                         ts_union(model_field_names.map(|n| TSType::StringLiteral(n.into()))),

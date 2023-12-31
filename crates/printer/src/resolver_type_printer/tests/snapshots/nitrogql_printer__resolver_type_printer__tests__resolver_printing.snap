@@ -6,14 +6,13 @@ import type { GraphQLResolveInfo } from "graphql";
 import type * as Schema from "schema";
 type __Resolver<Parent, Args, Context, Result> = (parent: Parent, args: Args, context: Context, info: GraphQLResolveInfo) => Result | Promise<Result>;
 type __TypeResolver<Obj, Context, Result> = (object: Obj, context: Context, info: GraphQLResolveInfo) => Result | Promise<Result>;
-type User = Omit<Schema.User, "__typename">;
-type Bot = Omit<Schema.Bot, "__typename">;
-type Post = Omit<Schema.Post, "__typename">;
-type Query = Omit<Schema.Query, "__typename">;
+type User = Omit<Schema.__ResolverOutput.User, "__typename">;
+type Bot = Omit<Schema.__ResolverOutput.Bot, "__typename">;
+type Post = Omit<Schema.__ResolverOutput.Post, "__typename">;
+type Query = Omit<Schema.__ResolverOutput.Query, "__typename">;
 type HasID = User | Bot;
 type UserOrBot = User | Bot;
-type UserType = Schema.UserType;
-type UserSearchQuery = Schema.UserSearchQuery;
+type UserType = Schema.__ResolverOutput.UserType;
 export type Resolvers<Context> = {
   User: {
     id: __Resolver<User, {}, Context, ID>;
@@ -41,7 +40,7 @@ export type Resolvers<Context> = {
     __resolveType: __TypeResolver<User | Bot, Context, "User" | "Bot">;
   };
 };
-export type ResolverOutput<T extends "User" | "Bot" | "Post" | "Query" | "HasID" | "UserOrBot" | "UserType" | "UserSearchQuery"> = 
+export type ResolverOutput<T extends "User" | "Bot" | "Post" | "Query" | "HasID" | "UserOrBot" | "UserType"> = 
 {
   User: User;
   Bot: Bot;
@@ -50,6 +49,5 @@ export type ResolverOutput<T extends "User" | "Bot" | "Post" | "Query" | "HasID"
   HasID: HasID;
   UserOrBot: UserOrBot;
   UserType: UserType;
-  UserSearchQuery: UserSearchQuery;
 }[T];
 
