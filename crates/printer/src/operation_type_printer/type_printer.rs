@@ -2,6 +2,7 @@ use std::{collections::HashMap, convert::identity, iter::once};
 
 use crate::{
     ts_types::{ts_types_util::ts_union, type_to_ts_type::get_ts_type_of_type, ObjectField},
+    type_target::TypeTarget,
     utils::interface_implementers,
 };
 use graphql_type_system::{NamedType, ObjectDefinition, Schema, Text, Type, TypeDefinition};
@@ -411,8 +412,13 @@ pub fn get_type_for_variable_definitions<'src, S: Text<'src>>(
             let property_name = def.name.name;
             let field_type = get_ts_type_of_type(&def.r#type, |name| {
                 TSType::NamespaceMember(
-                    context.options.schema_root_namespace.clone(),
-                    name.name.to_string(),
+                    Box::new(TSType::NamespaceMember(
+                        Box::new(TSType::TypeVariable(
+                            context.options.schema_root_namespace.as_str().into(),
+                        )),
+                        name.name.to_string(),
+                    )),
+                    "OperationInput".to_string(),
                 )
             });
             let is_optional =

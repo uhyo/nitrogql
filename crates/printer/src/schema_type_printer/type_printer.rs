@@ -4,6 +4,7 @@ use crate::{
     ts_types::{
         ts_types_util::ts_union, type_to_ts_type::get_ts_type_of_type, ObjectField, TSType,
     },
+    type_target::TypeTarget,
     utils::interface_implementers,
 };
 use nitrogql_ast::{
@@ -177,40 +178,68 @@ impl TypePrinter for ObjectTypeDefinition<'_> {
         context: &SchemaTypePrinterContext,
         writer: &mut impl SourceMapWriter,
     ) -> SchemaTypePrinterResult<()> {
-        let type_name_ident = Ident {
-            name: "__typename",
-            position: Pos::builtin(),
-        };
-        let schema_type = context.schema.get_type(self.name.name);
-        let obj_type = TSType::object(
-            vec![(
-                &type_name_ident,
-                TSType::StringLiteral(self.name.to_string()),
-                None,
-            )]
-            .into_iter()
-            .chain(self.fields.iter().map(|field| {
-                let schema_field = schema_type
-                    .and_then(|ty| ty.as_object())
-                    .and_then(|ty| ty.fields.iter().find(|f| f.name == field.name.name));
-                (
-                    &field.name,
-                    get_ts_type_of_type(&field.r#type, |name| {
-                        let local_name = context
-                            .local_type_names
-                            .get(name.name.name)
-                            .expect("Local type name not generated");
-                        TSType::TypeVariable(local_name.as_str().into())
-                    }),
-                    make_ts_description(
-                        &field.description,
-                        &schema_field.and_then(|f| f.deprecation.as_ref()),
-                    ),
+        struct S<'a> {
+            context: &'a SchemaTypePrinterContext<'a>,
+            def: &'a ObjectTypeDefinition<'a>,
+        }
+        impl S<'_> {
+            fn make_ts_type(&self, target: &str) -> TSType {
+                let schema_type = self.context.schema.get_type(self.def.name.name);
+                let type_name_ident = Ident {
+                    name: "__typename",
+                    position: Pos::builtin(),
+                };
+                TSType::object(
+                    vec![(
+                        &type_name_ident,
+                        TSType::StringLiteral(self.def.name.to_string()),
+                        None,
+                    )]
+                    .into_iter()
+                    .chain(self.def.fields.iter().map(|field| {
+                        let schema_field = schema_type
+                            .and_then(|ty| ty.as_object())
+                            .and_then(|ty| ty.fields.iter().find(|f| f.name == field.name.name));
+                        (
+                            &field.name,
+                            get_ts_type_of_type(&field.r#type, |name| {
+                                let local_name = self
+                                    .context
+                                    .local_type_names
+                                    .get(name.name.name)
+                                    .expect("Local type name not generated");
+                                TSType::NamespaceMember(
+                                    Box::new(TSType::TypeVariable(local_name.as_str().into())),
+                                    target.to_string(),
+                                )
+                            }),
+                            make_ts_description(
+                                &field.description,
+                                &schema_field.and_then(|f| f.deprecation.as_ref()),
+                            ),
+                        )
+                    })),
                 )
-            })),
-        );
+            }
+        }
+        impl NamespacedTypes for S<'_> {
+            fn has_resolver_output_type(&self) -> bool {
+                true
+            }
+            fn print_resolver_output_type(&self, writer: &mut impl SourceMapWriter) {
+                self.make_ts_type("ResolverOutput").print_type(writer);
+            }
+            fn has_operation_output_type(&self) -> bool {
+                true
+            }
+            fn print_operation_output_type(&self, writer: &mut impl SourceMapWriter) {
+                self.make_ts_type("OperationOutput").print_type(writer);
+            }
+            fn representative_variant(&self) -> &str {
+                "OperationOutput"
+            }
+        }
 
-        print_description(&self.description, writer);
         let local_name = context
             .local_type_names
             .get(self.name.name)
@@ -398,6 +427,84 @@ impl TypePrinter for InputObjectTypeDefinition<'_> {
         );
         Ok(())
     }
+}
+
+trait NamespacedTypes {
+    fn has_resolver_output_type(&self) -> bool {
+        false
+    }
+    fn print_resolver_output_type(&self, _writer: &mut impl SourceMapWriter) {}
+    fn has_resolver_input_type(&self) -> bool {
+        false
+    }
+    fn print_resolver_input_type(&self, _writer: &mut impl SourceMapWriter) {}
+    fn has_operation_output_type(&self) -> bool {
+        false
+    }
+    fn print_operation_output_type(&self, _writer: &mut impl SourceMapWriter) {}
+    fn has_operation_input_type(&self) -> bool {
+        false
+    }
+    fn print_operation_input_type(&self, _writer: &mut impl SourceMapWriter) {}
+    fn representative_variant(&self) -> &str;
+}
+
+fn export_namespaced_type(
+    writer: &mut impl SourceMapWriter,
+    type_keyword: &impl HasPos,
+    schema_name: &Ident,
+    local_name: &str,
+    description: &Option<StringValue>,
+    types: impl NamespacedTypes,
+) {
+    // Write four variants of a type
+    if local_name == schema_name.name {
+        writer.write_for("export declare namespace ", type_keyword);
+    } else {
+        writer.write_for("declare namespace ", type_keyword);
+    }
+    writer.write_for(local_name, schema_name);
+    writer.write(" {\n");
+    writer.indent();
+    if types.has_resolver_output_type() {
+        print_description(description, writer);
+        writer.write_for("export type ", type_keyword);
+        writer.write_for("ResolverOutput", schema_name);
+        writer.write(" = ");
+        types.print_resolver_output_type(writer);
+        writer.write(";\n");
+    }
+    if types.has_resolver_input_type() {
+        print_description(description, writer);
+        writer.write_for("export type ", type_keyword);
+        writer.write_for("ResolverInput", schema_name);
+        writer.write(" = ");
+        types.print_resolver_input_type(writer);
+        writer.write(";\n");
+    }
+    if types.has_operation_output_type() {
+        print_description(description, writer);
+        writer.write_for("export type ", type_keyword);
+        writer.write_for("OperationOutput", schema_name);
+        writer.write(" = ");
+        types.print_operation_output_type(writer);
+        writer.write(";\n");
+    }
+    if types.has_operation_input_type() {
+        print_description(description, writer);
+        writer.write_for("export type ", type_keyword);
+        writer.write_for("OperationInput", schema_name);
+        writer.write(" = ");
+        types.print_operation_input_type(writer);
+        writer.write(";\n");
+    }
+    writer.dedent();
+    writer.write("}\n");
+
+    print_description(description, writer);
+    export_type(writer, type_keyword, schema_name, local_name, |writer| {
+        write!(writer, "{local_name}.{}", types.representative_variant());
+    });
 }
 
 fn export_type<Writer: SourceMapWriter>(
