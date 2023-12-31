@@ -17,6 +17,8 @@ pub enum TSType {
     StringLiteral(String),
     /// Namespace member access N.K
     NamespaceMember(String, String),
+    /// Namespace member access N.K1.K2
+    NamespaceMember3(String, String, String),
     /// Object type (key, value, readonly)
     Object(Vec<ObjectField>),
     /// Array Type
@@ -168,9 +170,10 @@ impl TSType {
                 writer.write("\"");
             }
             TSType::NamespaceMember(ref ns, ref key) => {
-                writer.write(ns);
-                writer.write(".");
-                writer.write(key);
+                write!(writer, "{ns}.{key}");
+            }
+            TSType::NamespaceMember3(ref ns, ref key1, ref key2) => {
+                write!(writer, "{ns}.{key1}.{key2}");
             }
             TSType::Object(ref properties) => {
                 if properties.is_empty() {
@@ -287,6 +290,7 @@ impl TSType {
             t @ TSType::TypeVariable(_)
             | t @ TSType::StringLiteral(_)
             | t @ TSType::NamespaceMember(_, _)
+            | t @ TSType::NamespaceMember3(_, _, _)
             | t @ TSType::Never
             | t @ TSType::Null
             | t @ TSType::Undefined

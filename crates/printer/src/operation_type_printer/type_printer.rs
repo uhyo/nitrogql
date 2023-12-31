@@ -14,6 +14,7 @@ use nitrogql_ast::{
     value::Value,
     variable::VariablesDefinition,
 };
+use nitrogql_config_file::TypeTarget;
 use nitrogql_semantics::direct_fields_of_output_type;
 use sourcemap_writer::SourceMapWriter;
 
@@ -152,8 +153,9 @@ fn get_object_type_for_selection_set<'src, S: Text<'src>>(
             .partition_map(identity);
     let unaliased = TSType::Object(unaliased);
     let aliased = TSType::Object(aliased);
-    let schema_type = TSType::NamespaceMember(
+    let schema_type = TSType::NamespaceMember3(
         context.options.schema_root_namespace.clone(),
+        TypeTarget::OperationOutput.to_string(),
         branch.parent_obj.name.to_string(),
     );
     TSType::TypeFunc(
@@ -201,8 +203,9 @@ fn get_fields_for_selection_set<'a, 'src, S: Text<'src>>(
                             .expect("Type system error");
 
                         map_to_tstype(&field_def.r#type, |ty| match field.selection_set {
-                            None => TSType::NamespaceMember(
+                            None => TSType::NamespaceMember3(
                                 context.options.schema_root_namespace.clone(),
+                                TypeTarget::OperationOutput.to_string(),
                                 ty.to_string(),
                             ),
                             Some(ref set) => get_type_for_selection_set(context, set, ty),
@@ -410,8 +413,9 @@ pub fn get_type_for_variable_definitions<'src, S: Text<'src>>(
         .map(|def| {
             let property_name = def.name.name;
             let field_type = get_ts_type_of_type(&def.r#type, |name| {
-                TSType::NamespaceMember(
-                    context.options.schema_root_namespace.clone(),
+                TSType::NamespaceMember3(
+                    context.options.schema_root_namespace.as_str().into(),
+                    TypeTarget::OperationInput.to_string(),
                     name.name.to_string(),
                 )
             });

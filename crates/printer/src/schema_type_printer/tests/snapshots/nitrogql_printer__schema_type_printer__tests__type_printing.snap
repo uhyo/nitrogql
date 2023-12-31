@@ -11,47 +11,151 @@ export type __SelectionSet<Orig, Obj, Others> =
   __Beautify<Pick<{
     [K in keyof Orig]: Obj extends { [P in K]?: infer V } ? V : unknown
   }, Extract<keyof Orig, keyof Obj>> & Others>;
-export type ID = string;
 
-export type String = string;
+export declare namespace __OperationInput {
+  export type ID = string;
 
-export type Int = number;
+  export type String = string;
 
-export type User = {
-  __typename: "User";
-  id: ID;
-  name: String;
-  type: UserType;
-  age: Int | null;
-  posts: (Post)[];
-};
+  export type Int = number;
 
-export type Bot = {
-  __typename: "Bot";
-  id: ID;
-};
 
-export type Post = {
-  __typename: "Post";
-  id: ID;
-  title: String;
-  tags: (String)[] | null;
-  body: String;
-};
 
-export type Query = {
-  __typename: "Query";
-  me: User;
-};
 
-export type HasID = User | Bot;
 
-export type UserType = "NormalUser" | "PremiumUser";
 
-export type UserSearchQuery = {
-  readonly age?: Int | null | undefined;
-  readonly name?: String | null | undefined;
-  readonly keywords?: readonly (String)[] | null | undefined;
-};
+  export type UserType = "NormalUser" | "PremiumUser";
+
+  export type UserSearchQuery = {
+    readonly age?: Int | null | undefined;
+    readonly name?: String | null | undefined;
+    readonly keywords?: readonly (String)[] | null | undefined;
+  };
+
+}
+
+export declare namespace __OperationOutput {
+  export type ID = string;
+
+  export type String = string;
+
+  export type Int = number;
+
+  export type User = {
+    __typename: "User";
+    id: ID;
+    name: String;
+    type: UserType;
+    age: Int | null;
+    posts: (Post)[];
+  };
+
+  export type Bot = {
+    __typename: "Bot";
+    id: ID;
+  };
+
+  export type Post = {
+    __typename: "Post";
+    id: ID;
+    title: String;
+    tags: (String)[] | null;
+    body: String;
+  };
+
+  export type Query = {
+    __typename: "Query";
+    me: User;
+  };
+
+  export type HasID = User | Bot;
+
+  export type UserType = "NormalUser" | "PremiumUser";
+
+
+}
+
+export declare namespace __ResolverInput {
+  export type ID = string;
+
+  export type String = string;
+
+  export type Int = number;
+
+
+
+
+
+
+  export type UserType = "NormalUser" | "PremiumUser";
+
+  export type UserSearchQuery = {
+    readonly age?: Int | null | undefined;
+    readonly name?: String | null | undefined;
+    readonly keywords?: readonly (String)[] | null | undefined;
+  };
+
+}
+
+export declare namespace __ResolverOutput {
+  export type ID = string;
+
+  export type String = string;
+
+  export type Int = number;
+
+  export type User = {
+    __typename: "User";
+    id: ID;
+    name: String;
+    type: UserType;
+    age: Int | null;
+    posts: (Post)[];
+  };
+
+  export type Bot = {
+    __typename: "Bot";
+    id: ID;
+  };
+
+  export type Post = {
+    __typename: "Post";
+    id: ID;
+    title: String;
+    tags: (String)[] | null;
+    body: String;
+  };
+
+  export type Query = {
+    __typename: "Query";
+    me: User;
+  };
+
+  export type HasID = User | Bot;
+
+  export type UserType = "NormalUser" | "PremiumUser";
+
+
+}
+
+export type ID = __OperationOutput.ID;
+
+export type String = __OperationOutput.String;
+
+export type Int = __OperationOutput.Int;
+
+export type User = __OperationOutput.User;
+
+export type Bot = __OperationOutput.Bot;
+
+export type Post = __OperationOutput.Post;
+
+export type Query = __OperationOutput.Query;
+
+export type HasID = __OperationOutput.HasID;
+
+export type UserType = __OperationOutput.UserType;
+
+export type UserSearchQuery = __ResolverInput.UserSearchQuery;
 
 

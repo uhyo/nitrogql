@@ -5,23 +5,23 @@ expression: printed
 import type { TypedDocumentNode } from "@graphql-typed-document-node/core";
 import type * as Schema from "";
 
-type FooBar123Result = Schema.__SelectionSet<Schema.Query, {
-  me: Schema.__SelectionSet<Schema.User, {
-    id: Schema.ID;
-    name: Schema.String;
-    type: Schema.UserType;
-    age: Schema.Int | null;
-    posts: (Schema.__SelectionSet<Schema.User, {
-      id: Schema.ID;
-      id: Schema.ID;
-    }, {}> | Schema.__SelectionSet<Schema.Bot, {
-      id: Schema.ID;
-      id: Schema.ID;
-    }, {}> | Schema.__SelectionSet<Schema.Post, {
-      id: Schema.ID;
-      id: Schema.ID;
-      title: Schema.String;
-      body: Schema.String;
+type FooBar123Result = Schema.__SelectionSet<Schema.__OperationOutput.Query, {
+  me: Schema.__SelectionSet<Schema.__OperationOutput.User, {
+    id: Schema.__OperationOutput.ID;
+    name: Schema.__OperationOutput.String;
+    type: Schema.__OperationOutput.UserType;
+    age: Schema.__OperationOutput.Int | null;
+    posts: (Schema.__SelectionSet<Schema.__OperationOutput.User, {
+      id: Schema.__OperationOutput.ID;
+      id: Schema.__OperationOutput.ID;
+    }, {}> | Schema.__SelectionSet<Schema.__OperationOutput.Bot, {
+      id: Schema.__OperationOutput.ID;
+      id: Schema.__OperationOutput.ID;
+    }, {}> | Schema.__SelectionSet<Schema.__OperationOutput.Post, {
+      id: Schema.__OperationOutput.ID;
+      id: Schema.__OperationOutput.ID;
+      title: Schema.__OperationOutput.String;
+      body: Schema.__OperationOutput.String;
     }, {}>)[];
   }, {}>;
 }, {}>;
@@ -32,19 +32,19 @@ declare const FooBar123Query: TypedDocumentNode<FooBar123Result, FooBar123Variab
 
 export { FooBar123Query as default };
 
-export type F = Schema.__SelectionSet<Schema.User, {
-  id: Schema.ID;
-}, {}> | Schema.__SelectionSet<Schema.Bot, {
-  id: Schema.ID;
-}, {}> | Schema.__SelectionSet<Schema.Post, {
-  id: Schema.ID;
+export type F = Schema.__SelectionSet<Schema.__OperationOutput.User, {
+  id: Schema.__OperationOutput.ID;
+}, {}> | Schema.__SelectionSet<Schema.__OperationOutput.Bot, {
+  id: Schema.__OperationOutput.ID;
+}, {}> | Schema.__SelectionSet<Schema.__OperationOutput.Post, {
+  id: Schema.__OperationOutput.ID;
 }, {}>;
 
 export const F: TypedDocumentNode<F, never>;
 
-export type P = Schema.__SelectionSet<Schema.Post, {
-  title: Schema.String;
-  body: Schema.String;
+export type P = Schema.__SelectionSet<Schema.__OperationOutput.Post, {
+  title: Schema.__OperationOutput.String;
+  body: Schema.__OperationOutput.String;
 }, {}>;
 
 export const P: TypedDocumentNode<P, never>;

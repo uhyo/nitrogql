@@ -5,12 +5,12 @@ expression: printed
 import type { TypedDocumentNode } from "@graphql-typed-document-node/core";
 import type * as Schema from "";
 
-export type SampleQueryResult = Schema.__SelectionSet<Schema.Query, {
-  me: Schema.__SelectionSet<Schema.User, {
-    id: Schema.ID;
-    name: Schema.String;
-    type: Schema.UserType;
-    age: Schema.Int | null;
+export type SampleQueryResult = Schema.__SelectionSet<Schema.__OperationOutput.Query, {
+  me: Schema.__SelectionSet<Schema.__OperationOutput.User, {
+    id: Schema.__OperationOutput.ID;
+    name: Schema.__OperationOutput.String;
+    type: Schema.__OperationOutput.UserType;
+    age: Schema.__OperationOutput.Int | null;
   }, {}>;
 }, {}>;
 

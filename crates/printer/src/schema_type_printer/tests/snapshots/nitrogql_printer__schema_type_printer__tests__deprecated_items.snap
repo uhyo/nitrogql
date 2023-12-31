@@ -11,38 +11,115 @@ export type __SelectionSet<Orig, Obj, Others> =
   __Beautify<Pick<{
     [K in keyof Orig]: Obj extends { [P in K]?: infer V } ? V : unknown
   }, Extract<keyof Orig, keyof Obj>> & Others>;
-export type ID = string;
 
-export type String = string;
+export declare namespace __OperationInput {
+  export type ID = string;
 
-export type Int = number;
+  export type String = string;
 
-export type User = {
-  __typename: "User";
-  id: ID;
-  name: String;
-  /**
-   * Age of user.
-   * @deprecated No longer supported
-   */
-  age: Int | null;
-  /**
-   * @deprecated Deprecated for political reasons
-   */
-  gender: String | null;
-};
+  export type Int = number;
 
-export type Query = {
-  __typename: "Query";
-  me: User;
-};
 
-export type UserSearchQuery = {
-  /**
-   * @deprecated No longer supported
-   */
-  readonly age?: Int | null | undefined;
-  readonly name?: String | null | undefined;
-};
+
+  export type UserSearchQuery = {
+    /**
+     * @deprecated No longer supported
+     */
+    readonly age?: Int | null | undefined;
+    readonly name?: String | null | undefined;
+  };
+
+}
+
+export declare namespace __OperationOutput {
+  export type ID = string;
+
+  export type String = string;
+
+  export type Int = number;
+
+  export type User = {
+    __typename: "User";
+    id: ID;
+    name: String;
+    /**
+     * Age of user.
+     * @deprecated No longer supported
+     */
+    age: Int | null;
+    /**
+     * @deprecated Deprecated for political reasons
+     */
+    gender: String | null;
+  };
+
+  export type Query = {
+    __typename: "Query";
+    me: User;
+  };
+
+
+}
+
+export declare namespace __ResolverInput {
+  export type ID = string;
+
+  export type String = string;
+
+  export type Int = number;
+
+
+
+  export type UserSearchQuery = {
+    /**
+     * @deprecated No longer supported
+     */
+    readonly age?: Int | null | undefined;
+    readonly name?: String | null | undefined;
+  };
+
+}
+
+export declare namespace __ResolverOutput {
+  export type ID = string;
+
+  export type String = string;
+
+  export type Int = number;
+
+  export type User = {
+    __typename: "User";
+    id: ID;
+    name: String;
+    /**
+     * Age of user.
+     * @deprecated No longer supported
+     */
+    age: Int | null;
+    /**
+     * @deprecated Deprecated for political reasons
+     */
+    gender: String | null;
+  };
+
+  export type Query = {
+    __typename: "Query";
+    me: User;
+  };
+
+
+}
+
+export type ID = __OperationOutput.ID;
+
+export type String = __OperationOutput.String;
+
+export type Int = __OperationOutput.Int;
+
+export type User = __OperationOutput.User;
+
+export type Query = __OperationOutput.Query;
+
+export type UserSearchQuery = __ResolverInput.UserSearchQuery;
 
 

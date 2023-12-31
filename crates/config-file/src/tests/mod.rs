@@ -1,6 +1,6 @@
 use std::path::PathBuf;
 
-use crate::{parse_config, GenerateMode};
+use crate::{parse_config, GenerateMode, ScalarTypeConfig};
 
 mod export;
 mod name;
@@ -81,12 +81,30 @@ extensions:
     assert_eq!(
         config.generate.r#type.scalar_types,
         vec![
-            ("Date".to_owned(), "Date".to_owned()),
-            ("BigInt".to_owned(), "bigint".to_owned()),
-            ("Int".to_owned(), "number".to_owned()),
-            ("Float".to_owned(), "number".to_owned()),
-            ("ID".to_owned(), "string".to_owned()),
-            ("String".to_owned(), "string".to_owned()),
+            (
+                "Date".to_owned(),
+                ScalarTypeConfig::Single("Date".to_owned())
+            ),
+            (
+                "BigInt".to_owned(),
+                ScalarTypeConfig::Single("bigint".to_owned())
+            ),
+            (
+                "Int".to_owned(),
+                ScalarTypeConfig::Single("number".to_owned())
+            ),
+            (
+                "Float".to_owned(),
+                ScalarTypeConfig::Single("number".to_owned())
+            ),
+            (
+                "ID".to_owned(),
+                ScalarTypeConfig::Single("string".to_owned())
+            ),
+            (
+                "String".to_owned(),
+                ScalarTypeConfig::Single("string".to_owned())
+            ),
         ]
         .into_iter()
         .collect()

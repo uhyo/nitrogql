@@ -9,15 +9,17 @@ use nitrogql_ast::type_system::{
     ArgumentsDefinition, InterfaceTypeDefinition, ObjectTypeDefinition, TypeDefinition,
     UnionTypeDefinition,
 };
+use nitrogql_config_file::TypeTarget;
 
 use super::printer::ResolverTypePrinterContext;
 
-pub fn get_ts_type_for_resolver(
+pub fn get_ts_type_for_resolver_output(
     def: &TypeDefinition<'_>,
     context: &ResolverTypePrinterContext,
 ) -> TSType {
-    let base_type = TSType::NamespaceMember(
+    let base_type = TSType::NamespaceMember3(
         context.options.schema_root_namespace.clone(),
+        TypeTarget::ResolverOutput.to_string(),
         def.name().name.to_string(),
     );
     match def {
@@ -57,17 +59,17 @@ pub fn get_resolver_type(
 
 fn get_object_resolver_type(
     def: &ObjectTypeDefinition<'_>,
-    _context: &ResolverTypePrinterContext,
+    context: &ResolverTypePrinterContext,
 ) -> Option<TSType> {
     let parent_type = TSType::TypeVariable((&def.name).into());
     let fields = def
         .fields
         .iter()
         .map(|field| {
-            let arguments_type = field
-                .arguments
-                .as_ref()
-                .map_or_else(|| TSType::Object(vec![]), arguments_definition_to_ts);
+            let arguments_type = field.arguments.as_ref().map_or_else(
+                || TSType::Object(vec![]),
+                |arguments| arguments_definition_to_ts(context, arguments),
+            );
             let result_type = get_ts_type_of_type(&field.r#type, |name| {
                 TSType::TypeVariable((&name.name).into())
             });
@@ -162,12 +164,19 @@ fn get_union_resolver_type(
     Some(TSType::object(vec![("__resolveType", resolver_type, None)]))
 }
 
-fn arguments_definition_to_ts(arguments: &ArgumentsDefinition) -> TSType {
+fn arguments_definition_to_ts(
+    context: &ResolverTypePrinterContext,
+    arguments: &ArgumentsDefinition,
+) -> TSType {
     TSType::object(arguments.input_values.iter().map(|argument| {
         (
             ObjectKey::from(&argument.name),
             get_ts_type_of_type(&argument.r#type, |name| {
-                TSType::TypeVariable((&name.name).into())
+                TSType::NamespaceMember3(
+                    context.options.schema_root_namespace.clone(),
+                    TypeTarget::ResolverInput.to_string(),
+                    name.name.to_string(),
+                )
             }),
             argument.description.as_ref().map(|s| s.to_string()),
         )

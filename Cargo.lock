@@ -535,6 +535,7 @@ dependencies = [
  "insta",
  "nitrogql-ast",
  "nitrogql-checker",
+ "nitrogql-config-file",
  "nitrogql-error",
  "nitrogql-parser",
  "nitrogql-printer",
