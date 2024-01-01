@@ -13,7 +13,7 @@ export type __SelectionSet<Orig, Obj, Others> =
   }, Extract<keyof Orig, keyof Obj>> & Others>;
 
 export declare namespace __OperationInput {
-  export type ID = string;
+  export type ID = string | number;
 
   export type String = string;
 
@@ -98,7 +98,7 @@ export declare namespace __ResolverInput {
 }
 
 export declare namespace __ResolverOutput {
-  export type ID = string;
+  export type ID = string | number;
 
   export type String = string;
 
