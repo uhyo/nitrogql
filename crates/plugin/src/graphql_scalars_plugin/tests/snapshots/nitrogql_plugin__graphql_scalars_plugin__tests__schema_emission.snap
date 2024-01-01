@@ -9,9 +9,21 @@ extend scalar Date @nitrogql_ts_type(
         operationOutput: "Date"
     )
 extend scalar DateTime @nitrogql_ts_type(
+        resolverInput: "string"
+        resolverOutput: "Date | string"
+        operationInput: "Date | string"
+        operationOutput: "string"
+    )
+extend scalar MysteryType @nitrogql_ts_type(
         resolverInput: "number"
-        resolverOutput: "number"
-        operationInput: "number"
-        operationOutput: "number"
+        resolverOutput: "string | number | bigint"
+        operationInput: "string"
+        operationOutput: "number | bigint"
+    )
+extend scalar Time @nitrogql_ts_type(
+        resolverInput: "string | number"
+        resolverOutput: "string"
+        operationInput: "string"
+        operationOutput: "string | number"
     )
 

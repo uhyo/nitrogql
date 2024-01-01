@@ -31,6 +31,14 @@ pub struct SeparateScalarTypeConfig {
     pub operation_input: String,
 }
 
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct SeparateScalarTypeConfigRef<'a> {
+    pub resolver_output: &'a str,
+    pub resolver_input: &'a str,
+    pub operation_output: &'a str,
+    pub operation_input: &'a str,
+}
+
 impl ScalarTypeConfig {
     /// Get the TypeScript type for given target.
     pub fn get_type(&self, target: TypeTarget) -> &str {
@@ -64,6 +72,29 @@ impl ScalarTypeConfig {
                 config.operation_input.as_str(),
             ]
             .into_iter(),
+        }
+    }
+    /// Returns this config represented as four separate types.
+    pub fn separate_ref(&self) -> SeparateScalarTypeConfigRef {
+        match self {
+            ScalarTypeConfig::Single(type_name) => SeparateScalarTypeConfigRef {
+                resolver_output: type_name.as_str(),
+                resolver_input: type_name.as_str(),
+                operation_output: type_name.as_str(),
+                operation_input: type_name.as_str(),
+            },
+            ScalarTypeConfig::SendReceive(config) => SeparateScalarTypeConfigRef {
+                resolver_output: config.send.as_str(),
+                resolver_input: config.receive.as_str(),
+                operation_output: config.receive.as_str(),
+                operation_input: config.send.as_str(),
+            },
+            ScalarTypeConfig::Separate(config) => SeparateScalarTypeConfigRef {
+                resolver_output: config.resolver_output.as_str(),
+                resolver_input: config.resolver_input.as_str(),
+                operation_output: config.operation_output.as_str(),
+                operation_input: config.operation_input.as_str(),
+            },
         }
     }
 }
