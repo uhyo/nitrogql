@@ -14,6 +14,16 @@ export type NitrogqlConfig = {
     | undefined;
 };
 
+type ScalarTypeConfig =
+  | string
+  | { send: string; receive: string }
+  | {
+      resolverInput: string;
+      resolverOutput: string;
+      operationInput: string;
+      operationOutput: string;
+    };
+
 /**
  * Nitrogql's config object.
  */
@@ -65,7 +75,7 @@ export type NitrogqlExtension = {
               /**
                * Mapping from GraphQL scalar types to TypeScript types.
                */
-              scalarTypes?: Record<string, string> | undefined;
+              scalarTypes?: Record<string, ScalarTypeConfig> | undefined;
               /**
                * Whether to allow undefined as input value
                * for nullable fields.
