@@ -21,5 +21,5 @@ pub use load_config::load_config;
 #[cfg(feature = "execute_js")]
 pub use node::{load_default_from_js_file, run_node};
 pub use parse_config::parse_config;
-pub use scalar_type::ScalarTypeConfig;
+pub use scalar_type::{ScalarTypeConfig, SendReceiveScalarTypeConfig, SeparateScalarTypeConfig};
 pub use type_target::TypeTarget;

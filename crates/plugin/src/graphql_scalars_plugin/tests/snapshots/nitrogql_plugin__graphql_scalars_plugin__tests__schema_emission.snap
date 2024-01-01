@@ -2,6 +2,16 @@
 source: crates/plugin/src/graphql_scalars_plugin/tests/mod.rs
 expression: p.schema_addition().unwrap()
 ---
-extend scalar Date @nitrogql_ts_type(type: "Date")
-extend scalar DateTime @nitrogql_ts_type(type: "number")
+extend scalar Date @nitrogql_ts_type(
+        resolverInput: "Date"
+        resolverOutput: "Date"
+        operationInput: "Date"
+        operationOutput: "Date"
+    )
+extend scalar DateTime @nitrogql_ts_type(
+        resolverInput: "number"
+        resolverOutput: "number"
+        operationInput: "number"
+        operationOutput: "number"
+    )
 

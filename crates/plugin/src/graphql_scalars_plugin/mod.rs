@@ -35,8 +35,12 @@ impl PluginV1Beta for GraphQLScalarsPlugin {
         scalar_extensions.sort_by_key(|(type_name, _)| *type_name);
         for (type_name, codegen_scalar_type) in scalar_extensions {
             schema_addition.push_str(&format!(
-                "extend scalar {} @nitrogql_ts_type(type: \"{}\")\n",
-                type_name, codegen_scalar_type
+                "extend scalar {type_name} @nitrogql_ts_type(
+        resolverInput: \"{codegen_scalar_type}\"
+        resolverOutput: \"{codegen_scalar_type}\"
+        operationInput: \"{codegen_scalar_type}\"
+        operationOutput: \"{codegen_scalar_type}\"
+    )\n",
             ));
         }
         if schema_addition.is_empty() {

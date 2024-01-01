@@ -17,10 +17,17 @@ pub fn nitrogql_builtins() -> Vec<TypeSystemDefinitionOrExtension<'static>> {
             name: ident("nitrogql_ts_type"),
             description: None,
             arguments: Some(ArgumentsDefinition {
-                input_values: vec![InputValueDefinition {
+                input_values: [
+                    "resolverInput",
+                    "resolverOutput",
+                    "operationInput",
+                    "operationOutput",
+                ]
+                .into_iter()
+                .map(|name| InputValueDefinition {
                     description: None,
                     position: Pos::builtin(),
-                    name: ident("type"),
+                    name: ident(name),
                     r#type: Type::NonNull(Box::new(NonNullType {
                         r#type: Type::Named(NamedType {
                             name: ident("String"),
@@ -28,7 +35,8 @@ pub fn nitrogql_builtins() -> Vec<TypeSystemDefinitionOrExtension<'static>> {
                     })),
                     default_value: None,
                     directives: vec![],
-                }],
+                })
+                .collect(),
             }),
             repeatable: None,
             locations: vec![ident("SCALAR")],

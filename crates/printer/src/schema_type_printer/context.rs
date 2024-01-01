@@ -9,7 +9,7 @@ use nitrogql_ast::{
     type_system::{TypeDefinition, TypeSystemDefinition},
     TypeSystemDocument,
 };
-use nitrogql_config_file::{ScalarTypeConfig, TypeTarget};
+use nitrogql_config_file::{ScalarTypeConfig, SeparateScalarTypeConfig, TypeTarget};
 
 use crate::SchemaTypePrinterOptions;
 
@@ -70,13 +70,40 @@ fn get_scalar_types(
                 .find(|directive| (directive.name.name == "nitrogql_ts_type"))
                 .and_then(|directive| directive.arguments.as_ref())
                 .and_then(|args| {
-                    args.arguments.iter().find_map(|(key, value)| {
-                        (key.name == "type")
-                            .then_some(value)
-                            .and_then(|v| v.as_string())
-                    })
-                })
-                .map(|v| ScalarTypeConfig::Single(v.value.clone()));
+                    let mut resolver_input_type = None;
+                    let mut resolver_output_type = None;
+                    let mut operation_input_type = None;
+                    let mut operation_output_type = None;
+                    for (key, value) in args.arguments.iter() {
+                        match key.name {
+                            "resolverInput" => resolver_input_type = Some(value),
+                            "resolverOutput" => resolver_output_type = Some(value),
+                            "operationInput" => operation_input_type = Some(value),
+                            "operationOutput" => operation_output_type = Some(value),
+                            _ => {}
+                        }
+                    }
+                    if let (
+                        Some(resolver_input_type),
+                        Some(resolver_output_type),
+                        Some(operation_input_type),
+                        Some(operation_output_type),
+                    ) = (
+                        resolver_input_type.and_then(|v| v.as_string()),
+                        resolver_output_type.and_then(|v| v.as_string()),
+                        operation_input_type.and_then(|v| v.as_string()),
+                        operation_output_type.and_then(|v| v.as_string()),
+                    ) {
+                        Some(ScalarTypeConfig::Separate(SeparateScalarTypeConfig {
+                            resolver_input: resolver_input_type.value.clone(),
+                            resolver_output: resolver_output_type.value.clone(),
+                            operation_input: operation_input_type.value.clone(),
+                            operation_output: operation_output_type.value.clone(),
+                        }))
+                    } else {
+                        None
+                    }
+                });
             let scalar_ts_type = scalar_type_from_config.cloned().or(directive_ts_type);
             scalar_ts_type.map(|ty| (definition.name.name.to_owned(), ty))
         })
