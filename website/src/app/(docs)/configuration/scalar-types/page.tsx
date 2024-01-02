@@ -223,7 +223,7 @@ const id = result.data.me.id;`}
         <h4 id="single-form">Single Form</h4>
         <p>
           The easiest way to configure a scalar type is to use the single form.
-          This form spesicies to use one TypeScript type for all four
+          This form specifies to use one TypeScript type for all four
           situations.
         </p>
         <p>
@@ -339,7 +339,7 @@ const id = result.data.me.id;`}
           Notes on GraphQL Code Generator Compatibility
         </h3>
         <p>
-          If you know, or trying to migrate from GraphQL Code Generator, you may
+          If you know or trying to migrate from GraphQL Code Generator, you may
           wonder about compatibility with GraphQL Code Generator&apos;s{" "}
           <a
             href="https://the-guild.dev/graphql/codegen/plugins/typescript/typescript#scalars"
@@ -350,13 +350,15 @@ const id = result.data.me.id;`}
           option.
         </p>
         <p>
-          Particularly, GraphQL Code Generator supports a scalar&apos;s type as
-          a pair of <code>input</code> and <code>output</code> types.
+          Particularly, GraphQL Code Generator supports specifying a
+          scalar&apos;s type as a pair of <code>input</code> and{" "}
+          <code>output</code> types.
         </p>
         <p>
           You should note that the input/output configuration is{" "}
           <strong>not</strong> equivalent to nitrogql&apos;s send/receive
-          configuration mode:
+          configuration mode. The following table shows the correspondence
+          between the two:
         </p>
         <table>
           <thead>
