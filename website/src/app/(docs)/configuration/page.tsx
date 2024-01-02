@@ -20,6 +20,9 @@ export default function Configuration() {
         <InPageNav>
           <Link href="/configuration/file-name">Configuration File Name</Link>
           <Link href="/configuration/options">Configuration Options</Link>
+          <Link href="/configuration/scalar-types">
+            Configuring Scalar Types
+          </Link>
         </InPageNav>
       </main>
     </Toc>

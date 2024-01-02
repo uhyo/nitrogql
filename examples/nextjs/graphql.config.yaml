@@ -13,3 +13,6 @@ extensions:
       serverGraphqlOutput: ./src/generated/graphql.ts
       resolversOutput: ./src/generated/resolvers.d.ts
       schemaModuleSpecifier: "@/generated/schema"
+      type:
+        scalarTypes:
+          ID: string

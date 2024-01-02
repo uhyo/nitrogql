@@ -17,7 +17,26 @@ fn schema_emission() {
     },
     "DateTime": {
         "nitrogql:kind": "scalar",
-        "codegenScalarType": "number"
+        "codegenScalarType": {
+            "send": "Date | string",
+            "receive": "string"
+        }
+    },
+    "Time": {
+        "nitrogql:kind": "scalar",
+        "codegenScalarType": {
+            "input": "string",
+            "output": "string | number"
+        }
+    },
+    "MysteryType": {
+        "nitrogql:kind": "scalar",
+        "codegenScalarType": {
+            "resolverInput": "number",
+            "resolverOutput": "string | number | bigint",
+            "operationInput": "string",
+            "operationOutput": "number | bigint"
+        }
     },
     "Other": {
         "nitrogql:kind": "object",
