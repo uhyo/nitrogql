@@ -432,6 +432,62 @@ extensions:
 `}
         </Highlight>
 
+        <h4 id="configure-scalar-types">Configure scalar types</h4>
+        <p>
+          If you have customized mapping from GraphQL scalar types to TypeScript
+          types, you need to set{" "}
+          <Link href="/configuration/options#generate.type.scalarTypes">
+            <code>scalarTypes</code>
+          </Link>{" "}
+          option.
+        </p>
+        <p>
+          Migration from GraphQL Code Generator&apos;s{" "}
+          <a
+            href="https://the-guild.dev/graphql/codegen/plugins/typescript/typescript#scalars"
+            target="_blank"
+          >
+            <code>scalars</code> option
+          </a>{" "}
+          is straightforward. For example, if you have the following GraphQL
+          Code Generator configuration:
+        </p>
+        <Highlight language="yaml">
+          {`# GraphQL Code Generator configuration
+scalars:
+  ID:
+    input: string
+    output: string | number
+  DateTime: Date`}
+        </Highlight>
+        <p>
+          You can migrate to nitrogql&apos;s <code>scalarTypes</code> option as
+          follows:
+        </p>
+        <Highlight language="yaml">
+          {`# corresponding nitrogql configuration (graphql.config.yaml)
+extensions:
+  nitrogql:
+    generate:
+      # ...
+      type:
+        scalarTypes:
+          ID:
+            send: string | number
+            receive: string
+          DateTime: Date`}
+        </Highlight>
+        <p>
+          Note that nitrogql&apos;s <code>scalarTypes</code> option takes{" "}
+          <code>send</code> and <code>receive</code> properties instead of{" "}
+          <code>input</code> and <code>output</code> properties. Read more about
+          the difference in the{" "}
+          <Link href="/configuration/scalar-types">
+            Configuring Scalar Types
+          </Link>{" "}
+          page.
+        </p>
+
         <h4 id="configure-typescript">Configure TypeScript</h4>
         <p>
           In order to use the generated code from your application, you might
