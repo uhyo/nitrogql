@@ -4,6 +4,7 @@ import { Highlight } from "@/app/_utils/Highlight";
 import { Toc } from "../../_toc";
 import { Breadcrumb } from "@/app/_utils/Breadcrumb";
 import { ogp } from "@/app/_utils/metadata";
+import { InPageNav } from "@/app/_utils/InPageNav";
 
 export const metadata = ogp({
   title: "Configuration Options",
@@ -378,7 +379,9 @@ export const UserType = {
         </p>
         <Highlight language="yaml">
           {`scalarTypes:
-  ID: string
+  ID:
+    send: string | number
+    receive: string
   String: string
   Boolean: boolean
   Int: number
@@ -389,6 +392,14 @@ export const UserType = {
           the mapping in the configuration file. Any TypeScript code is allowed
           as long as it is valid as a type.
         </p>
+        <Hint>
+          💡 If you are using the{" "}
+          <Link href="/references/plugin-graphql-scalars">
+            nitrogql:graphql-scalars-plugin
+          </Link>
+          , you do not need to specify the mapping for GraphQL Scalars types you
+          are using.
+        </Hint>
         <p>
           Mapping for built-in scalar types need not be specified unless you
           want to override them.
@@ -400,8 +411,39 @@ export const UserType = {
     generate:
       type:
         scalarTypes:
-          Date: Date`}
+          Date: string`}
         </Highlight>
+        <p>
+          Note that nitrogql supports three different ways to specify the
+          mapping:
+        </p>
+        <Highlight language="yaml">
+          {`scalarTypes:
+  # 1. Specify as a single string
+  Date: string
+  # 2. Specify as a pair of send and receive types
+  Date:
+    send: string | Date
+    receive: string
+  # 3. Specify as a set of four types
+  Date:
+    resolverInput: string
+    resolverOutput: string | Date
+    operationInput: string | Date
+    operationOutput: string`}
+        </Highlight>
+        <p>
+          Read more at{" "}
+          <Link href="/configuration/scalar-types">
+            Configuring Scalar Types
+          </Link>
+          .
+        </p>
+        <InPageNav>
+          <Link href="/configuration/scalar-types">
+            Configuring Scalar Types
+          </Link>
+        </InPageNav>
 
         <h4 id="generate.type.allowUndefinedAsOptionalInput">
           allowUndefinedAsOptionalInput
