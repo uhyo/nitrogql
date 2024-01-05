@@ -4,6 +4,7 @@ import { Breadcrumb } from "@/app/_utils/Breadcrumb";
 import { Highlight } from "@/app/_utils/Highlight";
 import Link from "next/link";
 import { ogp } from "@/app/_utils/metadata";
+import { InPageNav } from "@/app/_utils/InPageNav";
 
 export const metadata = ogp({
   title: "Migrating from GraphQL Code Generator",
@@ -30,14 +31,20 @@ export default function Migrating() {
         <p>
           GraphQL Code Generator has a couple of <b>presets</b> that control how
           TypeScript code is generated. nitrogql&apos;s approach is similar to
-          the <b>near-operation-file</b> preset. This preset was the recommended
-          preset while GraphQL Code Generator was in v2.
+          the <b>near-operation-file</b> preset. This preset <em>was</em> the
+          recommended preset while GraphQL Code Generator was in v2.
         </p>
         <p>
           While GraphQL Code Generator has changed their recommended preset to
           the <b>client</b> preset, nitrogql still endorses the idea of the{" "}
           <b>near-operation-file</b> preset.
         </p>
+        <Hint>
+          👌 nitrogql supports code generation for both client-side TypeScript
+          code (code that uses GraphQL clients) and server-side TypeScript code
+          (code that implements GraphQL resolvers). This guide covers migration
+          of both client-side and server-side code.
+        </Hint>
 
         <h3 id="prerequisites">Prerequisites</h3>
         <p>
@@ -46,7 +53,8 @@ export default function Migrating() {
         </p>
         <ul>
           <li>
-            You are using the <b>near-operation-file</b> preset.
+            You are using the <b>near-operation-file</b> preset for client-side
+            code generation.
           </li>
           <li>
             You write your GraphQL operations in <code>.graphql</code> files,
@@ -58,12 +66,6 @@ export default function Migrating() {
           these conditions before migrating to nitrogql.
         </p>
 
-        <Hint>
-          😥 Generating resolver types is not supported in nitrogql yet. If you
-          are using GraphQL Code Generator to generate resolver types, that part
-          cannot be migrated to nitrogql for now.
-        </Hint>
-
         <h3 id="before-migrating-to-nitrogql">Before migrating to nitrogql</h3>
         <p>
           Apart from the above fundamental differences, nitrogql has limited,
@@ -72,8 +74,9 @@ export default function Migrating() {
           available in nitrogql.
         </p>
         <p>
-          While you stay with GraphQL Code Generator, you first need to adjust
-          its usage to be compatible with nitrogql.
+          We recommend you to first adjust your GraphQL Code Generator
+          configuration to be compatible with nitrogql as much as possible. This
+          will make the migration process easier.
         </p>
 
         <h4 id="use-typed-document-node">
@@ -113,8 +116,12 @@ export default function Migrating() {
         <p>
           Before you can migrate to nitrogql, you need to be using only{" "}
           <code>typescript-operations</code> and{" "}
-          <code>typed-document-node</code> plugins, not those library-specific
-          ones.
+          <code>typed-document-node</code> plugins for client-side code, not
+          those library-specific ones.
+        </p>
+        <p>
+          Regarding server-side code (if any), you should be using the{" "}
+          <code>typescript-resolvers</code> plugin.
         </p>
 
         <h4 id="disable-case-conversion">Disable case conversion</h4>
@@ -285,16 +292,57 @@ config:
           As is the case with other configuration changes, you need to update
           all TypeScript code that imports these types.
         </p>
+        <table>
+          <thead>
+            <tr>
+              <th />
+              <th>GraphQL Code Generator (adjusted)</th>
+              <th>nitrogql</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th>operation document object</th>
+              <td>
+                <code>GetUserDocument</code>
+              </td>
+              <td>
+                <code>GetUserQuery</code>
+              </td>
+            </tr>
+            <tr>
+              <th>operation result type</th>
+              <td>
+                <code>GetUserResult</code>
+              </td>
+              <td>
+                <code>GetUserResult</code>
+              </td>
+            </tr>
+            <tr>
+              <th>operation variables type</th>
+              <td>
+                <code>GetUserVariables</code>
+              </td>
+              <td>
+                <code>GetUserVariables</code>
+              </td>
+            </tr>
+          </tbody>
+        </table>
         <p>
           Name of the operation document object (<code>GetUserDocument</code>)
           still differ from nitrogql with the above setting. Since GraphQL Code
           Generator cannot exactly match the nitrogql behavior, we will guide
-          you to configure nitrogql to match the current behavior of GraphQL
+          you to configure nitrogql to match the resulting behavior of GraphQL
           Code Generator.
         </p>
 
-        <h3 id="migrating-to-nitrogql">Migrating to nitrogql</h3>
-        <p>Now you are ready to migrate to nitrogql!</p>
+        <h3 id="migrating-to-nitrogql">
+          Migrating to nitrogql (applies to both client-side and server-side
+          code)
+        </h3>
+        <p>Now it&apos;s time to migrate to nitrogql!</p>
 
         <Hint>
           🤯 If you are in a monorepo setting, adjust below instructions as
@@ -306,22 +354,24 @@ config:
         <Highlight language="bash">{`npm install -D @nitrogql/cli`}</Highlight>
 
         <p>
-          If you are using webpack, you also need to install appropriate webpack
-          loader. Note that this also applies to Next.js projects.
+          If you are using <b>webpack</b>, you also need to install appropriate
+          webpack loader. Note that this also applies to <b>Next.js</b>{" "}
+          projects.
         </p>
         <Highlight language="bash">{`npm install -D @nitrogql/graphql-loader`}</Highlight>
 
         <p>
-          If you are using Rollup, you need to install appropriate Rollup
-          plugin. Note that this also applies to Vite projects.
+          If you are using <b>Rollup</b>, you need to install appropriate Rollup
+          plugin. Note that this also applies to <b>Vite</b> projects.
         </p>
         <Highlight language="bash">{`npm install -D @nitrogql/rollup-plugin`}</Highlight>
 
         <h4 id="create-nitrogql-config">Create nitrogql config</h4>
         <p>
-          Nitrogql&apos;s configuration file is either{" "}
+          nitrogql&apos;s configuration file is either{" "}
           <code>graphql.config.yaml</code> or <code>.graphqlrc.yaml</code> at
-          the root of your project. You might have already one depending on your
+          the root of your project. <code>.js</code> or <code>.ts</code> files
+          are supported too. You might have already one depending on your
           GraphQL Code Generator configuration. Also, you can use{" "}
           <code>.json</code> or <code>.js</code> files instead of{" "}
           <code>.yaml</code> at your preference.
@@ -342,6 +392,10 @@ documents: src/app/**/*.graphql
           <code>extensions.nitrogql</code> object.
         </p>
 
+        <InPageNav>
+          <Link href="/configuration/file-name">Configuration File Name</Link>
+        </InPageNav>
+
         <h4 id="configure-schema-output">Configure schema output</h4>
         <p>
           One option you need to set is <code>generate.schemaOutput</code>. This
@@ -355,6 +409,10 @@ documents: src/app/**/*.graphql
             <code>typescript</code> plugin
           </a>{" "}
           of GraphQL Code Generator.
+        </p>
+        <p>
+          In nitrogql, the schema type definition file will be depended by other
+          generated file (both client-side and server-side).
         </p>
         <p>
           Also, if you are importing enums from the generated schema file, you
@@ -385,57 +443,10 @@ extensions:
       emitSchemaRuntime: true`}
         </Highlight>
 
-        <h4 id="configure-operation-output">Configure operation output</h4>
-        <p>
-          Next, you need to configure generation of TypeScript code from GraphQL
-          operations. This corresponds to the{" "}
-          <a
-            href="https://the-guild.dev/graphql/codegen/plugins/typescript/typescript-operations"
-            target="_blank"
-          >
-            <code>typescript-operations</code> plugin
-          </a>{" "}
-          of GraphQL Code Generator.
-        </p>
-        <p>
-          Without additional configuration, nitrogql generates TypeScript code
-          next to each GraphQL operations files. This is the same architecture
-          as GraphQL Code Generator&apos;s <code>near-operation-file</code>{" "}
-          preset.
-        </p>
-        <p>
-          However, you need to adjust nitrogql&apos;s <code>generate</code>{" "}
-          option so that you can use the generated code from your application in
-          the same way as you did with GraphQL Code Generator.
-        </p>
-        <p>
-          Below is the nitrogql configuration for keeping the same behavior as
-          your current settings.
-        </p>
-        <Highlight language="yaml">
-          {`schema: src/schema/*.graphql
-documents: src/app/**/*.graphql
-extensions:
-  nitrogql:
-    generate:
-      schemaOutput: path/to/schema.ts
-      emitSchemaRuntime: true
-      # add below
-      export:
-        defaultExportForOperation: false
-        variablesType: true
-        operationResultType: true
-      name:
-        queryVariableSuffix: Document
-        mutationVariableSuffix: Document
-        subscriptionVariableSuffix: Document 
-`}
-        </Highlight>
-
         <h4 id="configure-scalar-types">Configure scalar types</h4>
         <p>
-          If you have customized mapping from GraphQL scalar types to TypeScript
-          types, you need to set{" "}
+          If you have a customized mapping from GraphQL scalar types to
+          TypeScript types, you need to migrate it to nitrogql&apos;s{" "}
           <Link href="/configuration/options#generate.type.scalarTypes">
             <code>scalarTypes</code>
           </Link>{" "}
@@ -487,6 +498,67 @@ extensions:
           </Link>{" "}
           page.
         </p>
+
+        <InPageNav>
+          <Link href="/configuration/scalar-types">
+            Configuring Scalar Types
+          </Link>
+        </InPageNav>
+
+        <h3 id="migrating-to-nitrogql-client">
+          Migrating client-side to nitrogql
+        </h3>
+        <p>
+          If you are using GraphQL Code Generator for client-side code, belows
+          steps apply.
+        </p>
+
+        <h4 id="configure-operation-output">Configure operation output</h4>
+        <p>
+          Next, you need to configure generation of TypeScript code from GraphQL
+          operations. This corresponds to the{" "}
+          <a
+            href="https://the-guild.dev/graphql/codegen/plugins/typescript/typescript-operations"
+            target="_blank"
+          >
+            <code>typescript-operations</code> plugin
+          </a>{" "}
+          of GraphQL Code Generator.
+        </p>
+        <p>
+          Without additional configuration, nitrogql generates TypeScript code
+          next to each GraphQL operations files. This is the same architecture
+          as GraphQL Code Generator&apos;s <code>near-operation-file</code>{" "}
+          preset.
+        </p>
+        <p>
+          However, you need to adjust nitrogql&apos;s <code>generate</code>{" "}
+          option so that you can use the generated code from your application in
+          the same way as you did with GraphQL Code Generator.
+        </p>
+        <p>
+          Below is the nitrogql configuration for keeping the same behavior as
+          your current settings.
+        </p>
+        <Highlight language="yaml">
+          {`schema: src/schema/*.graphql
+documents: src/app/**/*.graphql
+extensions:
+  nitrogql:
+    generate:
+      schemaOutput: path/to/schema.ts
+      emitSchemaRuntime: true
+      # add below
+      export:
+        defaultExportForOperation: false
+        variablesType: true
+        operationResultType: true
+      name:
+        queryVariableSuffix: Document
+        mutationVariableSuffix: Document
+        subscriptionVariableSuffix: Document 
+`}
+        </Highlight>
 
         <h4 id="configure-typescript">Configure TypeScript</h4>
         <p>
@@ -563,6 +635,219 @@ export default {
   ],
 };`}
         </Highlight>
+
+        <h3 id="migrating-to-nitrogql-server">
+          Migrating server-side to nitrogql
+        </h3>
+        <p>
+          For server-side code, the role of GraphQL Code Generator is to
+          generate type definitions for resolvers. nitrogql also supports
+          generating such type definitions.
+        </p>
+
+        <h4 id="configure-resolver-output">Configure resolver output</h4>
+        <p>
+          First of all, you need to configure generation of resolver type
+          definitions file. This is done by setting the{" "}
+          <Link href="/configuration/options#generate.resolverOutput">
+            <code>generate.resolverOutput</code>
+          </Link>{" "}
+          option.
+        </p>
+        <p>
+          <b>Example:</b>
+        </p>
+        <Highlight language="yaml">
+          {`# GraphQL Code Generator configuration
+generates:
+  src/generated/resolvers.ts:
+    plugins:
+      - typescript-resolvers
+    config:
+      # ...
+
+# corresponding nitrogql configuration (graphql.config.yaml)
+schema: src/schema/*.graphql
+documents: src/app/**/*.graphql
+extensions:
+  nitrogql:
+    generate:
+      # ...
+      resolverOutput: src/generated/resolvers.ts`}
+        </Highlight>
+
+        <h4 id="apply-the-model-plugin">
+          Apply the <code>model</code> plugin
+        </h4>
+        <p>
+          nitrogql has mechanism for generating significantly more type-safe
+          definitions for resolvers. In return for this, use of the{" "}
+          <Link href="/references/plugin-model">
+            <code>model</code> plugin
+          </Link>{" "}
+          is almost a must.
+        </p>
+        <p>
+          First, add the <code>model</code> plugin to your nitrogql
+          configuration:
+        </p>
+        <Highlight language="yaml">
+          {`extensions:
+  nitrogql:
+    plugins:
+      - "nitrogql:model-plugin"
+    # ...`}
+        </Highlight>
+        <p>
+          Then, apply the <code>@model</code> directive to your GraphQL schema.
+        </p>
+
+        <p>
+          If you are using GraphQL Code Generator&apos;s{" "}
+          <a
+            href="https://the-guild.dev/graphql/codegen/plugins/typescript/typescript-resolvers#mappers"
+            target="_blank"
+          >
+            <code>mappers</code> option
+          </a>
+          , migration to nitrogql&apos;s <code>model</code> plugin is
+          straightforward.
+        </p>
+        <Highlight language="yaml">
+          {`# GraphQL Code Generator configuration
+generates:
+  src/generated/resolvers.ts:
+    config:
+      # ...
+      mappers:
+        User: "~/models/User#User"
+        `}
+        </Highlight>
+        <Highlight language="graphql">
+          {`# nitrogql equivalent
+type User @model(type: "import('~/models/User').User") {
+  # ...
+}`}
+        </Highlight>
+        <p>
+          Otherwise, you should annotate each object type field with{" "}
+          <code>@model</code> directive. The rule is that if you implement a
+          resolver for a field, you do not need the <code>@model</code>{" "}
+          directive. Any field that does not have a resolver implementation
+          (i.e. a field that is resolved by the default resolver) needs the{" "}
+          <code>@model</code> directive. Example:
+        </p>
+        <Highlight language="graphql">
+          {`type User {
+  id: ID! @model
+  name: String! @model
+  email: String! @model
+  posts: [Post!]!
+}`}
+        </Highlight>
+
+        <h4 id="usage-of-generated-resolver-types">
+          Usage of generated resolver types
+        </h4>
+        <p>
+          nitrogql&apos;s approach to generating resolver types is a little
+          different from GraphQL Code Generator&apos;s.
+        </p>
+        <p>
+          GraphQL Code Generator outputs one type per GraphQL type. For example,
+          if you have <code>type Query</code> and <code>type User</code> in your
+          GraphQL schema, you get <code>QueryResolvers</code> and{" "}
+          <code>UserResolvers</code> type generated by the{" "}
+          <code>typescript-resolvers</code> plugin.
+        </p>
+        <p>
+          nitrogql employs a different approach. It generates one type named{" "}
+          <code>Resolvers</code> that contains all information about resolvers.
+          GraphQL Code Generator&apos;s <code>UserResolvers</code> corresponds
+          to nitrogql&apos;s{" "}
+          <code>Resolvers&lt;Context&gt;[&quot;User&quot;]</code>.
+        </p>
+        <Highlight language="typescript">
+          {`// GraphQL Code Generator
+import type { Resolvers, UserResolvers } from "~/generated/resolvers";
+const userResolvers: UserResolvers = {
+  // ...
+};
+
+const resolvers: Resolvers = {
+  User: userResolvers,
+  // ...
+};
+
+// nitrogql
+import type { Resolvers } from "~/generated/resolvers";
+const userResolvers: Resolvers<Context>["User"] = {
+  // ...
+};
+
+const resolvers: Resolvers<Context> = {
+  User: userResolvers,
+  // ...
+};
+`}
+        </Highlight>
+        <p>
+          The goal of your resolver implementation should be the same as before
+          migration. You should make a <code>resolvers</code> object that
+          contains all resolver implementations and pass it to your GraphQL
+          server. If <code>resolvers</code> has type{" "}
+          <code>Resolvers&lt;Context&gt;</code>, it should be safe in a sense
+          that all resolver implementations have correct type and all required
+          fields are implemented.
+        </p>
+        <p>
+          Note that there is another difference between GraphQL Code Generator
+          and nitrogql in the handling of <code>Context</code>. A context is
+          additional data that is passed to all resolver implementations. In
+          GraphQL Code Generator, you can specify the type of context in the{" "}
+          <code>typescript-resolvers</code> plugin&apos;s{" "}
+          <a
+            href="https://the-guild.dev/graphql/codegen/plugins/typescript/typescript-resolvers#contexttype"
+            target="_blank"
+          >
+            <code>contextType</code> option
+          </a>{" "}
+          so the exported <code>Resolvers</code> type includes the context type.
+          However, nitrogql does not have such option. Instead, nitrogql&apos;s{" "}
+          <code>Resolvers</code> type is a generic type that takes the context
+          type as a type argument.
+        </p>
+        <p>
+          Therefore, you need to change the type of <code>resolvers</code> to{" "}
+          <code>Resolvers&lt;Context&gt;</code> to match the type of{" "}
+          <code>Resolvers</code> generated by GraphQL Code Generator. If it is a
+          problem for you, you can make an intermediate module that exports{" "}
+          <code>Resolvers&lt;Context&gt;</code> and import it from your resolver
+          implementation module.
+        </p>
+
+        <InPageNav>
+          <Link href="/references/plugin-model">nitrogql:model plugin</Link>
+          <Link href="/references/resolvers-file">
+            Resolvers file reference
+          </Link>
+        </InPageNav>
+
+        <h4 id="using-server-graphql-file">Using Server GraphQL File</h4>
+        <p>
+          This is not a mandatory step, but you can also take advantage of{" "}
+          <Link href="/references/server-graphql-file">
+            Server GraphQL File
+          </Link>{" "}
+          to make your GraphQL server implementation easier. If you are using
+          file system operations to load your GraphQL schema, this file is a
+          great alternative.
+        </p>
+        <InPageNav>
+          <Link href="/references/server-graphql-file">
+            Server GraphQL file reference
+          </Link>
+        </InPageNav>
 
         <h3 id="using-nitrogql-cli">Using nitrogql CLI</h3>
         <p>
