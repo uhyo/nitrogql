@@ -1,5 +1,3 @@
-import { randomUUID } from "crypto";
-
 export type Todo = {
   id: string;
   tags: readonly string[];
@@ -21,37 +19,37 @@ const tagMaster = new Map<string, Tag>([
 
 const todoMaster: Todo[] = [
   {
-    id: randomUUID(),
+    id: "1",
     tags: ["eat"],
     createdAt: new Date("2023-03-21T09:00"),
     finishedAt: null,
   },
   {
-    id: randomUUID(),
+    id: "2",
     tags: ["eat", "housework"],
     createdAt: new Date("2023-03-21T12:00"),
     finishedAt: null,
   },
   {
-    id: randomUUID(),
+    id: "3",
     tags: ["healthcare", "business"],
     createdAt: new Date("2023-03-21T13:00"),
     finishedAt: null,
   },
   {
-    id: randomUUID(),
+    id: "4",
     tags: ["business"],
     createdAt: new Date("2023-03-21T15:00"),
     finishedAt: null,
   },
   {
-    id: randomUUID(),
+    id: "5",
     tags: ["housework"],
     createdAt: new Date("2023-03-21T17:00"),
     finishedAt: null,
   },
   {
-    id: randomUUID(),
+    id: "6",
     tags: ["eat", "healthcare", "business"],
     createdAt: new Date("2023-03-21T18:00"),
     finishedAt: null,
