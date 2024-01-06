@@ -14,15 +14,14 @@
     "@apollo/server": "^4.9.1",
     "@graphql-tools/schema": "^10.0.0",
     "@types/node": "^20.8.10",
-    "eslint": "8.36.0",
-    "eslint-config-next": "13.2.4",
-    "glob": "^9.3.0",
+    "eslint": "^8.36.0",
+    "eslint-config-next": "^14.0.4",
     "graphql": "^16.8.1",
     "graphql-scalars": "^1.22.2",
-    "next": "^13.5.2",
+    "next": "^14.0.4",
     "react": "18.2.0",
     "react-dom": "18.2.0",
-    "urql": "^3.0.4"
+    "urql": "^4.0.6"
   },
   "devDependencies": {
     "@graphql-typed-document-node/core": "^3.2.0",
