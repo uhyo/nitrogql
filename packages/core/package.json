@@ -13,7 +13,8 @@
     ".": {
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
-    }
+    },
+    "./commandServer.js": "./dist/commandServer.js"
   },
   "scripts": {
     "build": "tsc",
