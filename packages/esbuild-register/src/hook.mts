@@ -1,9 +1,9 @@
-import type { LoadHook, ResolveHook } from "node:module";
+import type { InitializeHook, LoadHook, ResolveHook } from "node:module";
 import * as module from "node:module";
 import { transform } from "esbuild";
 import { loadTsConfig } from "./tsconfig.js";
 import { readFile } from "node:fs/promises";
-import { fileURLToPath } from "node:url";
+import { fileURLToPath, pathToFileURL } from "node:url";
 import {
   decideOutputFormatOfFile,
   rawSourceToText,
@@ -17,11 +17,40 @@ const esmLoaderHasCjsSupport =
 
 const tsExtensions = /\.(?:[cm]?ts|tsx)$/;
 
+/**
+ * The base URL to use when resolving relative to data: URL modules.
+ * By default, data: URL cannot import relative modules. This option
+ * allows you to change this behavior.
+ */
+let dataUrlResolutionBaseUrl: string | undefined =
+  process.env.DATA_URL_RESOLUTION_BASE &&
+  pathToFileURL(process.env.DATA_URL_RESOLUTION_BASE).toString();
+
+export const initialize: InitializeHook<
+  | {
+      dataUrlResolutionBase?: string;
+    }
+  | undefined
+> = (data) => {
+  if (data?.dataUrlResolutionBase !== undefined) {
+    dataUrlResolutionBaseUrl = pathToFileURL(
+      data.dataUrlResolutionBase
+    ).toString();
+  }
+};
+
 export const resolve: ResolveHook = async (
   specifier,
   context,
   defaultResolve
 ) => {
+  if (
+    context.parentURL?.startsWith("data:") &&
+    dataUrlResolutionBaseUrl !== undefined
+  ) {
+    context.parentURL = dataUrlResolutionBaseUrl;
+  }
+
   const resolved = await resolveModule(specifier, context.parentURL);
   if (resolved === undefined) {
     return defaultResolve(specifier, context);

@@ -16,12 +16,23 @@ const nodeSupportsModuleRegisterAPI =
   (nodeVersion[0] === 20 && nodeVersion[1] >= 6) ||
   (nodeVersion[0] === 18 && nodeVersion[1] >= 19);
 
-export async function runNode(path: string): Promise<string> {
+export async function runNode(
+  path: string,
+  options?: {
+    dataUrlResolutionBase?: string;
+  }
+): Promise<string> {
+  const env =
+    options?.dataUrlResolutionBase !== undefined
+      ? { DATA_URL_RESOLUTION_BASE: options.dataUrlResolutionBase }
+      : undefined;
   if (nodeSupportsModuleRegisterAPI) {
     const { stdout } = await promisify(execFile)(
       process.execPath,
       ["--import", registerMJS.toString(), path],
-      {}
+      {
+        env,
+      }
     );
     return stdout;
   } else {
@@ -34,7 +45,9 @@ export async function runNode(path: string): Promise<string> {
         hook.toString(),
         path,
       ],
-      {}
+      {
+        env,
+      }
     );
     return stdout;
   }

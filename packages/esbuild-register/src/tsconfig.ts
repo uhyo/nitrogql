@@ -36,6 +36,11 @@ async function loadConfig(
   targetUrl: URL,
   fileName: string
 ): Promise<LoadConfigResult | undefined> {
+  if (targetUrl.protocol === "data:") {
+    // data URL doesn't belong to a file,
+    // so we can't load config from the file system.
+    return undefined;
+  }
   while (true) {
     try {
       const loadUrl = new URL(fileName, targetUrl);
