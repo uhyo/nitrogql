@@ -28,9 +28,8 @@ pub async fn load_schema_js(path: &Path) -> io::Result<LoadSchemaJsResult> {
 import {{ loadSchemaJs }} from "@nitrogql/core";
 import {{ stdout }} from "process";
 
-loadSchemaJs("{}").then((result) => {{
-    stdout.write(JSON.stringify(result));
-}});
+const result = await loadSchemaJs("{}");
+export default result;
 "#,
         path.display()
     ))

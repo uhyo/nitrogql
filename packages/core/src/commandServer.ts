@@ -3,6 +3,7 @@ import { stdout, stdin } from "node:process";
 import { CommandRunner } from "./commandRunner.js";
 
 const commandRunner = new CommandRunner();
+// console.error("CommandRunner started");
 
 const rl = readline.createInterface({
   input: stdin,
@@ -10,10 +11,17 @@ const rl = readline.createInterface({
 });
 
 rl.on("line", (line) => {
-  commandRunner.run(line);
+  // console.error("Got line:", line);
+  const parsed = JSON.parse(line);
+  if (typeof parsed !== "string") {
+    console.error("Input must be a JSON string");
+    return;
+  }
+  commandRunner.run(parsed);
 });
 
 for await (const result of commandRunner.output) {
+  // console.error("Got result:", result);
   if (result.error) {
     console.error(result.error);
   } else {
