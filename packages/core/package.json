@@ -14,7 +14,7 @@
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
     },
-    "./commandServer.js": "./dist/commandServer.js"
+    "./commandServer.js": "./dist/command/server.js"
   },
   "scripts": {
     "build": "tsc",

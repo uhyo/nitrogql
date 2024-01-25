@@ -4,6 +4,7 @@
 
 import { execFileSync } from "node:child_process";
 import { getMemory, readString } from "./memory.js";
+import { getCommandClient } from "./command/commandClient.js";
 
 /**
  * Executes given code with Node.js.
@@ -86,15 +87,8 @@ export type NitrogqlConfigNamespace = {
   free_result(handle: number): void;
 };
 
-/**
- * `nitrogql_helper/config` namespace
- * depended on by nitrogql's wasm modules.
- */
-export const config: NitrogqlConfigNamespace = {
-  execute_node,
-  result_len,
-  write_result_to_buffer,
-  free_result,
+export type InitNitrogqlConfigResult = {
+  namespace: NitrogqlConfigNamespace;
 };
 
 const handleMap = new Map<number, string>();
@@ -140,4 +134,21 @@ function write_result_to_buffer(
 
 function free_result(handle: number): void {
   handleMap.delete(handle);
+}
+
+/**
+ * Initialize the `nitrogql_helper/config` namespace.
+ * This namespace is depended by nitrogql's wasm modules.
+ */
+export function initConfigNamespace(): InitNitrogqlConfigResult {
+  const w = getCommandClient();
+  const namespace: NitrogqlConfigNamespace = {
+    execute_node,
+    result_len,
+    write_result_to_buffer,
+    free_result,
+  };
+  return {
+    namespace,
+  };
 }
