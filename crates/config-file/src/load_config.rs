@@ -38,7 +38,7 @@ const CONFIG_NAMES: [(&str, LoaderKind); 19] = [
 ];
 
 /// searches graphql config and loads it if one is found.
-fn search_graphql_config(cwd: &Path) -> io::Result<Option<(PathBuf, String)>> {
+async fn search_graphql_config(cwd: &Path) -> io::Result<Option<(PathBuf, String)>> {
     trace!("search_graphql_config from {}", cwd.display());
     for (name, kind) in CONFIG_NAMES.iter() {
         let config_file_path = cwd.join(name);
@@ -67,6 +67,7 @@ fn search_graphql_config(cwd: &Path) -> io::Result<Option<(PathBuf, String)>> {
                 if config_file_path.try_exists()? {
                     trace!("Found config file {}", config_file_path.display());
                     return load_default_from_js_file(&config_file_path)
+                        .await
                         .map(|buf| Some((config_file_path, buf)));
                 } else {
                     trace!("Not found: {}", config_file_path.display());
@@ -79,7 +80,7 @@ fn search_graphql_config(cwd: &Path) -> io::Result<Option<(PathBuf, String)>> {
 
 /// Loads config file. Returns a pair of loaded file name and loaded config.
 /// Config file should follow the GraphQL Config format: https://the-guild.dev/graphql/config/docs
-pub fn load_config(
+pub async fn load_config(
     cwd: &Path,
     config_file: Option<&Path>,
 ) -> Result<Option<(PathBuf, Config)>, ConfigFileError> {
@@ -89,7 +90,7 @@ pub fn load_config(
             path_to_read.push(path);
             fs::read_to_string(&path_to_read).map(|source| Some((path_to_read, source)))
         }
-        None => search_graphql_config(cwd),
+        None => search_graphql_config(cwd).await,
     }?;
 
     match config_source {

@@ -10,6 +10,7 @@ use builtins::nitrogql_builtins;
 use clap::Parser;
 use context::OutputFormat;
 use file_store::FileStore;
+use futures::executor::block_on;
 use globmatch::wrappers::{build_matchers, match_paths};
 use graphql_builtins::generate_builtins;
 use graphql_type_system::Schema;
@@ -130,7 +131,7 @@ fn run_cli_impl(
         return Err(CliError::NoCommandSpecified.into());
     }
     let cwd = get_cwd()?;
-    let config_file = load_config(&cwd, args.config_file.as_deref())?;
+    let config_file = block_on(load_config(&cwd, args.config_file.as_deref()))?;
     let (root_dir, mut config) = if let Some((config_path, config_file)) = config_file {
         info!("Loaded config file from {}", config_path.display());
         (
@@ -183,7 +184,7 @@ fn run_cli_impl(
                 let LoadSchemaJsResult {
                     schema,
                     type_extensions,
-                } = load_schema_js(&path)?;
+                } = block_on(load_schema_js(&path))?;
                 let file_idx = file_store.add_file(path, schema, FileKind::Schema);
                 let (_, buf, _) = file_store.get_file(file_idx).unwrap();
                 set_current_file_of_pos(file_idx);

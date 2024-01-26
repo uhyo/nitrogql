@@ -35,7 +35,7 @@ static NODE_SUPPORTS_MODULE_REGISTER_API: Lazy<bool> = Lazy::new(|| {
 });
 
 /// Runs given string as JavaScript code, and returns string written to stdout.
-pub fn run_node(code: &str) -> io::Result<String> {
+pub async fn run_node(code: &str) -> io::Result<String> {
     #[cfg(not(target_os = "wasi"))]
     {
         let mut command = Command::new("node");
@@ -79,7 +79,7 @@ pub fn run_node(code: &str) -> io::Result<String> {
 }
 
 /// Load the default export of a JS file by executing it and returning the `module.exports` value.
-pub fn load_default_from_js_file(path: &Path) -> io::Result<String> {
+pub async fn load_default_from_js_file(path: &Path) -> io::Result<String> {
     run_node(&format!(
         r#"
 import config from "{}";
@@ -88,4 +88,5 @@ stdout.write(JSON.stringify(config?.default ?? config));
 "#,
         path.display()
     ))
+    .await
 }

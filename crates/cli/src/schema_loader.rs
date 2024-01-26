@@ -22,7 +22,7 @@ pub fn schema_kind_by_path(path: &Path) -> SchemaFileKind {
     }
 }
 
-pub fn load_schema_js(path: &Path) -> io::Result<LoadSchemaJsResult> {
+pub async fn load_schema_js(path: &Path) -> io::Result<LoadSchemaJsResult> {
     let res_json = run_node(&format!(
         r#"
 import {{ loadSchemaJs }} from "@nitrogql/core";
@@ -33,7 +33,8 @@ loadSchemaJs("{}").then((result) => {{
 }});
 "#,
         path.display()
-    ))?;
+    ))
+    .await?;
     let parsed: LoadSchemaJsResult = serde_yaml::from_str(&res_json).expect("failed to parse JSON");
     Ok(parsed)
 }

@@ -35,6 +35,7 @@ serde = "1.0.156"
 serde_yaml = "0.9.19"
 itertools = "0.10.5"
 simple_logger = "4.1.0"
+futures = "0.3.30"
 
 [dev-dependencies]
 insta = "1.28.0"
