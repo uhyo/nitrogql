@@ -1,11 +1,13 @@
 import { Worker } from "node:worker_threads";
+import readline from "node:readline";
+import { once } from "node:events";
 
 export type CommandClient = {
-  run: (command: string) => string;
+  run: (command: string) => Promise<string>;
   close: () => void;
 };
 
-export function getCommandClient() {
+export function getCommandClient(): CommandClient {
   const nodeVersion = process.versions.node;
   // @nitrogql/esbuild-register requires different usage
   // depending on whether Node.js supports the `register` API from `node:module`.
@@ -15,26 +17,36 @@ export function getCommandClient() {
   ];
   const nodeHasModuleRegisterAPI =
     major > 20 || (major === 20 && minor >= 6) || (major === 18 && minor >= 19);
-  const signalBuffer = new SharedArrayBuffer(4);
   const w = new Worker(new URL("./server.js", import.meta.url), {
     execArgv: nodeHasModuleRegisterAPI
-      ? [
-          "--no-warnings",
-          "--import=@nitrogql/esbuild-register",
-          "--input-type=module",
-        ]
-      : [
+      ? []
+      : // ? ["--no-warnings", "--import=@nitrogql/esbuild-register"]
+        [
           "--no-warnings",
           "--require=@nitrogql/esbuild-register",
           "--experimental-loader=@nitrogql/esbuild-register/hook",
-          "--input-type=module",
         ],
-    stdin: true,
-    stdout: true,
-    workerData: {
-      signalBuffer,
-    },
   });
-  return {};
-  return w;
+  w.on("error", (error) => {
+    console.error(error);
+  });
+  w.on("exit", () => {
+    console.error("Worker exited");
+  });
+  return {
+    run: async (command: string) => {
+      console.error("run", command);
+      w.postMessage(command);
+      const [result] = await once(w, "message");
+      if (result.error) {
+        console.error(result.error);
+        throw result.error;
+      }
+      console.error("line", result.result);
+      return result.result;
+    },
+    close: () => {
+      w.terminate();
+    },
+  };
 }

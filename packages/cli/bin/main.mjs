@@ -40,5 +40,6 @@ const wasm = await WebAssembly.compile(
 const instance = await WebAssembly.instantiate(wasm, importObject);
 wasi.setMemory(instance.exports.memory);
 core.setMemory(instance.exports.memory);
+configHelper.setWasmModule(instance.exports);
 
 instance.exports._start();

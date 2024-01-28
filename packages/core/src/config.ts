@@ -89,23 +89,11 @@ export type NitrogqlConfigNamespace = {
 
 export type InitNitrogqlConfigResult = {
   namespace: NitrogqlConfigNamespace;
+  setWasmModule: (module: WebAssembly.Exports) => void;
 };
 
 const handleMap = new Map<number, string>();
 let handleCounter = 0;
-
-function execute_node(code_ptr: number, code_len: number): number {
-  const code = readString(code_ptr, code_len);
-  try {
-    const result = executeNodeSync(code);
-    const handle = ++handleCounter;
-    handleMap.set(handle, result);
-    return handle;
-  } catch (err) {
-    console.error(err);
-    return 0;
-  }
-}
 
 function result_len(handle: number): number {
   const result = handleMap.get(handle);
@@ -141,6 +129,7 @@ function free_result(handle: number): void {
  * This namespace is depended by nitrogql's wasm modules.
  */
 export function initConfigNamespace(): InitNitrogqlConfigResult {
+  let module: WebAssembly.Exports | undefined = undefined;
   const w = getCommandClient();
   const namespace: NitrogqlConfigNamespace = {
     execute_node,
@@ -150,5 +139,28 @@ export function initConfigNamespace(): InitNitrogqlConfigResult {
   };
   return {
     namespace,
+    setWasmModule: (m) => {
+      module = m;
+    },
   };
+
+  function execute_node(code_ptr: number, code_len: number): number {
+    debugger;
+    if (module === undefined) {
+      throw new Error("wasm module is not set");
+    }
+    const m = module;
+    const code = readString(code_ptr, code_len);
+    const handle = ++handleCounter;
+    w.run(code)
+      .then((result) => {
+        handleMap.set(handle, result);
+        (m.execute_node_ret as (handle: number) => void)(handle);
+      })
+      .catch((error) => {
+        console.error(error);
+        (m.execute_node_ret as (handle: number) => void)(0);
+      });
+    return handle;
+  }
 }
