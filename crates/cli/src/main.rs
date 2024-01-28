@@ -72,12 +72,11 @@ struct Args {
 }
 
 fn main() {
-    let exit_code = run_cli(std::env::args());
-    process::exit(exit_code.try_into().unwrap());
+    block_on(run_cli(std::env::args()));
 }
 
-/// Run as CLI. Returns 0 if successful
-pub fn run_cli(args: impl IntoIterator<Item = String>) -> usize {
+/// Run as CLI.
+pub async fn run_cli(args: impl IntoIterator<Item = String>) {
     simple_logger::SimpleLogger::new()
         .with_level(log::LevelFilter::Error)
         .env()
@@ -87,7 +86,7 @@ pub fn run_cli(args: impl IntoIterator<Item = String>) -> usize {
     let file_store = Box::leak(Box::new(FileStore::new()));
     let args = Args::parse_from(args);
     let output_format = args.output_format;
-    let res = run_cli_impl(args, file_store, &mut output);
+    let res = run_cli_impl(args, file_store, &mut output).await;
     let code = match res {
         Ok(()) => 0,
         Err(err) => {
@@ -119,10 +118,10 @@ pub fn run_cli(args: impl IntoIterator<Item = String>) -> usize {
         }
     }
 
-    code
+    process::exit(code);
 }
 
-fn run_cli_impl(
+async fn run_cli_impl(
     args: Args,
     file_store: &mut FileStore,
     output: &mut CliOutput,
@@ -131,7 +130,7 @@ fn run_cli_impl(
         return Err(CliError::NoCommandSpecified.into());
     }
     let cwd = get_cwd()?;
-    let config_file = block_on(load_config(&cwd, args.config_file.as_deref()))?;
+    let config_file = load_config(&cwd, args.config_file.as_deref()).await?;
     let (root_dir, mut config) = if let Some((config_path, config_file)) = config_file {
         info!("Loaded config file from {}", config_path.display());
         (
@@ -161,9 +160,10 @@ fn run_cli_impl(
     }
 
     let schema_files = load_glob_files(&root_dir, &config.schema)?;
-    let (schema_docs, schema_errors): (Vec<_>, Vec<_>) = schema_files
-        .into_iter()
-        .map(|(path, buf)| match schema_kind_by_path(&path) {
+    let mut schema_docs = vec![];
+    let mut schema_errors = vec![];
+    for (path, buf) in schema_files {
+        let res = match schema_kind_by_path(&path) {
             SchemaFileKind::GraphQL => {
                 let file_idx = file_store.add_file(path, buf, FileKind::Schema);
                 let (ref path, buf, _) = file_store.get_file(file_idx).unwrap();
@@ -184,7 +184,7 @@ fn run_cli_impl(
                 let LoadSchemaJsResult {
                     schema,
                     type_extensions,
-                } = block_on(load_schema_js(&path))?;
+                } = load_schema_js(&path).await?;
                 let file_idx = file_store.add_file(path, schema, FileKind::Schema);
                 let (_, buf, _) = file_store.get_file(file_idx).unwrap();
                 set_current_file_of_pos(file_idx);
@@ -196,8 +196,12 @@ fn run_cli_impl(
                 }
                 Ok(LoadedSchema::GraphQL(doc))
             }
-        })
-        .partition_result();
+        };
+        match res {
+            Ok(doc) => schema_docs.push(doc),
+            Err(err) => schema_errors.push(err),
+        }
+    }
     if !schema_errors.is_empty() {
         return Err(CommandError::merge(schema_errors));
     }
