@@ -39,7 +39,6 @@ use nitrogql_parser::{parse_operation_document, parse_type_system_document};
 
 use self::{check::run_check, context::CliConfig, generate::run_generate};
 
-mod async_runtime;
 mod builtins;
 mod check;
 mod context;
@@ -72,8 +71,8 @@ struct Args {
 }
 
 fn main() {
-    async_runtime::spawn(run_cli(std::env::args()));
-    async_runtime::drive();
+    nitrogql_async_runtime::spawn(run_cli(std::env::args()));
+    nitrogql_async_runtime::drive();
 }
 
 /// Run as CLI.

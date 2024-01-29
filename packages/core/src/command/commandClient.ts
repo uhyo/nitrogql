@@ -1,6 +1,6 @@
 import { Worker } from "node:worker_threads";
-import readline from "node:readline";
 import { once } from "node:events";
+import path from "node:path";
 
 export type CommandClient = {
   run: (command: string) => Promise<string>;
@@ -18,10 +18,13 @@ export function getCommandClient(): CommandClient {
   const nodeHasModuleRegisterAPI =
     major > 20 || (major === 20 && minor >= 6) || (major === 18 && minor >= 19);
   const w = new Worker(new URL("./server.js", import.meta.url), {
+    env: {
+      ...process.env,
+      DATA_URL_RESOLUTION_BASE: path.join(process.cwd(), "__entrypoint__"),
+    },
     execArgv: nodeHasModuleRegisterAPI
-      ? []
-      : // ? ["--no-warnings", "--import=@nitrogql/esbuild-register"]
-        [
+      ? ["--no-warnings", "--import=@nitrogql/esbuild-register"]
+      : [
           "--no-warnings",
           "--require=@nitrogql/esbuild-register",
           "--experimental-loader=@nitrogql/esbuild-register/hook",
@@ -38,6 +41,7 @@ export function getCommandClient(): CommandClient {
       console.error("run", command);
       w.postMessage(command);
       const [result] = await once(w, "message");
+      await new Promise((resolve) => setTimeout(resolve, 100));
       if (result.error) {
         console.error(result.error);
         throw result.error;

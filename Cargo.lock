@@ -602,6 +602,13 @@ name = "nitrogql-ast"
 version = "0.1.0"
 
 [[package]]
+name = "nitrogql-async-runtime"
+version = "0.1.0"
+dependencies = [
+ "async-executor",
+]
+
+[[package]]
 name = "nitrogql-checker"
 version = "0.1.0"
 dependencies = [
@@ -622,7 +629,6 @@ name = "nitrogql-cli"
 version = "0.1.0"
 dependencies = [
  "anyhow",
- "async-executor",
  "clap",
  "colored",
  "futures",
@@ -636,6 +642,7 @@ dependencies = [
  "log",
  "lru 0.9.0",
  "nitrogql-ast",
+ "nitrogql-async-runtime",
  "nitrogql-checker",
  "nitrogql-config-file",
  "nitrogql-error",

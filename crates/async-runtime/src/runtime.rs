@@ -1,20 +1,5 @@
 use async_executor::LocalExecutor;
 
-thread_local! {
-    static RUNTIME: Runtime = Runtime::new();
-}
-
-pub fn spawn<F>(future: F)
-where
-    F: std::future::Future<Output = ()> + 'static,
-{
-    RUNTIME.with(|runtime| runtime.spawn(future));
-}
-
-pub fn drive() {
-    RUNTIME.with(|runtime| runtime.drive());
-}
-
 /// Simple async runtime used by the CLI.
 pub struct Runtime {
     inner: LocalExecutor<'static>,
