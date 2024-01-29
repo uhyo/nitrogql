@@ -7,12 +7,20 @@ use std::{
     task::{Poll, Waker},
 };
 
+use crate::drive;
+
 thread_local! {
     static TICKETS: RefCell<TicketRegistry> = RefCell::new(TicketRegistry::new());
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct TicketId(u32);
+
+impl From<TicketId> for u32 {
+    fn from(id: TicketId) -> Self {
+        id.0
+    }
+}
 
 /// Issue a new string ticket.
 pub fn issue_string_ticket() -> Ticket {
@@ -24,21 +32,26 @@ pub fn issue_string_ticket() -> Ticket {
 
 /// Receive a result from Node.js.
 #[no_mangle]
-pub extern "C" fn execute_node_ret(id: u32, result: *const u8, result_len: usize) {
+pub extern "C" fn execute_node_ret(id: u32, is_ok: u32, result: *const u8, result_len: usize) {
     TICKETS.with(|tickets| {
         let mut tickets = tickets.borrow_mut();
         let id = TicketId(id);
         let result = unsafe {
             let slice = std::slice::from_raw_parts(result, result_len);
-            String::from_utf8_unchecked(slice.to_vec())
+            String::from_utf8(slice.to_vec()).expect("invalid utf8")
         };
         let ticket = tickets
             .string_tickets
             .get_mut(&id)
             .expect("invalid ticket id");
-        ticket.result = Some(result);
+        ticket.result = if is_ok != 0 {
+            Some(Ok(result))
+        } else {
+            Some(Err(()))
+        };
         ticket.waker.wake_by_ref();
-    })
+    });
+    drive();
 }
 
 struct TicketRegistry {
@@ -75,8 +88,8 @@ impl TicketRegistry {
     }
 
     /// Takes the result of a ticket.
-    fn take_result(&mut self, id: TicketId) -> Option<String> {
-        let ticket = self.string_tickets.remove(&id).expect("invalid ticket id");
+    fn take_result(&mut self, id: TicketId) -> Option<Result<String, ()>> {
+        let ticket = self.string_tickets.remove(&id)?;
         match ticket.result {
             Some(result) => Some(result),
             None => {
@@ -89,7 +102,7 @@ impl TicketRegistry {
 
 struct StringTicket {
     waker: Waker,
-    result: Option<String>,
+    result: Option<Result<String, ()>>,
 }
 
 /// Ticket is a type of Future that can wait for a result from Node.js.
@@ -101,7 +114,7 @@ pub struct Ticket {
 }
 
 impl Future for Ticket {
-    type Output = String;
+    type Output = Result<String, ()>;
 
     fn poll(
         self: std::pin::Pin<&mut Self>,

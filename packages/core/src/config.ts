@@ -3,7 +3,7 @@
  */
 
 import { execFileSync } from "node:child_process";
-import { getMemory, readString } from "./memory.js";
+import { getMemory, readString, utf8Len, writeString } from "./memory.js";
 import { getCommandClient } from "./command/commandClient.js";
 
 /**
@@ -64,10 +64,13 @@ stdout.write(JSON.stringify(config.default ?? config));
 export type NitrogqlConfigNamespace = {
   /**
    * Executes given JavaScript (or TypeScript) code.
-   * Returns the handle to the result (string written to stdout).
-   * 0 if there was an error.
+   * Result is returned asynchronously via `execute_node_ret` function.
    */
-  execute_node(code_ptr: number, code_len: number): number;
+  execute_node(
+    code_ptr: number,
+    code_len: number,
+    ticket_handle: number
+  ): number;
   /**
    * Returns the length of the result.
    */
@@ -144,22 +147,40 @@ export function initConfigNamespace(): InitNitrogqlConfigResult {
     },
   };
 
-  function execute_node(code_ptr: number, code_len: number): number {
+  function execute_node(
+    code_ptr: number,
+    code_len: number,
+    ticket_handle: number
+  ): number {
     debugger;
     if (module === undefined) {
       throw new Error("wasm module is not set");
     }
     const m = module;
+    const alloc_string = m.alloc_string as (len: number) => number;
+    const free_string = m.free_string as (ptr: number, len: number) => void;
+    const execute_node_ret = m.execute_node_ret as (
+      ticket_handle: number,
+      is_ok: number,
+      result_ptr: number,
+      result_len: number
+    ) => void;
     const code = readString(code_ptr, code_len);
     const handle = ++handleCounter;
     w.run(code)
-      .then((result) => {
+      .then((data) => {
+        const result = JSON.stringify(data);
         handleMap.set(handle, result);
-        (m.execute_node_ret as (handle: number) => void)(handle);
+        // Write the result to the buffer.
+        const len = utf8Len(result);
+        const result_ptr = alloc_string(len);
+        writeString(result, result_ptr, len);
+        execute_node_ret(ticket_handle, 1, result_ptr, len);
+        free_string(result_ptr, len);
       })
       .catch((error) => {
         console.error(error);
-        (m.execute_node_ret as (handle: number) => void)(0);
+        execute_node_ret(ticket_handle, 0, 0, 0);
       });
     return handle;
   }

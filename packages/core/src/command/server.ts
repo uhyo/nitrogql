@@ -4,7 +4,7 @@ import { parentPort } from "node:worker_threads";
 import { CommandRunner } from "./commandRunner.js";
 
 const commandRunner = new CommandRunner();
-console.error("CommandRunner started");
+// console.error("CommandRunner started");
 
 if (parentPort === null) {
   // standalone server mode
@@ -13,7 +13,7 @@ if (parentPort === null) {
   });
 
   rl.on("line", (line) => {
-    console.error("Got line:", line);
+    // console.error("Got line:", line);
     const parsed = JSON.parse(line);
     if (typeof parsed !== "string") {
       console.error("Input must be a JSON string");
@@ -24,7 +24,7 @@ if (parentPort === null) {
 } else {
   // worker mode
   parentPort.on("message", (message) => {
-    console.error("Got message:", message);
+    // console.error("Got message:", message);
     if (typeof message !== "string") {
       console.error("Input must be a string");
       return;
@@ -34,7 +34,7 @@ if (parentPort === null) {
 }
 
 for await (const result of commandRunner.output) {
-  console.error("Got result:", result);
+  // console.error("Got result:", result);
   if (result.error) {
     console.error(result.error);
     if (parentPort !== null) {

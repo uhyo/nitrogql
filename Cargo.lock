@@ -667,6 +667,7 @@ name = "nitrogql-config-file"
 version = "0.1.0"
 dependencies = [
  "log",
+ "nitrogql-async-runtime",
  "once_cell",
  "serde",
  "serde_json",

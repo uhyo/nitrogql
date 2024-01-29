@@ -3,7 +3,11 @@ import { once } from "node:events";
 import path from "node:path";
 
 export type CommandClient = {
-  run: (command: string) => Promise<string>;
+  /**
+   * Runs given command as an ES module.
+   * Returns the value of default export (without serializing to JSON)
+   */
+  run: (command: string) => Promise<unknown>;
   close: () => void;
 };
 
@@ -38,7 +42,7 @@ export function getCommandClient(): CommandClient {
   });
   return {
     run: async (command: string) => {
-      console.error("run", command);
+      // console.error("run", command);
       w.postMessage(command);
       const [result] = await once(w, "message");
       await new Promise((resolve) => setTimeout(resolve, 100));
@@ -46,7 +50,7 @@ export function getCommandClient(): CommandClient {
         console.error(result.error);
         throw result.error;
       }
-      console.error("line", result.result);
+      // console.error("line", result.result);
       return result.result;
     },
     close: () => {
