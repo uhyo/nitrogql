@@ -1,5 +1,6 @@
 import readline from "node:readline";
 import { stdout, stdin } from "node:process";
+import inspector from "node:inspector";
 import { parentPort } from "node:worker_threads";
 import { CommandRunner } from "./commandRunner.js";
 
@@ -22,6 +23,13 @@ if (parentPort === null) {
     commandRunner.run(parsed);
   });
 } else {
+  // https://github.com/nodejs/node/issues/26609
+  if (process.execArgv.includes("--inspect-brk")) {
+    inspector.open();
+    inspector.waitForDebugger();
+    debugger;
+  }
+
   // worker mode
   parentPort.on("message", (message) => {
     // console.error("Got message:", message);
