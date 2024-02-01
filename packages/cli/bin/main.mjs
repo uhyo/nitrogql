@@ -1,3 +1,5 @@
+#!/usr/bin/env node
+
 import { argv, env, cwd, stdout } from "node:process";
 import { readFile } from "node:fs/promises";
 import { resolve } from "node:path";
