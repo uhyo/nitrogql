@@ -26,9 +26,15 @@ let dataUrlResolutionBaseUrl: string | undefined =
   process.env.DATA_URL_RESOLUTION_BASE &&
   pathToFileURL(process.env.DATA_URL_RESOLUTION_BASE).toString();
 
+/**
+ * Whether to include node_modules to conversion target.
+ */
+let includeNodeModules: boolean = !!process.env.INCLUDE_NODE_MODULES;
+
 export const initialize: InitializeHook<
   | {
       dataUrlResolutionBase?: string;
+      includeNodeModules?: boolean;
     }
   | undefined
 > = (data) => {
@@ -37,6 +43,13 @@ export const initialize: InitializeHook<
       data.dataUrlResolutionBase
     ).toString();
   }
+  if (data?.includeNodeModules !== undefined) {
+    includeNodeModules = data.includeNodeModules;
+  }
+};
+
+const isNodeModules = (url: string) => {
+  return url.includes("/node_modules/");
 };
 
 export const resolve: ResolveHook = async (
@@ -50,10 +63,21 @@ export const resolve: ResolveHook = async (
   ) {
     context.parentURL = dataUrlResolutionBaseUrl;
   }
+  // for speed, we don't run custom resolver for node_modules
+  // unless explicitly requested
+  if (
+    !includeNodeModules &&
+    context.parentURL !== undefined &&
+    isNodeModules(context.parentURL)
+  ) {
+    const res = await defaultResolve(specifier, context);
+    return res;
+  }
 
   const resolved = await resolveModule(specifier, context.parentURL);
   if (resolved === undefined) {
-    return defaultResolve(specifier, context);
+    const res = await defaultResolve(specifier, context);
+    return res;
   }
   return {
     shortCircuit: true,
@@ -105,5 +129,6 @@ export const load: LoadHook = async (url, context, nextLoad) => {
       "utf-8"
     );
   }
+  // console.log((performance.now() - startTime).toFixed(1), "load1", loadResult);
   return loadResult;
 };
