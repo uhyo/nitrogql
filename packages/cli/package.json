@@ -2,12 +2,12 @@
   "name": "@nitrogql/cli",
   "version": "1.6.0",
   "description": "GraphQL + TypeScript toolchain",
-  "main": "bin/index.mjs",
+  "main": "bin/main.mjs",
   "types": "./types.d.ts",
   "exports": {
     ".": {
       "types": "./types.d.ts",
-      "default": "./bin/index.mjs"
+      "default": "./bin/main.mjs"
     }
   },
   "repository": {
@@ -16,7 +16,7 @@
     "directory": "packages/cli"
   },
   "bin": {
-    "nitrogql": "bin/index.mjs"
+    "nitrogql": "bin/main.mjs"
   },
   "scripts": {},
   "keywords": [
