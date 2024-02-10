@@ -148,6 +148,15 @@ impl<'a> From<&'a str> for ObjectKey {
     }
 }
 
+impl From<String> for ObjectKey {
+    fn from(value: String) -> Self {
+        ObjectKey {
+            name: value,
+            pos: Pos::builtin(),
+        }
+    }
+}
+
 impl TSType {
     /// Prints type.
     pub fn print_type(&self, writer: &mut impl SourceMapWriter) {

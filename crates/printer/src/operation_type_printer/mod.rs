@@ -10,6 +10,7 @@ use self::visitor::{OperationTypePrinterOptions, OperationTypePrinterVisitor};
 
 mod branching;
 mod selection_set_visitor;
+mod selection_tree;
 #[cfg(test)]
 mod tests;
 pub mod type_printer;
