@@ -13,12 +13,9 @@ type TestResult = Schema.__SelectionSet<Schema.__OperationOutput.Query, {
     age: Schema.__OperationOutput.Int | null;
     posts: (Schema.__SelectionSet<Schema.__OperationOutput.User, {
       id: Schema.__OperationOutput.ID;
-      id: Schema.__OperationOutput.ID;
     }, {}> | Schema.__SelectionSet<Schema.__OperationOutput.Bot, {
       id: Schema.__OperationOutput.ID;
-      id: Schema.__OperationOutput.ID;
     }, {}> | Schema.__SelectionSet<Schema.__OperationOutput.Post, {
-      id: Schema.__OperationOutput.ID;
       id: Schema.__OperationOutput.ID;
     }, {}>)[];
   }, {}>;

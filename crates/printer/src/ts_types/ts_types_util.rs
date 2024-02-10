@@ -1,6 +1,9 @@
 use std::ops::Not;
 
-use super::TSType;
+use itertools::Itertools;
+
+use super::{fast_equal, TSType};
+use fast_equal::fast_equal;
 
 /// Calculates intersection of given list of types.
 pub fn ts_intersection(types: impl IntoIterator<Item = TSType>) -> TSType {
@@ -33,7 +36,12 @@ pub fn ts_intersection(types: impl IntoIterator<Item = TSType>) -> TSType {
     if others.is_empty() {
         object_type.unwrap_or(TSType::Unknown)
     } else {
-        TSType::Intersection(object_type.into_iter().chain(others).collect())
+        TSType::Intersection(
+            object_type
+                .into_iter()
+                .chain(others.into_iter().dedup_by(fast_equal))
+                .collect(),
+        )
     }
 }
 
