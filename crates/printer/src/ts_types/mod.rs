@@ -4,6 +4,7 @@ use sourcemap_writer::SourceMapWriter;
 
 use super::jsdoc::print_description;
 
+pub mod deep_merge;
 pub mod ts_types_util;
 pub mod type_to_ts_type;
 

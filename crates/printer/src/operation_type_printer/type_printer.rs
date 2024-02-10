@@ -1,7 +1,12 @@
 use std::{collections::HashMap, convert::identity, iter::once};
 
 use crate::{
-    ts_types::{ts_types_util::ts_union, type_to_ts_type::get_ts_type_of_type, ObjectField},
+    ts_types::{
+        deep_merge::{self, deep_merge_to_object},
+        ts_types_util::ts_union,
+        type_to_ts_type::get_ts_type_of_type,
+        ObjectField,
+    },
     utils::interface_implementers,
 };
 use graphql_type_system::{NamedType, ObjectDefinition, Schema, Text, Type, TypeDefinition};
@@ -151,8 +156,8 @@ fn get_object_type_for_selection_set<'src, S: Text<'src>>(
         get_fields_for_selection_set(context, selection_set, branch)
             .into_iter()
             .partition_map(identity);
-    let unaliased = TSType::Object(unaliased);
-    let aliased = TSType::Object(aliased);
+    let unaliased = deep_merge_to_object(unaliased);
+    let aliased = deep_merge_to_object(aliased);
     let schema_type = TSType::NamespaceMember3(
         context.options.schema_root_namespace.clone(),
         TypeTarget::OperationOutput.to_string(),
