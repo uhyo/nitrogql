@@ -182,6 +182,54 @@ fn fragment_inline_spread() {
 }
 
 #[test]
+fn fragment_merging() {
+    let doc = parse_operation_document(
+        "
+        query {
+            me {
+                ...F
+                ...P
+            }
+        }
+        fragment F on User {
+            id
+        }
+        fragment P on User {
+            name
+        }
+        ",
+    )
+    .unwrap();
+    let printed = print_document_default(&doc);
+    assert_snapshot!(printed);
+}
+
+#[test]
+fn fragment_nested_merging() {
+    let doc = parse_operation_document(
+        "
+        query {
+            ...F
+            ...P
+        }
+        fragment F on Query {
+            me {
+                id
+            }
+        }
+        fragment P on Query {
+            me {
+                name
+            }
+        }
+        ",
+    )
+    .unwrap();
+    let printed = print_document_default(&doc);
+    assert_snapshot!(printed);
+}
+
+#[test]
 fn query_variables() {
     let doc = parse_operation_document(
         "
