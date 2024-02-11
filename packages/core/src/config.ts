@@ -71,23 +71,6 @@ export type NitrogqlConfigNamespace = {
     code_len: number,
     ticket_handle: number
   ): number;
-  /**
-   * Returns the length of the result.
-   */
-  result_len(handle: number): number;
-  /**
-   * Writes result of executing config file to given buffer.
-   * Returns the number of bytes written.
-   */
-  write_result_to_buffer(
-    handle: number,
-    buffer: number,
-    buffer_len: number
-  ): number;
-  /**
-   * Frees the result.
-   */
-  free_result(handle: number): void;
 };
 
 export type InitNitrogqlConfigResult = {
@@ -95,37 +78,7 @@ export type InitNitrogqlConfigResult = {
   setWasmModule: (module: WebAssembly.Exports) => void;
 };
 
-const handleMap = new Map<number, string>();
 let handleCounter = 0;
-
-function result_len(handle: number): number {
-  const result = handleMap.get(handle);
-  if (result === undefined) {
-    return 0;
-  }
-  return result.length;
-}
-
-function write_result_to_buffer(
-  handle: number,
-  buffer: number,
-  buffer_len: number
-): number {
-  const result = handleMap.get(handle);
-  if (result === undefined) {
-    return 0;
-  }
-  const bytes = new TextEncoder().encode(result);
-  const memory = getMemory();
-  const bytesToWrite = Math.min(bytes.length, buffer_len);
-  const bufferView = new Uint8Array(memory.buffer, buffer, bytesToWrite);
-  bufferView.set(bytes.slice(0, bytesToWrite));
-  return bytesToWrite;
-}
-
-function free_result(handle: number): void {
-  handleMap.delete(handle);
-}
 
 /**
  * Initialize the `nitrogql_helper/config` namespace.
@@ -136,9 +89,6 @@ export function initConfigNamespace(): InitNitrogqlConfigResult {
   const w = getCommandClient();
   const namespace: NitrogqlConfigNamespace = {
     execute_node,
-    result_len,
-    write_result_to_buffer,
-    free_result,
   };
   return {
     namespace,
@@ -170,7 +120,6 @@ export function initConfigNamespace(): InitNitrogqlConfigResult {
     w.run(code)
       .then((data) => {
         const result = JSON.stringify(data);
-        handleMap.set(handle, result);
         // Write the result to the buffer.
         const len = utf8Len(result);
         const result_ptr = alloc_string(len);
