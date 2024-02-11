@@ -49,12 +49,14 @@ fn merge_fields<'src, S: Text<'src>>(
         (SelectionTreeField::Empty(left), SelectionTreeField::Empty(_)) => {
             SelectionTreeField::Empty(SelectionTreeEmptyLeaf { name: left.name })
         }
-        (SelectionTreeField::Leaf(left), SelectionTreeField::Leaf(right)) => {
-            assert_eq!(
-                left.name, right.name,
-                "Cannot merge fields of different names"
-            );
+        (SelectionTreeField::Leaf(left), SelectionTreeField::Leaf(_)) => {
             SelectionTreeField::Leaf(left)
+        }
+        (SelectionTreeField::Leaf(left), SelectionTreeField::Empty(_)) => {
+            SelectionTreeField::Leaf(left)
+        }
+        (SelectionTreeField::Empty(_), SelectionTreeField::Leaf(right)) => {
+            SelectionTreeField::Leaf(right)
         }
         (SelectionTreeField::Object(left), SelectionTreeField::Object(right)) => {
             SelectionTreeField::Object(SelectionTreeObject {
@@ -62,7 +64,16 @@ fn merge_fields<'src, S: Text<'src>>(
                 selection: merge_selection_trees(left.selection, right.selection),
             })
         }
-        _ => panic!("Cannot merge fields of different types"),
+        (SelectionTreeField::Empty(_), SelectionTreeField::Object(right)) => {
+            SelectionTreeField::Object(right)
+        }
+        (SelectionTreeField::Object(left), SelectionTreeField::Empty(_)) => {
+            SelectionTreeField::Object(left)
+        }
+        (left, right) => panic!(
+            "Cannot merge fields of different types\nleft: {:?}\nright: {:?}",
+            left, right
+        ),
     }
 }
 

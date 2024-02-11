@@ -44,7 +44,7 @@ fn type_system() -> TypeSystemDocument<'static> {
                 body: String!
             }
 
-            type Tweet implements HasId {
+            type Tweet implements HasID {
                 id: ID!
                 body: String!
             }
@@ -189,54 +189,6 @@ fn fragment_inline_spread() {
                         id
                     }
                 }
-            }
-        }
-        ",
-    )
-    .unwrap();
-    let printed = print_document_default(&doc);
-    assert_snapshot!(printed);
-}
-
-#[test]
-fn fragment_merging() {
-    let doc = parse_operation_document(
-        "
-        query {
-            me {
-                ...F
-                ...P
-            }
-        }
-        fragment F on User {
-            id
-        }
-        fragment P on User {
-            name
-        }
-        ",
-    )
-    .unwrap();
-    let printed = print_document_default(&doc);
-    assert_snapshot!(printed);
-}
-
-#[test]
-fn fragment_nested_merging() {
-    let doc = parse_operation_document(
-        "
-        query {
-            ...F
-            ...P
-        }
-        fragment F on Query {
-            me {
-                id
-            }
-        }
-        fragment P on Query {
-            me {
-                name
             }
         }
         ",
@@ -664,6 +616,145 @@ mod skip_include {
                 type
             }
             ",
+        )
+        .unwrap();
+        let printed = print_document_default(&doc);
+        assert_snapshot!(printed);
+    }
+}
+
+mod fragment_merging {
+    use super::*;
+
+    #[test]
+    fn fragment_merging() {
+        let doc = parse_operation_document(
+            "
+        query {
+            me {
+                ...F
+                ...P
+            }
+        }
+        fragment F on User {
+            id
+        }
+        fragment P on User {
+            name
+        }
+        ",
+        )
+        .unwrap();
+        let printed = print_document_default(&doc);
+        assert_snapshot!(printed);
+    }
+
+    #[test]
+    fn fragment_nested_merging() {
+        let doc = parse_operation_document(
+            "
+        query {
+            ...F
+            ...P
+        }
+        fragment F on Query {
+            me {
+                id
+            }
+        }
+        fragment P on Query {
+            me {
+                name
+            }
+        }
+        ",
+        )
+        .unwrap();
+        let printed = print_document_default(&doc);
+        assert_snapshot!(printed);
+    }
+
+    #[test]
+    fn fragment_nested_merging_list() {
+        let doc = parse_operation_document(
+            "
+        query {
+            ...F
+            ...P
+        }
+        fragment F on Query {
+            posts {
+                id
+                tags
+            }
+        }
+        fragment P on Query {
+            posts {
+                id
+                title
+            }
+        }
+        ",
+        )
+        .unwrap();
+        let printed = print_document_default(&doc);
+        assert_snapshot!(printed);
+    }
+
+    #[test]
+    fn conditional_fragments() {
+        let doc = parse_operation_document(
+            "
+        query {
+            ...F
+            ...P
+        }
+        fragment F on Query {
+            me {
+                posts {
+                    id
+                    ... on Post {
+                        title
+                    }
+                }
+            }
+        }
+        fragment P on Query {
+            me {
+                posts {
+                    id
+                    ... on Tweet {
+                        body
+                    }
+                }
+            }
+        }
+        ",
+        )
+        .unwrap();
+        let printed = print_document_default(&doc);
+        assert_snapshot!(printed);
+    }
+
+    #[test]
+    fn conditional_include() {
+        let doc = parse_operation_document(
+            "
+        query($cond: Boolean!) {
+            ... on Query @include(if: $cond) {
+                posts {
+                    id
+                    title
+                }
+            }
+            ... on Query @skip(if: $cond) {
+                posts {
+                    tags
+                    body
+                }
+            }
+        }
+        ",
         )
         .unwrap();
         let printed = print_document_default(&doc);
