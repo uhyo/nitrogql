@@ -1,0 +1,25 @@
+---
+source: crates/printer/src/operation_type_printer/tests/mod.rs
+expression: printed
+---
+import type { TypedDocumentNode } from "@graphql-typed-document-node/core";
+import type * as Schema from "";
+
+type Result = Schema.__SelectionSet<Schema.__OperationOutput.Query, {
+  posts: (Schema.__SelectionSet<Schema.__OperationOutput.Post, {
+    id: Schema.__OperationOutput.ID;
+    title: Schema.__OperationOutput.String;
+  }, {}>)[] | null;
+  nullablePosts: (Schema.__SelectionSet<Schema.__OperationOutput.Post, {
+    id: Schema.__OperationOutput.ID;
+    body: Schema.__OperationOutput.String;
+  }, {}> | null)[];
+}, {}>;
+
+type Variables = {};
+
+declare const Query: TypedDocumentNode<Result, Variables>;
+
+export { Query as default };
+
+

@@ -4,6 +4,7 @@ use sourcemap_writer::SourceMapWriter;
 
 use super::jsdoc::print_description;
 
+mod fast_equal;
 pub mod ts_types_util;
 pub mod type_to_ts_type;
 
@@ -141,6 +142,15 @@ impl<'a> From<&'a str> for ObjectKey {
     fn from(value: &'a str) -> Self {
         ObjectKey {
             name: value.to_owned(),
+            pos: Pos::builtin(),
+        }
+    }
+}
+
+impl From<String> for ObjectKey {
+    fn from(value: String) -> Self {
+        ObjectKey {
+            name: value,
             pos: Pos::builtin(),
         }
     }
