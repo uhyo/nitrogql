@@ -1,6 +1,6 @@
 use std::{borrow::Cow, collections::HashMap};
 
-use graphql_type_system::{NamedType, Node, RootTypes, Schema, Text};
+use graphql_type_system::{NamedType, Node, NonNullType, RootTypes, Schema, Text, Type};
 use nitrogql_ast::{
     base::Pos,
     operation::{ExecutableDefinition, FragmentDefinition, OperationType},
@@ -19,8 +19,11 @@ use crate::{
     ts_types::TSType,
 };
 
-use super::type_printer::{
-    get_type_for_selection_set, get_type_for_variable_definitions, QueryTypePrinterContext,
+use super::{
+    selection_tree::{generate_selection_tree_type, GenerateSelectionTreeTypeContext},
+    type_printer::{
+        get_type_for_selection_set, get_type_for_variable_definitions, QueryTypePrinterContext,
+    },
 };
 
 #[derive(Clone, Debug)]
@@ -158,7 +161,9 @@ impl<'a, 'src> OperationPrinterVisitor for OperationTypePrinterVisitor<'a, 'src>
 
         let root_types = self.context.schema.root_types().unwrap_or_default();
         let parent_type = select_root_type(&root_types, operation.operation_type);
-        let parent_type = NamedType::from(parent_type.clone());
+        let parent_type = Type::NonNull(Box::new(NonNullType::from(Type::Named(NamedType::from(
+            parent_type.clone(),
+        )))));
         let type_printer_context = QueryTypePrinterContext {
             options: &self.options,
             schema: self.context.schema,
@@ -166,12 +171,18 @@ impl<'a, 'src> OperationPrinterVisitor for OperationTypePrinterVisitor<'a, 'src>
             fragment_definitions: &self.context.fragment_definitions,
         };
 
-        get_type_for_selection_set(
+        let operation_type = get_type_for_selection_set(
             &type_printer_context,
             &operation.selection_set,
             &parent_type,
-        )
-        .print_type(writer);
+        );
+        let operation_type = generate_selection_tree_type(
+            &GenerateSelectionTreeTypeContext {
+                schema_root_namespace: &self.options.schema_root_namespace,
+            },
+            &operation_type,
+        );
+        operation_type.print_type(writer);
         writer.write(";\n\n");
 
         let input_variable_type = operation
@@ -246,10 +257,12 @@ impl<'a, 'src> OperationPrinterVisitor for OperationTypePrinterVisitor<'a, 'src>
 
         writer.write(" = ");
 
-        let parent_type = NamedType::from(Node::from(
-            fragment.type_condition.name,
-            fragment.type_condition.position,
-        ));
+        let parent_type = Type::NonNull(Box::new(NonNullType::from(Type::Named(NamedType::from(
+            Node::from(
+                fragment.type_condition.name,
+                fragment.type_condition.position,
+            ),
+        )))));
 
         let type_printer_context = QueryTypePrinterContext {
             options: &self.options,
@@ -262,6 +275,12 @@ impl<'a, 'src> OperationPrinterVisitor for OperationTypePrinterVisitor<'a, 'src>
             &type_printer_context,
             &fragment.selection_set,
             &parent_type,
+        );
+        let fragment_type = generate_selection_tree_type(
+            &GenerateSelectionTreeTypeContext {
+                schema_root_namespace: &self.options.schema_root_namespace,
+            },
+            &fragment_type,
         );
         fragment_type.print_type(writer);
         writer.write(";\n\n");

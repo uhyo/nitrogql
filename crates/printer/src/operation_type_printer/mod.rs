@@ -9,6 +9,7 @@ use crate::operation_base_printer::OperationPrinter;
 use self::visitor::{OperationTypePrinterOptions, OperationTypePrinterVisitor};
 
 mod branching;
+mod deep_merge;
 mod selection_set_visitor;
 mod selection_tree;
 #[cfg(test)]

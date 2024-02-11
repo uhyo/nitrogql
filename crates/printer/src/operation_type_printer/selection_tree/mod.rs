@@ -6,12 +6,19 @@ use nitrogql_ast::base::Pos;
 
 mod to_ts;
 
+pub use to_ts::{generate_selection_tree_type, GenerateSelectionTreeTypeContext};
+
 #[derive(Debug, Clone)]
-pub struct SelectionTree<S> {
+pub enum SelectionTree<S> {
+    NonNull(Box<SelectionTree<S>>),
+    List(Box<SelectionTree<S>>),
+    Object(Vec<SelectionTreeBranch<S>>),
+}
+
+#[derive(Debug, Clone)]
+pub struct SelectionTreeBranch<S> {
     /// Name of GraphQL type that this selection corresponds to.
     pub type_name: String,
-    /// Whether this selection corresponds to a list in the schema.
-    pub is_list: bool,
     /// List of unaliased fields that are selected.
     pub unaliased_fields: Vec<SelectionTreeField<S>>,
     /// List of aliased fields that are selected.
@@ -20,9 +27,26 @@ pub struct SelectionTree<S> {
 
 #[derive(Debug, Clone)]
 pub enum SelectionTreeField<S> {
+    Empty(SelectionTreeEmptyLeaf<S>),
     Leaf(SelectionTreeLeaf<S>),
     Object(SelectionTreeObject<S>),
-    Branch(SelectionTreeBranch<S>),
+}
+
+impl<S> SelectionTreeField<S> {
+    pub fn name(&self) -> &S {
+        match self {
+            SelectionTreeField::Empty(empty) => &empty.name,
+            SelectionTreeField::Leaf(leaf) => &leaf.name,
+            SelectionTreeField::Object(object) => &object.name,
+        }
+    }
+}
+
+/// Empty leaf (field that is omitted from the selection under this condition).a
+#[derive(Debug, Clone)]
+pub struct SelectionTreeEmptyLeaf<S> {
+    /// Name of the field.
+    pub name: S,
 }
 
 /// Non-object field in a selection.
@@ -38,16 +62,7 @@ pub struct SelectionTreeLeaf<S> {
 #[derive(Debug, Clone)]
 pub struct SelectionTreeObject<S> {
     /// Name of the field.
-    pub name: String,
+    pub name: S,
     /// Selection for the field.
     pub selection: SelectionTree<S>,
-}
-
-/// Or-branch in a selection tree.
-#[derive(Debug, Clone)]
-pub struct SelectionTreeBranch<S> {
-    /// Name of the field.
-    pub name: String,
-    /// List of selections for the field.
-    pub selections: Vec<SelectionTree<S>>,
 }

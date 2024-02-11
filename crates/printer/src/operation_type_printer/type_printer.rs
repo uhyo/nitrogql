@@ -1,15 +1,10 @@
 use std::{collections::HashMap, convert::identity, iter::once};
 
 use crate::{
-    ts_types::{
-        deep_merge::{self, deep_merge_to_object},
-        ts_types_util::ts_union,
-        type_to_ts_type::get_ts_type_of_type,
-        ObjectField,
-    },
+    ts_types::{ts_types_util::ts_union, type_to_ts_type::get_ts_type_of_type, ObjectField},
     utils::interface_implementers,
 };
-use graphql_type_system::{NamedType, ObjectDefinition, Schema, Text, Type, TypeDefinition};
+use graphql_type_system::{NamedType, Node, ObjectDefinition, Schema, Text, Type, TypeDefinition};
 use itertools::{Either, Itertools};
 use nitrogql_ast::{
     base::Pos,
@@ -26,7 +21,12 @@ use sourcemap_writer::SourceMapWriter;
 use super::{
     super::ts_types::{ts_types_util::ts_intersection, TSType},
     branching::BranchingCondition,
+    deep_merge::deep_merge_selection_tree,
     selection_set_visitor::visit_fields_in_selection_set,
+    selection_tree::{
+        SelectionTree, SelectionTreeBranch, SelectionTreeEmptyLeaf, SelectionTreeField,
+        SelectionTreeLeaf, SelectionTreeObject,
+    },
     visitor::OperationTypePrinterOptions,
 };
 
@@ -48,14 +48,30 @@ pub trait TypePrinter<'src, S: Text<'src>> {
 pub fn get_type_for_selection_set<'src, S: Text<'src>>(
     context: &QueryTypePrinterContext<'_, 'src, S>,
     selection_set: &SelectionSet<'src>,
-    parent_type: &NamedType<S, Pos>,
-) -> TSType {
-    let branches = generate_branching_conditions(context, selection_set, parent_type);
-    ts_union(
+    parent_type: &Type<S, Pos>,
+) -> SelectionTree<S> {
+    type_to_selection_tree(parent_type, |parent_type| {
+        let branches = generate_branching_conditions(context, selection_set, parent_type);
         branches
             .into_iter()
-            .map(|branch| get_object_type_for_selection_set(context, selection_set, &branch)),
-    )
+            .map(|branch| get_object_type_for_selection_set(context, selection_set, &branch))
+            .collect()
+    })
+}
+
+fn type_to_selection_tree<S, F: FnOnce(&NamedType<S, Pos>) -> Vec<SelectionTreeBranch<S>>>(
+    ty: &Type<S, Pos>,
+    mapper: F,
+) -> SelectionTree<S> {
+    match ty {
+        Type::Named(ref name) => SelectionTree::Object(mapper(name)),
+        Type::List(ref inner) => {
+            SelectionTree::List(Box::new(type_to_selection_tree(inner, mapper)))
+        }
+        Type::NonNull(ref inner) => {
+            SelectionTree::NonNull(Box::new(type_to_selection_tree(inner, mapper)))
+        }
+    }
 }
 
 /// Generates a set of branching conditions for a given selection set.
@@ -151,25 +167,18 @@ fn get_object_type_for_selection_set<'src, S: Text<'src>>(
     context: &QueryTypePrinterContext<'_, 'src, S>,
     selection_set: &SelectionSet<'src>,
     branch: &BranchingCondition<S>,
-) -> TSType {
+) -> SelectionTreeBranch<S> {
     let (unaliased, aliased): (Vec<_>, Vec<_>) =
         get_fields_for_selection_set(context, selection_set, branch)
             .into_iter()
             .partition_map(identity);
-    let unaliased = deep_merge_to_object(unaliased);
-    let aliased = deep_merge_to_object(aliased);
-    let schema_type = TSType::NamespaceMember3(
-        context.options.schema_root_namespace.clone(),
-        TypeTarget::OperationOutput.to_string(),
-        branch.parent_obj.name.to_string(),
-    );
-    TSType::TypeFunc(
-        Box::new(TSType::NamespaceMember(
-            context.options.schema_root_namespace.clone(),
-            "__SelectionSet".into(),
-        )),
-        vec![schema_type, unaliased, aliased],
-    )
+    let unaliased = deep_merge_selection_tree(unaliased);
+    let aliased = deep_merge_selection_tree(aliased);
+    SelectionTreeBranch {
+        type_name: branch.parent_obj.name.to_string(),
+        unaliased_fields: unaliased,
+        aliased_fields: aliased,
+    }
 }
 
 /// Returns an iterator of object fields.
@@ -179,7 +188,7 @@ fn get_fields_for_selection_set<'a, 'src, S: Text<'src>>(
     context: &'a QueryTypePrinterContext<'a, 'src, S>,
     selection_set: &'a SelectionSet<'src>,
     branch: &'a BranchingCondition<'a, S>,
-) -> Vec<Either<ObjectField, ObjectField>> {
+) -> Vec<Either<SelectionTreeField<S>, SelectionTreeField<S>>> {
     let parent_type_def = context
         .schema
         .get_type(&branch.parent_obj.name)
@@ -194,11 +203,21 @@ fn get_fields_for_selection_set<'a, 'src, S: Text<'src>>(
             .filter_map(move |sel| match sel {
                 Selection::Field(ref field) => {
                     let field_name = field.name.name;
+                    let selection_key =
+                        field.alias.map(|name| name.name).unwrap_or(field.name.name);
                     let field_type = if check_skip_directive(branch, &field.directives) {
-                        TSType::Never
+                        SelectionTreeField::Empty(SelectionTreeEmptyLeaf {
+                            name: selection_key.into(),
+                        })
                     } else if field_name == "__typename" {
                         // Special handling of reflection
-                        TSType::StringLiteral(branch.parent_obj.name.to_string())
+                        SelectionTreeField::Leaf(SelectionTreeLeaf {
+                            name: selection_key.into(),
+                            r#type: Type::Named(NamedType::from(Node::from(
+                                S::from("String"),
+                                Pos::builtin(),
+                            ))),
+                        })
                     } else {
                         let field_def = parent_fields
                             .iter()
@@ -207,31 +226,28 @@ fn get_fields_for_selection_set<'a, 'src, S: Text<'src>>(
                             })
                             .expect("Type system error");
 
-                        map_to_tstype(&field_def.r#type, |ty| match field.selection_set {
-                            None => TSType::NamespaceMember3(
-                                context.options.schema_root_namespace.clone(),
-                                TypeTarget::OperationOutput.to_string(),
-                                ty.to_string(),
-                            ),
-                            Some(ref set) => get_type_for_selection_set(context, set, ty),
-                        })
+                        match field.selection_set {
+                            None => SelectionTreeField::Leaf(SelectionTreeLeaf {
+                                name: selection_key.into(),
+                                r#type: field_def.r#type.clone(),
+                            }),
+                            Some(ref selection_set) => {
+                                let object_type = get_type_for_selection_set(
+                                    context,
+                                    selection_set,
+                                    &field_def.r#type,
+                                );
+                                SelectionTreeField::Object(SelectionTreeObject {
+                                    name: selection_key.into(),
+                                    selection: object_type,
+                                })
+                            }
+                        }
                     };
 
                     match field.alias {
-                        None => Some(Either::Left(ObjectField {
-                            key: field_name.into(),
-                            optional: field_type.is_never(),
-                            r#type: field_type,
-                            readonly: false,
-                            description: None,
-                        })),
-                        Some(aliased) => Some(Either::Right(ObjectField {
-                            key: aliased.name.into(),
-                            optional: field_type.is_never(),
-                            r#type: field_type,
-                            readonly: false,
-                            description: None,
-                        })),
+                        None => Some(Either::Left(field_type)),
+                        Some(_) => Some(Either::Right(field_type)),
                     }
                 }
                 _ => None,
@@ -258,10 +274,10 @@ fn get_fields_for_selection_set<'a, 'src, S: Text<'src>>(
                         fields
                             .into_iter()
                             .map(|field| {
-                                field.map(|field| ObjectField {
-                                    optional: true,
-                                    r#type: TSType::Never,
-                                    ..field
+                                field.map(|field| {
+                                    SelectionTreeField::Empty(SelectionTreeEmptyLeaf {
+                                        name: field.name().clone(),
+                                    })
                                 })
                             })
                             .collect()
@@ -280,10 +296,10 @@ fn get_fields_for_selection_set<'a, 'src, S: Text<'src>>(
                         fields
                             .into_iter()
                             .map(|field| {
-                                field.map(|field| ObjectField {
-                                    optional: true,
-                                    r#type: TSType::Never,
-                                    ..field
+                                field.map(|field| {
+                                    SelectionTreeField::Empty(SelectionTreeEmptyLeaf {
+                                        name: field.name().clone(),
+                                    })
                                 })
                             })
                             .collect()
@@ -299,10 +315,10 @@ fn get_fields_for_selection_set<'a, 'src, S: Text<'src>>(
                             fields
                                 .into_iter()
                                 .map(|field| {
-                                    field.map(|field| ObjectField {
-                                        optional: true,
-                                        r#type: TSType::Never,
-                                        ..field
+                                    field.map(|field| {
+                                        SelectionTreeField::Empty(SelectionTreeEmptyLeaf {
+                                            name: field.name().clone(),
+                                        })
                                     })
                                 })
                                 .collect()
@@ -445,32 +461,5 @@ pub fn get_type_for_variable_definitions<'src, S: Text<'src>>(
         TSType::empty_object()
     } else {
         ts_intersection(types_for_each_field)
-    }
-}
-
-/// Map given Type to TSType.
-fn map_to_tstype<Str, OriginalNode>(
-    ty: &Type<Str, OriginalNode>,
-    mapper: impl FnOnce(&NamedType<Str, OriginalNode>) -> TSType,
-) -> TSType {
-    let (res, nullable) = map_to_tstype_impl(ty, mapper);
-    if nullable {
-        ts_union(vec![res, TSType::Null])
-    } else {
-        res
-    }
-}
-
-fn map_to_tstype_impl<Str, OriginalNode>(
-    ty: &Type<Str, OriginalNode>,
-    mapper: impl FnOnce(&NamedType<Str, OriginalNode>) -> TSType,
-) -> (TSType, bool) {
-    match ty {
-        Type::Named(name) => (mapper(name), true),
-        Type::List(inner) => (TSType::Array(Box::new(map_to_tstype(inner, mapper))), true),
-        Type::NonNull(inner) => {
-            let (inner_ty, _) = map_to_tstype_impl(inner, mapper);
-            (inner_ty, false)
-        }
     }
 }
