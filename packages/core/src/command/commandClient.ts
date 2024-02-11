@@ -27,11 +27,7 @@ export function getCommandClient(): CommandClient {
       DATA_URL_RESOLUTION_BASE: path.join(process.cwd(), "__entrypoint__"),
     },
     execArgv: nodeHasModuleRegisterAPI
-      ? [
-          "--no-warnings",
-          "--import=@nitrogql/esbuild-register",
-          "--inspect-brk",
-        ]
+      ? ["--no-warnings", "--import=@nitrogql/esbuild-register"]
       : [
           "--no-warnings",
           "--require=@nitrogql/esbuild-register",
