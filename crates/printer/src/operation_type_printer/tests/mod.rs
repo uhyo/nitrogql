@@ -57,6 +57,8 @@ fn type_system() -> TypeSystemDocument<'static> {
 
             type Query {
                 me: User!
+                posts: [Post!]
+                nullablePosts: [Post]!
             }
             ",
     )
@@ -74,6 +76,21 @@ fn basic_type_printing() {
             me {
                 id name type age
             }
+        }
+        ",
+    )
+    .unwrap();
+    let printed = print_document_default(&doc);
+    assert_snapshot!(printed);
+}
+
+#[test]
+fn nested_list_and_non_null() {
+    let doc = parse_operation_document(
+        "
+        query {
+            posts { id title }
+            nullablePosts { id body }
         }
         ",
     )
