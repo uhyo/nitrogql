@@ -102,7 +102,6 @@ export function initConfigNamespace(): InitNitrogqlConfigResult {
     code_len: number,
     ticket_handle: number
   ): number {
-    debugger;
     if (module === undefined) {
       throw new Error("wasm module is not set");
     }
@@ -127,8 +126,7 @@ export function initConfigNamespace(): InitNitrogqlConfigResult {
         execute_node_ret(ticket_handle, 1, result_ptr, len);
         free_string(result_ptr, len);
       })
-      .catch((error) => {
-        console.error(error);
+      .catch(() => {
         execute_node_ret(ticket_handle, 0, 0, 0);
       });
     return handle;

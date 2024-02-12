@@ -5,7 +5,7 @@ import { parentPort } from "node:worker_threads";
 import { CommandRunner } from "./commandRunner.js";
 
 const commandRunner = new CommandRunner();
-// console.error("CommandRunner started");
+// console.error("CommandRunner started", process.version);
 
 if (parentPort === null) {
   // standalone server mode
@@ -49,6 +49,8 @@ for await (const result of commandRunner.output) {
       parentPort.postMessage({
         error: result.error,
       });
+    } else {
+      stdout.write(JSON.stringify({ error: result.error }) + "\n");
     }
   } else {
     if (parentPort !== null) {
@@ -56,7 +58,7 @@ for await (const result of commandRunner.output) {
         result: result.result,
       });
     } else {
-      stdout.write(JSON.stringify(result.result) + "\n");
+      stdout.write(JSON.stringify({ result: result.result }) + "\n");
     }
   }
 }

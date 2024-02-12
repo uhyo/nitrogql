@@ -1,6 +1,10 @@
+import child_process from "node:child_process";
+import * as module from "node:module";
 import { Worker } from "node:worker_threads";
 import { once } from "node:events";
 import path from "node:path";
+import readline from "node:readline";
+import { fileURLToPath } from "node:url";
 
 export type CommandClient = {
   /**
@@ -12,27 +16,24 @@ export type CommandClient = {
 };
 
 export function getCommandClient(): CommandClient {
-  const nodeVersion = process.versions.node;
   // @nitrogql/esbuild-register requires different usage
   // depending on whether Node.js supports the `register` API from `node:module`.
-  const [major, minor] = nodeVersion.split(".").map((x) => Number(x)) as [
-    number,
-    number
-  ];
-  const nodeHasModuleRegisterAPI =
-    major > 20 || (major === 20 && minor >= 6) || (major === 18 && minor >= 19);
+  // @ts-expect-error module.register does not exist yet
+  const nodeHasModuleRegisterAPI = !!module.register;
+  if (nodeHasModuleRegisterAPI) {
+    return getWorkerCommandClient();
+  } else {
+    return getProcessCommandClient();
+  }
+}
+
+function getWorkerCommandClient(): CommandClient {
   const w = new Worker(new URL("./server.js", import.meta.url), {
     env: {
       ...process.env,
       DATA_URL_RESOLUTION_BASE: path.join(process.cwd(), "__entrypoint__"),
     },
-    execArgv: nodeHasModuleRegisterAPI
-      ? ["--no-warnings", "--import=@nitrogql/esbuild-register"]
-      : [
-          "--no-warnings",
-          "--require=@nitrogql/esbuild-register",
-          "--experimental-loader=@nitrogql/esbuild-register/hook",
-        ],
+    execArgv: ["--no-warnings", "--import=@nitrogql/esbuild-register"],
   });
   w.on("error", (error) => {
     console.error(error);
@@ -42,12 +43,9 @@ export function getCommandClient(): CommandClient {
   });
   return {
     run: async (command: string) => {
-      // console.error("run", command);
       w.postMessage(command);
       const [result] = await once(w, "message");
-      await new Promise((resolve) => setTimeout(resolve, 100));
       if (result.error) {
-        console.error(result.error);
         throw result.error;
       }
       // console.error("line", result.result);
@@ -55,6 +53,50 @@ export function getCommandClient(): CommandClient {
     },
     close: () => {
       w.terminate();
+    },
+  };
+}
+
+function getProcessCommandClient(): CommandClient {
+  const childProcess = child_process.spawn(
+    process.execPath,
+    [
+      "--no-warnings",
+      "--require=@nitrogql/esbuild-register",
+      "--experimental-loader=@nitrogql/esbuild-register/hook",
+      fileURLToPath(new URL("./server.js", import.meta.url)),
+    ],
+    {
+      stdio: ["pipe", "pipe", "inherit"],
+      env: {
+        ...process.env,
+        DATA_URL_RESOLUTION_BASE: path.join(process.cwd(), "__entrypoint__"),
+      },
+    }
+  );
+  childProcess.on("error", (error) => {
+    console.error(error);
+  });
+  childProcess.on("exit", () => {
+    console.error("Child process exited");
+  });
+  const rl = readline.createInterface({
+    input: childProcess.stdout,
+    output: childProcess.stdin,
+  });
+  return {
+    run: async (command: string) => {
+      const commandString = JSON.stringify(command);
+      childProcess.stdin.write(commandString + "\n");
+      const [line] = await once(rl, "line");
+      const result = JSON.parse(line);
+      if (result.error) {
+        throw result.error;
+      }
+      return result.result;
+    },
+    close: () => {
+      childProcess.kill();
     },
   };
 }
