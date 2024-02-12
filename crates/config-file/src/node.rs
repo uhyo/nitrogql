@@ -70,6 +70,13 @@ fn check_if_node_supports_module_register_api() -> bool {
 pub async fn run_node(code: &str) -> io::Result<String> {
     #[cfg(not(target_os = "wasi"))]
     {
+        #[derive(serde::Deserialize)]
+        #[serde(untagged)]
+        enum RunNodeResult {
+            Result { result: serde_json::Value },
+            Error { error: serde_json::Value },
+        }
+
         NODE_COMMAND_SERVER.with(|server| {
             let mut server = server.borrow_mut();
             let mut stdin = server.stdin.as_mut().expect("failed to open stdin");
@@ -80,7 +87,17 @@ pub async fn run_node(code: &str) -> io::Result<String> {
             let mut reader = BufReader::new(&mut stdout);
             let mut result = String::new();
             reader.read_line(&mut result)?;
-            Ok(result)
+            let result: RunNodeResult = serde_json::from_str(&result)?;
+            match result {
+                RunNodeResult::Result { result } => {
+                    let result = serde_json::to_string(&result)?;
+                    Ok(result)
+                }
+                RunNodeResult::Error { error } => {
+                    let error = serde_json::to_string(&error)?;
+                    Err(io::Error::new(io::ErrorKind::Other, error))
+                }
+            }
         })
     }
     #[cfg(target_os = "wasi")]
