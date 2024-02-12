@@ -2,6 +2,7 @@
 resolver = "2"
 members = [
   "crates/ast",
+  "crates/async-runtime",
   "crates/builtins",
   "crates/cli",
   "crates/checker",

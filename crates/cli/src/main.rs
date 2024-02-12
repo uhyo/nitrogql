@@ -10,7 +10,6 @@ use builtins::nitrogql_builtins;
 use clap::Parser;
 use context::OutputFormat;
 use file_store::FileStore;
-use futures::executor::block_on;
 use globmatch::wrappers::{build_matchers, match_paths};
 use graphql_builtins::generate_builtins;
 use graphql_type_system::Schema;
@@ -72,7 +71,8 @@ struct Args {
 }
 
 fn main() {
-    block_on(run_cli(std::env::args()));
+    nitrogql_async_runtime::spawn(run_cli(std::env::args()));
+    nitrogql_async_runtime::drive();
 }
 
 /// Run as CLI.

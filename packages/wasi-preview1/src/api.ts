@@ -54,4 +54,5 @@ export type WASIAPI = {
   random_get: (buf: number, buf_len: number) => number;
   clock_time_get: (id: number, precision: number, ret_buf: number) => number;
   proc_exit: (rval: number) => void;
+  sched_yield: (ret_buf: number) => number;
 };

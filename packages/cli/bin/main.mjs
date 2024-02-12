@@ -27,9 +27,11 @@ const wasi = initWASI({
   },
 });
 
+const configHelper = core.initConfigNamespace();
+
 const importObject = {
   wasi_snapshot_preview1: wasi,
-  "nitrogql_helper/config": core.config,
+  "nitrogql_helper/config": configHelper.namespace,
 };
 
 const wasm = await WebAssembly.compile(
@@ -38,5 +40,6 @@ const wasm = await WebAssembly.compile(
 const instance = await WebAssembly.instantiate(wasm, importObject);
 wasi.setMemory(instance.exports.memory);
 core.setMemory(instance.exports.memory);
+configHelper.setWasmModule(instance.exports);
 
 instance.exports._start();

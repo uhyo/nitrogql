@@ -435,6 +435,9 @@ export function initWASI(config: WASIConfig): WASIAPI & WASIMeta {
     proc_exit: (rval: number): void => {
       process.exit(rval);
     },
+    sched_yield: (): number => {
+      return 0;
+    },
   };
 
   if (debug) {
