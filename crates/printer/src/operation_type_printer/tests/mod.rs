@@ -199,6 +199,45 @@ fn fragment_inline_spread() {
 }
 
 #[test]
+fn typename_field() {
+    let doc = parse_operation_document(
+        "
+        query {
+            me {
+                __typename
+                id name type age
+            }
+        }
+        ",
+    )
+    .unwrap();
+    let printed = print_document_default(&doc);
+    assert_snapshot!(printed);
+}
+
+#[test]
+fn typename_field_on_union() {
+    let doc = parse_operation_document(
+        "
+        query {
+            me {
+                posts {
+                    __typename
+                    id
+                    ... on Post {
+                        title
+                    }
+                }
+            }
+        }
+        ",
+    )
+    .unwrap();
+    let printed = print_document_default(&doc);
+    assert_snapshot!(printed);
+}
+
+#[test]
 fn query_variables() {
     let doc = parse_operation_document(
         "
