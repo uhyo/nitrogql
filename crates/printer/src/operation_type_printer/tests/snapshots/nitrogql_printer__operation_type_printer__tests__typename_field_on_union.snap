@@ -8,17 +8,17 @@ import type * as Schema from "";
 type Result = Schema.__SelectionSet<Schema.__OperationOutput.Query, {
   me: Schema.__SelectionSet<Schema.__OperationOutput.User, {
     posts: (Schema.__SelectionSet<Schema.__OperationOutput.User, {
-      __typename: "__typename";
+      __typename: "User";
       id: Schema.__OperationOutput.ID;
     }, {}> | Schema.__SelectionSet<Schema.__OperationOutput.Bot, {
-      __typename: "__typename";
+      __typename: "Bot";
       id: Schema.__OperationOutput.ID;
     }, {}> | Schema.__SelectionSet<Schema.__OperationOutput.Post, {
-      __typename: "__typename";
+      __typename: "Post";
       id: Schema.__OperationOutput.ID;
       title: Schema.__OperationOutput.String;
     }, {}> | Schema.__SelectionSet<Schema.__OperationOutput.Tweet, {
-      __typename: "__typename";
+      __typename: "Tweet";
       id: Schema.__OperationOutput.ID;
     }, {}>)[];
   }, {}>;

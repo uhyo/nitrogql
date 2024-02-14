@@ -51,14 +51,14 @@ fn generate_selection_tree_type_impl<'src, S: Text<'src>>(
                     branch
                         .unaliased_fields
                         .iter()
-                        .map(|field| field_to_type(context, field))
+                        .map(|field| field_to_type(context, field, &branch.type_name))
                         .collect(),
                 );
                 let aliased_object = TSType::Object(
                     branch
                         .aliased_fields
                         .iter()
-                        .map(|field| field_to_type(context, field))
+                        .map(|field| field_to_type(context, field, &branch.type_name))
                         .collect(),
                 );
                 TSType::TypeFunc(
@@ -78,6 +78,7 @@ fn generate_selection_tree_type_impl<'src, S: Text<'src>>(
 fn field_to_type<'src, S: Text<'src>>(
     context: &GenerateSelectionTreeTypeContext,
     field: &SelectionTreeField<S>,
+    parent_type_name: &str,
 ) -> ObjectField {
     match field {
         SelectionTreeField::Empty(empty) => ObjectField {
@@ -90,7 +91,7 @@ fn field_to_type<'src, S: Text<'src>>(
         SelectionTreeField::Leaf(leaf) => {
             let field_type = if leaf.name == "__typename" {
                 // special case for __typename
-                TSType::StringLiteral(leaf.name.to_string())
+                TSType::StringLiteral(parent_type_name.to_string())
             } else {
                 map_to_tstype(&leaf.r#type, |ty| {
                     TSType::NamespaceMember3(
