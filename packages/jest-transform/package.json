@@ -14,8 +14,8 @@
     ".": "./dist/index.js"
   },
   "scripts": {
-    "build": "tsc",
-    "watch": "tsc --watch",
+    "build": "tsc --build",
+    "watch": "tsc --build --watch",
     "check": "tsc",
     "test": "npm run build && NODE_OPTIONS=--experimental-vm-modules jest"
   },
