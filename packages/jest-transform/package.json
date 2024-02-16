@@ -16,7 +16,7 @@
   "scripts": {
     "build": "tsc --build",
     "watch": "tsc --build --watch",
-    "check": "tsc",
+    "check": "tsc --build",
     "test": "npm run build && NODE_OPTIONS=--experimental-vm-modules jest"
   },
   "keywords": [
