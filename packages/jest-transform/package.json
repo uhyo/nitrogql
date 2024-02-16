@@ -21,6 +21,7 @@
   "author": "uhyo <uhyo@uhy.ooo>",
   "license": "MIT",
   "dependencies": {
+    "@jest/transform": "^29.7.0",
     "@nitrogql/core": "1.6.3",
     "@nitrogql/loader-core": "1.6.3"
   },
