@@ -2,7 +2,7 @@
 
 exports[`snapshot test 1`] = `
 {
-  "F1": {
+  "F1Fragment": {
     "definitions": [
       {
         "directives": [],

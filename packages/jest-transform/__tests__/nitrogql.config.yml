@@ -1,0 +1,5 @@
+extensions:
+  nitrogql:
+    generate:
+      name:
+        fragmentVariableSuffix: Fragment

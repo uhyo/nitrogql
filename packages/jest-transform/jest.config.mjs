@@ -3,6 +3,9 @@
  * https://jestjs.io/docs/configuration
  */
 
+import path from "path";
+import { fileURLToPath } from "url";
+
 /** @type {import('jest').Config} */
 const config = {
   // All imported modules in your tests should be mocked automatically
@@ -175,7 +178,15 @@ const config = {
 
   // A map from regular expressions to paths to transformers
   transform: {
-    "^.+\\.graphql$": "@nitrogql/jest-transform",
+    "^.+\\.graphql$": [
+      "@nitrogql/jest-transform",
+      {
+        configFile: path.resolve(
+          path.dirname(fileURLToPath(import.meta.url)),
+          "__tests__/nitrogql.config.yml"
+        ),
+      },
+    ],
   },
 
   // An array of regexp pattern strings that are matched against all source file paths, matched files will skip transformation
