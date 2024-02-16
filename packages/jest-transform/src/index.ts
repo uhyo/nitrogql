@@ -1,7 +1,7 @@
-import type { AsyncTransformer, TransformedSource } from "@jest/transform";
+import { readFileSync } from "node:fs";
+import type { SyncTransformer, TransformedSource } from "@jest/transform";
 import { executeConfigFileSync } from "@nitrogql/core";
 import { init } from "@nitrogql/loader-core";
-import { readFile } from "node:fs/promises";
 
 const { initiateTask, getLog } = await init();
 
@@ -14,19 +14,15 @@ export type TransformerConfig = {
   configFile?: string;
 };
 
-const transformer: AsyncTransformer<TransformerConfig> = {
-  async processAsync(
-    sourceText,
-    sourcePath,
-    options
-  ): Promise<TransformedSource> {
+const transformer: SyncTransformer<TransformerConfig> = {
+  process(sourceText, sourcePath, options): TransformedSource {
     const configFile = options.transformerConfig.configFile;
     const task = initiateTask(sourcePath, sourceText);
 
     if (lastLoadedConfigPath !== configFile && configFile) {
       const configFileSource = configFileIsJS(configFile)
         ? executeConfigFileSync(configFile)
-        : await readFile(configFile, "utf-8");
+        : readFileSync(configFile, "utf-8");
       task.loadConfig(configFileSource);
     }
     lastLoadedConfigPath = configFile;
@@ -36,12 +32,10 @@ const transformer: AsyncTransformer<TransformerConfig> = {
       switch (status.status) {
         case "fileRequired": {
           const requiredFiles = status.files;
-          await Promise.all(
-            requiredFiles.map(async (requiredFile) => {
-              const requiredFileSource = await readFile(requiredFile, "utf-8");
-              task.supplyFile(requiredFile, requiredFileSource);
-            })
-          );
+          for (const requiredFile of requiredFiles) {
+            const requiredFileSource = readFileSync(requiredFile, "utf-8");
+            task.supplyFile(requiredFile, requiredFileSource);
+          }
           break;
         }
         case "ready": {

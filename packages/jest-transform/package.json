@@ -10,10 +10,14 @@
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "exports": {
+    ".": "./dist/index.js"
+  },
   "scripts": {
     "build": "tsc",
     "watch": "tsc --watch",
-    "check": "tsc"
+    "check": "tsc",
+    "test": "NODE_OPTIONS=--experimental-vm-modules jest"
   },
   "keywords": [
     "nitrogql"
@@ -27,6 +31,7 @@
   },
   "devDependencies": {
     "@types/node": "^20.10.4",
+    "jest": "^29.7.0",
     "typescript": "^5.2.2"
   }
 }

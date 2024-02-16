@@ -1,0 +1,106 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`snapshot test 1`] = `
+{
+  "F1": {
+    "definitions": [
+      {
+        "directives": [],
+        "kind": "FragmentDefinition",
+        "name": {
+          "kind": "Name",
+          "value": "F1",
+        },
+        "selectionSet": {
+          "kind": "SelectionSet",
+          "selections": [
+            {
+              "arguments": [],
+              "directives": [],
+              "kind": "Field",
+              "name": {
+                "kind": "Name",
+                "value": "something2",
+              },
+            },
+          ],
+        },
+        "typeCondition": {
+          "kind": "NamedType",
+          "name": {
+            "kind": "Name",
+            "value": "Query",
+          },
+        },
+      },
+    ],
+    "kind": "Document",
+  },
+  "default": {
+    "definitions": [
+      {
+        "directives": [],
+        "kind": "OperationDefinition",
+        "name": {
+          "kind": "Name",
+          "value": "Foo",
+        },
+        "operation": "query",
+        "selectionSet": {
+          "kind": "SelectionSet",
+          "selections": [
+            {
+              "arguments": [],
+              "directives": [],
+              "kind": "Field",
+              "name": {
+                "kind": "Name",
+                "value": "something",
+              },
+            },
+            {
+              "directives": [],
+              "kind": "FragmentSpread",
+              "name": {
+                "kind": "Name",
+                "value": "F1",
+              },
+            },
+          ],
+        },
+        "variableDefinitions": [],
+      },
+      {
+        "directives": [],
+        "kind": "FragmentDefinition",
+        "name": {
+          "kind": "Name",
+          "value": "F1",
+        },
+        "selectionSet": {
+          "kind": "SelectionSet",
+          "selections": [
+            {
+              "arguments": [],
+              "directives": [],
+              "kind": "Field",
+              "name": {
+                "kind": "Name",
+                "value": "something2",
+              },
+            },
+          ],
+        },
+        "typeCondition": {
+          "kind": "NamedType",
+          "name": {
+            "kind": "Name",
+            "value": "Query",
+          },
+        },
+      },
+    ],
+    "kind": "Document",
+  },
+}
+`;
