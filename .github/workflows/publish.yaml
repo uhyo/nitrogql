@@ -79,6 +79,13 @@ jobs:
           package: "./packages/rollup-plugin/package.json"
           access: public
           greater-version-only: true
+      - name: publish to npm (jest-transform)
+        uses: JS-DevTools/npm-publish@v1
+        with:
+          token: ${{ secrets.NPM_TOKEN }}
+          package: "./packages/jest-transform/package.json"
+          access: public
+          greater-version-only: true
   deploy-vercel:
     runs-on: ubuntu-latest
     steps:
@@ -96,5 +103,3 @@ jobs:
           VERCEL_URL: nitrogql.vercel.app
       - name: Deploy Project Artifacts to Vercel
         run: vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }}
-
-          
