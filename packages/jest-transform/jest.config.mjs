@@ -179,7 +179,7 @@ const config = {
   // A map from regular expressions to paths to transformers
   transform: {
     "^.+\\.graphql$": [
-      "@nitrogql/jest-transform",
+      "./dist/index.js",
       {
         configFile: path.resolve(
           path.dirname(fileURLToPath(import.meta.url)),
