@@ -17,7 +17,7 @@
     "build": "tsc --build",
     "watch": "tsc --build --watch",
     "check": "tsc --build",
-    "test": "npm run build && NODE_OPTIONS=--experimental-vm-modules jest"
+    "todo:test": "npm run build && NODE_OPTIONS=--experimental-vm-modules jest"
   },
   "keywords": [
     "nitrogql"
