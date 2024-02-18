@@ -28,7 +28,7 @@ Using multiple transformers should be possible by using the [jest-chain-transfor
     // Then, use jest-chain-transform to chain @nitrogql/jest-transform
     // with ts-jest
     "^.+\\.graphql$": ["jest-chain-transform", {
-      "transforms": [
+      "transformers": [
         ["@nitrogql/jest-transform", {
           "configFile":  path.resolve(__dirname, "nitrogql.config.js")
         }],
