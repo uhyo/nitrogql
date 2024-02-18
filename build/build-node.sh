@@ -11,7 +11,7 @@ if [ -n "${OPTIMIZE+x}" ]; then
   TARGET_DIR=release
 fi
 
-npm run build -w @nitrogql/core -w @nitrogql/loader-core -w @nitrogql/wasi-preview1 -w @nitrogql/esbuild-register
+npm run build -w @nitrogql/core -w @nitrogql/loader-core -w @nitrogql/wasi-preview1 -w @nitrogql/esbuild-register -w @nitrogql/jest-transform
 
 mkdir -p packages/cli/wasm
 cp target/wasm32-wasi/$TARGET_DIR/nitrogql-cli.opt.wasm packages/cli/wasm/nitrogql-cli.wasm
