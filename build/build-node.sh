@@ -22,7 +22,7 @@ cp target/wasm32-unknown-unknown/$TARGET_DIR/graphql-loader.opt.wasm packages/lo
 current_version=$(npm pkg get version --json)
 npm pkg set version=${current_version} --json --workspaces
 npm pkg set dependencies.@nitrogql/esbuild-register=${current_version} --json -w @nitrogql/core
-npm pkg set dependencies.@nitrogql/core=${current_version} --json -w @nitrogql/cli -w @nitrogql/rollup-plugin -w @nitrogql/graphql-loader
-npm pkg set dependencies.@nitrogql/loader-core=${current_version} --json -w @nitrogql/rollup-plugin -w @nitrogql/graphql-loader
+npm pkg set dependencies.@nitrogql/core=${current_version} --json -w @nitrogql/cli -w @nitrogql/rollup-plugin -w @nitrogql/graphql-loader -w @nitrogql/jest-transform
+npm pkg set dependencies.@nitrogql/loader-core=${current_version} --json -w @nitrogql/rollup-plugin -w @nitrogql/graphql-loader -w @nitrogql/jest-transform
 npm pkg set dependencies.@nitrogql/wasi-preview1=${current_version} --json -w @nitrogql/cli
 npx prettier --write "./**/package.json"

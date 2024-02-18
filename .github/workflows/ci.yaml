@@ -78,5 +78,3 @@ jobs:
           npm run generate
           npm run build
         working-directory: examples/vite
-
-

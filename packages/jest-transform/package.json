@@ -1,0 +1,37 @@
+{
+  "name": "@nitrogql/jest-transform",
+  "version": "1.6.3",
+  "description": "Jest transform for loading graphql files",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/uhyo/nitrogql.git",
+    "directory": "packages/jest-transform"
+  },
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": "./dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc --build",
+    "watch": "tsc --build --watch",
+    "check": "tsc --build",
+    "todo:test": "npm run build && NODE_OPTIONS=--experimental-vm-modules jest"
+  },
+  "keywords": [
+    "nitrogql"
+  ],
+  "author": "uhyo <uhyo@uhy.ooo>",
+  "license": "MIT",
+  "dependencies": {
+    "@jest/transform": "^29.7.0",
+    "@nitrogql/core": "1.6.3",
+    "@nitrogql/loader-core": "1.6.3"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.4",
+    "jest": "^29.7.0",
+    "typescript": "^5.2.2"
+  }
+}
