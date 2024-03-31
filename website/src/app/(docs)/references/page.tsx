@@ -27,9 +27,30 @@ export default function References() {
         </ul>
 
         <h3>Packages</h3>
+        <p>
+          Packages not listed here are considered internal. They are not meant
+          to be used directly and are subject to change without a major version
+          bump.
+        </p>
+
         <ul>
           <li>
             <Link href="/references/nitrogql-cli">@nitrogql/cli</Link>
+          </li>
+          <li>
+            <Link href="/references/graphql-loader">
+              @nitrogql/graphql-loader
+            </Link>
+          </li>
+          <li>
+            <Link href="/references/rollup-plugin">
+              @nitrogql/rollup-plugin
+            </Link>
+          </li>
+          <li>
+            <Link href="/references/jest-transform">
+              @nitrogql/jest-transform
+            </Link>
           </li>
         </ul>
         <h3>Generated Files</h3>
