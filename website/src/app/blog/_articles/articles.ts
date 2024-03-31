@@ -5,8 +5,10 @@ import { blogPostRelease1_3 } from "./release-1.3";
 import { blogPostRelease1_4 } from "./release-1.4";
 import { blogPostRelease1_5 } from "./release-1.5";
 import { blogPostRelease1_6 } from "./release-1.6";
+import { blogPostRelease1_7 } from "./release-1.7";
 
 export const articles = [
+  blogPostRelease1_7,
   blogPostRelease1_6,
   blogPostRelease1_5,
   blogPostRelease1_4,
