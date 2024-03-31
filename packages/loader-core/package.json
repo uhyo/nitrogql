@@ -1,6 +1,6 @@
 {
   "name": "@nitrogql/loader-core",
-  "version": "1.7.0-beta.2",
+  "version": "1.7.0",
   "description": "Core of nitrogql's loader implementations.",
   "repository": {
     "type": "git",
