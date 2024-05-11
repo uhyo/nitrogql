@@ -43,3 +43,11 @@ For Rollup-based projects:
 ```sh
 npm install --save-dev @nitrogql/rollup-plugin
 ```
+
+## Feedback wanted!
+
+Do you use [GraphQL Code Generator](https://the-guild.dev/graphql/codegen)? nitrogql wants to be a great alternative to GraphQL Code Generator.
+
+If you are using it and you have time, read our [documentation](https://nitrogql.vercel.app/) to check whether you can replace GraphQL Code Generator with nitrogql.
+
+If you can't, what blocks you from doing so? Please leave us feedback!
