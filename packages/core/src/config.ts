@@ -66,19 +66,13 @@ export type NitrogqlConfigNamespace = {
    * Executes given JavaScript (or TypeScript) code.
    * Result is returned asynchronously via `execute_node_ret` function.
    */
-  execute_node(
-    code_ptr: number,
-    code_len: number,
-    ticket_handle: number
-  ): number;
+  execute_node(code_ptr: number, code_len: number, ticket_handle: number): void;
 };
 
 export type InitNitrogqlConfigResult = {
   namespace: NitrogqlConfigNamespace;
   setWasmModule: (module: WebAssembly.Exports) => void;
 };
-
-let handleCounter = 0;
 
 /**
  * Initialize the `nitrogql_helper/config` namespace.
@@ -101,7 +95,7 @@ export function initConfigNamespace(): InitNitrogqlConfigResult {
     code_ptr: number,
     code_len: number,
     ticket_handle: number
-  ): number {
+  ): void {
     if (module === undefined) {
       throw new Error("wasm module is not set");
     }
@@ -115,7 +109,6 @@ export function initConfigNamespace(): InitNitrogqlConfigResult {
       result_len: number
     ) => void;
     const code = readString(code_ptr, code_len);
-    const handle = ++handleCounter;
     w.run(code)
       .then((data) => {
         const result = JSON.stringify(data);
@@ -129,6 +122,5 @@ export function initConfigNamespace(): InitNitrogqlConfigResult {
       .catch(() => {
         execute_node_ret(ticket_handle, 0, 0, 0);
       });
-    return handle;
   }
 }
