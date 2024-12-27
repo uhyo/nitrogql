@@ -7,7 +7,7 @@ pub struct OperationCheckContext<'schema, 'src, S> {
     phantom: std::marker::PhantomData<&'src ()>,
 }
 
-impl<'schema, 'src, S> OperationCheckContext<'schema, 'src, S> {
+impl<'schema, S> OperationCheckContext<'schema, '_, S> {
     pub fn new(definitions: &'schema Schema<S, Pos>) -> Self {
         Self {
             definitions,

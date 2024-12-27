@@ -15,7 +15,7 @@ thread_local! {
     /// Loaded config.
     static CONFIG: RefCell<Config> = RefCell::new(Config::default());
     /// Result of last operation.
-    static RESULT: RefCell<Option<String>> = RefCell::new(None);
+    static RESULT: RefCell<Option<String>> = const { RefCell::new(None) };
     /// Global set of tasks.
     static TASKS: RefCell<tasks::Tasks> = RefCell::new(tasks::Tasks::new());
 }

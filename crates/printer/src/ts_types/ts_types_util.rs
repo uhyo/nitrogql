@@ -32,7 +32,7 @@ pub fn ts_intersection(types: impl IntoIterator<Item = TSType>) -> TSType {
     let object_type = object_props
         .is_empty()
         .not()
-        .then(|| TSType::Object(object_props));
+        .then_some(TSType::Object(object_props));
     if others.is_empty() {
         object_type.unwrap_or(TSType::Unknown)
     } else {

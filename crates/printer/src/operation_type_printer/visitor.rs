@@ -128,7 +128,7 @@ pub struct OperationTypePrinterContext<'a, 'src, S: Text<'src>> {
     pub fragment_definitions: HashMap<&'src str, &'a FragmentDefinition<'src>>,
 }
 
-impl<'a, 'src> OperationPrinterVisitor for OperationTypePrinterVisitor<'a, 'src> {
+impl OperationPrinterVisitor for OperationTypePrinterVisitor<'_, '_> {
     fn print_header(&self, writer: &mut impl SourceMapWriter) {
         writeln!(
             writer,

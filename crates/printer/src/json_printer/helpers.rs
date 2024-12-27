@@ -8,7 +8,7 @@ use super::to_json::JsonPrintable;
 
 pub struct JSONValue<'a, T: JsonPrintable>(pub &'a T);
 
-impl<'a, T> JSONWriterValue for JSONValue<'a, T>
+impl<T> JSONWriterValue for JSONValue<'_, T>
 where
     T: JsonPrintable,
 {

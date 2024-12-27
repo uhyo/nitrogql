@@ -97,6 +97,6 @@ pub async fn load_config(
         None => Ok(None),
         Some((path, source)) => parse_config(&source)
             .map(|config| Some((path.clone(), config)))
-            .ok_or_else(|| ConfigFileError::Validation(path)),
+            .ok_or(ConfigFileError::Validation(path)),
     }
 }

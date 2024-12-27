@@ -46,7 +46,7 @@ pub fn run_check(context: CliContext) -> Result<CliContext> {
                     info!("Check succeeded");
                     eprintln!("'check' finished");
                     Ok(CliContext::SchemaResolved {
-                        schema,
+                        schema: *schema,
                         operations,
                         file_store,
                         config,
@@ -74,7 +74,7 @@ struct CheckImplInput<'src, 'a> {
 
 enum CheckImplOutput<'src> {
     Ok {
-        schema: LoadedSchema<'src, TypeSystemDocument<'src>>,
+        schema: Box<LoadedSchema<'src, TypeSystemDocument<'src>>>,
         operations: Vec<(
             PathBuf,
             OperationDocument<'src>,
@@ -138,7 +138,7 @@ fn check_impl<'src>(input: CheckImplInput<'src, '_>) -> CheckImplOutput<'src> {
         }
     } else {
         CheckImplOutput::Ok {
-            schema: loaded_schema,
+            schema: Box::new(loaded_schema),
             operations,
         }
     }
@@ -217,7 +217,7 @@ fn resolve_operations(
         .iter()
         .map(
             |(path, doc, ext, file_by_index)| -> std::result::Result<_, _> {
-                let doc = resolve_operation_imports((&path, &doc, &ext), &operation_resolver)?;
+                let doc = resolve_operation_imports((path, doc, ext), &operation_resolver)?;
                 Ok((path.clone(), doc, ext.clone(), *file_by_index))
             },
         )
@@ -249,7 +249,7 @@ impl<'a, 'src> Operations<'a, 'src> {
     }
 }
 
-impl<'a, 'src> OperationResolver<'src> for Operations<'a, 'src> {
+impl<'src> OperationResolver<'src> for Operations<'_, 'src> {
     fn resolve(
         &self,
         path: &Path,

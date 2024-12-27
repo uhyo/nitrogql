@@ -10,7 +10,7 @@ impl<'host> PluginHost<'host> {
     }
 }
 
-impl<'host> nitrogql_plugin::PluginHost for PluginHost<'host> {
+impl nitrogql_plugin::PluginHost for PluginHost<'_> {
     fn load_virtual_file(&mut self, content: String) -> &'static str {
         let index = self
             .file_store

@@ -71,7 +71,7 @@ where
 
 struct FromStrVisitor<T>(PhantomData<T>);
 
-impl<'de, T> Visitor<'de> for FromStrVisitor<T>
+impl<T> Visitor<'_> for FromStrVisitor<T>
 where
     T: FromStr,
 {

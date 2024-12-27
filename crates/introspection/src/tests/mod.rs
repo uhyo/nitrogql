@@ -1,4 +1,4 @@
-use insta::assert_display_snapshot;
+use insta::assert_snapshot;
 use nitrogql_printer::GraphQLPrinter;
 use sourcemap_writer::JustWriter;
 
@@ -1335,5 +1335,5 @@ fn read_introspection() {
     let mut buffer = String::new();
     let mut writer = JustWriter::new(&mut buffer);
     schema.print_graphql(&mut writer);
-    assert_display_snapshot!(buffer);
+    assert_snapshot!(buffer);
 }

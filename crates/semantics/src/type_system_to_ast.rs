@@ -178,7 +178,7 @@ fn convert_type<S: Deref<Target = str>, D>(ty: &graphql_type_system::Type<S, D>)
 }
 
 fn convert_arguments<S: Deref<Target = str>, D>(
-    arguments: &Vec<graphql_type_system::InputValue<S, D>>,
+    arguments: &[graphql_type_system::InputValue<S, D>],
 ) -> Option<ArgumentsDefinition> {
     if arguments.is_empty() {
         None

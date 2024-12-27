@@ -2,7 +2,7 @@ use std::cell::Cell;
 
 thread_local! {
     /// Current file to be used when generating Pos.
-    static CURRENT_FILE_OF_POS: Cell<usize> = Cell::new(0);
+    static CURRENT_FILE_OF_POS: Cell<usize> = const { Cell::new(0) };
 }
 
 pub fn get_current_file_of_pos() -> usize {

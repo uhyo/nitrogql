@@ -323,7 +323,7 @@ fn load_glob_files<'a, S: AsRef<str> + 'a>(
 
 fn resolve_loaded_schema<'src>(
     schema_docs: Vec<LoadedSchema<'src, TypeSystemOrExtensionDocument<'src>>>,
-) -> Result<LoadedSchema<TypeSystemOrExtensionDocument>, CliError> {
+) -> Result<LoadedSchema<'src, TypeSystemOrExtensionDocument<'src>>, CliError> {
     let mut introsection: Option<Schema<_, _>> = None;
     let mut documents: Vec<TypeSystemOrExtensionDocument> = vec![];
     for doc in schema_docs {

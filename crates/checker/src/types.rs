@@ -53,7 +53,7 @@ pub fn is_subtype<'src, S: Text<'src>>(
             } else {
                 other
             };
-            return is_subtype(definitions, target_inner.as_inner(), other);
+            is_subtype(definitions, target_inner.as_inner(), other)
         }
         Type::List(target_inner) => {
             if let Type::List(other_inner) = other {
@@ -71,9 +71,7 @@ pub fn is_subtype<'src, S: Text<'src>>(
             } else {
                 None
             };
-            let Some(target_def) = definitions.get_type(target_name) else {
-                return None;
-            };
+            let target_def = definitions.get_type(target_name)?;
             let other_def = other_name.and_then(|other_name| definitions.get_type(other_name));
             match **target_def {
                 TypeDefinition::Scalar(_)
