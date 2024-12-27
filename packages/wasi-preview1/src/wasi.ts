@@ -303,6 +303,9 @@ export function initWASI(config: WASIConfig): WASIAPI & WASIMeta {
         return handleFsError(e, debug);
       }
     },
+    fd_fdstat_get: (fd, ret_buf) => {
+      throw new Error("Function not implemented.");
+    },
     random_get: (buf, buf_len): number => {
       crypto.randomFillSync(new Uint8Array(memory(), buf, buf_len));
       return 0;
