@@ -15,7 +15,6 @@ use crate::SchemaTypePrinterOptions;
 
 pub struct SchemaTypePrinterContext<'src> {
     pub options: &'src SchemaTypePrinterOptions,
-    pub document: &'src TypeSystemDocument<'src>,
     pub schema: &'src Schema<Cow<'src, str>, Pos>,
     // Mapping from Scalar name to TypeScript types.
     pub scalar_types: HashMap<String, ScalarTypeConfig>,
@@ -36,7 +35,6 @@ impl SchemaTypePrinterContext<'_> {
         let local_type_names = make_local_type_names(document, &scalar_types);
         SchemaTypePrinterContext {
             options,
-            document,
             schema,
             scalar_types,
             local_type_names,

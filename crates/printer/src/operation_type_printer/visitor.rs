@@ -115,7 +115,6 @@ where
             .collect();
         let context = OperationTypePrinterContext {
             schema,
-            operation,
             fragment_definitions,
         };
         Self { options, context }
@@ -124,7 +123,6 @@ where
 
 pub struct OperationTypePrinterContext<'a, 'src, S: Text<'src>> {
     pub schema: &'a Schema<S, Pos>,
-    pub operation: &'a OperationDocument<'src>,
     pub fragment_definitions: HashMap<&'src str, &'a FragmentDefinition<'src>>,
 }
 
@@ -167,7 +165,6 @@ impl OperationPrinterVisitor for OperationTypePrinterVisitor<'_, '_> {
         let type_printer_context = QueryTypePrinterContext {
             options: &self.options,
             schema: self.context.schema,
-            operation: self.context.operation,
             fragment_definitions: &self.context.fragment_definitions,
         };
 
@@ -267,7 +264,6 @@ impl OperationPrinterVisitor for OperationTypePrinterVisitor<'_, '_> {
         let type_printer_context = QueryTypePrinterContext {
             options: &self.options,
             schema: self.context.schema,
-            operation: self.context.operation,
             fragment_definitions: &self.context.fragment_definitions,
         };
 

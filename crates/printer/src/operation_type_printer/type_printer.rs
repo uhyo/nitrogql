@@ -9,14 +9,13 @@ use itertools::{Either, Itertools};
 use nitrogql_ast::{
     base::Pos,
     directive::Directive,
-    operation::{FragmentDefinition, OperationDocument},
+    operation::FragmentDefinition,
     selection_set::{Selection, SelectionSet},
     value::Value,
     variable::VariablesDefinition,
 };
 use nitrogql_config_file::TypeTarget;
 use nitrogql_semantics::direct_fields_of_output_type;
-use sourcemap_writer::SourceMapWriter;
 
 use super::{
     super::ts_types::{ts_types_util::ts_intersection, TSType},
@@ -33,16 +32,7 @@ use super::{
 pub struct QueryTypePrinterContext<'a, 'src, S: Text<'src>> {
     pub options: &'a OperationTypePrinterOptions,
     pub schema: &'a Schema<S, Pos>,
-    pub operation: &'a OperationDocument<'src>,
     pub fragment_definitions: &'a HashMap<&'src str, &'a FragmentDefinition<'src>>,
-}
-
-pub trait TypePrinter<'src, S: Text<'src>> {
-    fn print_type(
-        &self,
-        options: &QueryTypePrinterContext<'_, 'src, S>,
-        writer: &mut impl SourceMapWriter,
-    );
 }
 
 pub fn get_type_for_selection_set<'src, S: Text<'src>>(
