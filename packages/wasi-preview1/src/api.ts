@@ -43,6 +43,7 @@ export type WASIAPI = {
     cookie: bigint,
     ret_buf: number
   ) => number;
+  fd_fdstat_get: (fd: number, ret_buf: number) => number;
   path_filestat_get: (
     fd: number,
     flags: number,
