@@ -1,6 +1,6 @@
 {
   "name": "@nitrogql/esbuild-register",
-  "version": "1.7.0",
+  "version": "1.7.1-beta.0",
   "description": "Uses esbuild to run TypeScript files directly with Node.js",
   "repository": {
     "type": "git",
