@@ -8,7 +8,7 @@ jobs:
   publish:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: install rustup
         run: curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
       - uses: Swatinem/rust-cache@v2
@@ -16,7 +16,7 @@ jobs:
         run: rustup target add wasm32-wasi wasm32-unknown-unknown
       - uses: actions/setup-node@v3
         with:
-          node-version: 18
+          node-version: 22
       - run: npm install
       - name: install wasm-opt
         run: npm install wasm-opt -g
@@ -31,61 +31,61 @@ jobs:
         env:
           OPTIMIZE: "1"
       - name: publish to npm (esbuild-register)
-        uses: JS-DevTools/npm-publish@v1
+        uses: JS-DevTools/npm-publish@v3
         with:
           token: ${{ secrets.NPM_TOKEN }}
           package: "./packages/esbuild-register/package.json"
           access: public
-          greater-version-only: true
+          strategy: upgrade
       - name: publish to npm (core)
-        uses: JS-DevTools/npm-publish@v1
+        uses: JS-DevTools/npm-publish@v3
         with:
           token: ${{ secrets.NPM_TOKEN }}
           package: "./packages/core/package.json"
           access: public
-          greater-version-only: true
+          strategy: upgrade
       - name: publish to npm (loader-core)
-        uses: JS-DevTools/npm-publish@v1
+        uses: JS-DevTools/npm-publish@v3
         with:
           token: ${{ secrets.NPM_TOKEN }}
           package: "./packages/loader-core/package.json"
           access: public
-          greater-version-only: true
+          strategy: upgrade
       - name: publish to npm (wasi-preview1)
-        uses: JS-DevTools/npm-publish@v1
+        uses: JS-DevTools/npm-publish@v3
         with:
           token: ${{ secrets.NPM_TOKEN }}
           package: "./packages/wasi-preview1/package.json"
           access: public
-          greater-version-only: true
+          strategy: upgrade
       - name: publish to npm (cli)
-        uses: JS-DevTools/npm-publish@v1
+        uses: JS-DevTools/npm-publish@v3
         with:
           token: ${{ secrets.NPM_TOKEN }}
           package: "./packages/cli/package.json"
           access: public
-          greater-version-only: true
+          strategy: upgrade
       - name: publish to npm (graphql-loader)
-        uses: JS-DevTools/npm-publish@v1
+        uses: JS-DevTools/npm-publish@v3
         with:
           token: ${{ secrets.NPM_TOKEN }}
           package: "./packages/graphql-loader/package.json"
           access: public
-          greater-version-only: true
+          strategy: upgrade
       - name: publish to npm (rollup-plugin)
-        uses: JS-DevTools/npm-publish@v1
+        uses: JS-DevTools/npm-publish@v3
         with:
           token: ${{ secrets.NPM_TOKEN }}
           package: "./packages/rollup-plugin/package.json"
           access: public
-          greater-version-only: true
+          strategy: upgrade
       - name: publish to npm (jest-transform)
-        uses: JS-DevTools/npm-publish@v1
+        uses: JS-DevTools/npm-publish@v3
         with:
           token: ${{ secrets.NPM_TOKEN }}
           package: "./packages/jest-transform/package.json"
           access: public
-          greater-version-only: true
+          strategy: upgrade
   deploy-vercel:
     runs-on: ubuntu-latest
     steps:
