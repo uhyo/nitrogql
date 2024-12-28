@@ -1,3 +1,4 @@
+import { pathToFileURL } from "node:url";
 import type { GraphQLNamedType } from "graphql";
 
 export type LoadSchemaResult = {
@@ -14,8 +15,10 @@ export type LoadSchemaResult = {
 /**
  * Loads given JS module as a schema and returns the schema as a SDL string.
  */
-export async function loadSchemaJs(module: string): Promise<LoadSchemaResult> {
-  let loaded = await import(module);
+export async function loadSchemaJs(
+  schemaPath: string
+): Promise<LoadSchemaResult> {
+  let loaded = await import(pathToFileURL(schemaPath).toString());
   while (loaded?.default) {
     loaded = loaded.default;
   }
@@ -44,7 +47,7 @@ export async function loadSchemaJs(module: string): Promise<LoadSchemaResult> {
     return { schema: graphql.printSchema(loaded), typeExtensions };
   }
   throw new Error(
-    `Failed to load schema from '${module}'. The module must export a string or a GraphQLSchema object.`
+    `Failed to load schema from '${schemaPath}'. The module must export a string or a GraphQLSchema object.`
   );
 }
 
