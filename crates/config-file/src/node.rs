@@ -120,7 +120,7 @@ import config from "{}";
 import {{ stdout }} from "process";
 export default config?.default ?? config;
 "#,
-        path.display()
+        path.to_string_lossy().escape_default()
     ))
     .await
 }

@@ -26,12 +26,11 @@ pub async fn load_schema_js(path: &Path) -> io::Result<LoadSchemaJsResult> {
     let res_json = run_node(&format!(
         r#"
 import {{ loadSchemaJs }} from "@nitrogql/core";
-import {{ stdout }} from "process";
 
 const result = await loadSchemaJs("{}");
 export default result;
 "#,
-        path.display()
+        path.to_string_lossy().escape_default()
     ))
     .await?;
     let parsed: LoadSchemaJsResult = serde_yaml::from_str(&res_json).expect("failed to parse JSON");
