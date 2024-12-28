@@ -116,8 +116,8 @@ pub async fn run_node(code: &str) -> io::Result<String> {
 pub async fn load_default_from_js_file(path: &Path) -> io::Result<String> {
     run_node(&format!(
         r#"
-import config from "{}";
-import {{ stdout }} from "process";
+import {{ pathToFileURL }} from "url";
+const config = (await import(pathToFileURL("{}").toString())).default;
 export default config?.default ?? config;
 "#,
         path.to_string_lossy().escape_default()

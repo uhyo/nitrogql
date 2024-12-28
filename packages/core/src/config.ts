@@ -2,8 +2,9 @@
  * @file `nitrogql_helper/config` namespace.
  */
 
+import { pathToFileURL } from "node:url";
 import { execFileSync } from "node:child_process";
-import { getMemory, readString, utf8Len, writeString } from "./memory.js";
+import { readString, utf8Len, writeString } from "./memory.js";
 import { getCommandClient } from "./command/commandClient.js";
 
 /**
@@ -55,8 +56,10 @@ export function executeNodeSync(code: string): string {
  */
 export function executeConfigFileSync(configFilePath: string): string {
   return executeNodeSync(`
-import config from ${JSON.stringify(configFilePath)};
 import { stdout } from "process";
+const config = (await import(${JSON.stringify(
+    pathToFileURL(configFilePath).toString()
+  )})).default;
 stdout.write(JSON.stringify(config.default ?? config));
 `);
 }
