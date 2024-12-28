@@ -1,7 +1,7 @@
 {
   "name": "@nitrogql/e2e-test-esm",
   "private": true,
-  "version": "1.7.1-beta.2",
+  "version": "1.7.1",
   "description": "",
   "main": "index.js",
   "type": "module",
