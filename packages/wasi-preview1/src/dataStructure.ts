@@ -35,6 +35,21 @@ export function writeFilestat(
   view.setBigUint64(56, ctim, true);
 }
 
+export function writeFdstat(
+  memory: ArrayBuffer,
+  ptr: number,
+  filetype: number,
+  fs_flags: number,
+  fs_rights_base: bigint,
+  fs_rights_inheriting: bigint
+) {
+  const view = new DataView(memory, ptr, 24);
+  view.setUint8(0, filetype);
+  view.setUint16(2, fs_flags, true);
+  view.setBigUint64(8, fs_rights_base, true);
+  view.setBigUint64(16, fs_rights_inheriting, true);
+}
+
 export function generateOneReaddirEntry(
   ent: DirEntry,
   index: number

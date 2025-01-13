@@ -5,6 +5,7 @@ import * as error from "./error.js";
 import {
   generateOneReaddirEntry,
   getFiletypeOfStat,
+  writeFdstat,
   writeFilestat,
   writePrestatDir,
 } from "./dataStructure.js";
@@ -304,7 +305,26 @@ export function initWASI(config: WASIConfig): WASIAPI & WASIMeta {
       }
     },
     fd_fdstat_get: (fd, ret_buf) => {
-      throw new Error("Function not implemented.");
+      const fdObj = fs.get(fd);
+      if (fdObj === undefined) {
+        return error.badf;
+      }
+      try {
+        const stat = fs.stat(fdObj);
+        // fd_write | path_create_directory | path_open | fd_readdir | path_filestat_get | fd_filestat_get
+        const fs_flags = 0b0001_0010_0011_0001_0010_0000n;
+        writeFdstat(
+          memory(),
+          ret_buf,
+          getFiletypeOfStat(stat),
+          0,
+          fs_flags,
+          fs_flags
+        );
+        return 0;
+      } catch (e) {
+        return handleFsError(e, debug);
+      }
     },
     random_get: (buf, buf_len): number => {
       crypto.randomFillSync(new Uint8Array(memory(), buf, buf_len));
