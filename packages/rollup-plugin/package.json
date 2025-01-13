@@ -1,6 +1,6 @@
 {
   "name": "@nitrogql/rollup-plugin",
-  "version": "1.7.1",
+  "version": "1.7.2-beta.0",
   "description": "GraphQL + TypeScript toolchain",
   "repository": {
     "type": "git",
@@ -24,8 +24,8 @@
     "rollup": "^3.20.2"
   },
   "dependencies": {
-    "@nitrogql/core": "1.7.1",
-    "@nitrogql/loader-core": "1.7.1",
+    "@nitrogql/core": "1.7.2-beta.0",
+    "@nitrogql/loader-core": "1.7.2-beta.0",
     "@rollup/pluginutils": "^5.0.2"
   }
 }
