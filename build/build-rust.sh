@@ -14,7 +14,7 @@ fi
 
 (
   cd crates/cli
-  cargo rustc --target wasm32-wasi $RUSTC_FLAGS
+  cargo rustc --target wasm32-wasip1 $RUSTC_FLAGS
 )
 
 (
@@ -24,7 +24,7 @@ fi
 
 if [ -n "${OPTIMIZE+x}" ]; then
   (
-    cd target/wasm32-wasi/$TARGET_DIR
+    cd target/wasm32-wasip1/$TARGET_DIR
     wasm-opt nitrogql-cli.wasm -Oz -o nitrogql-cli.opt.wasm.tmp
     wasm-snip nitrogql-cli.opt.wasm.tmp > nitrogql-cli.opt.wasm
   )
@@ -36,7 +36,7 @@ if [ -n "${OPTIMIZE+x}" ]; then
   )
 else
   (
-    cd target/wasm32-wasi/$TARGET_DIR
+    cd target/wasm32-wasip1/$TARGET_DIR
     cp nitrogql-cli.wasm nitrogql-cli.opt.wasm
   )
 

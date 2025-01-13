@@ -14,7 +14,7 @@ fi
 npm run build -w @nitrogql/core -w @nitrogql/loader-core -w @nitrogql/wasi-preview1 -w @nitrogql/esbuild-register -w @nitrogql/jest-transform
 
 mkdir -p packages/cli/wasm
-cp target/wasm32-wasi/$TARGET_DIR/nitrogql-cli.opt.wasm packages/cli/wasm/nitrogql-cli.wasm
+cp target/wasm32-wasip1/$TARGET_DIR/nitrogql-cli.opt.wasm packages/cli/wasm/nitrogql-cli.wasm
 
 mkdir -p packages/loader-core/wasm
 cp target/wasm32-unknown-unknown/$TARGET_DIR/graphql-loader.opt.wasm packages/loader-core/wasm/graphql-loader.wasm
