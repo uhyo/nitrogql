@@ -1,6 +1,6 @@
 {
   "name": "@nitrogql/graphql-loader",
-  "version": "1.7.2-beta.0",
+  "version": "1.7.2",
   "description": "GraphQL + TypeScript toolchain",
   "repository": {
     "type": "git",
@@ -23,8 +23,8 @@
     "node": "18.15.0"
   },
   "dependencies": {
-    "@nitrogql/core": "1.7.2-beta.0",
-    "@nitrogql/loader-core": "1.7.2-beta.0"
+    "@nitrogql/core": "1.7.2",
+    "@nitrogql/loader-core": "1.7.2"
   },
   "devDependencies": {
     "webpack": "^5.76.2"
