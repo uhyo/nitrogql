@@ -57,7 +57,7 @@ pub fn run_generate(mut context: CliContext) -> Result<CliContext> {
                 && schema_output
                     .as_ref()
                     .and_then(|schema_output| schema_output.file_name())
-                    .map_or(false, |name| name.to_string_lossy().ends_with(".d.ts"))
+                    .is_some_and(|name| name.to_string_lossy().ends_with(".d.ts"))
             {
                 return Err(CliError::CannotEmitRuntimeToDts.into());
             }

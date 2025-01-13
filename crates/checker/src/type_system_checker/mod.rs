@@ -252,7 +252,7 @@ fn check_interface(
             &definitions.type_system,
             f.r#type.unwrapped_type().name.name,
         )
-        .map_or(false, |k| !k.is_output_type())
+        .is_some_and(|k| !k.is_output_type())
         {
             result.push(
                 CheckErrorMessage::NoInputType {

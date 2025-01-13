@@ -68,7 +68,7 @@ pub fn check_operation_document<'src, S: Text<'src>>(
                             .take(idx)
                             .find(|other| match other {
                                 ExecutableDefinition::OperationDefinition(def) => {
-                                    def.name.map_or(false, |n| n.name == name.name)
+                                    def.name.is_some_and(|n| n.name == name.name)
                                 }
                                 ExecutableDefinition::FragmentDefinition(_) => false,
                             });
