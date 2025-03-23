@@ -10,7 +10,7 @@ use crate::{ModelPlugin, Plugin, PluginHost};
 mod checker {
     use insta::assert_debug_snapshot;
     use nitrogql_ast::TypeSystemDocument;
-    use nitrogql_checker::{check_type_system_document, CheckError, CheckErrorMessage};
+    use nitrogql_checker::{CheckError, CheckErrorMessage, check_type_system_document};
 
     use crate::{ModelPlugin, Plugin};
 

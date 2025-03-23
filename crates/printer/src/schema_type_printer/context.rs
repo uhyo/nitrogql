@@ -5,9 +5,9 @@ use std::{
 
 use graphql_type_system::Schema;
 use nitrogql_ast::{
+    TypeSystemDocument,
     base::Pos,
     type_system::{TypeDefinition, TypeSystemDefinition},
-    TypeSystemDocument,
 };
 use nitrogql_config_file::{ScalarTypeConfig, SeparateScalarTypeConfig, TypeTarget};
 

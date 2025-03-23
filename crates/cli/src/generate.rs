@@ -14,11 +14,11 @@ use crate::schema_loader::LoadedSchema;
 use nitrogql_config_file::{Config, GenerateMode};
 use nitrogql_error::Result;
 use nitrogql_printer::{
-    print_types_for_operation_document, GraphQLPrinter, OperationTypePrinterOptions,
-    ResolverTypePrinter, ResolverTypePrinterOptions, SchemaTypePrinter, SchemaTypePrinterOptions,
+    GraphQLPrinter, OperationTypePrinterOptions, ResolverTypePrinter, ResolverTypePrinterOptions,
+    SchemaTypePrinter, SchemaTypePrinterOptions, print_types_for_operation_document,
 };
 use nitrogql_utils::relative_path;
-use sourcemap_writer::{print_source_map_json, JsStringWriter, SourceWriter, SourceWriterBuffers};
+use sourcemap_writer::{JsStringWriter, SourceWriter, SourceWriterBuffers, print_source_map_json};
 
 use super::{check::run_check, context::CliContext};
 

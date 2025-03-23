@@ -2,6 +2,7 @@ use std::ops::Deref;
 
 use graphql_type_system::{Node, Schema, Text};
 use nitrogql_ast::{
+    TypeSystemDocument,
     base::{Ident, Keyword, Pos},
     operation::OperationType,
     r#type::{ListType, NamedType, NonNullType, Type},
@@ -12,7 +13,6 @@ use nitrogql_ast::{
         TypeSystemDefinition, UnionTypeDefinition,
     },
     value::{NullValue, StringValue, Value},
-    TypeSystemDocument,
 };
 
 /// Convert Schema to TypeSystemDocument. For type definition generation purpose.

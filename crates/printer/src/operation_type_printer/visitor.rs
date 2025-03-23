@@ -2,9 +2,9 @@ use std::{borrow::Cow, collections::HashMap};
 
 use graphql_type_system::{NamedType, Node, NonNullType, RootTypes, Schema, Text, Type};
 use nitrogql_ast::{
+    OperationDocument,
     base::Pos,
     operation::{ExecutableDefinition, FragmentDefinition, OperationType},
-    OperationDocument,
 };
 use nitrogql_config_file::{Config, GenerateMode};
 use nitrogql_utils::clone_into;
@@ -12,17 +12,17 @@ use sourcemap_writer::SourceMapWriter;
 
 use crate::{
     operation_base_printer::{
-        options::OperationBasePrinterOptions, OperationPrinterVisitor, PrintFragmentContext,
-        PrintOperationContext,
+        OperationPrinterVisitor, PrintFragmentContext, PrintOperationContext,
+        options::OperationBasePrinterOptions,
     },
     operation_js_printer::{print_fragment_runtime, print_operation_runtime},
     ts_types::TSType,
 };
 
 use super::{
-    selection_tree::{generate_selection_tree_type, GenerateSelectionTreeTypeContext},
+    selection_tree::{GenerateSelectionTreeTypeContext, generate_selection_tree_type},
     type_printer::{
-        get_type_for_selection_set, get_type_for_variable_definitions, QueryTypePrinterContext,
+        QueryTypePrinterContext, get_type_for_selection_set, get_type_for_variable_definitions,
     },
 };
 

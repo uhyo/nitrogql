@@ -1,4 +1,4 @@
-use crate::{cloning_utils::map_option_node, text::Text, Node};
+use crate::{Node, cloning_utils::map_option_node, text::Text};
 
 #[derive(Debug, Copy, Clone)]
 pub struct RootTypes<T> {

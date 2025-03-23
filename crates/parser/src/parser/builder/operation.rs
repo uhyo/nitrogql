@@ -6,13 +6,13 @@ use nitrogql_ast::{
 };
 
 use super::{
+    Rule,
     base::build_variable,
     directives::build_directives,
-    r#type::build_type,
     selection_set::build_selection_set,
+    r#type::build_type,
     utils::PairExt,
     value::{build_string_value, build_value},
-    Rule,
 };
 use pest::iterators::Pair;
 

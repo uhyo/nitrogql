@@ -15,7 +15,7 @@ use nitrogql_ast::{
 
 use self::{
     count_selection_set_fields::selection_set_has_more_than_one_fields,
-    fragment_map::{generate_fragment_map, FragmentMap},
+    fragment_map::{FragmentMap, generate_fragment_map},
 };
 
 use super::{
@@ -544,10 +544,7 @@ fn check_fragment_spread_core<'src, S: Text<'src>>(
             // This should be flagged elsewhere
             return;
         }
-        (
-            TypeDefinition::Object(obj_definition),
-            TypeDefinition::Object(cond_obj_definition),
-        ) => {
+        (TypeDefinition::Object(obj_definition), TypeDefinition::Object(cond_obj_definition)) => {
             let cond_obj_name = cond_obj_definition.name.inner_ref();
             if obj_definition.name != *cond_obj_name {
                 result.push(
@@ -573,14 +570,8 @@ fn check_fragment_spread_core<'src, S: Text<'src>>(
                 );
             }
         }
-        (
-            TypeDefinition::Object(obj_definition),
-            TypeDefinition::Interface(intf_definition),
-        )
-        | (
-            TypeDefinition::Interface(intf_definition),
-            TypeDefinition::Object(obj_definition),
-        ) => {
+        (TypeDefinition::Object(obj_definition), TypeDefinition::Interface(intf_definition))
+        | (TypeDefinition::Interface(intf_definition), TypeDefinition::Object(obj_definition)) => {
             let intf_name = intf_definition.name.inner_ref();
             let obj_implements_intf = obj_definition
                 .interfaces
@@ -610,14 +601,8 @@ fn check_fragment_spread_core<'src, S: Text<'src>>(
                 );
             }
         }
-        (
-            TypeDefinition::Object(obj_definition),
-            TypeDefinition::Union(cond_union_definition),
-        )
-        | (
-            TypeDefinition::Union(cond_union_definition),
-            TypeDefinition::Object(obj_definition),
-        ) => {
+        (TypeDefinition::Object(obj_definition), TypeDefinition::Union(cond_union_definition))
+        | (TypeDefinition::Union(cond_union_definition), TypeDefinition::Object(obj_definition)) => {
             let obj_name = obj_definition.name.inner_ref();
             let obj_in_union = cond_union_definition
                 .possible_types
@@ -752,10 +737,7 @@ fn check_fragment_spread_core<'src, S: Text<'src>>(
                 );
             }
         }
-        (
-            TypeDefinition::Union(union_definition1),
-            TypeDefinition::Union(union_definition2),
-        ) => {
+        (TypeDefinition::Union(union_definition1), TypeDefinition::Union(union_definition2)) => {
             let there_is_overlapping_member = union_definition2.possible_types.iter().any(|mem2| {
                 union_definition1
                     .possible_types

@@ -1,7 +1,7 @@
 use graphql_type_system::{NamedType, Text, Type};
 use nitrogql_config_file::TypeTarget;
 
-use crate::ts_types::{ts_types_util::ts_union, ObjectField, TSType};
+use crate::ts_types::{ObjectField, TSType, ts_types_util::ts_union};
 
 use super::{SelectionTree, SelectionTreeField};
 

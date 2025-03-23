@@ -7,7 +7,7 @@ use nitrogql_printer::GraphQLPrinter;
 use sourcemap_writer::JustWriter;
 
 use crate::{
-    resolve_operation_extensions, resolve_operation_imports, OperationExtension, OperationResolver,
+    OperationExtension, OperationResolver, resolve_operation_extensions, resolve_operation_imports,
 };
 
 struct TestOperationResolver;

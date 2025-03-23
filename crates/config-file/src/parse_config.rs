@@ -1,6 +1,6 @@
 use serde::Deserialize;
 
-use crate::{parsing_utils::StringOrVecString, Config, GenerateConfig};
+use crate::{Config, GenerateConfig, parsing_utils::StringOrVecString};
 
 #[derive(Deserialize)]
 struct ConfigParser {

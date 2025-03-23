@@ -1,7 +1,7 @@
 use nitrogql_ast::OperationDocument;
 use sourcemap_writer::SourceMapWriter;
 
-use crate::{operation_base_printer::OperationPrinter, OperationJSPrinterOptions};
+use crate::{OperationJSPrinterOptions, operation_base_printer::OperationPrinter};
 
 use self::visitor::OperationJSPrinterVisitor;
 

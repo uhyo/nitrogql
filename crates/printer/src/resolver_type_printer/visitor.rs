@@ -1,7 +1,7 @@
 use crate::{
     ts_types::{
-        ts_types_util::ts_union, type_to_ts_type::get_ts_type_of_type, ObjectField, ObjectKey,
-        TSType,
+        ObjectField, ObjectKey, TSType, ts_types_util::ts_union,
+        type_to_ts_type::get_ts_type_of_type,
     },
     utils::interface_implementers,
 };

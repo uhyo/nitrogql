@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
-use nitrogql_ast::{base::Pos, TypeSystemDocument};
-use nitrogql_printer::{ts_types::TSType, ResolverTypePrinterOptions};
+use nitrogql_ast::{TypeSystemDocument, base::Pos};
+use nitrogql_printer::{ResolverTypePrinterOptions, ts_types::TSType};
 
 /// Interface of a naked plugin.
 #[allow(unused_variables)]

@@ -8,5 +8,5 @@ use crate::OperationExtension;
 pub trait OperationResolver<'src> {
     /// Resolve a full path to an operation.
     fn resolve(&self, path: &Path)
-        -> Option<(&OperationDocument<'src>, &OperationExtension<'src>)>;
+    -> Option<(&OperationDocument<'src>, &OperationExtension<'src>)>;
 }

@@ -2,16 +2,16 @@ use std::{borrow::Cow, collections::HashMap};
 
 use graphql_type_system::Schema;
 use nitrogql_ast::{
+    TypeSystemDocument,
     base::Pos,
     type_system::{TypeDefinition, TypeSystemDefinition},
-    TypeSystemDocument,
 };
 use nitrogql_semantics::ast_to_type_system;
 use sourcemap_writer::SourceMapWriter;
 
 use crate::{
     resolver_type_printer::visitor::{get_resolver_type, get_ts_type_for_resolver_output},
-    ts_types::{ts_types_util::ts_union, ObjectField, ObjectKey, TSType},
+    ts_types::{ObjectField, ObjectKey, TSType, ts_types_util::ts_union},
 };
 
 use super::{

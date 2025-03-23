@@ -1,11 +1,11 @@
 use nitrogql_ast::{
+    TypeSystemDocument,
     base::{Ident, Keyword, Pos},
     r#type::{NamedType, NonNullType, Type},
     type_system::{
         ArgumentsDefinition, DirectiveDefinition, InputValueDefinition, ScalarTypeDefinition,
         TypeDefinition, TypeSystemDefinition, TypeSystemDefinitionOrExtension,
     },
-    TypeSystemDocument,
 };
 
 /// Build nitrogql-specific built-in definitions.

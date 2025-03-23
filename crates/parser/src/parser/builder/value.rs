@@ -1,6 +1,6 @@
 use crate::parts;
 
-use super::{base::build_variable, utils::PairExt, Rule};
+use super::{Rule, base::build_variable, utils::PairExt};
 use pest::iterators::Pair;
 
 use nitrogql_ast::value::{

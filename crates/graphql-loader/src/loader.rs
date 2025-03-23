@@ -3,7 +3,7 @@ use std::path::{Path, PathBuf};
 use nitrogql_ast::OperationDocument;
 use nitrogql_config_file::Config;
 use nitrogql_error::{PositionedError, Result};
-use nitrogql_semantics::{resolve_operation_imports, OperationExtension, OperationResolver};
+use nitrogql_semantics::{OperationExtension, OperationResolver, resolve_operation_imports};
 use nitrogql_utils::resolve_relative_path;
 use thiserror::Error;
 

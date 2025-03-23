@@ -6,7 +6,7 @@ use nitrogql_parser::parse_operation_document;
 use nitrogql_semantics::resolve_operation_extensions;
 use sourcemap_writer::JustWriter;
 
-use crate::{print_js_for_operation_document, OperationJSPrinterOptions};
+use crate::{OperationJSPrinterOptions, print_js_for_operation_document};
 
 #[test]
 fn print_query() {

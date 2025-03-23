@@ -1,6 +1,6 @@
 use nitrogql_ast::OperationDocument;
 use nitrogql_config_file::Config;
-use nitrogql_printer::{print_js_for_operation_document, OperationJSPrinterOptions};
+use nitrogql_printer::{OperationJSPrinterOptions, print_js_for_operation_document};
 use sourcemap_writer::SourceWriter;
 
 pub fn print_js(document: &OperationDocument, config: &Config) -> String {

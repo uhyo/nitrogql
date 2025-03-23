@@ -1,6 +1,6 @@
 use std::{marker::PhantomData, str::FromStr};
 
-use serde::{de::Visitor, Deserialize, Deserializer};
+use serde::{Deserialize, Deserializer, de::Visitor};
 
 /// A string or a list of strings.
 pub enum StringOrVecString {

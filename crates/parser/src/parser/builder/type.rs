@@ -1,4 +1,4 @@
-use super::{utils::PairExt, Rule};
+use super::{Rule, utils::PairExt};
 use pest::iterators::Pair;
 
 use nitrogql_ast::r#type::{ListType, NamedType, NonNullType, Type};

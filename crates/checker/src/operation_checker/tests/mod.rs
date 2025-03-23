@@ -2,11 +2,11 @@ use std::borrow::Cow;
 
 use graphql_builtins::generate_builtins;
 use graphql_type_system::Schema;
-use nitrogql_ast::{base::Pos, OperationDocumentExt, TypeSystemDocument};
+use nitrogql_ast::{OperationDocumentExt, TypeSystemDocument, base::Pos};
 use nitrogql_parser::parse_type_system_document;
 use nitrogql_semantics::{resolve_operation_extensions, resolve_schema_extensions};
 
-use crate::{check_operation_document, CheckError, OperationCheckContext};
+use crate::{CheckError, OperationCheckContext, check_operation_document};
 
 mod operations {
     use std::borrow::Cow;
@@ -495,7 +495,7 @@ mod fragments {
     use insta::assert_debug_snapshot;
     use nitrogql_semantics::{ast_to_type_system, resolve_operation_extensions};
 
-    use crate::{operation_checker::check_operation_document, OperationCheckContext};
+    use crate::{OperationCheckContext, operation_checker::check_operation_document};
     use nitrogql_ast::base::Pos;
     use nitrogql_parser::parse_operation_document;
 

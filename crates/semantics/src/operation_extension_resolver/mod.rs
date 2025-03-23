@@ -1,8 +1,8 @@
 use nitrogql_ast::{
+    OperationDocument, OperationDocumentExt,
     base::Pos,
     operation::ExecutableDefinition,
     operation_ext::{ExecutableDefinitionExt, ImportTarget},
-    OperationDocument, OperationDocumentExt,
 };
 use nitrogql_error::PositionedError;
 use thiserror::Error;

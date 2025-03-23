@@ -1,6 +1,6 @@
 use std::path::PathBuf;
 
-use crate::{parse_config, GenerateMode, ScalarTypeConfig};
+use crate::{GenerateMode, ScalarTypeConfig, parse_config};
 
 mod export;
 mod name;

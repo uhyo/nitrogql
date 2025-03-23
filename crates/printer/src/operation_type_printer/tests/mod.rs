@@ -3,18 +3,18 @@ use std::path::Path;
 use insta::assert_snapshot;
 
 use graphql_builtins::generate_builtins;
-use nitrogql_ast::{set_current_file_of_pos, OperationDocumentExt};
 use nitrogql_ast::{OperationDocument, TypeSystemDocument};
+use nitrogql_ast::{OperationDocumentExt, set_current_file_of_pos};
 use nitrogql_parser::{parse_operation_document, parse_type_system_document};
 use nitrogql_semantics::{
-    ast_to_type_system, resolve_operation_extensions, OperationExtension, OperationResolver,
+    OperationExtension, OperationResolver, ast_to_type_system, resolve_operation_extensions,
 };
 use nitrogql_semantics::{resolve_operation_imports, resolve_schema_extensions};
 use sourcemap_writer::JustWriter;
 
+use crate::OperationTypePrinterOptions;
 use crate::operation_base_printer::options::OperationBasePrinterOptions;
 use crate::print_types_for_operation_document;
-use crate::OperationTypePrinterOptions;
 
 fn type_system() -> TypeSystemDocument<'static> {
     let mut doc = parse_type_system_document(

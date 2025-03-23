@@ -1,10 +1,10 @@
 use std::{cell::RefCell, collections::HashMap};
 
 use nitrogql_ast::{TypeSystemDocument, TypeSystemOrExtensionDocument};
-use nitrogql_parser::{parse_type_system_document, ParseError};
-use nitrogql_printer::{ts_types::TSType, ResolverTypePrinterOptions, ResolverTypePrinterPlugin};
+use nitrogql_parser::{ParseError, parse_type_system_document};
+use nitrogql_printer::{ResolverTypePrinterOptions, ResolverTypePrinterPlugin, ts_types::TSType};
 
-use crate::{plugin_v1::PluginSchemaExtensions, PluginV1Beta};
+use crate::{PluginV1Beta, plugin_v1::PluginSchemaExtensions};
 
 pub use crate::PluginCheckResult;
 

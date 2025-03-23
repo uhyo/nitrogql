@@ -11,19 +11,19 @@ use nitrogql_ast::{
     OperationDocument, OperationDocumentExt, TypeSystemDocument, TypeSystemOrExtensionDocument,
 };
 use nitrogql_checker::{
-    check_operation_document, check_type_system_document, CheckError, CheckErrorMessage,
-    OperationCheckContext,
+    CheckError, CheckErrorMessage, OperationCheckContext, check_operation_document,
+    check_type_system_document,
 };
 use nitrogql_error::{PositionedError, Result};
 use nitrogql_plugin::Plugin;
 use nitrogql_semantics::{
-    ast_to_type_system, resolve_operation_extensions, resolve_operation_imports,
-    resolve_schema_extensions, OperationExtension, OperationResolver,
+    OperationExtension, OperationResolver, ast_to_type_system, resolve_operation_extensions,
+    resolve_operation_imports, resolve_schema_extensions,
 };
 
 use crate::{output::InputFileKind, schema_loader::LoadedSchema};
 
-use super::{error::CliError, CliContext};
+use super::{CliContext, error::CliError};
 
 pub fn run_check(context: CliContext) -> Result<CliContext> {
     debug!("Checking");

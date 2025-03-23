@@ -6,7 +6,7 @@ use std::{
 use nitrogql_ast::OperationDocument;
 use nitrogql_error::Result;
 use nitrogql_parser::parse_operation_document;
-use nitrogql_semantics::{resolve_operation_extensions, OperationExtension};
+use nitrogql_semantics::{OperationExtension, resolve_operation_extensions};
 
 /// Set of tasks.
 #[derive(Debug)]

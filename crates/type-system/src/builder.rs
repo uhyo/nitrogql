@@ -1,6 +1,6 @@
-use std::collections::{hash_map::Entry, HashMap};
+use std::collections::{HashMap, hash_map::Entry};
 
-use crate::{root_types::RootTypes, text::Text, DirectiveDefinition, Node, Schema, TypeDefinition};
+use crate::{DirectiveDefinition, Node, Schema, TypeDefinition, root_types::RootTypes, text::Text};
 
 type SchemaRootTypes<Str, OriginalNode> = RootTypes<Option<Node<Str, OriginalNode>>>;
 

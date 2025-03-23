@@ -3,8 +3,8 @@ use json_writer::{JSONObjectWriter, JSONWriter};
 use nitrogql_ast::{
     directive::Directive,
     operation::{ExecutableDefinition, FragmentDefinition, OperationDefinition, OperationDocument},
-    r#type::{NamedType, Type},
     selection_set::{Field, FragmentSpread, InlineFragment, Selection, SelectionSet},
+    r#type::{NamedType, Type},
     value::Value,
     variable::VariableDefinition,
 };

@@ -2,7 +2,7 @@ use std::{borrow::Borrow, fmt::Display};
 
 use crate::{
     ts_types::{
-        ts_types_util::ts_union, type_to_ts_type::get_ts_type_of_type, ObjectField, TSType,
+        ObjectField, TSType, ts_types_util::ts_union, type_to_ts_type::get_ts_type_of_type,
     },
     utils::interface_implementers,
 };

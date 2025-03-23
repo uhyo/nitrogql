@@ -1,6 +1,6 @@
 use nitrogql_ast::{
-    operation_ext::{ExecutableDefinitionExt, ImportDefinition, ImportTarget},
     OperationDocumentExt,
+    operation_ext::{ExecutableDefinitionExt, ImportDefinition, ImportTarget},
 };
 use sourcemap_writer::SourceMapWriter;
 

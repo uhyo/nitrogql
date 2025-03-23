@@ -1,4 +1,4 @@
-use super::{utils::PairExt, Rule};
+use super::{Rule, utils::PairExt};
 use nitrogql_ast::variable::Variable;
 use pest::iterators::Pair;
 

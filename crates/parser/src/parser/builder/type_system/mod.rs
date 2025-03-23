@@ -6,8 +6,8 @@ use self::{
 };
 
 use super::{
-    directives::build_directives, operation::str_to_operation_type, utils::PairExt,
-    value::build_string_value, Rule,
+    Rule, directives::build_directives, operation::str_to_operation_type, utils::PairExt,
+    value::build_string_value,
 };
 use crate::parts;
 use nitrogql_ast::{

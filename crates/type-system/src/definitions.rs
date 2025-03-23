@@ -1,8 +1,8 @@
 use crate::{
     cloning_utils::{map_option_node, map_vec_node},
     node::{Node, OriginalNodeRef},
-    r#type::Type,
     text::Text,
+    r#type::Type,
 };
 
 /// Definition of a schema type.

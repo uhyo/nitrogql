@@ -6,7 +6,7 @@ use nitrogql_ast::base::Pos;
 
 mod to_ts;
 
-pub use to_ts::{generate_selection_tree_type, GenerateSelectionTreeTypeContext};
+pub use to_ts::{GenerateSelectionTreeTypeContext, generate_selection_tree_type};
 
 #[derive(Debug, Clone)]
 pub enum SelectionTree<S> {

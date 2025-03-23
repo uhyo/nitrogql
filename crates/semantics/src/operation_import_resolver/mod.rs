@@ -4,7 +4,7 @@ use std::{
 };
 
 use log::debug;
-use nitrogql_ast::{base::Pos, operation::ExecutableDefinition, OperationDocument};
+use nitrogql_ast::{OperationDocument, base::Pos, operation::ExecutableDefinition};
 use nitrogql_error::PositionedError;
 use nitrogql_utils::resolve_relative_path;
 use thiserror::Error;

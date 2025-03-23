@@ -6,6 +6,7 @@ use graphql_type_system::{
     TypeDefinition, UnionDefinition,
 };
 use nitrogql_ast::{
+    TypeSystemDocument,
     base::{HasPos, Pos},
     directive::Directive,
     operation::OperationType,
@@ -14,7 +15,6 @@ use nitrogql_ast::{
         SchemaDefinition, TypeDefinition as AstTypeDefinition, TypeSystemDefinition,
     },
     value::{StringValue, Value},
-    TypeSystemDocument,
 };
 
 use crate::type_system_utils::{convert_type, ident_to_node};
@@ -100,8 +100,8 @@ fn convert_type_definition<'src>(
                     def.position,
                 ),
             )]),
-        AstTypeDefinition::Union(def) => builder
-            .extend::<Vec<(_, Node<TypeDefinition<_, _>, _>)>>(vec![(
+        AstTypeDefinition::Union(def) => {
+            builder.extend::<Vec<(_, Node<TypeDefinition<_, _>, _>)>>(vec![(
                 def.name.name.into(),
                 Node::from(
                     TypeDefinition::Union(UnionDefinition {
@@ -111,9 +111,10 @@ fn convert_type_definition<'src>(
                     }),
                     def.position,
                 ),
-            )]),
-        AstTypeDefinition::Enum(def) => builder
-            .extend::<Vec<(_, Node<TypeDefinition<_, _>, _>)>>(vec![(
+            )])
+        }
+        AstTypeDefinition::Enum(def) => {
+            builder.extend::<Vec<(_, Node<TypeDefinition<_, _>, _>)>>(vec![(
                 def.name.name.into(),
                 Node::from(
                     TypeDefinition::Enum(EnumDefinition {
@@ -131,7 +132,8 @@ fn convert_type_definition<'src>(
                     }),
                     def.position,
                 ),
-            )]),
+            )])
+        }
         AstTypeDefinition::InputObject(def) => {
             builder.extend::<Vec<(_, Node<TypeDefinition<_, _>, _>)>>(vec![(
                 def.name.name.into(),

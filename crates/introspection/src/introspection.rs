@@ -240,7 +240,9 @@ fn as_type_definition<'src, D: Default>(
         }))
     } else if kind == "UNION" {
         let Some(ref possible_types) = value.possible_types else {
-            return Err(IntrospectionError::Introspection("__Type of kind UNION must have a list 'possibleTypes' field".into()));
+            return Err(IntrospectionError::Introspection(
+                "__Type of kind UNION must have a list 'possibleTypes' field".into(),
+            ));
         };
         let possible_types = possible_types
             .iter()
@@ -255,7 +257,9 @@ fn as_type_definition<'src, D: Default>(
         }))
     } else if kind == "ENUM" {
         let Some(ref enum_values) = value.enum_values else {
-            return Err(IntrospectionError::Introspection("__Type of kind ENUM must have a list 'enumValues' field".into()));
+            return Err(IntrospectionError::Introspection(
+                "__Type of kind ENUM must have a list 'enumValues' field".into(),
+            ));
         };
         let members = enum_values
             .iter()
@@ -282,7 +286,9 @@ fn as_type_definition<'src, D: Default>(
         }))
     } else if kind == "INPUT_OBJECT" {
         let Some(ref fields) = value.input_fields else {
-            return Err(IntrospectionError::Introspection("__Type of kind INPUT_OBJECT must have a list 'inputFields' field".into()));
+            return Err(IntrospectionError::Introspection(
+                "__Type of kind INPUT_OBJECT must have a list 'inputFields' field".into(),
+            ));
         };
         let fields = fields
             .iter()

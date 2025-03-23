@@ -5,8 +5,8 @@ use nitrogql_ast::{
 };
 use sourcemap_writer::SourceMapWriter;
 
-use super::utils::print_string;
 use super::GraphQLPrinter;
+use super::utils::print_string;
 
 impl GraphQLPrinter for Type<'_> {
     fn print_graphql(&self, writer: &mut impl SourceMapWriter) {

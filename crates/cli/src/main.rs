@@ -16,7 +16,7 @@ use graphql_type_system::Schema;
 use itertools::Itertools;
 use log::info;
 use nitrogql_ast::{
-    set_current_file_of_pos, type_system::TypeSystemOrExtensionDocument, OperationDocumentExt,
+    OperationDocumentExt, set_current_file_of_pos, type_system::TypeSystemOrExtensionDocument,
 };
 use nitrogql_introspection::schema_from_introspection_json;
 use nitrogql_plugin::{Plugin, PluginSchemaExtensions};
@@ -30,11 +30,11 @@ use crate::{
     error::CliError,
     file_store::FileKind,
     load_plugins::load_plugins,
-    schema_loader::{load_schema_js, schema_kind_by_path, LoadSchemaJsResult, SchemaFileKind},
+    schema_loader::{LoadSchemaJsResult, SchemaFileKind, load_schema_js, schema_kind_by_path},
 };
 use nitrogql_config_file::load_config;
 
-use nitrogql_error::{print_positioned_error, PositionedError};
+use nitrogql_error::{PositionedError, print_positioned_error};
 use nitrogql_parser::{parse_operation_document, parse_type_system_document};
 
 use self::{check::run_check, context::CliConfig, generate::run_generate};

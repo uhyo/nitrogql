@@ -2,7 +2,7 @@ use std::ops::Not;
 
 use itertools::Itertools;
 
-use super::{fast_equal, TSType};
+use super::{TSType, fast_equal};
 use fast_equal::fast_equal;
 
 /// Calculates intersection of given list of types.

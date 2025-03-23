@@ -16,7 +16,7 @@ use super::{
     error::{CheckError, CheckErrorMessage},
     types::inout_kind_of_type,
 };
-use nitrogql_semantics::{generate_definition_map, DefinitionMap};
+use nitrogql_semantics::{DefinitionMap, generate_definition_map};
 
 mod check_directive_recursion;
 mod interfaces;

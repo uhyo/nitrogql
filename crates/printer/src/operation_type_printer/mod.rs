@@ -1,7 +1,7 @@
 use std::borrow::Cow;
 
 use graphql_type_system::Schema;
-use nitrogql_ast::{base::Pos, OperationDocument};
+use nitrogql_ast::{OperationDocument, base::Pos};
 use sourcemap_writer::SourceMapWriter;
 
 use crate::operation_base_printer::OperationPrinter;

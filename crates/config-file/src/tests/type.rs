@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use crate::{parse_config, ScalarTypeConfig};
+use crate::{ScalarTypeConfig, parse_config};
 
 #[test]
 fn default_config() {

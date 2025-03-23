@@ -14,7 +14,7 @@ static POS: Pos = Pos {
 };
 
 mod value {
-    use super::{print_json_to_string, POS};
+    use super::{POS, print_json_to_string};
     use insta::assert_snapshot;
     use nitrogql_ast::{
         base::Ident,
@@ -123,7 +123,7 @@ mod value {
 }
 
 mod r#type {
-    use super::{print_json_to_string, POS};
+    use super::{POS, print_json_to_string};
     use insta::assert_snapshot;
     use nitrogql_ast::{
         base::Ident,
@@ -176,7 +176,7 @@ mod selection_set {
         value::{Arguments, IntValue, StringValue, Value},
     };
 
-    use super::{print_json_to_string, POS};
+    use super::{POS, print_json_to_string};
 
     #[test]
     fn simple_field() {

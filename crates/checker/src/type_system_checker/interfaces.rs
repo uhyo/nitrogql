@@ -1,6 +1,9 @@
-use nitrogql_ast::{type_system::{InterfaceTypeDefinition, FieldDefinition}, base::Ident};
-use nitrogql_semantics::{DefinitionMap, type_system_utils::convert_type};
 use crate::{error::CheckError, types::is_subtype};
+use nitrogql_ast::{
+    base::Ident,
+    type_system::{FieldDefinition, InterfaceTypeDefinition},
+};
+use nitrogql_semantics::{DefinitionMap, type_system_utils::convert_type};
 
 use super::CheckErrorMessage;
 
@@ -17,63 +20,93 @@ pub fn check_valid_implementation(
     // If implementedType declares it implements any interfaces, type must also declare it implements those interfaces.
     for imp in interface.implements.iter() {
         if !implements.iter().any(|ident| ident.name == imp.name) {
-            result.push(CheckErrorMessage::InterfaceNotImplemented {
-                name: imp.name.to_owned(),
-            }.with_pos(object_name.position));
+            result.push(
+                CheckErrorMessage::InterfaceNotImplemented {
+                    name: imp.name.to_owned(),
+                }
+                .with_pos(object_name.position),
+            );
         }
-
     }
     // type must include a field of the same name for every field defined in implementedType.
     for imp_field in interface.fields.iter() {
-        let Some(field) = fields.iter().find(|field| imp_field.name.name == field.name.name) else {
-            result.push(CheckErrorMessage::InterfaceFieldNotImplemented {
-                field_name: imp_field.name.to_string(),
-                interface_name: 
-                interface.name.to_string()
-             }.with_pos(object_name.position));
-             continue;
+        let Some(field) = fields
+            .iter()
+            .find(|field| imp_field.name.name == field.name.name)
+        else {
+            result.push(
+                CheckErrorMessage::InterfaceFieldNotImplemented {
+                    field_name: imp_field.name.to_string(),
+                    interface_name: interface.name.to_string(),
+                }
+                .with_pos(object_name.position),
+            );
+            continue;
         };
 
         // field must include an argument of the same name for every argument defined in implementedField.
-        for imp_arg in imp_field.arguments.iter().flat_map(|args| args.input_values.iter()) {
-            let Some(field_arg) =
-                field.arguments
+        for imp_arg in imp_field
+            .arguments
+            .iter()
+            .flat_map(|args| args.input_values.iter())
+        {
+            let Some(field_arg) = field
+                .arguments
                 .iter()
                 .flat_map(|args| args.input_values.iter())
                 .find(|arg| arg.name.name == imp_arg.name.name)
             else {
-                result.push(CheckErrorMessage::InterfaceArgumentNotImplemented {
-                    argument_name: imp_arg.name.to_string(),
-                    interface_name: interface.name.to_string(),
-                }.with_pos(field.name.position));
+                result.push(
+                    CheckErrorMessage::InterfaceArgumentNotImplemented {
+                        argument_name: imp_arg.name.to_string(),
+                        interface_name: interface.name.to_string(),
+                    }
+                    .with_pos(field.name.position),
+                );
                 continue;
             };
             // That named argument on field must accept the same type (invariant) as that named argument on implementedField.
             if !field_arg.r#type.is_same(&imp_arg.r#type) {
-                result.push(CheckErrorMessage::ArgumentTypeMisMatchWithInterface { interface_name: interface.name.to_string() }.with_pos(field_arg.name.position));
+                result.push(
+                    CheckErrorMessage::ArgumentTypeMisMatchWithInterface {
+                        interface_name: interface.name.to_string(),
+                    }
+                    .with_pos(field_arg.name.position),
+                );
             }
         }
         // field may include additional arguments not defined in implementedField, but any additional argument must not be required, e.g. must not be of a non-nullable type.
         if let Some(ref arguments) = field.arguments {
-            for field_arg in
-                arguments.input_values
-                .iter()
-                .filter(|arg| {
-                    imp_field.arguments
-                        .iter()
-                        .flat_map(|imp_args| imp_args.input_values.iter())
-                        .all(|imp_arg| imp_arg.name.name != arg.name.name)
-                }) {
+            for field_arg in arguments.input_values.iter().filter(|arg| {
+                imp_field
+                    .arguments
+                    .iter()
+                    .flat_map(|imp_args| imp_args.input_values.iter())
+                    .all(|imp_arg| imp_arg.name.name != arg.name.name)
+            }) {
                 if field_arg.r#type.is_nonnull() {
-                    result.push(CheckErrorMessage::ArgumentTypeNonNullAgainstInterface { interface_name: interface.name.to_string() }.with_pos(field_arg.name.position));
+                    result.push(
+                        CheckErrorMessage::ArgumentTypeNonNullAgainstInterface {
+                            interface_name: interface.name.to_string(),
+                        }
+                        .with_pos(field_arg.name.position),
+                    );
                 }
             }
         }
         // field must return a type which is equal to or a sub-type of (covariant) the return type of implementedField field’s return type:
-        if is_subtype(&definitions.type_system, &convert_type(&field.r#type), &convert_type(&imp_field.r#type)) == Some(false) {
-            result.push(CheckErrorMessage::FieldTypeMisMatchWithInterface {
-                interface_name: interface.name.to_string(),
-            }.with_pos(field.name.position));
+        if is_subtype(
+            &definitions.type_system,
+            &convert_type(&field.r#type),
+            &convert_type(&imp_field.r#type),
+        ) == Some(false)
+        {
+            result.push(
+                CheckErrorMessage::FieldTypeMisMatchWithInterface {
+                    interface_name: interface.name.to_string(),
+                }
+                .with_pos(field.name.position),
+            );
         }
     }
 }

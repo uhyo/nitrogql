@@ -5,7 +5,7 @@ use json_writer::JSONObjectWriter;
 mod file_kind;
 
 pub use file_kind::{InputFileKind, OutputFileKind};
-use nitrogql_error::{print_positioned_error, PositionedError};
+use nitrogql_error::{PositionedError, print_positioned_error};
 
 use crate::file_store::FileStore;
 

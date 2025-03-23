@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use crate::{
-    json_printer::{print_to_json_string, ExecutableDefinitionRef},
+    json_printer::{ExecutableDefinitionRef, print_to_json_string},
     utils::fragment_names_in_selection_set,
 };
 use nitrogql_ast::operation::{FragmentDefinition, OperationDefinition};

@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use nitrogql_ast::TypeSystemDocument;
 
-use crate::{ts_types::TSType, ResolverTypePrinterOptions};
+use crate::{ResolverTypePrinterOptions, ts_types::TSType};
 
 /// A plugin that can transform resolver output types.
 pub trait ResolverTypePrinterPlugin {

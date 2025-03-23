@@ -1,9 +1,9 @@
 use std::{path::PathBuf, str::FromStr};
 
 use nitrogql_ast::{
+    OperationDocumentExt,
     operation::OperationDocument,
     type_system::{TypeSystemDocument, TypeSystemOrExtensionDocument},
-    OperationDocumentExt,
 };
 use nitrogql_config_file::Config;
 use nitrogql_plugin::Plugin;

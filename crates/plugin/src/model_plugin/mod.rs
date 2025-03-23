@@ -1,19 +1,19 @@
 use std::collections::HashMap;
 
 use nitrogql_ast::{
+    TypeSystemDocument,
     type_system::{FieldDefinition, ObjectTypeDefinition, TypeDefinition, TypeSystemDefinition},
     value::Value,
-    TypeSystemDocument,
 };
 use nitrogql_config_file::TypeTarget;
 use nitrogql_printer::{
-    ts_types::{ts_types_util::ts_union, TSType},
     ResolverTypePrinterOptions,
+    ts_types::{TSType, ts_types_util::ts_union},
 };
 
 use crate::{
-    plugin_v1::{PluginCheckResult, PluginV1Beta},
     PluginCheckError,
+    plugin_v1::{PluginCheckResult, PluginV1Beta},
 };
 
 mod tests;

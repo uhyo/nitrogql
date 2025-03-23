@@ -1,7 +1,7 @@
 use std::{collections::HashMap, convert::identity, iter::once};
 
 use crate::{
-    ts_types::{ts_types_util::ts_union, type_to_ts_type::get_ts_type_of_type, ObjectField},
+    ts_types::{ObjectField, ts_types_util::ts_union, type_to_ts_type::get_ts_type_of_type},
     utils::interface_implementers,
 };
 use graphql_type_system::{NamedType, Node, ObjectDefinition, Schema, Text, Type, TypeDefinition};
@@ -18,7 +18,7 @@ use nitrogql_config_file::TypeTarget;
 use nitrogql_semantics::direct_fields_of_output_type;
 
 use super::{
-    super::ts_types::{ts_types_util::ts_intersection, TSType},
+    super::ts_types::{TSType, ts_types_util::ts_intersection},
     branching::BranchingCondition,
     deep_merge::deep_merge_selection_tree,
     selection_set_visitor::visit_fields_in_selection_set,
@@ -55,9 +55,7 @@ fn type_to_selection_tree<S, F: FnOnce(&NamedType<S, Pos>) -> Vec<SelectionTreeB
 ) -> SelectionTree<S> {
     match ty {
         Type::Named(name) => SelectionTree::Object(mapper(name)),
-        Type::List(inner) => {
-            SelectionTree::List(Box::new(type_to_selection_tree(inner, mapper)))
-        }
+        Type::List(inner) => SelectionTree::List(Box::new(type_to_selection_tree(inner, mapper))),
         Type::NonNull(inner) => {
             SelectionTree::NonNull(Box::new(type_to_selection_tree(inner, mapper)))
         }

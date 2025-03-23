@@ -1,4 +1,4 @@
-use nitrogql_ast::{base::Pos, operation_ext::OperationDocumentExt, TypeSystemOrExtensionDocument};
+use nitrogql_ast::{TypeSystemOrExtensionDocument, base::Pos, operation_ext::OperationDocumentExt};
 use nitrogql_error::PositionedError;
 use pest::Parser;
 use pest_derive::Parser;

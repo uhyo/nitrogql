@@ -1,4 +1,4 @@
-use super::{directives::build_directives, utils::PairExt, value::build_arguments, Rule};
+use super::{Rule, directives::build_directives, utils::PairExt, value::build_arguments};
 use pest::iterators::Pair;
 
 use crate::parts;

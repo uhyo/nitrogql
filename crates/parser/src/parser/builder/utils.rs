@@ -86,9 +86,7 @@ macro_rules! parts_mod {
             Err(None) => panic!("Expected {:?}, actual nothing", $rule),
         }
     };
-    ($expr:expr, opt, $rule:expr) => {{
-        $expr.ok()
-    }};
+    ($expr:expr, opt, $rule:expr) => {{ $expr.ok() }};
 }
 
 #[macro_export]
