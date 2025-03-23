@@ -35,11 +35,11 @@ pub enum CheckErrorMessage {
     ArgumentsNotNeeded { kind: &'static str },
     #[error("Required argument '{name}' is not specified")]
     RequiredArgumentNotSpecified { name: String },
-    #[error("This value does not match expected type '{r#type}' ")]
+    #[error("This value does not match expected type '{type}' ")]
     TypeMismatch { r#type: String },
     #[error("Variable '${name}' is not defined")]
     UnknownVariable { name: String },
-    #[error("'{member}' is a member of enum {r#enum}")]
+    #[error("'{member}' is a member of enum {enum}")]
     UnknownEnumMember { member: String, r#enum: String },
     #[error("Argument '{name}' is not defined")]
     UnknownArgument { name: String },

@@ -16,7 +16,7 @@ nitrogql-semantics = { path = "../semantics" }
 nitrogql-printer = { path = "../printer" }
 nitrogql-utils = { path = "../utils" }
 sourcemap-writer = { path = "../sourcemap-writer" }
-thiserror = "1.0.40"
+thiserror = "2.0.12"
 
 [dev-dependencies]
 insta = "1.28.0"

@@ -17,7 +17,7 @@ nitrogql-semantics = { path = "../semantics" }
 graphql-type-system = { path = "../type-system" }
 serde_yaml = "0.9.19"
 sourcemap-writer = { path = "../sourcemap-writer" }
-thiserror = "1.0.40"
+thiserror = "2.0.12"
 
 [dev-dependencies]
 insta = "1.28.0"

@@ -7,6 +7,6 @@ edition = "2021"
 
 [dependencies]
 anyhow = "1.0.70"
-colored = "2.0.0"
+colored = "3.0.0"
 nitrogql-ast = { path = "../ast" }
 nitrogql-utils = { path = "../utils" }
