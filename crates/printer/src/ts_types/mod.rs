@@ -160,10 +160,10 @@ impl TSType {
     /// Prints type.
     pub fn print_type(&self, writer: &mut impl SourceMapWriter) {
         match self {
-            TSType::TypeVariable(ref v) => {
+            TSType::TypeVariable(v) => {
                 writer.write_for(&v.name, v);
             }
-            TSType::TypeFunc(ref f, ref args) => {
+            TSType::TypeFunc(f, args) => {
                 f.print_type(writer);
                 writer.write("<");
                 for (idx, arg) in args.iter().enumerate() {
@@ -174,18 +174,18 @@ impl TSType {
                 }
                 writer.write(">");
             }
-            TSType::StringLiteral(ref v) => {
+            TSType::StringLiteral(v) => {
                 writer.write("\"");
                 writer.write(v);
                 writer.write("\"");
             }
-            TSType::NamespaceMember(ref ns, ref key) => {
+            TSType::NamespaceMember(ns, key) => {
                 write!(writer, "{ns}.{key}");
             }
-            TSType::NamespaceMember3(ref ns, ref key1, ref key2) => {
+            TSType::NamespaceMember3(ns, key1, key2) => {
                 write!(writer, "{ns}.{key1}.{key2}");
             }
-            TSType::Object(ref properties) => {
+            TSType::Object(properties) => {
                 if properties.is_empty() {
                     writer.write("{}");
                     return;
@@ -217,17 +217,17 @@ impl TSType {
                 writer.dedent();
                 writer.write("}");
             }
-            TSType::Array(ref ty) => {
+            TSType::Array(ty) => {
                 writer.write("(");
                 ty.print_type(writer);
                 writer.write(")[]");
             }
-            TSType::ReadonlyArray(ref ty) => {
+            TSType::ReadonlyArray(ty) => {
                 writer.write("readonly (");
                 ty.print_type(writer);
                 writer.write(")[]");
             }
-            TSType::Intersection(ref types) => {
+            TSType::Intersection(types) => {
                 if types.is_empty() {
                     TSType::Unknown.print_type(writer);
                     return;
@@ -239,7 +239,7 @@ impl TSType {
                     ty.print_type(writer);
                 }
             }
-            TSType::Union(ref types) => {
+            TSType::Union(types) => {
                 if types.is_empty() {
                     TSType::Never.print_type(writer);
                     return;

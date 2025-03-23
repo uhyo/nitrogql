@@ -215,7 +215,7 @@ fn print_description<Str: Borrow<str> + ?Sized, N: Deref<Target = Str>>(
     description: &Option<N>,
     writer: &mut impl SourceMapWriter,
 ) {
-    if let Some(ref description) = description {
+    if let Some(description) = description {
         print_string((**description).borrow(), writer);
         writer.write("\n");
     }

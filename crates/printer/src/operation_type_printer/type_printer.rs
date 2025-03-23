@@ -54,11 +54,11 @@ fn type_to_selection_tree<S, F: FnOnce(&NamedType<S, Pos>) -> Vec<SelectionTreeB
     mapper: F,
 ) -> SelectionTree<S> {
     match ty {
-        Type::Named(ref name) => SelectionTree::Object(mapper(name)),
-        Type::List(ref inner) => {
+        Type::Named(name) => SelectionTree::Object(mapper(name)),
+        Type::List(inner) => {
             SelectionTree::List(Box::new(type_to_selection_tree(inner, mapper)))
         }
-        Type::NonNull(ref inner) => {
+        Type::NonNull(inner) => {
             SelectionTree::NonNull(Box::new(type_to_selection_tree(inner, mapper)))
         }
     }
@@ -138,7 +138,7 @@ fn get_boolean_variables<'src, S: Text<'src>>(
                         if arg.name != "if" {
                             return None;
                         }
-                        if let Value::Variable(ref v) = value {
+                        if let Value::Variable(v) = value {
                             Some(v.name)
                         } else {
                             None
@@ -191,7 +191,7 @@ fn get_fields_for_selection_set<'a, 'src, S: Text<'src>>(
             .selections
             .iter()
             .filter_map(move |sel| match sel {
-                Selection::Field(ref field) => {
+                Selection::Field(field) => {
                     let field_name = field.name.name;
                     let selection_key =
                         field.alias.map(|name| name.name).unwrap_or(field.name.name);
@@ -248,7 +248,7 @@ fn get_fields_for_selection_set<'a, 'src, S: Text<'src>>(
         .iter()
         .flat_map(move |sel| match sel {
             Selection::Field(_) => vec![],
-            Selection::FragmentSpread(ref fragment) => {
+            Selection::FragmentSpread(fragment) => {
                 let fragment_def = context
                     .fragment_definitions
                     .get(fragment.fragment_name.name)
@@ -278,7 +278,7 @@ fn get_fields_for_selection_set<'a, 'src, S: Text<'src>>(
                     vec![]
                 }
             }
-            Selection::InlineFragment(ref fragment) => match fragment.type_condition {
+            Selection::InlineFragment(fragment) => match fragment.type_condition {
                 None => {
                     let fields =
                         get_fields_for_selection_set(context, &fragment.selection_set, branch);

@@ -8,7 +8,7 @@ use nitrogql_ast::{
 pub fn interface_implementers<'a, 'src, S: Text<'src>, OriginalNode>(
     schema: &'a Schema<S, OriginalNode>,
     interface_name: &'a str,
-) -> impl Iterator<Item = &'a ObjectDefinition<S, OriginalNode>> + 'a {
+) -> impl Iterator<Item = &'a ObjectDefinition<S, OriginalNode>> + 'a + use<'a, S, OriginalNode> {
     schema.iter_types().filter_map(move |(_, def)| {
         def.as_object().filter(|obj_def| {
             obj_def

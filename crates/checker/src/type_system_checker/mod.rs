@@ -31,30 +31,30 @@ pub fn check_type_system_document(document: &TypeSystemDocument) -> Vec<CheckErr
 
     for def in document.definitions.iter() {
         match def {
-            TypeSystemDefinition::SchemaDefinition(ref d) => {
+            TypeSystemDefinition::SchemaDefinition(d) => {
                 check_schema(d, &definition_map, &mut result);
             }
-            TypeSystemDefinition::TypeDefinition(ref d) => match d {
-                TypeDefinition::Scalar(ref d) => {
+            TypeSystemDefinition::TypeDefinition(d) => match d {
+                TypeDefinition::Scalar(d) => {
                     check_scalar(d, &definition_map, &mut result);
                 }
-                TypeDefinition::Object(ref d) => {
+                TypeDefinition::Object(d) => {
                     check_object(d, &definition_map, &mut result);
                 }
-                TypeDefinition::Interface(ref d) => {
+                TypeDefinition::Interface(d) => {
                     check_interface(d, &definition_map, &mut result);
                 }
-                TypeDefinition::Union(ref d) => {
+                TypeDefinition::Union(d) => {
                     check_union(d, &definition_map, &mut result);
                 }
-                TypeDefinition::Enum(ref d) => {
+                TypeDefinition::Enum(d) => {
                     check_enum(d, &definition_map, &mut result);
                 }
-                TypeDefinition::InputObject(ref d) => {
+                TypeDefinition::InputObject(d) => {
                     check_input_object(d, &definition_map, &mut result);
                 }
             },
-            TypeSystemDefinition::DirectiveDefinition(ref d) => {
+            TypeSystemDefinition::DirectiveDefinition(d) => {
                 check_directive(d, &definition_map, &mut result);
             }
         }
@@ -188,7 +188,7 @@ fn check_object(
             );
             continue;
         };
-        let TypeDefinition::Interface(ref def) = interface_def else {
+        let TypeDefinition::Interface(def) = interface_def else {
             result.push(
                 CheckErrorMessage::NotInterface {
                     name: interface.name.to_owned(),
@@ -279,7 +279,7 @@ fn check_interface(
             );
             continue;
         };
-        let TypeDefinition::Interface(ref def) = interface_def else {
+        let TypeDefinition::Interface(def) = interface_def else {
             result.push(
                 CheckErrorMessage::NotInterface {
                     name: other_interface.name.to_owned(),

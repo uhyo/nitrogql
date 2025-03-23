@@ -53,7 +53,7 @@ where
 
         for d in document.definitions.iter() {
             match d {
-                ExecutableDefinition::OperationDefinition(ref def) => {
+                ExecutableDefinition::OperationDefinition(def) => {
                     let operation_names = operation_variable_name(&self.options, def);
                     let context = PrintOperationContext {
                         operation_names: &operation_names,
@@ -71,7 +71,7 @@ where
                             .print_default_exported_operation_definition(context, self.writer);
                     }
                 }
-                ExecutableDefinition::FragmentDefinition(ref def) => {
+                ExecutableDefinition::FragmentDefinition(def) => {
                     // do not export fragment definitions imported from other files.
                     let exported = document.position.file == def.position.file;
                     let var_name =

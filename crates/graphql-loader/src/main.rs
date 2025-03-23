@@ -27,7 +27,7 @@ static LOGGER: StringLogger = StringLogger::new();
 fn main() {}
 
 /// Initialize this reactor
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn init(debug: usize) {
     log::set_logger(&LOGGER).expect("failed to set logger");
     if debug != 0 {
@@ -39,7 +39,7 @@ pub extern "C" fn init(debug: usize) {
 ///
 /// # Safety
 /// Caller should guarantee that the contents of returned buffer should be valid UTF-8 strings.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn alloc_string(len_bytes: usize) -> *mut u8 {
     let str = Box::new(String::with_capacity(len_bytes));
     let str = Box::leak(str);
@@ -50,13 +50,13 @@ pub extern "C" fn alloc_string(len_bytes: usize) -> *mut u8 {
 ///
 /// # Safety
 /// `free_string` should only be called with a pointer returned by `alloc_string` with the same value of `len_bytes` argument.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub unsafe extern "C" fn free_string(ptr: *mut u8, len_bytes: usize) {
     let _ = unsafe { String::from_raw_parts(ptr, 0, len_bytes) };
 }
 
 /// Loads config from given source. Returns true if successful
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn load_config(config_file_ptr: *const u8, config_file_len: usize) -> bool {
     let config_file = read_str_ptr(config_file_ptr, config_file_len);
     load_config_impl(&config_file)
@@ -64,7 +64,7 @@ pub extern "C" fn load_config(config_file_ptr: *const u8, config_file_len: usize
 
 /// Initiates a task with given filename and source.
 /// Returns the task id if successful, otherwise 0.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn initiate_task(
     file_name_ptr: *const u8,
     file_name_len: usize,
@@ -91,7 +91,7 @@ pub extern "C" fn initiate_task(
 /// Get the list of additionally required files for the given task.
 /// Returns true if successful.
 /// Result is stored in `RESULT` and can be accessed by `get_result_ptr` and `get_result_size`.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn get_required_files(task_id: usize) -> bool {
     debug!("get_required_files {task_id}");
     TASKS.with(|tasks| {
@@ -116,7 +116,7 @@ pub extern "C" fn get_required_files(task_id: usize) -> bool {
 
 /// Load an additional file.
 /// Returns true if successful.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn load_file(
     task_id: usize,
     file_name_ptr: *const u8,
@@ -143,7 +143,7 @@ pub extern "C" fn load_file(
 
 /// Converts given GraphQL string to JS.
 /// Returns true if successful.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn emit_js(task_id: usize) -> bool {
     debug!("convert_to_js {task_id}");
     TASKS.with(|tasks| {
@@ -164,7 +164,7 @@ pub extern "C" fn emit_js(task_id: usize) -> bool {
 }
 
 /// Frees the task with given id.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn free_task(task_id: usize) {
     debug!("free_task {task_id}");
     TASKS.with(|tasks| {
@@ -174,7 +174,7 @@ pub extern "C" fn free_task(task_id: usize) {
 }
 
 /// Gets the pointer to the last result of operation.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn get_result_ptr() -> *const u8 {
     RESULT.with(|cell| {
         let r = cell.borrow();
@@ -184,7 +184,7 @@ pub extern "C" fn get_result_ptr() -> *const u8 {
 }
 
 /// Gets the size of the last result of operation.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn get_result_size() -> usize {
     RESULT.with(|cell| {
         let r = cell.borrow();
@@ -194,7 +194,7 @@ pub extern "C" fn get_result_size() -> usize {
 }
 
 /// Writes the log to the result buffer.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn get_log() {
     let log = LOGGER.take_log();
     RESULT.with(|cell| cell.replace(Some(log)));

@@ -31,7 +31,7 @@ pub fn issue_string_ticket() -> Ticket {
 }
 
 /// Receive a result from Node.js.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn execute_node_ret(id: u32, is_ok: u32, result: *const u8, result_len: usize) {
     TICKETS.with(|tickets| {
         let mut tickets = tickets.borrow_mut();

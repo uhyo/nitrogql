@@ -545,8 +545,8 @@ fn check_fragment_spread_core<'src, S: Text<'src>>(
             return;
         }
         (
-            TypeDefinition::Object(ref obj_definition),
-            TypeDefinition::Object(ref cond_obj_definition),
+            TypeDefinition::Object(obj_definition),
+            TypeDefinition::Object(cond_obj_definition),
         ) => {
             let cond_obj_name = cond_obj_definition.name.inner_ref();
             if obj_definition.name != *cond_obj_name {
@@ -574,12 +574,12 @@ fn check_fragment_spread_core<'src, S: Text<'src>>(
             }
         }
         (
-            TypeDefinition::Object(ref obj_definition),
-            TypeDefinition::Interface(ref intf_definition),
+            TypeDefinition::Object(obj_definition),
+            TypeDefinition::Interface(intf_definition),
         )
         | (
-            TypeDefinition::Interface(ref intf_definition),
-            TypeDefinition::Object(ref obj_definition),
+            TypeDefinition::Interface(intf_definition),
+            TypeDefinition::Object(obj_definition),
         ) => {
             let intf_name = intf_definition.name.inner_ref();
             let obj_implements_intf = obj_definition
@@ -611,12 +611,12 @@ fn check_fragment_spread_core<'src, S: Text<'src>>(
             }
         }
         (
-            TypeDefinition::Object(ref obj_definition),
-            TypeDefinition::Union(ref cond_union_definition),
+            TypeDefinition::Object(obj_definition),
+            TypeDefinition::Union(cond_union_definition),
         )
         | (
-            TypeDefinition::Union(ref cond_union_definition),
-            TypeDefinition::Object(ref obj_definition),
+            TypeDefinition::Union(cond_union_definition),
+            TypeDefinition::Object(obj_definition),
         ) => {
             let obj_name = obj_definition.name.inner_ref();
             let obj_in_union = cond_union_definition
@@ -648,8 +648,8 @@ fn check_fragment_spread_core<'src, S: Text<'src>>(
             }
         }
         (
-            TypeDefinition::Interface(ref interface_definition1),
-            TypeDefinition::Interface(ref interface_definition2),
+            TypeDefinition::Interface(interface_definition1),
+            TypeDefinition::Interface(interface_definition2),
         ) => {
             let intf1_name = interface_definition1.name.inner_ref();
             let intf2_name = interface_definition2.name.inner_ref();
@@ -700,12 +700,12 @@ fn check_fragment_spread_core<'src, S: Text<'src>>(
             }
         }
         (
-            TypeDefinition::Interface(ref interface_definition),
-            TypeDefinition::Union(ref union_definition),
+            TypeDefinition::Interface(interface_definition),
+            TypeDefinition::Union(union_definition),
         )
         | (
-            TypeDefinition::Union(ref union_definition),
-            TypeDefinition::Interface(ref interface_definition),
+            TypeDefinition::Union(union_definition),
+            TypeDefinition::Interface(interface_definition),
         ) => {
             let intf_name = interface_definition.name.inner_ref();
             let some_member_implements_interface =
@@ -753,8 +753,8 @@ fn check_fragment_spread_core<'src, S: Text<'src>>(
             }
         }
         (
-            TypeDefinition::Union(ref union_definition1),
-            TypeDefinition::Union(ref union_definition2),
+            TypeDefinition::Union(union_definition1),
+            TypeDefinition::Union(union_definition2),
         ) => {
             let there_is_overlapping_member = union_definition2.possible_types.iter().any(|mem2| {
                 union_definition1

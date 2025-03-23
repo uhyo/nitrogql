@@ -141,10 +141,10 @@ fn get_schema_metadata_type(document: &TypeSystemDocument) -> TSType {
     // If there is no schema definition, use default root type names.
     let mut operations = vec![];
     for d in document.definitions.iter() {
-        let TypeSystemDefinition::TypeDefinition(ref def) = d else {
+        let TypeSystemDefinition::TypeDefinition(def) = d else {
             continue;
         };
-        let TypeDefinition::Object(ref def) = def else {
+        let TypeDefinition::Object(def) = def else {
             continue;
         };
 

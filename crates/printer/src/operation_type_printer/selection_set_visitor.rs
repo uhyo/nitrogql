@@ -22,7 +22,7 @@ fn visit_fields_in_selection_set_impl<'src, S: Text<'src>>(
         visitor(sel);
         match sel {
             Selection::Field(_) => {}
-            Selection::FragmentSpread(ref fragment) => {
+            Selection::FragmentSpread(fragment) => {
                 if seen_fragments.contains(&fragment.fragment_name.name) {
                     continue;
                 }
@@ -38,7 +38,7 @@ fn visit_fields_in_selection_set_impl<'src, S: Text<'src>>(
                     visitor,
                 );
             }
-            Selection::InlineFragment(ref fragment) => {
+            Selection::InlineFragment(fragment) => {
                 visit_fields_in_selection_set_impl(
                     context,
                     &fragment.selection_set,

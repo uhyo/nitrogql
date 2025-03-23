@@ -87,7 +87,7 @@ impl<'a, Str: Text<'a>, OriginalNode> Schema<Str, OriginalNode> {
     /// Iterate over types.
     pub fn iter_types(
         &self,
-    ) -> impl Iterator<Item = (&Str, &Node<TypeDefinition<Str, OriginalNode>, OriginalNode>)> {
+    ) -> impl Iterator<Item = (&Str, &Node<TypeDefinition<Str, OriginalNode>, OriginalNode>)> + use<'_, Str, OriginalNode> {
         self.type_names.iter().filter_map(move |type_name| {
             self.type_definitions
                 .get(type_name.borrow())
@@ -102,7 +102,7 @@ impl<'a, Str: Text<'a>, OriginalNode> Schema<Str, OriginalNode> {
             &Str,
             &Node<DirectiveDefinition<Str, OriginalNode>, OriginalNode>,
         ),
-    > {
+    > + use<'_, Str, OriginalNode> {
         self.directive_names.iter().filter_map(move |type_name| {
             self.directive_definitions
                 .get(type_name.borrow())

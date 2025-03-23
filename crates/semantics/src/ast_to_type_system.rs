@@ -26,13 +26,13 @@ pub fn ast_to_type_system<'src>(
     let mut builder = SchemaBuilder::<Cow<'src, str>, Pos>::new();
     for def in document.definitions.iter() {
         match def {
-            TypeSystemDefinition::SchemaDefinition(ref def) => {
+            TypeSystemDefinition::SchemaDefinition(def) => {
                 convert_schema_definition(def, &mut builder);
             }
-            TypeSystemDefinition::TypeDefinition(ref def) => {
+            TypeSystemDefinition::TypeDefinition(def) => {
                 convert_type_definition(def, &mut builder);
             }
-            TypeSystemDefinition::DirectiveDefinition(ref def) => {
+            TypeSystemDefinition::DirectiveDefinition(def) => {
                 convert_directive_definition(def, &mut builder);
             }
         }
@@ -63,7 +63,7 @@ fn convert_type_definition<'src>(
     builder: &mut SchemaBuilder<Cow<'src, str>, Pos>,
 ) {
     match def {
-        AstTypeDefinition::Scalar(ref def) => builder
+        AstTypeDefinition::Scalar(def) => builder
             .extend::<Vec<(_, Node<TypeDefinition<_, _>, _>)>>(vec![(
                 def.name.name.into(),
                 Node::from(
@@ -74,7 +74,7 @@ fn convert_type_definition<'src>(
                     def.position,
                 ),
             )]),
-        AstTypeDefinition::Object(ref def) => builder
+        AstTypeDefinition::Object(def) => builder
             .extend::<Vec<(_, Node<TypeDefinition<_, _>, _>)>>(vec![(
                 def.name.name.into(),
                 Node::from(
@@ -87,7 +87,7 @@ fn convert_type_definition<'src>(
                     def.position,
                 ),
             )]),
-        AstTypeDefinition::Interface(ref def) => builder
+        AstTypeDefinition::Interface(def) => builder
             .extend::<Vec<(_, Node<TypeDefinition<_, _>, _>)>>(vec![(
                 def.name.name.into(),
                 Node::from(
@@ -100,7 +100,7 @@ fn convert_type_definition<'src>(
                     def.position,
                 ),
             )]),
-        AstTypeDefinition::Union(ref def) => builder
+        AstTypeDefinition::Union(def) => builder
             .extend::<Vec<(_, Node<TypeDefinition<_, _>, _>)>>(vec![(
                 def.name.name.into(),
                 Node::from(
@@ -112,7 +112,7 @@ fn convert_type_definition<'src>(
                     def.position,
                 ),
             )]),
-        AstTypeDefinition::Enum(ref def) => builder
+        AstTypeDefinition::Enum(def) => builder
             .extend::<Vec<(_, Node<TypeDefinition<_, _>, _>)>>(vec![(
                 def.name.name.into(),
                 Node::from(
@@ -132,7 +132,7 @@ fn convert_type_definition<'src>(
                     def.position,
                 ),
             )]),
-        AstTypeDefinition::InputObject(ref def) => {
+        AstTypeDefinition::InputObject(def) => {
             builder.extend::<Vec<(_, Node<TypeDefinition<_, _>, _>)>>(vec![(
                 def.name.name.into(),
                 Node::from(
