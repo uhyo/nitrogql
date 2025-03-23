@@ -3,7 +3,7 @@ use thiserror::Error;
 
 #[cfg(target_os = "wasi")]
 #[link(wasm_import_module = "nitrogql_helper/config")]
-extern "C" {
+unsafe extern "C" {
     /// Executes given code. Result is asynchronously provided to given ticket.
     fn execute_node(code_ptr: *const u8, code_len: usize, ticket_handle: u32);
 }
