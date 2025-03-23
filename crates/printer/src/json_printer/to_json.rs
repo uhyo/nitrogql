@@ -1,4 +1,4 @@
-use json_writer::JSONObjectWriter;
+use json_writer::{JSONObjectWriter, JSONWriter};
 
 use nitrogql_ast::{
     directive::Directive,
@@ -13,11 +13,11 @@ use super::helpers::{Argument, JSONValue, Name, Variable};
 
 /// Value that can be printed into JSON.
 pub trait JsonPrintable {
-    fn print_json(&self, writer: &mut JSONObjectWriter);
+    fn print_json<W: JSONWriter>(&self, writer: &mut JSONObjectWriter<W>);
 }
 
 impl JsonPrintable for OperationDocument<'_> {
-    fn print_json(&self, writer: &mut JSONObjectWriter) {
+    fn print_json<W: JSONWriter>(&self, writer: &mut JSONObjectWriter<W>) {
         writer.value("kind", "Document");
 
         let mut definitions_writer = writer.array("definitions");
@@ -28,7 +28,7 @@ impl JsonPrintable for OperationDocument<'_> {
 }
 
 impl JsonPrintable for [ExecutableDefinitionRef<'_>] {
-    fn print_json(&self, writer: &mut JSONObjectWriter) {
+    fn print_json<W: JSONWriter>(&self, writer: &mut JSONObjectWriter<W>) {
         writer.value("kind", "Document");
 
         let mut definitions_writer = writer.array("definitions");
@@ -39,7 +39,7 @@ impl JsonPrintable for [ExecutableDefinitionRef<'_>] {
 }
 
 impl JsonPrintable for [&FragmentDefinition<'_>] {
-    fn print_json(&self, writer: &mut JSONObjectWriter) {
+    fn print_json<W: JSONWriter>(&self, writer: &mut JSONObjectWriter<W>) {
         writer.value("kind", "Document");
 
         let mut definitions_writer = writer.array("definitions");
@@ -50,7 +50,7 @@ impl JsonPrintable for [&FragmentDefinition<'_>] {
 }
 
 impl JsonPrintable for ExecutableDefinition<'_> {
-    fn print_json(&self, writer: &mut JSONObjectWriter) {
+    fn print_json<W: JSONWriter>(&self, writer: &mut JSONObjectWriter<W>) {
         match self {
             ExecutableDefinition::OperationDefinition(op) => {
                 op.print_json(writer);
@@ -68,7 +68,7 @@ pub enum ExecutableDefinitionRef<'a> {
 }
 
 impl JsonPrintable for ExecutableDefinitionRef<'_> {
-    fn print_json(&self, writer: &mut JSONObjectWriter) {
+    fn print_json<W: JSONWriter>(&self, writer: &mut JSONObjectWriter<W>) {
         match self {
             ExecutableDefinitionRef::OperationDefinition(op) => {
                 op.print_json(writer);
@@ -81,7 +81,7 @@ impl JsonPrintable for ExecutableDefinitionRef<'_> {
 }
 
 impl JsonPrintable for OperationDefinition<'_> {
-    fn print_json(&self, writer: &mut JSONObjectWriter) {
+    fn print_json<W: JSONWriter>(&self, writer: &mut JSONObjectWriter<W>) {
         writer.value("kind", "OperationDefinition");
         writer.value("operation", self.operation_type.as_str());
         if let Some(name) = &self.name {
@@ -104,7 +104,7 @@ impl JsonPrintable for OperationDefinition<'_> {
 }
 
 impl JsonPrintable for FragmentDefinition<'_> {
-    fn print_json(&self, writer: &mut JSONObjectWriter) {
+    fn print_json<W: JSONWriter>(&self, writer: &mut JSONObjectWriter<W>) {
         writer.value("kind", "FragmentDefinition");
         writer.value("name", JSONValue(&Name(self.name.name)));
         Type::Named(NamedType {
@@ -121,7 +121,7 @@ impl JsonPrintable for FragmentDefinition<'_> {
 }
 
 impl JsonPrintable for VariableDefinition<'_> {
-    fn print_json(&self, writer: &mut JSONObjectWriter) {
+    fn print_json<W: JSONWriter>(&self, writer: &mut JSONObjectWriter<W>) {
         writer.value("kind", "VariableDefinition");
         writer.value("variable", JSONValue(&Variable::new(Name(self.name.name))));
         writer.value("type", JSONValue(&self.r#type));
@@ -133,7 +133,7 @@ impl JsonPrintable for VariableDefinition<'_> {
 }
 
 impl JsonPrintable for Directive<'_> {
-    fn print_json(&self, writer: &mut JSONObjectWriter) {
+    fn print_json<W: JSONWriter>(&self, writer: &mut JSONObjectWriter<W>) {
         writer.value("kind", "Directive");
         writer.value("name", JSONValue(&Name(self.name.name)));
         let mut arguments_writer = writer.array("arguments");
@@ -146,7 +146,7 @@ impl JsonPrintable for Directive<'_> {
 }
 
 impl JsonPrintable for Type<'_> {
-    fn print_json(&self, writer: &mut JSONObjectWriter) {
+    fn print_json<W: JSONWriter>(&self, writer: &mut JSONObjectWriter<W>) {
         match self {
             Type::NonNull(inner) => {
                 writer.value("kind", "NonNullType");
@@ -165,7 +165,7 @@ impl JsonPrintable for Type<'_> {
 }
 
 impl JsonPrintable for Value<'_> {
-    fn print_json(&self, writer: &mut JSONObjectWriter) {
+    fn print_json<W: JSONWriter>(&self, writer: &mut JSONObjectWriter<W>) {
         match self {
             Value::Variable(v) => {
                 Variable::new(Name(v.name)).print_json(writer);
@@ -215,7 +215,7 @@ impl JsonPrintable for Value<'_> {
 }
 
 impl JsonPrintable for SelectionSet<'_> {
-    fn print_json(&self, writer: &mut JSONObjectWriter) {
+    fn print_json<W: JSONWriter>(&self, writer: &mut JSONObjectWriter<W>) {
         writer.value("kind", "SelectionSet");
         let mut selections_writer = writer.array("selections");
         for selection in self.selections.iter() {
@@ -225,7 +225,7 @@ impl JsonPrintable for SelectionSet<'_> {
 }
 
 impl JsonPrintable for Selection<'_> {
-    fn print_json(&self, writer: &mut JSONObjectWriter) {
+    fn print_json<W: JSONWriter>(&self, writer: &mut JSONObjectWriter<W>) {
         match self {
             Selection::Field(field) => {
                 field.print_json(writer);
@@ -241,7 +241,7 @@ impl JsonPrintable for Selection<'_> {
 }
 
 impl JsonPrintable for Field<'_> {
-    fn print_json(&self, writer: &mut JSONObjectWriter) {
+    fn print_json<W: JSONWriter>(&self, writer: &mut JSONObjectWriter<W>) {
         writer.value("kind", "Field");
         writer.value("name", JSONValue(&Name(self.name.name)));
         if let Some(ref alias) = self.alias {
@@ -267,7 +267,7 @@ impl JsonPrintable for Field<'_> {
 }
 
 impl JsonPrintable for FragmentSpread<'_> {
-    fn print_json(&self, writer: &mut JSONObjectWriter) {
+    fn print_json<W: JSONWriter>(&self, writer: &mut JSONObjectWriter<W>) {
         writer.value("kind", "FragmentSpread");
         writer.value("name", JSONValue(&Name(self.fragment_name.name)));
         let mut directives_writer = writer.array("directives");
@@ -278,7 +278,7 @@ impl JsonPrintable for FragmentSpread<'_> {
 }
 
 impl JsonPrintable for InlineFragment<'_> {
-    fn print_json(&self, writer: &mut JSONObjectWriter) {
+    fn print_json<W: JSONWriter>(&self, writer: &mut JSONObjectWriter<W>) {
         writer.value("kind", "InlineFragment");
         if let Some(ref cond) = self.type_condition {
             let mut type_condition_writer = writer.object("typeCondition");
@@ -293,7 +293,7 @@ impl JsonPrintable for InlineFragment<'_> {
     }
 }
 
-fn write_selection_set(set: &SelectionSet<'_>, writer: &mut JSONObjectWriter) {
+fn write_selection_set<W: JSONWriter>(set: &SelectionSet<'_>, writer: &mut JSONObjectWriter<W>) {
     if set.selections.is_empty() {
         return;
     }

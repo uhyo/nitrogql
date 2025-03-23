@@ -10,7 +10,7 @@ nitrogql-ast = { path = "../ast" }
 nitrogql-error = { path = "../error" }
 pest = "2.5.5"
 pest_derive = "2.5.5"
-thiserror = "1.0.40"
+thiserror = "2.0.12"
 
 [dev-dependencies]
 insta = "1.28.0"

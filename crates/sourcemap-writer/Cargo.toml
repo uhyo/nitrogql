@@ -8,5 +8,5 @@ edition = "2021"
 [dependencies]
 nitrogql-ast = { path = "../ast" }
 nitrogql-utils = { path = "../utils" }
-lru = "0.10.0"
-json-writer = "0.2.1"
+lru = "0.13.0"
+json-writer = "0.4.0"

@@ -20,22 +20,22 @@ nitrogql-utils = { path = "../utils" }
 sourcemap-writer = { path = "../sourcemap-writer" }
 graphql-builtins = { path = "../builtins" }
 graphql-type-system = { path = "../type-system" }
-json-writer = "0.2.1"
-lru = "0.9.0"
+json-writer = "0.4.0"
+lru = "0.13.0"
 glob = "0.3.1"
 anyhow = "1.0.69"
 pest = "2.5.5"
 pest_derive = "2.5.5"
-thiserror = "1.0.38"
+thiserror = "2.0.12"
 clap = { version ="4.1.7", default-features = false, features = ["std", "help", "usage", "error-context", "suggestions", "derive"] }
-globmatch = "0.2.4"
+globmatch = "0.3.0"
 log = "0.4.17"
-colored = "2.0.0"
+colored = "3.0.0"
 once_cell = "1.17.1"
 serde = "1.0.156"
 serde_yaml = "0.9.19"
-itertools = "0.10.5"
-simple_logger = "4.1.0"
+itertools = "0.14.0"
+simple_logger = "5.0.0"
 futures = "0.3.30"
 
 [dev-dependencies]
