@@ -65,7 +65,7 @@ impl HasPos for OperationDefinition<'_> {
 
 impl OperationDefinition<'_> {
     /// Returns Pos for its name.
-    pub fn name_pos(&self) -> NamePos {
+    pub fn name_pos(&self) -> NamePos<'_> {
         match self.name {
             None => NamePos {
                 pos: *self.position(),

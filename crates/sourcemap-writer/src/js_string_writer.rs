@@ -11,7 +11,7 @@ pub struct JsStringWriter<'a> {
 }
 
 impl JsStringWriter<'_> {
-    pub fn new(buffer: &mut String) -> JsStringWriter {
+    pub fn new(buffer: &mut String) -> JsStringWriter<'_> {
         buffer.push_str("`\n");
         JsStringWriter {
             buffer,

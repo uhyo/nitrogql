@@ -349,10 +349,8 @@ fn check_skip_directive<'src, S: Text<'src>>(
                             return true;
                         }
                     }
-                    Value::BooleanValue(b) => {
-                        if b.value {
-                            return true;
-                        }
+                    Value::BooleanValue(b) if b.value => {
+                        return true;
                     }
                     _ => {}
                 }
@@ -375,10 +373,8 @@ fn check_skip_directive<'src, S: Text<'src>>(
                             return true;
                         }
                     }
-                    Value::BooleanValue(b) => {
-                        if !b.value {
-                            return true;
-                        }
+                    Value::BooleanValue(b) if !b.value => {
+                        return true;
                     }
                     _ => {}
                 }

@@ -91,7 +91,7 @@ pub fn generate_builtins() -> Vec<TypeSystemDefinitionOrExtension<'static>> {
         .collect()
 }
 
-fn scalar(name: &str) -> TypeDefinition {
+fn scalar(name: &str) -> TypeDefinition<'_> {
     TypeDefinition::Scalar(ScalarTypeDefinition {
         description: None,
         position: Pos::builtin(),
@@ -133,14 +133,14 @@ fn directive<'a>(
     }
 }
 
-fn ident(name: &str) -> Ident {
+fn ident(name: &str) -> Ident<'_> {
     Ident {
         name,
         position: Pos::builtin(),
     }
 }
 
-fn keyword(name: &str) -> Keyword {
+fn keyword(name: &str) -> Keyword<'_> {
     Keyword {
         name,
         position: Pos::builtin(),

@@ -54,7 +54,7 @@ impl From<ParseError> for PositionedError {
     }
 }
 
-pub fn parse_operation_document(document: &str) -> Result<OperationDocumentExt, ParseError> {
+pub fn parse_operation_document(document: &str) -> Result<OperationDocumentExt<'_>, ParseError> {
     let res = RawParser::parse(Rule::ExecutableDocument, document)?;
 
     Ok(build_operation_document(res))
@@ -62,7 +62,7 @@ pub fn parse_operation_document(document: &str) -> Result<OperationDocumentExt, 
 
 pub fn parse_type_system_document(
     document: &str,
-) -> Result<TypeSystemOrExtensionDocument, ParseError> {
+) -> Result<TypeSystemOrExtensionDocument<'_>, ParseError> {
     let res = RawParser::parse(Rule::TypeSystemExtensionDocument, document)?;
 
     Ok(build_type_system_or_extension_document(res))

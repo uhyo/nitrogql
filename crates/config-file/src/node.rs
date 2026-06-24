@@ -95,7 +95,7 @@ pub async fn run_node(code: &str) -> io::Result<String> {
                 }
                 RunNodeResult::Error { error } => {
                     let error = serde_json::to_string(&error)?;
-                    Err(io::Error::new(io::ErrorKind::Other, error))
+                    Err(io::Error::other(error))
                 }
             }
         })

@@ -64,8 +64,8 @@ fn type_system() -> TypeSystemDocument<'static> {
     )
     .unwrap();
     doc.extend(generate_builtins());
-    let doc = resolve_schema_extensions(doc).unwrap();
-    doc
+
+    resolve_schema_extensions(doc).unwrap()
 }
 
 #[test]

@@ -75,7 +75,7 @@ impl ScalarTypeConfig {
         }
     }
     /// Returns this config represented as four separate types.
-    pub fn separate_ref(&self) -> SeparateScalarTypeConfigRef {
+    pub fn separate_ref(&self) -> SeparateScalarTypeConfigRef<'_> {
         match self {
             ScalarTypeConfig::Single(type_name) => SeparateScalarTypeConfigRef {
                 resolver_output: type_name.as_str(),

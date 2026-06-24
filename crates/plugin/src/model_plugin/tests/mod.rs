@@ -181,7 +181,7 @@ type Post {
     }
 }
 
-fn parse_to_type_system_document(source: &str) -> TypeSystemDocument {
+fn parse_to_type_system_document(source: &str) -> TypeSystemDocument<'_> {
     let mut doc = parse_type_system_document(source).unwrap();
     doc.extend(generate_builtins());
 
@@ -195,8 +195,7 @@ fn parse_to_type_system_document(source: &str) -> TypeSystemDocument {
             .flat_map(|d| d.definitions),
     );
 
-    let doc = resolve_schema_extensions(doc).unwrap();
-    doc
+    resolve_schema_extensions(doc).unwrap()
 }
 
 struct TestHost {}

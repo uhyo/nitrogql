@@ -1005,11 +1005,11 @@ mod imports {
     }
 }
 
-fn parse_to_type_system_document(source: &str) -> TypeSystemDocument {
+fn parse_to_type_system_document(source: &str) -> TypeSystemDocument<'_> {
     let mut doc = parse_type_system_document(source).unwrap();
     doc.extend(generate_builtins());
-    let doc = resolve_schema_extensions(doc).unwrap();
-    doc
+
+    resolve_schema_extensions(doc).unwrap()
 }
 
 fn test_check(

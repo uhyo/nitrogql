@@ -67,7 +67,7 @@ pub enum TypeDefinition<'a> {
 }
 
 impl TypeDefinition<'_> {
-    pub fn name(&self) -> &Ident {
+    pub fn name(&self) -> &Ident<'_> {
         match self {
             TypeDefinition::Scalar(def) => &def.name,
             TypeDefinition::Object(def) => &def.name,
