@@ -65,7 +65,7 @@ fn get_scalar_types(
             let directive_ts_type = definition
                 .directives
                 .iter()
-                .find(|directive| (directive.name.name == "nitrogql_ts_type"))
+                .find(|directive| directive.name.name == "nitrogql_ts_type")
                 .and_then(|directive| directive.arguments.as_ref())
                 .and_then(|args| {
                     let mut resolver_input_type = None;

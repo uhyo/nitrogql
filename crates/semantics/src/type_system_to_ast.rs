@@ -16,7 +16,7 @@ use nitrogql_ast::{
 };
 
 /// Convert Schema to TypeSystemDocument. For type definition generation purpose.
-pub fn type_system_to_ast<'src, S: Text<'src>, D>(schema: &Schema<S, D>) -> TypeSystemDocument {
+pub fn type_system_to_ast<'src, S: Text<'src>, D>(schema: &Schema<S, D>) -> TypeSystemDocument<'_> {
     let mut result = TypeSystemDocument::new();
     let schema_definition = {
         let mut schema_definition = SchemaDefinition {
@@ -62,7 +62,7 @@ pub fn type_system_to_ast<'src, S: Text<'src>, D>(schema: &Schema<S, D>) -> Type
 
 fn convert_type_definition<S: Deref<Target = str>, D>(
     type_def: &graphql_type_system::TypeDefinition<S, D>,
-) -> TypeDefinition {
+) -> TypeDefinition<'_> {
     match type_def {
         graphql_type_system::TypeDefinition::Scalar(scalar) => {
             TypeDefinition::Scalar(ScalarTypeDefinition {
@@ -152,7 +152,7 @@ fn convert_type_definition<S: Deref<Target = str>, D>(
 
 fn convert_field<S: Deref<Target = str>, D>(
     field: &graphql_type_system::Field<S, D>,
-) -> FieldDefinition {
+) -> FieldDefinition<'_> {
     FieldDefinition {
         description: convert_description(&field.description),
         name: convert_node_to_ident(&field.name),
@@ -162,7 +162,7 @@ fn convert_field<S: Deref<Target = str>, D>(
     }
 }
 
-fn convert_type<S: Deref<Target = str>, D>(ty: &graphql_type_system::Type<S, D>) -> Type {
+fn convert_type<S: Deref<Target = str>, D>(ty: &graphql_type_system::Type<S, D>) -> Type<'_> {
     match ty {
         graphql_type_system::Type::Named(named) => Type::Named(NamedType {
             name: convert_node_to_ident(named),
@@ -179,7 +179,7 @@ fn convert_type<S: Deref<Target = str>, D>(ty: &graphql_type_system::Type<S, D>)
 
 fn convert_arguments<S: Deref<Target = str>, D>(
     arguments: &[graphql_type_system::InputValue<S, D>],
-) -> Option<ArgumentsDefinition> {
+) -> Option<ArgumentsDefinition<'_>> {
     if arguments.is_empty() {
         None
     } else {
@@ -191,7 +191,7 @@ fn convert_arguments<S: Deref<Target = str>, D>(
 
 fn convert_input_value<S: Deref<Target = str>, D>(
     input_value: &graphql_type_system::InputValue<S, D>,
-) -> InputValueDefinition {
+) -> InputValueDefinition<'_> {
     InputValueDefinition {
         description: convert_description(&input_value.description),
         position: Pos::default(),
@@ -217,14 +217,14 @@ fn convert_description<S: Deref<Target = str>, D>(
     })
 }
 
-fn convert_node_to_ident<S: Deref<Target = str>, D>(node: &Node<S, D>) -> Ident {
+fn convert_node_to_ident<S: Deref<Target = str>, D>(node: &Node<S, D>) -> Ident<'_> {
     Ident {
         name: node,
         position: Pos::default(),
     }
 }
 
-fn keyword(name: &str) -> Keyword {
+fn keyword(name: &str) -> Keyword<'_> {
     Keyword {
         name,
         position: Pos::builtin(),

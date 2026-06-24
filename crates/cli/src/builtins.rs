@@ -44,14 +44,14 @@ pub fn nitrogql_builtins() -> Vec<TypeSystemDefinitionOrExtension<'static>> {
     )]
 }
 
-fn ident(name: &str) -> Ident {
+fn ident(name: &str) -> Ident<'_> {
     Ident {
         name,
         position: Pos::builtin(),
     }
 }
 
-fn keyword(name: &str) -> Keyword {
+fn keyword(name: &str) -> Keyword<'_> {
     Keyword {
         name,
         position: Pos::builtin(),

@@ -28,7 +28,7 @@ impl HasPos for Type<'_> {
 
 impl Type<'_> {
     /// Returns a reference to the unwrapped type of self.
-    pub fn unwrapped_type(&self) -> &NamedType {
+    pub fn unwrapped_type(&self) -> &NamedType<'_> {
         match self {
             Type::Named(name) => name,
             Type::NonNull(inner) => inner.r#type.unwrapped_type(),

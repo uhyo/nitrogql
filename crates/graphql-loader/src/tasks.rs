@@ -70,7 +70,7 @@ impl Task {
     }
     /// Gets the root document.
     /// Panics if the root file is not registered yet.
-    pub fn get_root_document(&self) -> (&OperationDocument, &OperationExtension) {
+    pub fn get_root_document(&self) -> (&OperationDocument<'_>, &OperationExtension<'_>) {
         let (doc, extension) = self
             .loaded_files
             .get(&self.root_file_name)
@@ -82,7 +82,10 @@ impl Task {
         self.loaded_files.contains_key(file_name)
     }
     /// Gets the document and extension for the given file.
-    pub fn get_file(&self, file_name: &Path) -> Option<&(OperationDocument, OperationExtension)> {
+    pub fn get_file(
+        &self,
+        file_name: &Path,
+    ) -> Option<&(OperationDocument<'_>, OperationExtension<'_>)> {
         self.loaded_files.get(file_name)
     }
     /// Returns an iterator over loaded files.

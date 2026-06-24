@@ -229,10 +229,10 @@ directive @model(
     ) -> Option<TypeSystemDocument<'src>> {
         // removes @model directives
         let definitions = document.definitions.iter().flat_map(|def| {
-            if let TypeSystemDefinition::DirectiveDefinition(def) = def {
-                if def.name.name == "model" {
-                    return None;
-                }
+            if let TypeSystemDefinition::DirectiveDefinition(def) = def
+                && def.name.name == "model"
+            {
+                return None;
             }
             if let TypeSystemDefinition::TypeDefinition(TypeDefinition::Object(def)) = def {
                 let directives = def

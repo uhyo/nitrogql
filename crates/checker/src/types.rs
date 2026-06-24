@@ -111,14 +111,13 @@ pub fn is_subtype<'src, S: Text<'src>>(
                     } else {
                         return Some(false);
                     }
-                    if let Some(other_def) = other_def.and_then(|def| def.as_union()) {
-                        if other_def
+                    if let Some(other_def) = other_def.and_then(|def| def.as_union())
+                        && other_def
                             .possible_types
                             .iter()
                             .any(|mem| mem == &***target_name)
-                        {
-                            return Some(true);
-                        }
+                    {
+                        return Some(true);
                     }
                     if other_def.is_some() {
                         Some(false)

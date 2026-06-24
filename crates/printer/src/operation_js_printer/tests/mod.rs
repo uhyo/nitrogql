@@ -167,7 +167,7 @@ fn can_print_mutually_recursive_fragments() {
     assert_snapshot!(print_js(&document));
 }
 
-fn parse(str: &str) -> OperationDocument {
+fn parse(str: &str) -> OperationDocument<'_> {
     let doc = parse_operation_document(str).unwrap();
     let (document, _) = resolve_operation_extensions(doc).unwrap();
     document

@@ -22,7 +22,7 @@ pub struct DefinitionMap<'a> {
 
 impl DefinitionMap<'_> {
     /// Returns a TypeDefinition for the root type of given OperationType.
-    pub fn root_type(&self, op: OperationType) -> Option<&TypeDefinition> {
+    pub fn root_type(&self, op: OperationType) -> Option<&TypeDefinition<'_>> {
         let op_type_name = match self.schema {
             Some(schema) => schema
                 .definitions

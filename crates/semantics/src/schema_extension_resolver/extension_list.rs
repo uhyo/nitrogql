@@ -64,7 +64,7 @@ impl From<ExtensionError> for PositionedError {
 }
 
 impl<OriginalType: HasPos, ExtensionType: HasPos> ExtensionList<'_, OriginalType, ExtensionType> {
-    pub fn new(name_of_elem: &str) -> ExtensionList<OriginalType, ExtensionType> {
+    pub fn new(name_of_elem: &str) -> ExtensionList<'_, OriginalType, ExtensionType> {
         ExtensionList {
             name_of_elem,
             items: IndexMap::new(),

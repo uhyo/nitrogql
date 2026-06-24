@@ -10,7 +10,7 @@ pub struct JustWriter<'a> {
 }
 
 impl JustWriter<'_> {
-    pub fn new(buffer: &mut String) -> JustWriter {
+    pub fn new(buffer: &mut String) -> JustWriter<'_> {
         JustWriter {
             buffer,
             indent: 0,
