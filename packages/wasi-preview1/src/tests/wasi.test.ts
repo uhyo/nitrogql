@@ -1,11 +1,17 @@
 import { Volume, createFsFromVolume } from "memfs";
-import { describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
 import { initWASI } from "../wasi.js";
 import { NestedDirectoryJSON } from "memfs";
 
-// 1 is 64KiB
-const memory = new WebAssembly.Memory({ initial: 1 });
-const buffer = new DataView(memory.buffer);
+// Each test gets a fresh memory so that leftover bytes at fixed offsets can
+// never couple one test to another. See #60.
+let memory: WebAssembly.Memory;
+let buffer: DataView;
+beforeEach(() => {
+  // 1 is 64KiB
+  memory = new WebAssembly.Memory({ initial: 1 });
+  buffer = new DataView(memory.buffer);
+});
 
 describe("args", () => {
   it("args_sizes_get", () => {

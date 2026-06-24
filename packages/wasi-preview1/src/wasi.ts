@@ -256,6 +256,12 @@ export function initWASI(config: WASIConfig): WASIAPI & WASIMeta {
       iovs_len: number,
       ret_buf: number
     ): number => {
+      // Validate the fd before reading iovs from guest memory, so that a bad
+      // fd never depends on (or touches) whatever happens to sit at iovs_ptr.
+      // stdout (1) and stderr (2) are always writable.
+      if (fd !== 1 && fd !== 2 && fs.get(fd) === undefined) {
+        return error.badf;
+      }
       const buffers = [];
       const dv = new DataView(memory(), iovs_ptr, 8 * iovs_len);
       for (let i = 0; i < iovs_len; i++) {
