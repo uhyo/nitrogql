@@ -372,6 +372,62 @@ describe("fs", () => {
       assertFileStat(memory.buffer, 128, 7, 11n);
     });
   });
+  describe("fd_fdstat_get", () => {
+    it("should return stats for preopened directory", () => {
+      const fs = createTestFS({
+        "/app": {
+          "foo.txt": "hello world",
+        },
+      });
+      const wasi = initWASI({
+        args: [],
+        env: {},
+        preopens: { "/": "/app" },
+        fs,
+      });
+      wasi.setMemory(memory);
+
+      // fd 3 is the preopened directory, which has no host file descriptor.
+      const result = wasi.fd_fdstat_get(3, 256);
+      expect(result).toBe(0);
+      // filetype::directory
+      expect(buffer.getUint8(256)).toBe(3);
+    });
+    it("should return stats for opened file", () => {
+      const fs = createTestFS({
+        "/app": {
+          "foo.txt": "hello world",
+        },
+      });
+      const wasi = initWASI({
+        args: [],
+        env: {},
+        preopens: { "/": "/app" },
+        fs,
+      });
+      wasi.setMemory(memory);
+
+      writeTextToBuf("foo.txt", memory.buffer);
+      const result = wasi.path_open(3, 0, 0, 7, 0, 0, 0, 0, 64);
+      expect(result).toBe(0);
+      const fd = buffer.getUint32(64, true);
+      const result2 = wasi.fd_fdstat_get(fd, 256);
+      expect(result2).toBe(0);
+      // filetype::regular_file
+      expect(buffer.getUint8(256)).toBe(4);
+    });
+    it("should return badf when fd is not open", () => {
+      const fs = createTestFS({
+        "/app": {
+          "foo.txt": "hello world",
+        },
+      });
+      const wasi = initWASI({ args: [], env: {}, preopens: {}, fs });
+      wasi.setMemory(memory);
+      const result = wasi.fd_fdstat_get(4, 256);
+      expect(result).toBe(8);
+    });
+  });
   describe("fd_read", () => {
     // Waiting for https://github.com/streamich/memfs/pull/946
     it.skip("should read from file", () => {

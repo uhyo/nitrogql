@@ -108,7 +108,12 @@ export class FileSystem {
    */
   stat(fd: FD): nodeFs.BigIntStats {
     if (fd.hostFd === undefined) {
-      throw new FSError("Not opened", "badf");
+      // Preopened directories do not have a host file descriptor, so stat the
+      // host path directly. (Rust's std calls fd_fdstat_get on preopened
+      // directories during startup.)
+      return this.#fs.statSync(fd.hostPath, {
+        bigint: true,
+      });
     }
     return this.#fs.fstatSync(fd.hostFd, {
       bigint: true,
