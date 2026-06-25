@@ -21,7 +21,7 @@
   "author": "uhyo <uhyo@uhy.ooo>",
   "license": "MIT",
   "devDependencies": {
-    "rollup": "^3.20.2"
+    "rollup": "^4.62.2"
   },
   "dependencies": {
     "@nitrogql/core": "1.7.2",
