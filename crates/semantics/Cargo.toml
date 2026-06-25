@@ -10,12 +10,12 @@ nitrogql-ast = { path = "../ast" }
 nitrogql-error = { path = "../error" }
 nitrogql-utils = { path = "../utils" }
 graphql-type-system = { path = "../type-system" }
-indexmap = "2.0.0"
-log = "0.4.17"
-thiserror = "2.0.12"
+indexmap = "2.14.0"
+log = "0.4.33"
+thiserror = "2.0.18"
 
 [dev-dependencies]
-insta = "1.28.0"
+insta = "1.48.0"
 nitrogql-printer = { path = "../printer" }
 nitrogql-parser = { path = "../parser" }
 nitrogql-introspection = { path = "../introspection" }

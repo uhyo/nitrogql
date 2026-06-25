@@ -8,11 +8,11 @@ edition = "2024"
 [dependencies]
 nitrogql-ast = { path = "../ast" }
 nitrogql-error = { path = "../error" }
-pest = "2.5.5"
-pest_derive = "2.5.5"
-thiserror = "2.0.12"
+pest = "2.8.6"
+pest_derive = "2.8.6"
+thiserror = "2.0.18"
 
 [dev-dependencies]
-insta = "1.28.0"
+insta = "1.48.0"
 nitrogql-printer = { path = "../printer" }
 sourcemap-writer = { path = "../sourcemap-writer" }

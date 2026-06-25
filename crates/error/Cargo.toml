@@ -6,7 +6,7 @@ edition = "2024"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-anyhow = "1.0.70"
-colored = "3.0.0"
+anyhow = "1.0.102"
+colored = "3.1.1"
 nitrogql-ast = { path = "../ast" }
 nitrogql-utils = { path = "../utils" }

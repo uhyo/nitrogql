@@ -6,8 +6,8 @@ edition = "2024"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-anyhow = "1.0.70"
-log = "0.4.17"
+anyhow = "1.0.102"
+log = "0.4.33"
 nitrogql-ast = { path = "../ast" }
 nitrogql-config-file = { path = "../config-file" }
 nitrogql-error = { path = "../error" }
@@ -16,7 +16,7 @@ nitrogql-semantics = { path = "../semantics" }
 nitrogql-printer = { path = "../printer" }
 nitrogql-utils = { path = "../utils" }
 sourcemap-writer = { path = "../sourcemap-writer" }
-thiserror = "2.0.12"
+thiserror = "2.0.18"
 
 [dev-dependencies]
-insta = "1.28.0"
+insta = "1.48.0"
