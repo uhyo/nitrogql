@@ -22,6 +22,7 @@
   "author": "uhyo <uhyo@uhy.ooo>",
   "license": "MIT",
   "devDependencies": {
+    "@types/node": "^20.10.4",
     "memfs": "^4.2.1",
     "vitest": "^0.34.2"
   }
