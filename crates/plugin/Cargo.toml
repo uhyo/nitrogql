@@ -15,9 +15,9 @@ nitrogql-parser = { path = "../parser" }
 nitrogql-printer = { path = "../printer" }
 nitrogql-semantics = { path = "../semantics" }
 graphql-type-system = { path = "../type-system" }
-serde_yaml = "0.9.19"
+serde_yaml = "0.9.34"
 sourcemap-writer = { path = "../sourcemap-writer" }
-thiserror = "2.0.12"
+thiserror = "2.0.18"
 
 [dev-dependencies]
-insta = "1.28.0"
+insta = "1.48.0"

@@ -7,7 +7,7 @@ edition = "2024"
 
 [dependencies]
 graphql-type-system = { path = "../type-system" }
-itertools = "0.14.0"
+itertools = "0.15.0"
 json-writer = "0.4.0"
 nitrogql-ast = { path = "../ast" }
 nitrogql-checker = { path = "../checker" }
@@ -15,9 +15,9 @@ nitrogql-config-file = { path = "../config-file" }
 nitrogql-semantics = { path = "../semantics" }
 nitrogql-utils = { path = "../utils" }
 sourcemap-writer = { path = "../sourcemap-writer" }
-thiserror = "2.0.12"
+thiserror = "2.0.18"
 
 [dev-dependencies]
 graphql-builtins = { path = "../builtins" }
 nitrogql-parser = { path = "../parser" }
-insta = "1.28.0"
+insta = "1.48.0"

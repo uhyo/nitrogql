@@ -871,7 +871,11 @@ function readBufAsText(buf: Uint8Array): string {
   return decoder.decode(buf);
 }
 
-function writeTextToBuf(text: string, buf: ArrayBuffer, offset?: number): void {
+function writeTextToBuf(
+  text: string,
+  buf: ArrayBuffer | Uint8Array,
+  offset?: number
+): void {
   const encoder = new TextEncoder();
   const encoded = encoder.encode(text);
   new Uint8Array(buf).set(encoded, offset);
