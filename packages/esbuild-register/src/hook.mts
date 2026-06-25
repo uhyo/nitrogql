@@ -38,7 +38,7 @@ export const initialize: InitializeHook<
 > = (data) => {
   if (data?.dataUrlResolutionBase !== undefined) {
     dataUrlResolutionBaseUrl = pathToFileURL(
-      data.dataUrlResolutionBase
+      data.dataUrlResolutionBase,
     ).toString();
   }
   if (data?.includeNodeModules !== undefined) {
@@ -53,7 +53,7 @@ const isNodeModules = (url: string) => {
 export const resolve: ResolveHook = async (
   specifier,
   context,
-  defaultResolve
+  defaultResolve,
 ) => {
   if (
     context.parentURL?.startsWith("data:") &&
@@ -124,7 +124,7 @@ export const load: LoadHook = async (url, context, nextLoad) => {
     loadResult.source ??= await readFile(
       // @ts-expect-error
       new URL(loadResult.responseURL ?? url),
-      "utf-8"
+      "utf-8",
     );
   }
   // console.log((performance.now() - startTime).toFixed(1), "load1", loadResult);

@@ -4,7 +4,7 @@ import { DirEntry } from "./fs.js";
 export function writePrestatDir(
   memory: ArrayBuffer,
   ptr: number,
-  pr_name_len: number
+  pr_name_len: number,
 ) {
   const view = new DataView(memory);
   // preopentype::dir
@@ -22,7 +22,7 @@ export function writeFilestat(
   size: bigint,
   atim: bigint,
   mtim: bigint,
-  ctim: bigint
+  ctim: bigint,
 ) {
   const view = new DataView(memory, ptr, 64);
   view.setBigUint64(0, dev, true);
@@ -41,7 +41,7 @@ export function writeFdstat(
   filetype: number,
   fs_flags: number,
   fs_rights_base: bigint,
-  fs_rights_inheriting: bigint
+  fs_rights_inheriting: bigint,
 ) {
   const view = new DataView(memory, ptr, 24);
   view.setUint8(0, filetype);
@@ -52,7 +52,7 @@ export function writeFdstat(
 
 export function generateOneReaddirEntry(
   ent: DirEntry,
-  index: number
+  index: number,
 ): Uint8Array {
   const ret = new Uint8Array(24 + ent.name.length);
   const view = new DataView(ret.buffer);

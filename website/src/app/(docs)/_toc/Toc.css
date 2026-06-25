@@ -46,7 +46,7 @@ div.toc nav ul li[data-level="4"] a {
 
 div.toc nav ul li[data-current="true"] a {
   font-weight: bold;
-  color: rgb(var(--nitrogql-red)); 
+  color: rgb(var(--nitrogql-red));
 }
 
 div.toc nav ul a:hover {

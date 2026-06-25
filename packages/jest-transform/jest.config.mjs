@@ -183,7 +183,7 @@ const config = {
       {
         configFile: path.resolve(
           path.dirname(fileURLToPath(import.meta.url)),
-          "__tests__/nitrogql.config.yml"
+          "__tests__/nitrogql.config.yml",
         ),
       },
     ],

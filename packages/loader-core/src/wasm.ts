@@ -13,7 +13,7 @@ export type WASMInterface = {
     filename_ptr: number,
     filename_size: number,
     input_ptr: number,
-    input_size: number
+    input_size: number,
   ): number;
   get_required_files(task_id: number): number;
   load_file(
@@ -21,7 +21,7 @@ export type WASMInterface = {
     filename_ptr: number,
     filename_size: number,
     input_ptr: number,
-    input_size: number
+    input_size: number,
   ): number;
   emit_js(task_id: number): number;
   free_task(task_id: number): void;

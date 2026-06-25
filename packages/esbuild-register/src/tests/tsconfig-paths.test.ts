@@ -21,7 +21,7 @@ describe("tsconfig.json 'paths' support", async () => {
         `
 import { foo } from "~/foo.mjs";
 console.log(foo.repeat(5));
-`
+`,
       )
       .path("entry.mts");
     const result = await runNode(filePath);
@@ -38,7 +38,7 @@ console.log(foo.repeat(5));
 import pkg from "~/foo.cjs";
 const { foo } = pkg;
 console.log(foo.repeat(5));
-`
+`,
       )
       .path("entry.mts");
     const result = await runNode(filePath);
@@ -55,7 +55,7 @@ console.log(foo.repeat(5));
 import pkg from "~/foo";
 const { foo } = pkg;
 console.log(foo.repeat(5));
-`
+`,
       )
       .path("entry.mts");
     const result = await runNode(filePath);
@@ -71,7 +71,7 @@ console.log(foo.repeat(5));
         `
 import { foo } from "~/foo.cjs";
 export { foo as foo2 };
-`
+`,
       )
       .file(
         "entry.mts",
@@ -79,7 +79,7 @@ export { foo as foo2 };
 import pkg from "./loader.js";
 const { foo2 } = pkg;
 console.log(foo2.repeat(5));
-`
+`,
       )
       .path("entry.mts");
     const result = await runNode(filePath);

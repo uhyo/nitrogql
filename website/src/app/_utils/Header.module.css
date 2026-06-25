@@ -41,7 +41,7 @@
   background-image: linear-gradient(
     to bottom,
     rgb(var(--nitrogql-red), 0.1) 0%,
-    rgb(var(--nitrogql-red), 0.0) 100%
+    rgb(var(--nitrogql-red), 0) 100%
   );
   background-position: 0 100%;
   background-size: 100% 8px;

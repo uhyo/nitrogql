@@ -71,7 +71,7 @@ function useCurrentHeading(toc: readonly TocItem[]): string | undefined {
       {
         threshold: 1,
         rootMargin: "-4px",
-      }
+      },
     );
 
     for (const item of toc) {
@@ -94,13 +94,13 @@ function useCurrentHeading(toc: readonly TocItem[]): string | undefined {
       return currentHeaderByPosition;
     }
     const firstIntersectionHeader = toc.findIndex(
-      (item) => item.id !== undefined && intersectingSet.has(item.id)
+      (item) => item.id !== undefined && intersectingSet.has(item.id),
     );
     if (firstIntersectionHeader === -1) {
       return undefined;
     }
     return toc.at(
-      firstIntersectionHeader === 0 ? 0 : firstIntersectionHeader - 1
+      firstIntersectionHeader === 0 ? 0 : firstIntersectionHeader - 1,
     )?.id;
   }, [toc, intersectingSet, currentHeaderByPosition]);
 
@@ -108,7 +108,7 @@ function useCurrentHeading(toc: readonly TocItem[]): string | undefined {
 }
 
 function getCurrentHeaderByPosition(
-  toc: readonly TocItem[]
+  toc: readonly TocItem[],
 ): string | undefined {
   let start = 0;
   let end = toc.length - 1;

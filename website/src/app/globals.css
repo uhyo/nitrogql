@@ -1,9 +1,10 @@
 :root {
   --max-width: 1100px;
   --border-radius: 12px;
-  --font-mono: ui-monospace, Menlo, Monaco, 'Cascadia Mono', 'Segoe UI Mono',
-    'Roboto Mono', 'Oxygen Mono', 'Ubuntu Monospace', 'Source Code Pro',
-    'Fira Mono', 'Droid Sans Mono', 'Courier New', monospace;
+  --font-mono:
+    ui-monospace, Menlo, Monaco, "Cascadia Mono", "Segoe UI Mono",
+    "Roboto Mono", "Oxygen Mono", "Ubuntu Monospace", "Source Code Pro",
+    "Fira Mono", "Droid Sans Mono", "Courier New", monospace;
 
   --foreground-rgb: 0, 0, 0;
   --background-rgb: 255, 255, 255;
@@ -37,7 +38,6 @@ a:visited {
   color: rgb(var(--nitrogql-dark-red));
 }
 
-
 @media (prefers-color-scheme: dark) {
   :root {
     --foreground-rgb: 255, 255, 255;
@@ -65,10 +65,10 @@ body {
   height: 100dvh;
   display: grid;
   grid-template-areas:
-   "header header"
-   "menu ."
-   "main toc"
-   "footer footer";
+    "header header"
+    "menu ."
+    "main toc"
+    "footer footer";
   grid-template-columns: 1fr auto;
   grid-template-rows: auto auto 1fr auto;
 
@@ -138,12 +138,14 @@ h4 {
   font-size: 1.1em;
 }
 
-ul, ol {
+ul,
+ol {
   margin-block: 1em;
   margin-inline-start: 1em;
   list-style-position: outside;
 }
-ul li, ol li {
+ul li,
+ol li {
   margin-block: 0.5em;
 }
 
@@ -156,7 +158,8 @@ table {
   font-size: 0.9em;
 }
 
-table th, table td {
+table th,
+table td {
   padding: 0.5em 1em;
   border-bottom: 1px solid rgb(var(--nitrogql-light-red));
 }

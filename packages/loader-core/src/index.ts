@@ -8,7 +8,7 @@ import { WASMBin, WasmError } from "./bin.js";
  */
 export async function init() {
   const wasm = await WebAssembly.compile(
-    await readFile(new URL("../wasm/graphql-loader.wasm", import.meta.url))
+    await readFile(new URL("../wasm/graphql-loader.wasm", import.meta.url)),
   );
   const instance = (await WebAssembly.instantiate(wasm)) as WASMInstance;
 
@@ -32,7 +32,7 @@ export async function init() {
           filenameString.ptr,
           filenameString.size,
           inputString.ptr,
-          inputString.size
+          inputString.size,
         );
         if (taskId === 0) {
           throw new WasmError("Failed to initiate task", bin);

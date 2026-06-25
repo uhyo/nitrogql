@@ -10,7 +10,7 @@ describe("import files locally", async () => {
         `
 import { posix } from "path";
 console.log(posix.join("/foo/bar", "baz"));
-`
+`,
       )
       .path("entry.mts");
     const result = await runNode(filePath);
@@ -23,7 +23,7 @@ console.log(posix.join("/foo/bar", "baz"));
         `
 import path from "node:path/posix";
 console.log(path.join("/foo/bar", "baz"));
-`
+`,
       )
       .path("entry.mts");
     const result = await runNode(filePath);
@@ -36,14 +36,14 @@ console.log(path.join("/foo/bar", "baz"));
         `
 import { posix } from "path";
 export const joined = posix.join("/foo/bar", "../baz");
-`
+`,
       )
       .file(
         "entry.mts",
         `
 import mod from "./mid.cjs";
 console.log(mod.joined);
-`
+`,
       )
       .path("entry.mts");
     const result = await runNode(filePath);
@@ -56,14 +56,14 @@ console.log(mod.joined);
         `
 import path from "node:path/posix";
 export const joined = path.join("/foo/bar", "../baz");
-`
+`,
       )
       .file(
         "entry.mts",
         `
 import mod from "./mid.cjs";
 console.log(mod.joined);
-`
+`,
       )
       .path("entry.mts");
     const result = await runNode(filePath);

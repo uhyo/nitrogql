@@ -10,7 +10,7 @@ describe("dataUrlResolutionBase", async () => {
         "foo.mts",
         `
 export const foo: string = "foo";
-`
+`,
       )
       .file(
         "entry.mts",
@@ -19,7 +19,7 @@ await import("data:text/javascript," + encodeURIComponent(\`
 import { foo } from "./foo.mts";
 console.log(foo.repeat(5));
 \`));
-      `
+      `,
       )
       .path("entry.mts");
     const result = await runNode(filePath, {

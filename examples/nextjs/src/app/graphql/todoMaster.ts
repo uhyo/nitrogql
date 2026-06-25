@@ -66,7 +66,7 @@ const todoBodyData = new Map<string, string>(
       "Go shopping for dinner",
       "Eat dinner",
     ][index],
-  ])
+  ]),
 );
 
 /**

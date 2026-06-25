@@ -38,7 +38,7 @@ describe("args", () => {
     const result = wasi.args_get(0, 64);
     expect(result).toBe(0);
     const data = readBufAsText(
-      new Uint8Array(memory.buffer, 64, 5 + 9 + 3 + 3)
+      new Uint8Array(memory.buffer, 64, 5 + 9 + 3 + 3),
     );
     expect(data).toBe("--foo\0--bar=baz\0qux\0");
     expect(buffer.getUint32(0, true)).toBe(64);
@@ -241,7 +241,7 @@ describe("fs", () => {
       const result = wasi.path_open(3, 0, 0, 7, 5, 0, 0, 0, 64);
       expect(result).toBe(20);
       expect(fs.readFileSync("/app/foo.txt", { encoding: "utf8" })).toBe(
-        "hello world"
+        "hello world",
       );
     });
     it("should truncate file if oflags has truncate flag", () => {
@@ -458,7 +458,7 @@ describe("fs", () => {
       const { data: iovs, buffers: ioBuffers } = createIovs(
         memory.buffer,
         1024,
-        [20]
+        [20],
       );
       new Uint8Array(buffer.buffer).set(iovs, 128);
 
@@ -502,7 +502,7 @@ describe("fs", () => {
       const { data: iovs, buffers: ioBuffers } = createIovs(
         memory.buffer,
         1024,
-        [11]
+        [11],
       );
       writeTextToBuf("hello world", ioBuffers[0]!);
       new Uint8Array(buffer.buffer).set(iovs, 128);
@@ -557,23 +557,23 @@ describe("fs", () => {
 
       assertDirent(memory.buffer, 1024, 1n, 7, 4);
       expect(readBufAsText(new Uint8Array(memory.buffer, 1024 + 24, 7))).toBe(
-        "bar.txt"
+        "bar.txt",
       );
       assertDirent(memory.buffer, 1024 + 24 + 7, 2n, 7, 4);
       expect(
-        readBufAsText(new Uint8Array(memory.buffer, 1024 + 24 + 7 + 24, 7))
+        readBufAsText(new Uint8Array(memory.buffer, 1024 + 24 + 7 + 24, 7)),
       ).toBe("baz.txt");
       assertDirent(memory.buffer, 1024 + (24 + 7) * 2, 3n, 7, 4);
       expect(
         readBufAsText(
-          new Uint8Array(memory.buffer, 1024 + (24 + 7) * 2 + 24, 7)
-        )
+          new Uint8Array(memory.buffer, 1024 + (24 + 7) * 2 + 24, 7),
+        ),
       ).toBe("foo.txt");
       assertDirent(memory.buffer, 1024 + (24 + 7) * 3, 4n, 7, 3);
       expect(
         readBufAsText(
-          new Uint8Array(memory.buffer, 1024 + (24 + 7) * 3 + 24, 3)
-        )
+          new Uint8Array(memory.buffer, 1024 + (24 + 7) * 3 + 24, 3),
+        ),
       ).toBe("xxx");
     });
     it("should return entries for directory with cookie", () => {
@@ -611,11 +611,11 @@ describe("fs", () => {
 
       assertDirent(memory.buffer, 1024, 3n, 7, 4);
       expect(readBufAsText(new Uint8Array(memory.buffer, 1024 + 24, 7))).toBe(
-        "foo.txt"
+        "foo.txt",
       );
       assertDirent(memory.buffer, 1024 + 24 + 7, 4n, 7, 3);
       expect(
-        readBufAsText(new Uint8Array(memory.buffer, 1024 + 24 + 7 + 24, 3))
+        readBufAsText(new Uint8Array(memory.buffer, 1024 + 24 + 7 + 24, 3)),
       ).toBe("xxx");
     });
     it("should fill buffer when buffer is too small", () => {
@@ -653,19 +653,19 @@ describe("fs", () => {
 
       assertDirent(memory.buffer, 1024, 1n, 7, 4);
       expect(readBufAsText(new Uint8Array(memory.buffer, 1024 + 24, 7))).toBe(
-        "bar.txt"
+        "bar.txt",
       );
       assertDirent(memory.buffer, 1024 + 24 + 7, 2n, 7, 4);
       expect(
-        readBufAsText(new Uint8Array(memory.buffer, 1024 + 24 + 7 + 24, 7))
+        readBufAsText(new Uint8Array(memory.buffer, 1024 + 24 + 7 + 24, 7)),
       ).toBe("baz.txt");
       assertDirent(memory.buffer, 1024 + (24 + 7) * 2, 3n, 7, 4);
       // foo.txt is truncated
       expect(
         readBufAsText(
           // 88 - (24 + 7) * 2 - 24 = 2
-          new Uint8Array(memory.buffer, 1024 + (24 + 7) * 2 + 24, 2)
-        )
+          new Uint8Array(memory.buffer, 1024 + (24 + 7) * 2 + 24, 2),
+        ),
       ).toBe("fo");
     });
   });
@@ -874,7 +874,7 @@ function readBufAsText(buf: Uint8Array): string {
 function writeTextToBuf(
   text: string,
   buf: ArrayBuffer | Uint8Array,
-  offset?: number
+  offset?: number,
 ): void {
   const encoder = new TextEncoder();
   const encoded = encoder.encode(text);
@@ -884,7 +884,7 @@ function writeTextToBuf(
 function fillBufRandomly(
   buf: ArrayBuffer,
   offset: number,
-  length: number
+  length: number,
 ): void {
   const view = new DataView(buf, offset);
   for (let i = 0; i < length; i++) {
@@ -896,7 +896,7 @@ function assertFileStat(
   buf: ArrayBuffer,
   offset: number,
   filetype: number,
-  size: bigint
+  size: bigint,
 ) {
   const view = new DataView(buf, offset);
   expect(view.getUint8(16)).toBe(filetype);
@@ -908,7 +908,7 @@ function assertDirent(
   offset: number,
   d_next: bigint,
   d_namlen: number,
-  d_type: number
+  d_type: number,
 ) {
   const view = new DataView(buf, offset);
   expect(view.getBigUint64(0, true)).toBe(d_next);
@@ -919,7 +919,7 @@ function assertDirent(
 function createIovs(
   memory: ArrayBuffer,
   data_start_ptr: number,
-  lengths: readonly number[]
+  lengths: readonly number[],
 ) {
   const view = new DataView(memory);
   let ptr = data_start_ptr;

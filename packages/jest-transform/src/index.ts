@@ -80,7 +80,7 @@ const createTransformer: TransformerCreator<
         {
           ...options,
           transformerConfig: additionalTransformer[1],
-        }
+        },
       );
       return transformed;
     },
@@ -97,7 +97,7 @@ function configFileIsJS(configFile: string) {
 }
 
 async function loadTransformer(
-  transformer: string | [transformer: string, transformerConfig: unknown]
+  transformer: string | [transformer: string, transformerConfig: unknown],
 ): Promise<[transformer: SyncTransformer<unknown>, config: unknown]> {
   let transformerModule, transformerConfig: unknown;
   if (typeof transformer === "string") {
@@ -110,9 +110,8 @@ async function loadTransformer(
     transformerModule = transformerModule.default;
   }
   if (transformerModule.createTransformer) {
-    transformerModule = await transformerModule.createTransformer(
-      transformerConfig
-    );
+    transformerModule =
+      await transformerModule.createTransformer(transformerConfig);
   }
   return [transformerModule, transformerConfig];
 }

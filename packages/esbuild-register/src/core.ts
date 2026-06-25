@@ -15,13 +15,13 @@ const tsExtensions = /\.(?:[cm]?ts|tsx)$/;
 
 export async function resolveModule(
   specifier: string,
-  parentURL: string | undefined
+  parentURL: string | undefined,
 ): Promise<string | undefined> {
   if (specifier.startsWith("node:") || specifier.startsWith("data:")) {
     return undefined;
   }
   parentURL ??= pathToFileURL(
-    path.join(process.cwd(), "__entrypoint__")
+    path.join(process.cwd(), "__entrypoint__"),
   ).toString();
   let candidates: {
     specifier: string;
@@ -41,8 +41,8 @@ export async function resolveModule(
               path.resolve(
                 fileURLToPath(tsConfigUrl),
                 "..",
-                baseUrl ?? "./__entrypoint__"
-              )
+                baseUrl ?? "./__entrypoint__",
+              ),
             ).toString(),
           };
         });
@@ -89,14 +89,14 @@ export async function resolveModule(
 
 export function resolveModuleSync(
   specifier: string,
-  parentURL: string | undefined
+  parentURL: string | undefined,
 ): string | undefined {
   if (specifier.startsWith("node:") || specifier.startsWith("data:")) {
     return undefined;
   }
 
   parentURL ??= pathToFileURL(
-    path.join(process.cwd(), "__entrypoint__")
+    path.join(process.cwd(), "__entrypoint__"),
   ).toString();
   let candidates: {
     specifier: string;
@@ -116,8 +116,8 @@ export function resolveModuleSync(
               path.resolve(
                 fileURLToPath(tsConfigUrl),
                 "..",
-                baseUrl ?? "./__entrypoint__"
-              )
+                baseUrl ?? "./__entrypoint__",
+              ),
             ).toString(),
           };
         });
@@ -163,7 +163,7 @@ export function resolveModuleSync(
 }
 
 export async function decideOutputFormatOfFile(
-  url: URL
+  url: URL,
 ): Promise<"cjs" | "esm"> {
   if (url.pathname.endsWith(".cts")) {
     return "cjs";
@@ -209,7 +209,7 @@ export function decideOutputFormatOfFileSync(url: URL): "cjs" | "esm" {
 }
 
 export function rawSourceToText(
-  source: string | ArrayBuffer | ArrayBufferView
+  source: string | ArrayBuffer | ArrayBufferView,
 ): string {
   if (typeof source === "string") {
     return source;
@@ -220,7 +220,7 @@ export function rawSourceToText(
   return Buffer.from(
     source.buffer,
     source.byteOffset,
-    source.byteLength
+    source.byteLength,
   ).toString("utf8");
 }
 
@@ -241,7 +241,7 @@ export async function mapJsToTs(url: URL): Promise<URL | undefined> {
     for (const ext of tsExts) {
       const tsUrl = new URL(
         url.pathname.slice(0, -matchedExt.length) + ext,
-        url
+        url,
       );
       const exists = await access(tsUrl)
         .then(() => true)
@@ -262,7 +262,7 @@ export function mapJsToTsSync(url: URL): URL | undefined {
     for (const ext of tsExts) {
       const tsUrl = new URL(
         url.pathname.slice(0, -matchedExt.length) + ext,
-        url
+        url,
       );
       if (existsSync(tsUrl)) {
         return tsUrl;

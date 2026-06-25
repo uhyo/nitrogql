@@ -8,7 +8,7 @@ import path from "node:path";
 export function tmp(): Folder {
   const folder = path.join(
     tmpdir(),
-    "nitrogql-" + Date.now() + "-" + Math.random().toString(36).slice(2)
+    "nitrogql-" + Date.now() + "-" + Math.random().toString(36).slice(2),
   );
   return new Folder(folder);
 }
@@ -23,7 +23,7 @@ export class Folder {
 
   file(name: string, content: string): this {
     this.#work = this.#work.then(() =>
-      writeFile(path.join(this.#path, name), content)
+      writeFile(path.join(this.#path, name), content),
     );
     return this;
   }
@@ -32,7 +32,7 @@ export class Folder {
     this.#work = this.#work.then(() =>
       mkdir(path.join(this.#path, name), {
         recursive: true,
-      })
+      }),
     );
     return this;
   }

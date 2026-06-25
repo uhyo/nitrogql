@@ -32,7 +32,7 @@ export function register() {
     // @ts-expect-error
     Module._resolveFilename = (
       specifier: string,
-      parent: NodeJS.Module | undefined
+      parent: NodeJS.Module | undefined,
     ) => {
       const parentURL = parent && pathToFileURL(parent.filename).toString();
       if (

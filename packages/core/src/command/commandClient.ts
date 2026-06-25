@@ -71,7 +71,7 @@ function getProcessCommandClient(): CommandClient {
         ...process.env,
         DATA_URL_RESOLUTION_BASE: path.join(process.cwd(), "__entrypoint__"),
       },
-    }
+    },
   );
   childProcess.on("error", (error) => {
     console.error(error);

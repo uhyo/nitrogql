@@ -6,7 +6,7 @@ export type WASIAPI = {
   args_get: (argv: number, argv_buf: number) => number;
   environ_sizes_get: (
     environ_count_buf: number,
-    environ_size_buf: number
+    environ_size_buf: number,
   ) => number;
   environ_get: (environ: number, environ_buf: number) => number;
   fd_prestat_get: (fd: number, buf: number) => number;
@@ -20,7 +20,7 @@ export type WASIAPI = {
     fs_rights_base: number,
     fs_rights_inheriting: number,
     fdflags: number,
-    ret_buf: number
+    ret_buf: number,
   ) => number;
   fd_close: (fd: number) => number;
   fd_filestat_get: (fd: number, ret_buf: number) => number;
@@ -28,20 +28,20 @@ export type WASIAPI = {
     fd: number,
     iovs_ptr: number,
     iovs_len: number,
-    ret_buf: number
+    ret_buf: number,
   ) => number;
   fd_write: (
     fd: number,
     iovs_ptr: number,
     iovs_len: number,
-    ret_buf: number
+    ret_buf: number,
   ) => number;
   fd_readdir: (
     fd: number,
     buf: number,
     buf_len: number,
     cookie: bigint,
-    ret_buf: number
+    ret_buf: number,
   ) => number;
   fd_fdstat_get: (fd: number, ret_buf: number) => number;
   path_filestat_get: (
@@ -49,7 +49,7 @@ export type WASIAPI = {
     flags: number,
     path: number,
     path_len: number,
-    ret_buf: number
+    ret_buf: number,
   ) => number;
   path_create_directory: (fd: number, path: number, path_len: number) => number;
   random_get: (buf: number, buf_len: number) => number;

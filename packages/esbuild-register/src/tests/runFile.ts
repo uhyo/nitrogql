@@ -9,7 +9,7 @@ const hook = new URL("../../dist/hook.mjs", pathToFileURL(__filename));
 const nodeVersion = process.versions.node.split(".").map((x) => Number(x)) as [
   number,
   number,
-  number
+  number,
 ];
 const nodeSupportsModuleRegisterAPI =
   nodeVersion[0] > 20 ||
@@ -20,7 +20,7 @@ export async function runNode(
   path: string,
   options?: {
     dataUrlResolutionBase?: string;
-  }
+  },
 ): Promise<string> {
   const env =
     options?.dataUrlResolutionBase !== undefined
@@ -32,7 +32,7 @@ export async function runNode(
       ["--import", registerMJS.toString(), path],
       {
         env,
-      }
+      },
     );
     return stdout;
   } else {
@@ -47,7 +47,7 @@ export async function runNode(
       ],
       {
         env,
-      }
+      },
     );
     return stdout;
   }
