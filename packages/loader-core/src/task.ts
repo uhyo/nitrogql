@@ -31,7 +31,7 @@ export class Task {
     const configFilePathString = this.#bin.alloc.allocString(configString);
     this.#bin.exports.load_config(
       configFilePathString.ptr,
-      configFilePathString.size
+      configFilePathString.size,
     );
     configFilePathString.free();
   }
@@ -41,12 +41,12 @@ export class Task {
    */
   status(): TaskStatus {
     const getRequiredFilesResult = this.#bin.exports.get_required_files(
-      this.taskId
+      this.taskId,
     );
     if (!getRequiredFilesResult) {
       throw new WasmError(
         "graphql-loader failed to get required files",
-        this.#bin
+        this.#bin,
       );
     }
     const requiredFiles = this.#bin.readResult().split("\n").filter(Boolean);
@@ -68,7 +68,7 @@ export class Task {
         filePathString.ptr,
         filePathString.size,
         sourceString.ptr,
-        sourceString.size
+        sourceString.size,
       );
       if (!result) {
         throw new WasmError("graphql-loader failed to load file", this.#bin);
@@ -87,7 +87,7 @@ export class Task {
     if (!result) {
       throw new WasmError(
         "graphql-loader failed to emit JavaScript",
-        this.#bin
+        this.#bin,
       );
     }
     const js = this.#bin.readResult();

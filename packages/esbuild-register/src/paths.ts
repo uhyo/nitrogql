@@ -3,7 +3,7 @@
  */
 export function resolvePaths(
   specifier: string,
-  paths: Record<string, readonly string[]>
+  paths: Record<string, readonly string[]>,
 ): readonly string[] | undefined {
   for (const [from, tos] of Object.entries(paths)) {
     const matched = match(specifier, from, tos);
@@ -17,7 +17,7 @@ export function resolvePaths(
 function match(
   specifier: string,
   fromPath: string,
-  toPaths: readonly string[]
+  toPaths: readonly string[],
 ): readonly string[] | undefined {
   const parts = fromPath.split("*", 2);
   if (parts.length === 1) {

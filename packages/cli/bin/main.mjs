@@ -35,7 +35,7 @@ const importObject = {
 };
 
 const wasm = await WebAssembly.compile(
-  await readFile(new URL("../wasm/nitrogql-cli.wasm", import.meta.url))
+  await readFile(new URL("../wasm/nitrogql-cli.wasm", import.meta.url)),
 );
 const instance = await WebAssembly.instantiate(wasm, importObject);
 wasi.setMemory(instance.exports.memory);

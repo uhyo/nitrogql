@@ -3,7 +3,7 @@ import { isValidElement } from "react";
 const empty: readonly never[] = [];
 
 export function generateTocFromReactNode(
-  node: React.ReactNode
+  node: React.ReactNode,
 ): readonly TocItem[] {
   const toc: TocItem[] = [];
   if (typeof node !== "object") {

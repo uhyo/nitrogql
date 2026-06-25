@@ -22,7 +22,7 @@ describe("No wildcard", () => {
       resolvePaths("foo", {
         pika: ["chu"],
         foo: ["bar"],
-      })
+      }),
     ).toEqual(["bar"]);
   });
 });
@@ -35,7 +35,7 @@ describe("Wildcard", () => {
   });
   it("Wildcard in the middle", () => {
     expect(resolvePaths("foo/pikachu/bar", { "foo/*/bar": ["bar/*"] })).toEqual(
-      ["bar/pikachu"]
+      ["bar/pikachu"],
     );
   });
 });

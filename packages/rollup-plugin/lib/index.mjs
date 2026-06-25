@@ -59,10 +59,10 @@ export default function NitrogqlRollupPlugin(options) {
                 this.addWatchFile(requiredFile);
                 const requiredFileSource = await readFile(
                   requiredFile,
-                  "utf-8"
+                  "utf-8",
                 );
                 task.supplyFile(requiredFile, requiredFileSource);
-              })
+              }),
             );
             break;
           }

@@ -98,7 +98,7 @@ export function initWASI(config: WASIConfig): WASIAPI & WASIMeta {
     fd_prestat_dir_name: (
       fd: number,
       pathPtr: number,
-      pathLen: number
+      pathLen: number,
     ): number => {
       const fdObj = fs.get(fd);
       if (fdObj === undefined) {
@@ -141,12 +141,12 @@ export function initWASI(config: WASIConfig): WASIAPI & WASIMeta {
      */
     environ_sizes_get: (
       environ_count_buf: number,
-      environ_size_buf: number
+      environ_size_buf: number,
     ): number => {
       const envs = Object.entries(config.env);
       const envLen = envs.length;
       const envSizes = envs.map(
-        ([key, value]) => utf8Length(key) + utf8Length(value) + 2
+        ([key, value]) => utf8Length(key) + utf8Length(value) + 2,
       );
       const bufSize = envSizes.reduce((acc, size) => acc + size, 0);
       const dv = new DataView(memory());
@@ -161,7 +161,7 @@ export function initWASI(config: WASIConfig): WASIAPI & WASIMeta {
       let currentPtr = environ_buf;
       const dv = new DataView(memory());
       for (const [index, [key, value]] of Object.entries(
-        config.env
+        config.env,
       ).entries()) {
         const dataUtf8 = toUtf8(key + "=" + value + "\0");
         writeBuf(memory(), currentPtr, dataUtf8.length, dataUtf8);
@@ -182,14 +182,14 @@ export function initWASI(config: WASIConfig): WASIAPI & WASIMeta {
       _fs_rights_base: number,
       _fs_rights_inheriting: number,
       fdflags: number,
-      ret_buf: number
+      ret_buf: number,
     ): number => {
       const parentFd = fs.get(fd);
       if (parentFd === undefined) {
         return error.badf;
       }
       const relativePath = fromUtf8(
-        new Uint8Array(memory(), path_ptr, path_len)
+        new Uint8Array(memory(), path_ptr, path_len),
       );
       debugLog(`${parentFd.virtualPath} / ${relativePath}`);
       try {
@@ -220,7 +220,7 @@ export function initWASI(config: WASIConfig): WASIAPI & WASIMeta {
         // See: https://github.com/streamich/memfs/pull/943
         stat.atimeNs ?? 0n,
         stat.mtimeNs ?? 0n,
-        stat.ctimeNs ?? 0n
+        stat.ctimeNs ?? 0n,
       );
       return 0;
     },
@@ -228,7 +228,7 @@ export function initWASI(config: WASIConfig): WASIAPI & WASIMeta {
       fd: number,
       iovs_ptr: number,
       iovs_len: number,
-      ret_buf: number
+      ret_buf: number,
     ): number => {
       const fdObj = fs.get(fd);
       if (fdObj === undefined) {
@@ -254,7 +254,7 @@ export function initWASI(config: WASIConfig): WASIAPI & WASIMeta {
       fd: number,
       iovs_ptr: number,
       iovs_len: number,
-      ret_buf: number
+      ret_buf: number,
     ): number => {
       // Validate the fd before reading iovs from guest memory, so that a bad
       // fd never depends on (or touches) whatever happens to sit at iovs_ptr.
@@ -279,7 +279,7 @@ export function initWASI(config: WASIConfig): WASIAPI & WASIMeta {
           dv.setUint32(
             0,
             buffers.reduce((acc, b) => acc + b.length, 0),
-            true
+            true,
           );
           return 0;
         }
@@ -292,7 +292,7 @@ export function initWASI(config: WASIConfig): WASIAPI & WASIMeta {
           dv.setUint32(
             0,
             buffers.reduce((acc, b) => acc + b.length, 0),
-            true
+            true,
           );
           return 0;
         }
@@ -325,7 +325,7 @@ export function initWASI(config: WASIConfig): WASIAPI & WASIMeta {
           getFiletypeOfStat(stat),
           0,
           fs_flags,
-          fs_flags
+          fs_flags,
         );
         return 0;
       } catch (e) {
@@ -368,14 +368,14 @@ export function initWASI(config: WASIConfig): WASIAPI & WASIMeta {
       flags: number,
       path_ptr: number,
       path_len: number,
-      ret_buf: number
+      ret_buf: number,
     ): number => {
       const parentFd = fs.get(fd);
       if (parentFd === undefined) {
         return error.badf;
       }
       const relativePath = fromUtf8(
-        new Uint8Array(memory(), path_ptr, path_len)
+        new Uint8Array(memory(), path_ptr, path_len),
       );
       debugLog(`${parentFd.virtualPath} / ${relativePath}`);
       try {
@@ -392,7 +392,7 @@ export function initWASI(config: WASIConfig): WASIAPI & WASIMeta {
           // See: https://github.com/streamich/memfs/pull/943
           stat.atimeNs ?? 0n,
           stat.mtimeNs ?? 0n,
-          stat.ctimeNs ?? 0n
+          stat.ctimeNs ?? 0n,
         );
         return 0;
       } catch (e) {
@@ -404,7 +404,7 @@ export function initWASI(config: WASIConfig): WASIAPI & WASIMeta {
       buf: number,
       buf_len: number,
       cookie: bigint,
-      ret_buf: number
+      ret_buf: number,
     ): number => {
       const fdObj = fs.get(fd);
       if (fdObj === undefined) {
@@ -437,14 +437,14 @@ export function initWASI(config: WASIConfig): WASIAPI & WASIMeta {
     path_create_directory: (
       fd: number,
       path_ptr: number,
-      path_len: number
+      path_len: number,
     ): number => {
       const parentFd = fs.get(fd);
       if (parentFd === undefined) {
         return error.badf;
       }
       const relativePath = fromUtf8(
-        new Uint8Array(memory(), path_ptr, path_len)
+        new Uint8Array(memory(), path_ptr, path_len),
       );
       try {
         fs.mkdir(parentFd, relativePath);

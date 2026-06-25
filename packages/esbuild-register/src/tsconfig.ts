@@ -3,7 +3,7 @@ import { readFile } from "node:fs/promises";
 import { parentDir } from "./util.js";
 
 export async function loadTsConfig(
-  targetUrl: URL
+  targetUrl: URL,
 ): Promise<LoadConfigResult | undefined> {
   return loadConfig(targetUrl, "tsconfig.json");
 }
@@ -13,13 +13,13 @@ export function loadTsConfigSync(targetUrl: URL): LoadConfigResult | undefined {
 }
 
 export async function loadPackageJson(
-  targetUrl: URL
+  targetUrl: URL,
 ): Promise<LoadConfigResult | undefined> {
   return loadConfig(targetUrl, "package.json");
 }
 
 export function loadPackageJsonSync(
-  targetUrl: URL
+  targetUrl: URL,
 ): LoadConfigResult | undefined {
   return loadConfigSync(targetUrl, "package.json");
 }
@@ -34,7 +34,7 @@ type LoadConfigResult = {
  */
 async function loadConfig(
   targetUrl: URL,
-  fileName: string
+  fileName: string,
 ): Promise<LoadConfigResult | undefined> {
   if (targetUrl.protocol === "data:") {
     // data URL doesn't belong to a file,
@@ -70,7 +70,7 @@ async function loadConfig(
 
 function loadConfigSync(
   targetUrl: URL,
-  fileName: string
+  fileName: string,
 ): LoadConfigResult | undefined {
   while (true) {
     try {

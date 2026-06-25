@@ -82,7 +82,7 @@ export class FileSystem {
     parentDir: FD,
     relativePath: string,
     lookupflags: number,
-    oflags: number
+    oflags: number,
   ): FD {
     const fd = this.#nextFd++;
     const virtualPath = toUtf8(relativePath);
@@ -90,7 +90,7 @@ export class FileSystem {
     this.#guardRelativeAccess(parentDir, hostPath);
     const hostFd = this.#fs.openSync(
       hostPath,
-      translateOFlags(oflags, lookupflags, this.#fs)
+      translateOFlags(oflags, lookupflags, this.#fs),
     );
     this.#openedFiles.set(fd, {
       fd,
@@ -125,7 +125,7 @@ export class FileSystem {
   statPath(
     parentDir: FD,
     relativePath: string,
-    lookupflags: number
+    lookupflags: number,
   ): nodeFs.BigIntStats {
     const hostPath = path.resolve(parentDir.hostPath, relativePath);
     this.#guardRelativeAccess(parentDir, hostPath);
@@ -214,7 +214,10 @@ export class FileSystem {
 export type FSErrorKind = "badf" | "notcapable";
 
 export class FSError extends Error {
-  constructor(message: string, public kind: FSErrorKind) {
+  constructor(
+    message: string,
+    public kind: FSErrorKind,
+  ) {
     super(message);
   }
 }
@@ -222,7 +225,7 @@ export class FSError extends Error {
 function translateOFlags(
   oflags: number,
   lookupflags: number,
-  fs: typeof import("node:fs")
+  fs: typeof import("node:fs"),
 ): number {
   let result = 0;
   if (oflags & 0x0001) {

@@ -16,7 +16,7 @@ export type LoadSchemaResult = {
  * Loads given JS module as a schema and returns the schema as a SDL string.
  */
 export async function loadSchemaJs(
-  schemaPath: string
+  schemaPath: string,
 ): Promise<LoadSchemaResult> {
   let loaded = await import(pathToFileURL(schemaPath).toString());
   while (loaded?.default) {
@@ -27,7 +27,7 @@ export async function loadSchemaJs(
   }
   const graphql = await import("graphql").catch((err) => {
     console.error(
-      "Failed to load 'graphql' package. If you want to use a GraphQLSchema object as a schema, you need to install 'graphql' package."
+      "Failed to load 'graphql' package. If you want to use a GraphQLSchema object as a schema, you need to install 'graphql' package.",
     );
     throw err;
   });
@@ -42,12 +42,12 @@ export async function loadSchemaJs(
           ...type.extensions,
         };
         return [[name, extensions]];
-      })
+      }),
     );
     return { schema: graphql.printSchema(loaded), typeExtensions };
   }
   throw new Error(
-    `Failed to load schema from '${schemaPath}'. The module must export a string or a GraphQLSchema object.`
+    `Failed to load schema from '${schemaPath}'. The module must export a string or a GraphQLSchema object.`,
   );
 }
 

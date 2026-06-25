@@ -18,5 +18,5 @@ ul.pokemonList {
 ul.pokemonList > li {
   height: auto;
   padding: 1em 0.5em;
-  background-color:#f5f5f5;
+  background-color: #f5f5f5;
 }

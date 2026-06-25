@@ -44,7 +44,7 @@ export default function graphQLLoader(source) {
               this.addDependency(requiredFile);
               const requiredFileSource = await readFile(requiredFile, "utf-8");
               task.supplyFile(requiredFile, requiredFileSource);
-            })
+            }),
           );
           break;
         }
@@ -60,7 +60,7 @@ export default function graphQLLoader(source) {
       (res) => callback(null, res),
       (err) => {
         callback(err);
-      }
+      },
     )
     .finally(() => {
       const log = getLog();

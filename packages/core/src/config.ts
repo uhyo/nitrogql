@@ -18,7 +18,7 @@ export function executeNodeSync(code: string): string {
   // depending on whether Node.js supports the `register` API from `node:module`.
   const [major, minor] = nodeVersion.split(".").map((x) => Number(x)) as [
     number,
-    number
+    number,
   ];
   const nodeHasModuleRegisterAPI =
     major > 20 || (major === 20 && minor >= 6) || (major === 18 && minor >= 19);
@@ -33,7 +33,7 @@ export function executeNodeSync(code: string): string {
       {
         encoding: "utf-8",
         input: code,
-      }
+      },
     );
   }
   return execFileSync(
@@ -47,7 +47,7 @@ export function executeNodeSync(code: string): string {
     {
       encoding: "utf-8",
       input: code,
-    }
+    },
   );
 }
 
@@ -58,7 +58,7 @@ export function executeConfigFileSync(configFilePath: string): string {
   return executeNodeSync(`
 import { stdout } from "process";
 const config = (await import(${JSON.stringify(
-    pathToFileURL(configFilePath).toString()
+    pathToFileURL(configFilePath).toString(),
   )})).default;
 stdout.write(JSON.stringify(config.default ?? config));
 `);
@@ -97,7 +97,7 @@ export function initConfigNamespace(): InitNitrogqlConfigResult {
   function execute_node(
     code_ptr: number,
     code_len: number,
-    ticket_handle: number
+    ticket_handle: number,
   ): void {
     if (module === undefined) {
       throw new Error("wasm module is not set");
@@ -109,7 +109,7 @@ export function initConfigNamespace(): InitNitrogqlConfigResult {
       ticket_handle: number,
       is_ok: number,
       result_ptr: number,
-      result_len: number
+      result_len: number,
     ) => void;
     const code = readString(code_ptr, code_len);
     w.run(code)

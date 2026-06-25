@@ -10,7 +10,7 @@ describe("Without package.json", () => {
         `
 const foo: string = "foo";
 console.log(foo.repeat(5));
-`
+`,
       )
       .path("single.ts");
     const result = await runNode(filePath);
@@ -24,7 +24,7 @@ console.log(foo.repeat(5));
         `
 const foo: string = "foo";
 console.log(foo.repeat(5));
-`
+`,
       )
       .path("single.cts");
     const result = await runNode(filePath);
@@ -38,7 +38,7 @@ console.log(foo.repeat(5));
         `
 const foo: string = "foo";
 console.log(foo.repeat(5));
-`
+`,
       )
       .path("single.mts");
     const result = await runNode(filePath);
@@ -54,7 +54,7 @@ describe("With package.json", () => {
         "package.json",
         JSON.stringify({
           type: "module",
-        })
+        }),
       )
       .path("single.ts");
     const result = await runNode(filePath);
@@ -67,7 +67,7 @@ describe("With package.json", () => {
         `
 const foo: string = "foo";
 console.log(foo.repeat(5));
-`
+`,
       )
       .path("single.cts");
     const result = await runNode(filePath);
@@ -81,7 +81,7 @@ console.log(foo.repeat(5));
         `
 const foo: string = "foo";
 console.log(foo.repeat(5));
-`
+`,
       )
       .path("single.mts");
     const result = await runNode(filePath);

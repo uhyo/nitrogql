@@ -12,26 +12,26 @@ const addESMPackage = (folder: Folder): Folder => {
         name: "foo",
         main: "index.js",
         type: "module",
-      })
+      }),
     )
     .file(
       "node_modules/foo/prefix.js",
       `
 export const prefix = "This is ";
-`
+`,
     )
     .file(
       "node_modules/foo/index.js",
       `
 import { prefix } from "./prefix.js";
 export const foo = prefix + "foo";
-`
+`,
     )
     .file(
       "node_modules/foo/index.ts",
       `
 throw new Error("This should not be loaded");
-`
+`,
     );
 };
 
@@ -44,26 +44,26 @@ const addCJSPackage = (folder: Folder): Folder => {
       JSON.stringify({
         name: "bar",
         main: "index.js",
-      })
+      }),
     )
     .file(
       "node_modules/bar/prefix.js",
       `
 exports.prefix = "This is ";
-`
+`,
     )
     .file(
       "node_modules/bar/index.js",
       `
 const { prefix } = require("./prefix");
 exports.foo = prefix + "foo";
-`
+`,
     )
     .file(
       "node_modules/bar/index.ts",
       `
 throw new Error("This should not be loaded");
-`
+`,
     );
 };
 
@@ -75,7 +75,7 @@ describe("import ESM from node_modules", async () => {
         `
 import { foo } from "foo";
 console.log(foo);
-`
+`,
       )
       .path("entry.mts");
     const result = await runNode(filePath);
@@ -88,14 +88,14 @@ console.log(foo);
         `
 import { foo } from "foo";
 export const repeated: string = foo.repeat(3);
-`
+`,
       )
       .file(
         "entry.mts",
         `
 import { repeated } from "./loader.mjs";
 console.log(repeated);
-`
+`,
       )
       .path("entry.mts");
     const result = await runNode(filePath);
@@ -108,14 +108,14 @@ console.log(repeated);
         `
 import { foo } from "foo";
 export const repeated: Promise<string> = import("foo").then(({ foo }) => foo.repeat(3));
-`
+`,
       )
       .file(
         "entry.mts",
         `
 import mod from "./loader.cjs";
 console.log(await mod.repeated);
-`
+`,
       )
       .path("entry.mts");
     const result = await runNode(filePath);
@@ -127,21 +127,21 @@ console.log(await mod.repeated);
         "foo.ts",
         `
 throw new Error("This should not be loaded");
-`
+`,
       )
       .file(
         "loader.cts",
         `
 import { foo } from "foo";
 export const repeated: Promise<string> = import("foo").then(({ foo }) => foo.repeat(3));
-`
+`,
       )
       .file(
         "entry.mts",
         `
 import mod from "./loader.cjs";
 console.log(await mod.repeated);
-`
+`,
       )
       .path("entry.mts");
     const result = await runNode(filePath);
@@ -157,7 +157,7 @@ describe("import CJS from node_modules", async () => {
         `
 import { foo } from "bar";
 console.log(foo);
-`
+`,
       )
       .path("entry.mts");
     const result = await runNode(filePath);
@@ -170,14 +170,14 @@ console.log(foo);
         `
 import { foo } from "bar";
 export const repeated: string = foo.repeat(3);
-`
+`,
       )
       .file(
         "entry.mts",
         `
 import { repeated } from "./loader.mjs";
 console.log(repeated);
-`
+`,
       )
       .path("entry.mts");
     const result = await runNode(filePath);
@@ -190,14 +190,14 @@ console.log(repeated);
         `
 import { foo } from "bar";
 export const repeated: Promise<string> = import("bar").then(({ foo }) => foo.repeat(3));
-`
+`,
       )
       .file(
         "entry.mts",
         `
 import mod from "./loader.cjs";
 console.log(await mod.repeated);
-`
+`,
       )
       .path("entry.mts");
     const result = await runNode(filePath);
@@ -209,21 +209,21 @@ console.log(await mod.repeated);
         "foo.ts",
         `
 throw new Error("This should not be loaded");
-`
+`,
       )
       .file(
         "loader.cts",
         `
 import { foo } from "bar";
 export const repeated: Promise<string> = import("bar").then(({ foo }) => foo.repeat(3));
-`
+`,
       )
       .file(
         "entry.mts",
         `
 import mod from "./loader.cjs";
 console.log(await mod.repeated);
-`
+`,
       )
       .path("entry.mts");
     const result = await runNode(filePath);

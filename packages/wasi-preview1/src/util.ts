@@ -28,7 +28,7 @@ export function writeBuf(
   memory: ArrayBuffer,
   offset: number,
   maxLength: number,
-  buf: Uint8Array
+  buf: Uint8Array,
 ): number {
   const writtenLength = Math.min(maxLength, buf.length);
   const view = new Uint8Array(memory, offset, writtenLength);
