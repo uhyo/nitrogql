@@ -33,7 +33,7 @@ jobs:
     name: unit-test-js (Node ${{ matrix.node-version }})
     strategy:
       matrix:
-        node-version: [18.18, 18, 20.5, 20, 22]
+        node-version: [22, 24, 26]
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
@@ -46,10 +46,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        # 20.5 is added because @nitrogql/esbuild-register behaves differently
-        # before and after 20.6
-        # 18.18 is added for the same reason
-        node-version: [18.18, 18, 20.5, 20, 22]
+        node-version: [22, 24, 26]
     name: e2e-test (Node ${{ matrix.node-version }})
     steps:
       - uses: actions/checkout@v3
