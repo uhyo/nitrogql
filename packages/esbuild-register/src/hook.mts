@@ -11,9 +11,7 @@ import {
 } from "./core.js";
 
 // >= Node 20.6.0
-const esmLoaderHasCjsSupport =
-  // @ts-expect-error
-  module.register !== undefined;
+const esmLoaderHasCjsSupport = module.register !== undefined;
 
 const tsExtensions = /\.(?:[cm]?ts|tsx)$/;
 

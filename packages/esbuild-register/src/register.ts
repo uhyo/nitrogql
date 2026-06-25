@@ -18,10 +18,8 @@ export function register() {
   const includeNodeModules: boolean = !!process.env.INCLUDE_NODE_MODULES;
 
   // ESM loader (>= Node 20.6.0 or >= 18.19.0)
-  // @ts-expect-error
   if (nodeModule.register) {
     const hookUrl = new URL("hook.mjs", pathToFileURL(__filename));
-    // @ts-expect-error
     nodeModule.register(hookUrl);
   }
 

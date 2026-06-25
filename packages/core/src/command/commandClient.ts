@@ -18,7 +18,6 @@ export type CommandClient = {
 export function getCommandClient(): CommandClient {
   // @nitrogql/esbuild-register requires different usage
   // depending on whether Node.js supports the `register` API from `node:module`.
-  // @ts-expect-error module.register does not exist yet
   const nodeHasModuleRegisterAPI = !!module.register;
   if (nodeHasModuleRegisterAPI) {
     return getWorkerCommandClient();
