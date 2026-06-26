@@ -7,13 +7,13 @@
     "url": "https://github.com/uhyo/nitrogql.git",
     "directory": "packages/esbuild-register"
   },
-  "type": "commonjs",
-  "main": "dist/index.cjs",
+  "type": "module",
+  "main": "./dist/index.mjs",
   "exports": {
     ".": {
       "import": "./dist/index.mjs",
-      "require": "./dist/index.cjs",
-      "default": "./dist/index.cjs"
+      "require": "./dist/index.mjs",
+      "default": "./dist/index.mjs"
     },
     "./hook": "./dist/hook.mjs"
   },
@@ -30,7 +30,7 @@
   "license": "MIT",
   "devDependencies": {
     "@types/node": "^20.8.10",
-    "vitest": "^0.34.2"
+    "vitest": "^4"
   },
   "dependencies": {
     "esbuild": ">=0.19.5 <1",
