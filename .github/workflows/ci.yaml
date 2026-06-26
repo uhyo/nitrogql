@@ -19,8 +19,6 @@ jobs:
       - name: install rustup
         run: curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
       - uses: Swatinem/rust-cache@v2
-      - name: install additional targets
-        run: rustup target add wasm32-wasip1
       - name: test
         run: cargo test
       - name: lint
@@ -53,8 +51,6 @@ jobs:
       - name: install rustup
         run: curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
       - uses: Swatinem/rust-cache@v2
-      - name: install additional targets
-        run: rustup target add wasm32-wasip1 wasm32-unknown-unknown
       - uses: actions/setup-node@v3
         with:
           node-version: ${{ matrix.node-version }}
