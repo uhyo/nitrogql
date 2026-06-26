@@ -31,7 +31,7 @@ jobs:
         env:
           OPTIMIZE: "1"
       - name: publish to npm (esbuild-register)
-        uses: JS-DevTools/npm-publish@v3
+        uses: JS-DevTools/npm-publish@v4
         with:
           token: ${{ secrets.NPM_TOKEN }}
           package: "./packages/esbuild-register/package.json"
@@ -39,7 +39,7 @@ jobs:
           strategy: upgrade
           tag: ${{ github.event.release.prerelease && 'next' || 'latest' }}
       - name: publish to npm (core)
-        uses: JS-DevTools/npm-publish@v3
+        uses: JS-DevTools/npm-publish@v4
         with:
           token: ${{ secrets.NPM_TOKEN }}
           package: "./packages/core/package.json"
@@ -47,7 +47,7 @@ jobs:
           strategy: upgrade
           tag: ${{ github.event.release.prerelease && 'next' || 'latest' }}
       - name: publish to npm (loader-core)
-        uses: JS-DevTools/npm-publish@v3
+        uses: JS-DevTools/npm-publish@v4
         with:
           token: ${{ secrets.NPM_TOKEN }}
           package: "./packages/loader-core/package.json"
@@ -55,7 +55,7 @@ jobs:
           strategy: upgrade
           tag: ${{ github.event.release.prerelease && 'next' || 'latest' }}
       - name: publish to npm (wasi-preview1)
-        uses: JS-DevTools/npm-publish@v3
+        uses: JS-DevTools/npm-publish@v4
         with:
           token: ${{ secrets.NPM_TOKEN }}
           package: "./packages/wasi-preview1/package.json"
@@ -63,7 +63,7 @@ jobs:
           strategy: upgrade
           tag: ${{ github.event.release.prerelease && 'next' || 'latest' }}
       - name: publish to npm (cli)
-        uses: JS-DevTools/npm-publish@v3
+        uses: JS-DevTools/npm-publish@v4
         with:
           token: ${{ secrets.NPM_TOKEN }}
           package: "./packages/cli/package.json"
@@ -71,7 +71,7 @@ jobs:
           strategy: upgrade
           tag: ${{ github.event.release.prerelease && 'next' || 'latest' }}
       - name: publish to npm (graphql-loader)
-        uses: JS-DevTools/npm-publish@v3
+        uses: JS-DevTools/npm-publish@v4
         with:
           token: ${{ secrets.NPM_TOKEN }}
           package: "./packages/graphql-loader/package.json"
@@ -79,7 +79,7 @@ jobs:
           strategy: upgrade
           tag: ${{ github.event.release.prerelease && 'next' || 'latest' }}
       - name: publish to npm (rollup-plugin)
-        uses: JS-DevTools/npm-publish@v3
+        uses: JS-DevTools/npm-publish@v4
         with:
           token: ${{ secrets.NPM_TOKEN }}
           package: "./packages/rollup-plugin/package.json"
@@ -87,7 +87,7 @@ jobs:
           strategy: upgrade
           tag: ${{ github.event.release.prerelease && 'next' || 'latest' }}
       - name: publish to npm (jest-transform)
-        uses: JS-DevTools/npm-publish@v3
+        uses: JS-DevTools/npm-publish@v4
         with:
           token: ${{ secrets.NPM_TOKEN }}
           package: "./packages/jest-transform/package.json"
