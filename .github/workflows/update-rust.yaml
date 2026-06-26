@@ -1,0 +1,51 @@
+name: Update Rust toolchain
+on:
+  schedule:
+    # Weekly, Monday 06:00 UTC. Rust stable ships every ~6 weeks, so this
+    # picks up new releases within a few days without being noisy.
+    - cron: "0 6 * * 1"
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  update-rust:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Determine latest stable Rust version
+        id: latest
+        run: |
+          rustup toolchain install stable --profile minimal >/dev/null
+          version="$(rustc +stable --version | awk '{print $2}')"
+          echo "Latest stable: $version"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+      - name: Read currently pinned version
+        id: current
+        run: |
+          version="$(grep -E '^channel = ' rust-toolchain.toml | sed -E 's/.*"(.*)".*/\1/')"
+          echo "Currently pinned: $version"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+      - name: Update rust-toolchain.toml
+        if: steps.latest.outputs.version != steps.current.outputs.version
+        run: |
+          sed -i -E "s/^channel = \".*\"/channel = \"${{ steps.latest.outputs.version }}\"/" rust-toolchain.toml
+      - name: Create Pull Request
+        if: steps.latest.outputs.version != steps.current.outputs.version
+        uses: peter-evans/create-pull-request@v7
+        with:
+          commit-message: "Update Rust toolchain to ${{ steps.latest.outputs.version }}"
+          title: "Update Rust toolchain to ${{ steps.latest.outputs.version }}"
+          body: |
+            A new stable Rust release is available.
+
+            - Pinned: `${{ steps.current.outputs.version }}`
+            - Latest stable: `${{ steps.latest.outputs.version }}`
+
+            This PR bumps `rust-toolchain.toml`. Merge once CI is green.
+          branch: update-rust-toolchain
+          base: master
+          delete-branch: true
+          labels: dependencies

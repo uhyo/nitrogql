@@ -1,0 +1,9 @@
+[toolchain]
+# Pin the Rust toolchain so CI (and local builds) use a known version.
+# A new compiler release can break the build even without code changes,
+# so we upgrade this deliberately. The "Update Rust toolchain" workflow
+# (.github/workflows/update-rust.yaml) opens a PR when a newer stable is out.
+channel = "1.94.1"
+profile = "minimal"
+components = ["clippy", "rustfmt"]
+targets = ["wasm32-wasip1", "wasm32-unknown-unknown"]
