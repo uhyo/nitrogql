@@ -13,35 +13,11 @@ import { getCommandClient } from "./command/commandClient.js";
  * @returns stdout
  */
 export function executeNodeSync(code: string): string {
-  const nodeVersion = process.versions.node;
-  // @nitrogql/esbuild-register requires different usage
-  // depending on whether Node.js supports the `register` API from `node:module`.
-  const [major, minor] = nodeVersion.split(".").map((x) => Number(x)) as [
-    number,
-    number,
-  ];
-  const nodeHasModuleRegisterAPI =
-    major > 20 || (major === 20 && minor >= 6) || (major === 18 && minor >= 19);
-  if (nodeHasModuleRegisterAPI) {
-    return execFileSync(
-      process.execPath,
-      [
-        "--no-warnings",
-        "--import=@nitrogql/esbuild-register",
-        "--input-type=module",
-      ],
-      {
-        encoding: "utf-8",
-        input: code,
-      },
-    );
-  }
   return execFileSync(
     process.execPath,
     [
       "--no-warnings",
-      "--require=@nitrogql/esbuild-register",
-      "--experimental-loader=@nitrogql/esbuild-register/hook",
+      "--import=@nitrogql/esbuild-register",
       "--input-type=module",
     ],
     {
