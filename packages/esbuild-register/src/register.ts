@@ -19,7 +19,7 @@ export function register() {
 
   // ESM loader (>= Node 20.6.0 or >= 18.19.0)
   if (nodeModule.register) {
-    const hookUrl = new URL("hook.mjs", pathToFileURL(__filename));
+    const hookUrl = new URL("hook.mjs", import.meta.url);
     nodeModule.register(hookUrl);
   }
 
