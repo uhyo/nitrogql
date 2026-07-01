@@ -1,0 +1,18 @@
+---
+source: crates/checker/src/operation_checker/tests/mod.rs
+expression: "test_check(schema, doc)"
+---
+[
+    CheckError {
+        position: Pos {
+            line: 2,
+            column: 31,
+            file: 0,
+            builtin: false,
+        },
+        message: OneOfInputNullableVariable {
+            name: "id",
+        },
+        additional_info: [],
+    },
+]

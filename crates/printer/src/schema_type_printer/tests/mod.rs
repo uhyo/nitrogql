@@ -272,6 +272,59 @@ fn deprecated_items() {
 }
 
 #[test]
+fn one_of_input_object() {
+    let doc = parse_type_system_document(
+        r#"
+        scalar ID
+        scalar String
+        scalar Int
+
+        input UserBy @oneOf {
+            id: ID
+            "Email address of user."
+            email: String
+            registrationNumber: Int @deprecated(reason: "Use id instead")
+        }
+
+        type Query {
+            me: String!
+        }
+        "#,
+    )
+    .unwrap();
+    let doc = resolve_schema_extensions(doc).unwrap();
+    let printed = print_document(&doc, SchemaTypePrinterOptions::default()).unwrap();
+    assert_snapshot!(printed);
+}
+
+#[test]
+fn one_of_input_object_with_input_nullable_field_is_optional_false() {
+    let doc = parse_type_system_document(
+        r#"
+        scalar ID
+        scalar String
+
+        input UserBy @oneOf {
+            id: ID
+            email: String
+        }
+
+        type Query {
+            me: String!
+        }
+        "#,
+    )
+    .unwrap();
+    let doc = resolve_schema_extensions(doc).unwrap();
+    let options = SchemaTypePrinterOptions {
+        input_nullable_field_is_optional: false,
+        ..SchemaTypePrinterOptions::default()
+    };
+    let printed = print_document(&doc, options).unwrap();
+    assert_snapshot!(printed);
+}
+
+#[test]
 fn enum_runtime() {
     let doc = parse_type_system_document(
         r#"

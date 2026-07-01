@@ -144,6 +144,9 @@ impl<'a, Str: Text<'a>, OriginalNode> GraphQLPrinter for TypeDefinition<Str, Ori
             TypeDefinition::InputObject(object) => {
                 writer.write("input ");
                 writer.write(&object.name);
+                if object.one_of {
+                    writer.write(" @oneOf");
+                }
                 writer.write(" {\n");
                 writer.indent();
                 for field in object.fields.iter() {

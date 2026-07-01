@@ -2,7 +2,9 @@ use std::{borrow::Borrow, fmt::Display};
 
 use crate::{
     ts_types::{
-        ObjectField, TSType, ts_types_util::ts_union, type_to_ts_type::get_ts_type_of_type,
+        ObjectField, TSType,
+        ts_types_util::ts_union,
+        type_to_ts_type::{get_ts_type_of_type, get_ts_type_of_type_non_null},
     },
     utils::interface_implementers,
 };
@@ -407,43 +409,94 @@ impl TypePrinter for InputObjectTypeDefinition<'_> {
             return Ok(());
         }
         let schema_type = context.schema.get_type(self.name.name);
-        let obj_type = TSType::Object(
-            self.fields
-                .iter()
-                .map(|field| {
-                    let schema_field = schema_type
-                        .and_then(|t| t.as_input_object())
-                        .and_then(|t| t.fields.iter().find(|f| f.name == field.name.name))
-                        .expect("Type system error");
+        let is_one_of = self.directives.iter().any(|d| d.name.name == "oneOf");
+        let obj_type = if is_one_of {
+            // A @oneOf input object is printed as a union of
+            // single-field object types.
+            ts_union(self.fields.iter().enumerate().map(|(selected_index, _)| {
+                TSType::Object(
+                    self.fields
+                        .iter()
+                        .enumerate()
+                        .map(|(index, field)| {
+                            if index != selected_index {
+                                return ObjectField {
+                                    key: (&field.name).into(),
+                                    r#type: TSType::Never,
+                                    readonly: true,
+                                    optional: true,
+                                    description: None,
+                                };
+                            }
+                            let schema_field = schema_type
+                                .and_then(|t| t.as_input_object())
+                                .and_then(|t| {
+                                    t.fields.iter().find(|f| f.name == field.name.name)
+                                })
+                                .expect("Type system error");
 
-                    let ts_type = get_ts_type_of_type(&field.r#type, |name| {
-                        let local_name = context
-                            .local_type_names
-                            .get(name.name.name)
-                            .expect("Local type name not generated");
-                        TSType::TypeVariable(local_name.as_str().into())
+                            // The selected field must be given a non-null value.
+                            let ts_type = get_ts_type_of_type_non_null(&field.r#type, |name| {
+                                let local_name = context
+                                    .local_type_names
+                                    .get(name.name.name)
+                                    .expect("Local type name not generated");
+                                TSType::TypeVariable(local_name.as_str().into())
+                            })
+                            .into_readonly();
+                            ObjectField {
+                                key: (&field.name).into(),
+                                r#type: ts_type,
+                                readonly: true,
+                                optional: false,
+                                description: make_ts_description(
+                                    &field.description,
+                                    &schema_field.deprecation,
+                                ),
+                            }
+                        })
+                        .collect(),
+                )
+            }))
+        } else {
+            TSType::Object(
+                self.fields
+                    .iter()
+                    .map(|field| {
+                        let schema_field = schema_type
+                            .and_then(|t| t.as_input_object())
+                            .and_then(|t| t.fields.iter().find(|f| f.name == field.name.name))
+                            .expect("Type system error");
+
+                        let ts_type = get_ts_type_of_type(&field.r#type, |name| {
+                            let local_name = context
+                                .local_type_names
+                                .get(name.name.name)
+                                .expect("Local type name not generated");
+                            TSType::TypeVariable(local_name.as_str().into())
+                        })
+                        .into_readonly();
+                        let is_optional = context.options.input_nullable_field_is_optional
+                            && !field.r#type.is_nonnull();
+                        let ts_type = if is_optional {
+                            TSType::Union(vec![ts_type, TSType::Undefined])
+                        } else {
+                            ts_type
+                        };
+                        ObjectField {
+                            key: (&field.name).into(),
+                            r#type: ts_type,
+                            readonly: true,
+                            optional: is_optional,
+                            description: make_ts_description(
+                                &field.description,
+                                &schema_field.deprecation,
+                            ),
+                        }
                     })
-                    .into_readonly();
-                    let is_optional = context.options.input_nullable_field_is_optional
-                        && !field.r#type.is_nonnull();
-                    let ts_type = if is_optional {
-                        TSType::Union(vec![ts_type, TSType::Undefined])
-                    } else {
-                        ts_type
-                    };
-                    ObjectField {
-                        key: (&field.name).into(),
-                        r#type: ts_type,
-                        readonly: true,
-                        optional: is_optional,
-                        description: make_ts_description(
-                            &field.description,
-                            &schema_field.deprecation,
-                        ),
-                    }
-                })
-                .collect(),
-        );
+                    .collect(),
+            )
+        };
 
         print_description(&self.description, writer);
         let local_name = context

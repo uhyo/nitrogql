@@ -4,6 +4,7 @@ use graphql_type_system::{Node, Schema, Text};
 use nitrogql_ast::{
     TypeSystemDocument,
     base::{Ident, Keyword, Pos},
+    directive::Directive,
     operation::OperationType,
     r#type::{ListType, NamedType, NonNullType, Type},
     type_system::{
@@ -138,7 +139,15 @@ fn convert_type_definition<S: Deref<Target = str>, D>(
                 description: convert_description(&input_object.description),
                 position: Pos::default(),
                 name: convert_node_to_ident(&input_object.name),
-                directives: vec![],
+                directives: if input_object.one_of {
+                    vec![Directive {
+                        position: Pos::builtin(),
+                        name: ident("oneOf"),
+                        arguments: None,
+                    }]
+                } else {
+                    vec![]
+                },
                 input_keyword: keyword("input"),
                 fields: input_object
                     .fields
@@ -226,6 +235,13 @@ fn convert_node_to_ident<S: Deref<Target = str>, D>(node: &Node<S, D>) -> Ident<
 
 fn keyword(name: &str) -> Keyword<'_> {
     Keyword {
+        name,
+        position: Pos::builtin(),
+    }
+}
+
+fn ident(name: &str) -> Ident<'_> {
+    Ident {
         name,
         position: Pos::builtin(),
     }

@@ -406,6 +406,7 @@ fn check_input_object(
         result,
     );
 
+    let is_one_of = input.directives.iter().any(|d| d.name.name == "oneOf");
     let mut seen_fields = vec![];
     for f in input.fields.iter() {
         if seen_fields.contains(&f.name.name) {
@@ -452,6 +453,20 @@ fn check_input_object(
                 );
             }
             Some(false) => {}
+        }
+
+        if is_one_of {
+            if f.r#type.is_nonnull() {
+                result.push(
+                    CheckErrorMessage::OneOfFieldNotNullable.with_pos(*f.r#type.position()),
+                );
+            }
+            if let Some(ref default_value) = f.default_value {
+                result.push(
+                    CheckErrorMessage::OneOfFieldWithDefaultValue
+                        .with_pos(*default_value.position()),
+                );
+            }
         }
     }
 }

@@ -1005,6 +1005,143 @@ mod imports {
     }
 }
 
+mod one_of {
+    use std::borrow::Cow;
+
+    use graphql_type_system::Schema;
+    use insta::assert_debug_snapshot;
+    use nitrogql_semantics::ast_to_type_system;
+
+    use nitrogql_ast::base::Pos;
+    use nitrogql_parser::parse_operation_document;
+
+    use super::{parse_to_type_system_document, test_check};
+
+    fn type_system() -> Schema<Cow<'static, str>, Pos> {
+        let doc = parse_to_type_system_document(
+            "
+            type Query {
+                user(by: UserBy!): User
+            }
+            type User {
+                id: ID!
+                name: String!
+            }
+            input UserBy @oneOf {
+                id: ID
+                email: String
+            }
+        ",
+        );
+        ast_to_type_system(&doc)
+    }
+
+    #[test]
+    fn valid_single_field() {
+        let schema = type_system();
+        let doc = parse_operation_document(
+            "
+            query {
+                user(by: { id: \"123\" }) { name }
+            }
+        ",
+        )
+        .unwrap();
+
+        assert_debug_snapshot!(test_check(schema, doc));
+    }
+
+    #[test]
+    fn two_fields() {
+        let schema = type_system();
+        let doc = parse_operation_document(
+            "
+            query {
+                user(by: { id: \"123\", email: \"foo@example.com\" }) { name }
+            }
+        ",
+        )
+        .unwrap();
+
+        assert_debug_snapshot!(test_check(schema, doc));
+    }
+
+    #[test]
+    fn no_fields() {
+        let schema = type_system();
+        let doc = parse_operation_document(
+            "
+            query {
+                user(by: {}) { name }
+            }
+        ",
+        )
+        .unwrap();
+
+        assert_debug_snapshot!(test_check(schema, doc));
+    }
+
+    #[test]
+    fn null_field() {
+        let schema = type_system();
+        let doc = parse_operation_document(
+            "
+            query {
+                user(by: { id: null }) { name }
+            }
+        ",
+        )
+        .unwrap();
+
+        assert_debug_snapshot!(test_check(schema, doc));
+    }
+
+    #[test]
+    fn nullable_variable_field() {
+        let schema = type_system();
+        let doc = parse_operation_document(
+            "
+            query ($id: ID) {
+                user(by: { id: $id }) { name }
+            }
+        ",
+        )
+        .unwrap();
+
+        assert_debug_snapshot!(test_check(schema, doc));
+    }
+
+    #[test]
+    fn non_null_variable_field() {
+        let schema = type_system();
+        let doc = parse_operation_document(
+            "
+            query ($id: ID!) {
+                user(by: { id: $id }) { name }
+            }
+        ",
+        )
+        .unwrap();
+
+        assert_debug_snapshot!(test_check(schema, doc));
+    }
+
+    #[test]
+    fn whole_input_variable() {
+        let schema = type_system();
+        let doc = parse_operation_document(
+            "
+            query ($by: UserBy!) {
+                user(by: $by) { name }
+            }
+        ",
+        )
+        .unwrap();
+
+        assert_debug_snapshot!(test_check(schema, doc));
+    }
+}
+
 fn parse_to_type_system_document(source: &str) -> TypeSystemDocument<'_> {
     let mut doc = parse_type_system_document(source).unwrap();
     doc.extend(generate_builtins());

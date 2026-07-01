@@ -157,6 +157,7 @@ fn convert_type_definition<'src>(
                                 deprecation: convert_deprecation(&input.directives),
                             })
                             .collect(),
+                        one_of: convert_one_of(&def.directives),
                     }),
                     def.position,
                 ),
@@ -224,6 +225,10 @@ fn convert_field<'src>(field: &FieldDefinition<'src>) -> Field<Cow<'src, str>, P
         arguments: convert_arguments(&field.arguments),
         deprecation: convert_deprecation(&field.directives),
     }
+}
+
+fn convert_one_of(directives: &[Directive]) -> bool {
+    directives.iter().any(|dir| dir.name.name == "oneOf")
 }
 
 fn convert_deprecation<'src>(directives: &[Directive<'src>]) -> Option<Cow<'src, str>> {

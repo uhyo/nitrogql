@@ -110,6 +110,7 @@ where
                     name: def.name.as_ref().map(&f),
                     description: map_option_node(&def.description, &f),
                     fields: def.fields.iter().map(|x| x.map_str(&f)).collect(),
+                    one_of: def.one_of,
                 })
             }
         }
@@ -195,6 +196,8 @@ pub struct InputObjectDefinition<Str, OriginalNode> {
     pub description: Option<Node<Str, OriginalNode>>,
     /// Field definitions.
     pub fields: Vec<InputValue<Str, OriginalNode>>,
+    /// Whether this input object is a @oneOf input object.
+    pub one_of: bool,
 }
 
 /// Represents one field in an object type.

@@ -1550,6 +1550,139 @@ mod input_objects {
     }
 }
 
+#[cfg(test)]
+mod one_of {
+    use insta::assert_debug_snapshot;
+
+    use crate::type_system_checker::{
+        check_type_system_document, tests::parse_to_type_system_document,
+    };
+
+    #[test]
+    fn valid_one_of_input_object() {
+        let doc = parse_to_type_system_document(
+            "
+            input UserBy @oneOf {
+                id: ID
+                email: String
+            }
+        ",
+        );
+        let errors = check_type_system_document(&doc);
+        assert_debug_snapshot!(errors, @"[]");
+    }
+
+    #[test]
+    fn one_of_field_must_be_nullable() {
+        let doc = parse_to_type_system_document(
+            "
+            input UserBy @oneOf {
+                id: ID!
+                email: String
+            }
+        ",
+        );
+        let errors = check_type_system_document(&doc);
+        assert_debug_snapshot!(errors, @"
+        [
+            CheckError {
+                position: Pos {
+                    line: 2,
+                    column: 20,
+                    file: 0,
+                    builtin: false,
+                },
+                message: OneOfFieldNotNullable,
+                additional_info: [],
+            },
+        ]
+        ");
+    }
+
+    #[test]
+    fn one_of_field_must_not_have_default_value() {
+        let doc = parse_to_type_system_document(
+            "
+            input UserBy @oneOf {
+                id: ID = \"admin\"
+                email: String
+            }
+        ",
+        );
+        let errors = check_type_system_document(&doc);
+        assert_debug_snapshot!(errors, @"
+        [
+            CheckError {
+                position: Pos {
+                    line: 2,
+                    column: 25,
+                    file: 0,
+                    builtin: false,
+                },
+                message: OneOfFieldWithDefaultValue,
+                additional_info: [],
+            },
+        ]
+        ");
+    }
+
+    #[test]
+    fn one_of_wrong_location() {
+        let doc = parse_to_type_system_document(
+            "
+            type MyType @oneOf {
+                foo: String
+            }
+        ",
+        );
+        let errors = check_type_system_document(&doc);
+        assert_debug_snapshot!(errors, @r#"
+        [
+            CheckError {
+                position: Pos {
+                    line: 1,
+                    column: 24,
+                    file: 0,
+                    builtin: false,
+                },
+                message: DirectiveLocationNotAllowed {
+                    name: "oneOf",
+                },
+                additional_info: [],
+            },
+        ]
+        "#);
+    }
+
+    #[test]
+    fn one_of_applied_by_extension() {
+        let doc = parse_to_type_system_document(
+            "
+            input UserBy {
+                id: ID
+                email: String!
+            }
+            extend input UserBy @oneOf
+        ",
+        );
+        let errors = check_type_system_document(&doc);
+        assert_debug_snapshot!(errors, @"
+        [
+            CheckError {
+                position: Pos {
+                    line: 3,
+                    column: 23,
+                    file: 0,
+                    builtin: false,
+                },
+                message: OneOfFieldNotNullable,
+                additional_info: [],
+            },
+        ]
+        ");
+    }
+}
+
 fn parse_to_type_system_document(source: &str) -> TypeSystemDocument<'_> {
     use graphql_builtins::generate_builtins;
 

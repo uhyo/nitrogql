@@ -90,6 +90,10 @@ pub enum CheckErrorMessage {
     ArgumentTypeNonNullAgainstInterface { interface_name: String },
     #[error("'{member_name}' is not an object type")]
     NonObjectTypeUnionMember { member_name: String },
+    #[error("Field of @oneOf input object must not be of non-null type")]
+    OneOfFieldNotNullable,
+    #[error("Field of @oneOf input object must not have a default value")]
+    OneOfFieldWithDefaultValue,
     // errors for operation
     #[error("Unnamed operation must be the only operation in this document")]
     UnNamedOperationMustBeSingle,
@@ -120,6 +124,14 @@ pub enum CheckErrorMessage {
     RecursingFragmentSpread { name: String },
     #[error("Subscription operation must have exactly one root field")]
     SubscriptionMustHaveExactlyOneRootField,
+    #[error("Value of @oneOf input object '{name}' must have exactly one field")]
+    OneOfInputNotExactlyOneField { name: String },
+    #[error("Field '{field}' of @oneOf input object must not be null")]
+    OneOfInputNullValue { field: String },
+    #[error(
+        "Variable '${name}' used for a field of @oneOf input object must be of non-null type"
+    )]
+    OneOfInputNullableVariable { name: String },
     // Error that should be checked in type system check phase
     #[error("Type system error. This is a bug of checker")]
     TypeSystemError,
