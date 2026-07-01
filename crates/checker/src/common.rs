@@ -287,6 +287,48 @@ fn is_value_compatible_type_def<'src, S: Text<'src>>(
                 }
                 return (false, vec![]);
             };
+            if object_def.one_of {
+                if value.fields.len() != 1 {
+                    result.push(
+                        CheckErrorMessage::OneOfInputNotExactlyOneField {
+                            name: object_def.name.to_string(),
+                        }
+                        .with_pos(value.position)
+                        .with_additional_info(vec![(
+                            *object_def.name.original_node_ref(),
+                            CheckErrorMessage::DefinitionPos {
+                                name: object_def.name.to_string(),
+                            },
+                        )]),
+                    );
+                } else {
+                    let (key, field_value) = &value.fields[0];
+                    match field_value {
+                        Value::NullValue(_) => {
+                            result.push(
+                                CheckErrorMessage::OneOfInputNullValue {
+                                    field: key.name.to_owned(),
+                                }
+                                .with_pos(*field_value.position()),
+                            );
+                        }
+                        Value::Variable(variable) => {
+                            // Unknown variable is reported by the recursive check_value
+                            if let Some(v_def) = get_variable_definition(variables, variable)
+                                && !v_def.r#type.is_nonnull()
+                            {
+                                result.push(
+                                    CheckErrorMessage::OneOfInputNullableVariable {
+                                        name: variable.name.to_owned(),
+                                    }
+                                    .with_pos(*field_value.position()),
+                                );
+                            }
+                        }
+                        _ => {}
+                    }
+                }
+            }
             let mut res = true;
             let mut additional_info = vec![];
             let mut seen_fields = 0;

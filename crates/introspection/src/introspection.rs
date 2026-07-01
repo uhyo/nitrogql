@@ -49,6 +49,8 @@ struct IntrospectionType<'src> {
     input_fields: Option<Vec<IntrospectionInputValue<'src>>>,
     #[serde(rename = "ofType")]
     of_type: Option<Box<IntrospectionType<'src>>>,
+    #[serde(rename = "isOneOf")]
+    is_one_of: Option<bool>,
 }
 
 #[derive(Deserialize)]
@@ -299,6 +301,7 @@ fn as_type_definition<'src, D: Default>(
             name,
             description,
             fields,
+            one_of: value.is_one_of.unwrap_or(false),
         }))
     } else {
         Err(IntrospectionError::Introspection(format!(

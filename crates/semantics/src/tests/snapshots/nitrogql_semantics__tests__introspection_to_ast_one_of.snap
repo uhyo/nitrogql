@@ -1,0 +1,16 @@
+---
+source: crates/semantics/src/tests/mod.rs
+expression: print_ast(&ast)
+---
+schema {
+  query: Query
+}
+type Query {
+  user(by: UserBy!): String
+}
+input UserBy @oneOf {
+  id: ID
+  email: String
+}
+scalar ID
+scalar String

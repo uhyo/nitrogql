@@ -65,6 +65,7 @@ pub fn generate_builtins() -> Vec<TypeSystemDefinitionOrExtension<'static>> {
                 "ENUM_VALUE",
             ],
         ),
+        directive("oneOf", vec![], vec!["INPUT_OBJECT"]),
         directive(
             "specifiedBy",
             vec![(

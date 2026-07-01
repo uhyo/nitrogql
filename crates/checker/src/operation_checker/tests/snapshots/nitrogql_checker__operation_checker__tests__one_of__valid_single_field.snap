@@ -1,0 +1,5 @@
+---
+source: crates/checker/src/operation_checker/tests/mod.rs
+expression: "test_check(schema, doc)"
+---
+[]

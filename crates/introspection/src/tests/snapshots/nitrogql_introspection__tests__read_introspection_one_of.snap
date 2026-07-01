@@ -1,0 +1,21 @@
+---
+source: crates/introspection/src/tests/mod.rs
+expression: buffer
+---
+schema {
+  query: Query
+}
+
+type Query {
+  user(by: UserBy!): String
+}
+
+"Input for looking up a user."
+input UserBy @oneOf {
+  id: ID
+  email: String
+}
+
+scalar ID
+
+scalar String

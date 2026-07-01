@@ -1,0 +1,30 @@
+---
+source: crates/checker/src/operation_checker/tests/mod.rs
+expression: "test_check(schema, doc)"
+---
+[
+    CheckError {
+        position: Pos {
+            line: 2,
+            column: 25,
+            file: 0,
+            builtin: false,
+        },
+        message: OneOfInputNotExactlyOneField {
+            name: "UserBy",
+        },
+        additional_info: [
+            (
+                Pos {
+                    line: 8,
+                    column: 18,
+                    file: 0,
+                    builtin: false,
+                },
+                DefinitionPos {
+                    name: "UserBy",
+                },
+            ),
+        ],
+    },
+]
