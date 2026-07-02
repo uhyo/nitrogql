@@ -44,6 +44,10 @@ impl GraphQLPrinter for ExecutableDefinition<'_> {
 
 impl GraphQLPrinter for OperationDefinition<'_> {
     fn print_graphql(&self, writer: &mut impl SourceMapWriter) {
+        if let Some(ref description) = self.description {
+            description.print_graphql(writer);
+            writer.write("\n");
+        }
         writer.write(self.operation_type.as_str());
         if let Some(ref name) = self.name {
             writer.write(" ");
@@ -88,6 +92,10 @@ impl GraphQLPrinter for VariablesDefinition<'_> {
 
 impl GraphQLPrinter for VariableDefinition<'_> {
     fn print_graphql(&self, writer: &mut impl SourceMapWriter) {
+        if let Some(ref description) = self.description {
+            description.print_graphql(writer);
+            writer.write(" ");
+        }
         self.name.print_graphql(writer);
         writer.write(": ");
         self.r#type.print_graphql(writer);
@@ -196,6 +204,10 @@ impl GraphQLPrinter for Selection<'_> {
 
 impl GraphQLPrinter for FragmentDefinition<'_> {
     fn print_graphql(&self, writer: &mut impl SourceMapWriter) {
+        if let Some(ref description) = self.description {
+            description.print_graphql(writer);
+            writer.write("\n");
+        }
         writer.write("fragment ");
         self.name.print_graphql(writer);
         writer.write(" on ");

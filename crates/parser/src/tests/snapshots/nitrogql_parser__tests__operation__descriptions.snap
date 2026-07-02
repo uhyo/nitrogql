@@ -1,0 +1,20 @@
+---
+source: crates/parser/src/tests/mod.rs
+expression: "print_graphql(parse_operation_document(r#\"\n                \"This is a query.\"\n                query sample(\n                    \"This is a variable.\"\n                    $foo: Int!\n                    \"\"\"\n                    This is another variable.\n                    \"\"\"\n                    $bar: String = \"bar\" @deprecated\n                ) {\n                    foo\n                    ...F\n                }\n                \"\"\"\n                This is a fragment.\n                \"\"\"\n                fragment F on Foo {\n                    bar\n                }\n                \"#).unwrap())"
+---
+"This is a query."
+query sample(
+  "This is a variable." $foo: Int!,
+  """
+                      This is another variable.
+                      """ $bar: String
+) {
+  foo
+  ... F
+}
+"""
+                This is a fragment.
+                """
+fragment F on Foo {
+  bar
+}

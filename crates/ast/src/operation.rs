@@ -4,6 +4,7 @@ use super::{
     base::{HasPos, Ident, NamePos, Pos},
     directive::Directive,
     selection_set::SelectionSet,
+    value::StringValue,
 };
 
 #[derive(Copy, Clone, PartialEq, Eq, Debug)]
@@ -47,6 +48,7 @@ impl HasPos for ExecutableDefinition<'_> {
 #[derive(Clone, Debug)]
 pub struct OperationDefinition<'a> {
     pub position: Pos,
+    pub description: Option<StringValue>,
     pub operation_type: OperationType,
     pub name: Option<Ident<'a>>,
     pub variables_definition: Option<VariablesDefinition<'a>>,
@@ -82,6 +84,7 @@ impl OperationDefinition<'_> {
 #[derive(Clone, Debug)]
 pub struct FragmentDefinition<'a> {
     pub position: Pos,
+    pub description: Option<StringValue>,
     pub name: Ident<'a>,
     pub type_condition: Ident<'a>,
     pub directives: Vec<Directive<'a>>,

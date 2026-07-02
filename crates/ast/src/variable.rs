@@ -2,7 +2,7 @@ use crate::{
     base::{HasPos, Pos},
     directive::Directive,
     r#type::Type,
-    value::Value,
+    value::{StringValue, Value},
 };
 
 /// Variable token.
@@ -32,6 +32,7 @@ pub struct VariablesDefinition<'a> {
 #[derive(Clone, Debug)]
 pub struct VariableDefinition<'a> {
     pub pos: Pos,
+    pub description: Option<StringValue>,
     pub name: Variable<'a>,
     pub r#type: Type<'a>,
     pub default_value: Option<Value<'a>>,

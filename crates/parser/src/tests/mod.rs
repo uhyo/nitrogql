@@ -90,6 +90,35 @@ mod operation {
         ));
     }
     #[test]
+    fn descriptions() {
+        assert_snapshot!(print_graphql(
+            parse_operation_document(
+                r#"
+                "This is a query."
+                query sample(
+                    "This is a variable."
+                    $foo: Int!
+                    """
+                    This is another variable.
+                    """
+                    $bar: String = "bar" @deprecated
+                ) {
+                    foo
+                    ...F
+                }
+                """
+                This is a fragment.
+                """
+                fragment F on Foo {
+                    bar
+                }
+                "#
+            )
+            .unwrap()
+        ));
+    }
+
+    #[test]
     fn comments() {
         assert_snapshot!(print_graphql(
             parse_operation_document(

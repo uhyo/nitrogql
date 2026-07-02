@@ -11,6 +11,7 @@ use super::{
     directives::build_directives,
     selection_set::build_selection_set,
     r#type::build_type,
+    type_system::build_description,
     utils::PairExt,
     value::{build_string_value, build_value},
 };
@@ -29,8 +30,9 @@ pub fn build_variables_definition(pair: Pair<Rule>) -> VariablesDefinition {
 /// Parses one VariableDefinition Pair.
 pub fn build_variable_definition(pair: Pair<Rule>) -> VariableDefinition {
     let pos = pair.to_pos();
-    let (variable, ty, default_value, directives) = parts!(
+    let (description, variable, ty, default_value, directives) = parts!(
         pair,
+        Description opt,
         Variable,
         Type,
         DefaultValue opt,
@@ -39,6 +41,7 @@ pub fn build_variable_definition(pair: Pair<Rule>) -> VariableDefinition {
 
     VariableDefinition {
         pos,
+        description: description.map(build_description),
         name: build_variable(variable),
         r#type: build_type(ty),
         default_value: default_value.map(|pair| {
@@ -55,8 +58,16 @@ pub fn build_executable_definition(pair: Pair<Rule>) -> ExecutableDefinitionExt 
     match pair.as_rule() {
         Rule::OperationDefinition => {
             // TODO: handling of OperationSet (abbreviated syntax)
-            let (operation_type, name, variables_definition, directives, selection_set) = parts!(
+            let (
+                description,
+                operation_type,
+                name,
+                variables_definition,
+                directives,
+                selection_set,
+            ) = parts!(
                 pair,
+                Description opt,
                 OperationType,
                 Name opt,
                 VariablesDefinition opt,
@@ -65,6 +76,7 @@ pub fn build_executable_definition(pair: Pair<Rule>) -> ExecutableDefinitionExt 
             );
             ExecutableDefinitionExt::OperationDefinition(OperationDefinition {
                 position,
+                description: description.map(build_description),
                 operation_type: str_to_operation_type(operation_type.as_str()),
                 name: name.map(|pair| pair.to_ident()),
                 variables_definition: variables_definition.map(build_variables_definition),
@@ -73,8 +85,9 @@ pub fn build_executable_definition(pair: Pair<Rule>) -> ExecutableDefinitionExt 
             })
         }
         Rule::FragmentDefinition => {
-            let (_, name, type_condition, directives, selection_set) = parts!(
+            let (description, _, name, type_condition, directives, selection_set) = parts!(
                 pair,
+                Description opt,
                 KEYWORD_fragment,
                 FragmentName,
                 TypeCondition,
@@ -83,6 +96,7 @@ pub fn build_executable_definition(pair: Pair<Rule>) -> ExecutableDefinitionExt 
             );
             ExecutableDefinitionExt::FragmentDefinition(FragmentDefinition {
                 position,
+                description: description.map(build_description),
                 name: name.to_ident(),
                 type_condition: {
                     let (_, name) = parts!(type_condition, KEYWORD_on, NamedType);

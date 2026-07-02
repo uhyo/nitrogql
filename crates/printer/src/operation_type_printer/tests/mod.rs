@@ -127,6 +127,35 @@ fn export_input_and_result_type() {
 }
 
 #[test]
+fn descriptions() {
+    let doc = parse_operation_document(
+        r#"
+        """
+        Query to get the current user.
+        """
+        query testQuery(
+            "ID of the user."
+            $foo: Int!
+            "Name of the user."
+            $bar: String
+        ) {
+            me(foo: $foo, bar: $bar) {
+                id name type age
+                ...F
+            }
+        }
+        "Fragment to get the ID."
+        fragment F on HasID {
+            id
+        }
+        "#,
+    )
+    .unwrap();
+    let printed = print_document_default(&doc);
+    assert_snapshot!(printed);
+}
+
+#[test]
 fn fragment_spread() {
     let doc = parse_operation_document(
         "
