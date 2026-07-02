@@ -11,6 +11,7 @@ use nitrogql_utils::clone_into;
 use sourcemap_writer::SourceMapWriter;
 
 use crate::{
+    jsdoc::print_description,
     operation_base_printer::{
         OperationPrinterVisitor, PrintFragmentContext, PrintOperationContext,
         options::OperationBasePrinterOptions,
@@ -150,6 +151,9 @@ impl OperationPrinterVisitor for OperationTypePrinterVisitor<'_, '_> {
             "{}{}",
             context.operation_names.operation_name, self.options.operation_result_type_suffix
         );
+        if let Some(ref description) = operation.description {
+            print_description(description, writer);
+        }
         if context.export_result_type {
             writer.write("export ");
         }
@@ -202,6 +206,9 @@ impl OperationPrinterVisitor for OperationTypePrinterVisitor<'_, '_> {
         input_variable_type.print_type(writer);
         writer.write(";\n\n");
 
+        if let Some(ref description) = operation.description {
+            print_description(description, writer);
+        }
         if context.exported {
             writer.write("export ");
         } else if !self.options.print_values {
@@ -240,6 +247,9 @@ impl OperationPrinterVisitor for OperationTypePrinterVisitor<'_, '_> {
     ) {
         let fragment = context.fragment;
         // type of fragment
+        if let Some(ref description) = fragment.description {
+            print_description(description, writer);
+        }
         if context.exported {
             writer.write("export ");
         }
@@ -282,6 +292,9 @@ impl OperationPrinterVisitor for OperationTypePrinterVisitor<'_, '_> {
         writer.write(";\n\n");
 
         // runtime value
+        if let Some(ref description) = fragment.description {
+            print_description(description, writer);
+        }
         if context.exported {
             writer.write("export ");
         } else if !self.options.print_values {

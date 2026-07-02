@@ -436,7 +436,7 @@ pub fn get_type_for_variable_definitions<'src, S: Text<'src>>(
                 optional: is_optional,
                 r#type: field_type,
                 readonly: true,
-                description: None,
+                description: def.description.as_ref().map(|d| d.value.clone()),
             }])
         })
         .collect();

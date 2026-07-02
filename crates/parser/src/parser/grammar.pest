@@ -85,7 +85,7 @@ ExecutableDocument = { SOI ~ ExecutableDefinition+ ~ EOI }
 
 ExecutableDefinition = { OperationDefinition | FragmentDefinition | ext_ImportStatement }
 OperationDefinition = {
-  OperationType ~ Name? ~ VariablesDefinition? ~ Directives? ~ SelectionSet | SelectionSet
+  Description? ~ OperationType ~ Name? ~ VariablesDefinition? ~ Directives? ~ SelectionSet | SelectionSet
 }
 
 OperationType = { KEYWORD_query | KEYWORD_mutation| KEYWORD_subscription }
@@ -101,7 +101,7 @@ Argument = { Name ~ ":" ~ Value }
 FragmentSpread = { "..." ~ FragmentName ~ Directives? }
 InlineFragment = { "..." ~ TypeCondition? ~ Directives? ~ SelectionSet }
 
-FragmentDefinition = { KEYWORD_fragment ~ FragmentName ~ TypeCondition ~ Directives? ~ SelectionSet }
+FragmentDefinition = { Description? ~ KEYWORD_fragment ~ FragmentName ~ TypeCondition ~ Directives? ~ SelectionSet }
 
 FragmentName = { !KEYWORD_on ~ Name }
 TypeCondition = { KEYWORD_on ~ NamedType }
@@ -133,7 +133,7 @@ ObjectValue = {
 ObjectField = { Name ~ ":" ~ Value }
 
 VariablesDefinition = { "(" ~ VariableDefinition+ ~ ")" }
-VariableDefinition = { Variable ~ ":" ~ Type ~ DefaultValue? ~ Directives? }
+VariableDefinition = { Description? ~ Variable ~ ":" ~ Type ~ DefaultValue? ~ Directives? }
 
 Variable = { "$" ~ Name }
 
