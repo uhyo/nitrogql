@@ -57,32 +57,54 @@ pub fn build_executable_definition(pair: Pair<Rule>) -> ExecutableDefinitionExt 
     let position = pair.to_pos();
     match pair.as_rule() {
         Rule::OperationDefinition => {
-            // TODO: handling of OperationSet (abbreviated syntax)
-            let (
-                description,
-                operation_type,
-                name,
-                variables_definition,
-                directives,
-                selection_set,
-            ) = parts!(
-                pair,
-                Description opt,
-                OperationType,
-                Name opt,
-                VariablesDefinition opt,
-                Directives opt,
-                SelectionSet
-            );
-            ExecutableDefinitionExt::OperationDefinition(OperationDefinition {
-                position,
-                description: description.map(build_description),
-                operation_type: str_to_operation_type(operation_type.as_str()),
-                name: name.map(|pair| pair.to_ident()),
-                variables_definition: variables_definition.map(build_variables_definition),
-                directives: directives.map_or(vec![], build_directives),
-                selection_set: build_selection_set(selection_set),
-            })
+            // The grammar allows two forms for an OperationDefinition:
+            //   1. Description? OperationType Name? VariablesDefinition? Directives? SelectionSet
+            //   2. SelectionSet  (shorthand / anonymous query syntax, e.g. `{ foo bar }`)
+            // In the shorthand form the only child is a SelectionSet, and the operation
+            // is treated as an anonymous, untyped `query`.
+            let is_shorthand = pair
+                .clone()
+                .into_inner()
+                .next()
+                .is_some_and(|first| first.is_rule(Rule::SelectionSet));
+            if is_shorthand {
+                let selection_set = pair.only_child();
+                ExecutableDefinitionExt::OperationDefinition(OperationDefinition {
+                    position,
+                    description: None,
+                    operation_type: OperationType::Query,
+                    name: None,
+                    variables_definition: None,
+                    directives: vec![],
+                    selection_set: build_selection_set(selection_set),
+                })
+            } else {
+                let (
+                    description,
+                    operation_type,
+                    name,
+                    variables_definition,
+                    directives,
+                    selection_set,
+                ) = parts!(
+                    pair,
+                    Description opt,
+                    OperationType,
+                    Name opt,
+                    VariablesDefinition opt,
+                    Directives opt,
+                    SelectionSet
+                );
+                ExecutableDefinitionExt::OperationDefinition(OperationDefinition {
+                    position,
+                    description: description.map(build_description),
+                    operation_type: str_to_operation_type(operation_type.as_str()),
+                    name: name.map(|pair| pair.to_ident()),
+                    variables_definition: variables_definition.map(build_variables_definition),
+                    directives: directives.map_or(vec![], build_directives),
+                    selection_set: build_selection_set(selection_set),
+                })
+            }
         }
         Rule::FragmentDefinition => {
             let (description, _, name, type_condition, directives, selection_set) = parts!(
