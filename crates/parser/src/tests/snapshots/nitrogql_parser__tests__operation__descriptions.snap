@@ -7,7 +7,7 @@ query sample(
   "This is a variable." $foo: Int!,
   """
                       This is another variable.
-                      """ $bar: String
+                      """ $bar: String = "bar" @deprecated
 ) {
   foo
   ... F
