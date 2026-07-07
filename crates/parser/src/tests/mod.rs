@@ -13,6 +13,12 @@ mod operation {
         ))
     }
     #[test]
+    fn shorthand_query() {
+        assert_snapshot!(print_graphql(
+            parse_operation_document("{ foo bar }").unwrap()
+        ))
+    }
+    #[test]
     fn query_with_name() {
         assert_snapshot!(print_graphql(
             parse_operation_document(
