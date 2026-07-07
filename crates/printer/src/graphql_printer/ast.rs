@@ -99,6 +99,14 @@ impl GraphQLPrinter for VariableDefinition<'_> {
         self.name.print_graphql(writer);
         writer.write(": ");
         self.r#type.print_graphql(writer);
+        if let Some(ref default_value) = self.default_value {
+            writer.write(" = ");
+            default_value.print_graphql(writer);
+        }
+        for d in self.directives.iter() {
+            writer.write(" ");
+            d.print_graphql(writer);
+        }
     }
 }
 
