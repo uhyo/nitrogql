@@ -1,6 +1,6 @@
 {
   "name": "@nitrogql/core",
-  "version": "1.7.2",
+  "version": "2.0.0-beta.0",
   "description": "GraphQL + TypeScript toolchain",
   "repository": {
     "type": "git",
@@ -26,11 +26,11 @@
   ],
   "author": "uhyo <uhyo@uhy.ooo>",
   "license": "MIT",
-  "volta": {
-    "node": "18.15.0"
+  "engines": {
+    "node": ">=22"
   },
   "dependencies": {
-    "@nitrogql/esbuild-register": "1.7.2",
+    "@nitrogql/esbuild-register": "2.0.0-beta.0",
     "esbuild": "0.x"
   },
   "devDependencies": {
