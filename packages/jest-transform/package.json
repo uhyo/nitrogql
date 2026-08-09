@@ -1,6 +1,6 @@
 {
   "name": "@nitrogql/jest-transform",
-  "version": "2.0.0-beta.0",
+  "version": "2.0.0",
   "description": "Jest transform for loading graphql files",
   "repository": {
     "type": "git",
@@ -29,8 +29,8 @@
   },
   "dependencies": {
     "@jest/transform": "^30.4.1",
-    "@nitrogql/core": "2.0.0-beta.0",
-    "@nitrogql/loader-core": "2.0.0-beta.0"
+    "@nitrogql/core": "2.0.0",
+    "@nitrogql/loader-core": "2.0.0"
   },
   "devDependencies": {
     "@types/node": "^20.10.4",
