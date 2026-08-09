@@ -7,6 +7,10 @@ on:
 jobs:
   publish:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      # Required for npm OIDC Trusted Publishing
+      id-token: write
     steps:
       - uses: actions/checkout@v7
       - name: install rustup
@@ -30,70 +34,27 @@ jobs:
         run: ./build/build-node.sh
         env:
           OPTIMIZE: "1"
-      - name: publish to npm (esbuild-register)
-        uses: JS-DevTools/npm-publish@v4
-        with:
-          token: ${{ secrets.NPM_TOKEN }}
-          package: "./packages/esbuild-register/package.json"
-          access: public
-          strategy: upgrade
-          tag: ${{ github.event.release.prerelease && 'next' || 'latest' }}
-      - name: publish to npm (core)
-        uses: JS-DevTools/npm-publish@v4
-        with:
-          token: ${{ secrets.NPM_TOKEN }}
-          package: "./packages/core/package.json"
-          access: public
-          strategy: upgrade
-          tag: ${{ github.event.release.prerelease && 'next' || 'latest' }}
-      - name: publish to npm (loader-core)
-        uses: JS-DevTools/npm-publish@v4
-        with:
-          token: ${{ secrets.NPM_TOKEN }}
-          package: "./packages/loader-core/package.json"
-          access: public
-          strategy: upgrade
-          tag: ${{ github.event.release.prerelease && 'next' || 'latest' }}
-      - name: publish to npm (wasi-preview1)
-        uses: JS-DevTools/npm-publish@v4
-        with:
-          token: ${{ secrets.NPM_TOKEN }}
-          package: "./packages/wasi-preview1/package.json"
-          access: public
-          strategy: upgrade
-          tag: ${{ github.event.release.prerelease && 'next' || 'latest' }}
-      - name: publish to npm (cli)
-        uses: JS-DevTools/npm-publish@v4
-        with:
-          token: ${{ secrets.NPM_TOKEN }}
-          package: "./packages/cli/package.json"
-          access: public
-          strategy: upgrade
-          tag: ${{ github.event.release.prerelease && 'next' || 'latest' }}
-      - name: publish to npm (graphql-loader)
-        uses: JS-DevTools/npm-publish@v4
-        with:
-          token: ${{ secrets.NPM_TOKEN }}
-          package: "./packages/graphql-loader/package.json"
-          access: public
-          strategy: upgrade
-          tag: ${{ github.event.release.prerelease && 'next' || 'latest' }}
-      - name: publish to npm (rollup-plugin)
-        uses: JS-DevTools/npm-publish@v4
-        with:
-          token: ${{ secrets.NPM_TOKEN }}
-          package: "./packages/rollup-plugin/package.json"
-          access: public
-          strategy: upgrade
-          tag: ${{ github.event.release.prerelease && 'next' || 'latest' }}
-      - name: publish to npm (jest-transform)
-        uses: JS-DevTools/npm-publish@v4
-        with:
-          token: ${{ secrets.NPM_TOKEN }}
-          package: "./packages/jest-transform/package.json"
-          access: public
-          strategy: upgrade
-          tag: ${{ github.event.release.prerelease && 'next' || 'latest' }}
+      - name: update npm
+        # npm >= 11.5.1 is required for OIDC Trusted Publishing
+        run: npm install -g npm@latest
+      - name: publish to npm
+        run: |
+          # Packages are published in dependency order.
+          for package in esbuild-register core loader-core wasi-preview1 cli graphql-loader rollup-plugin jest-transform; do
+            echo "::group::publish to npm ($package)"
+            pushd "packages/$package"
+            name=$(node -p "require('./package.json').name")
+            version=$(node -p "require('./package.json').version")
+            if npm view "$name@$version" version > /dev/null 2>&1; then
+              echo "$name@$version is already published; skipping"
+            else
+              npm publish --access public --tag "$TAG"
+            fi
+            popd
+            echo "::endgroup::"
+          done
+        env:
+          TAG: ${{ github.event.release.prerelease && 'next' || 'latest' }}
   deploy-vercel:
     runs-on: ubuntu-latest
     steps:
