@@ -21,6 +21,9 @@ export default function Guides() {
             Organizing Resolver Definitions
           </Link>
           <Link href="/guides/monorepo">Monorepo Guide</Link>
+          <Link href="/guides/typescript-content-mapper">
+            Using TypeScript Content Mapper
+          </Link>
           <Link href="/guides/migrating-from-graphql-codegen">
             Migrating from GraphQL Code Generator
           </Link>

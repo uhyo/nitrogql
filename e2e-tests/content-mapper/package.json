@@ -1,0 +1,18 @@
+{
+  "name": "@nitrogql/e2e-test-content-mapper",
+  "private": true,
+  "version": "2.0.0",
+  "description": "",
+  "type": "module",
+  "scripts": {
+    "e2e-test": "tsc --runExternalCode"
+  },
+  "keywords": [],
+  "author": "uhyo <uhyo@uhy.ooo>",
+  "license": "MIT",
+  "devDependencies": {
+    "@graphql-typed-document-node/core": "^3.2.0",
+    "@nitrogql/cli": "*",
+    "typescript": "7.1.0-beta"
+  }
+}

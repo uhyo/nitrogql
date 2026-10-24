@@ -1,0 +1,11 @@
+type User {
+  id: ID!
+  name: String!
+  age: Int
+  role: Role!
+}
+
+enum Role {
+  ADMIN
+  USER
+}

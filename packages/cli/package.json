@@ -18,6 +18,15 @@
   "bin": {
     "nitrogql": "bin/main.mjs"
   },
+  "typescript": {
+    "contentMapper": {
+      "exec": [
+        "node",
+        "./bin/content-mapper.mjs"
+      ],
+      "dynamicConfig": true
+    }
+  },
   "scripts": {},
   "keywords": [
     "graphql"

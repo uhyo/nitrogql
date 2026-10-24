@@ -1,0 +1,16 @@
+---
+source: crates/cli/src/content_mapper/tests.rs
+expression: "print_result(&result, FRAGMENT, &root)"
+---
+import type { TypedDocumentNode } from "@graphql-typed-document-node/core";
+import type * as Schema from "../schema/a.graphql";
+
+export type UserName = Schema.__SelectionSet<Schema.__OperationOutput.User, {
+  name: Schema.__OperationOutput.String;
+}, {}>;
+
+export declare const UserName: TypedDocumentNode<UserName, never>;
+
+// mapping: "UserName" -> "UserName" (Verbatim)
+// mapping: "UserName" -> "UserName" (Verbatim)
+// mapping: "UserName" -> "UserName" (Verbatim)

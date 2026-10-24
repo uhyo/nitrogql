@@ -1,0 +1,6 @@
+---
+source: crates/cli/src/content_mapper/tests.rs
+expression: "print_result(&result, operation, &root)"
+---
+export {};
+// diagnostic 3: "Parse error: expected Selection" at ""

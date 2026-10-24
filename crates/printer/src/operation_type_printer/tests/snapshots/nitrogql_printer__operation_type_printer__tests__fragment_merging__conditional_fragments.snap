@@ -42,7 +42,7 @@ export type F = Schema.__SelectionSet<Schema.__OperationOutput.Query, {
   }, {}>;
 }, {}>;
 
-export const F: TypedDocumentNode<F, never>;
+export declare const F: TypedDocumentNode<F, never>;
 
 export type P = Schema.__SelectionSet<Schema.__OperationOutput.Query, {
   me: Schema.__SelectionSet<Schema.__OperationOutput.User, {
@@ -59,6 +59,4 @@ export type P = Schema.__SelectionSet<Schema.__OperationOutput.Query, {
   }, {}>;
 }, {}>;
 
-export const P: TypedDocumentNode<P, never>;
-
-
+export declare const P: TypedDocumentNode<P, never>;

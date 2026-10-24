@@ -211,7 +211,8 @@ impl OperationPrinterVisitor for OperationTypePrinterVisitor<'_, '_> {
         }
         if context.exported {
             writer.write("export ");
-        } else if !self.options.print_values {
+        }
+        if !self.options.print_values {
             writer.write("declare ");
         }
         writer.write("const ");
@@ -297,7 +298,8 @@ impl OperationPrinterVisitor for OperationTypePrinterVisitor<'_, '_> {
         }
         if context.exported {
             writer.write("export ");
-        } else if !self.options.print_values {
+        }
+        if !self.options.print_values {
             writer.write("declare ");
         }
         writer.write("const ");

@@ -144,7 +144,7 @@ fn check_impl<'src>(input: CheckImplInput<'src, '_>) -> CheckImplOutput<'src> {
     }
 }
 
-fn resolve_schema<'src>(
+pub(crate) fn resolve_schema<'src>(
     schema: LoadedSchema<'src, TypeSystemOrExtensionDocument<'src>>,
     plugins: &[Plugin<'src>],
 ) -> std::result::Result<LoadedSchema<'src, TypeSystemDocument<'src>>, Vec<PositionedError>> {

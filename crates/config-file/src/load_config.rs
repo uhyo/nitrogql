@@ -37,6 +37,14 @@ const CONFIG_NAMES: [(&str, LoaderKind); 19] = [
     (".graphqlrc.cts", LoaderKind::Js),
 ];
 
+/// Determines how to load given config file from its extension.
+fn loader_kind_by_path(path: &Path) -> LoaderKind {
+    match path.extension().and_then(|ext| ext.to_str()) {
+        Some("js" | "mjs" | "cjs" | "ts" | "mts" | "cts") => LoaderKind::Js,
+        _ => LoaderKind::Yaml,
+    }
+}
+
 /// searches graphql config and loads it if one is found.
 async fn search_graphql_config(cwd: &Path) -> io::Result<Option<(PathBuf, String)>> {
     trace!("search_graphql_config from {}", cwd.display());
@@ -88,7 +96,14 @@ pub async fn load_config(
         Some(path) => {
             let mut path_to_read = cwd.to_owned();
             path_to_read.push(path);
-            fs::read_to_string(&path_to_read).map(|source| Some((path_to_read, source)))
+            match loader_kind_by_path(&path_to_read) {
+                LoaderKind::Yaml => {
+                    fs::read_to_string(&path_to_read).map(|source| Some((path_to_read, source)))
+                }
+                LoaderKind::Js => load_default_from_js_file(&path_to_read)
+                    .await
+                    .map(|source| Some((path_to_read, source))),
+            }
         }
         None => search_graphql_config(cwd).await,
     }?;

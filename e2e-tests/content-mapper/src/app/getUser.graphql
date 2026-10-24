@@ -1,0 +1,9 @@
+#import UserFields from "./userFields.graphql"
+
+query GetUser($id: ID!) {
+  user(id: $id) {
+    ...UserFields
+    age
+    role
+  }
+}

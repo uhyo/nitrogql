@@ -418,7 +418,7 @@ static TS_TO_JS: [(&str, &str); 7] = [
 
 /// Converts relative path for use with `import` statements.
 /// This is done by converting TS extensions to JS extensions.
-fn path_to_ts(mut path: PathBuf) -> PathBuf {
+pub(crate) fn path_to_ts(mut path: PathBuf) -> PathBuf {
     match path.file_name() {
         None => path,
         Some(file_name) => match file_name.to_os_string().into_string() {

@@ -566,6 +566,7 @@ dependencies = [
  "pest",
  "pest_derive",
  "serde",
+ "serde_json",
  "serde_yaml",
  "simple_logger",
  "sourcemap-writer",

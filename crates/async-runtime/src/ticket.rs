@@ -36,17 +36,18 @@ pub extern "C" fn execute_node_ret(id: u32, is_ok: u32, result: *const u8, resul
     TICKETS.with(|tickets| {
         let mut tickets = tickets.borrow_mut();
         let id = TicketId(id);
-        let result = unsafe {
-            let slice = std::slice::from_raw_parts(result, result_len);
-            String::from_utf8(slice.to_vec()).expect("invalid utf8")
-        };
         let ticket = tickets
             .string_tickets
             .get_mut(&id)
             .expect("invalid ticket id");
         ticket.result = if is_ok != 0 {
+            let result = unsafe {
+                let slice = std::slice::from_raw_parts(result, result_len);
+                String::from_utf8(slice.to_vec()).expect("invalid utf8")
+            };
             Some(Ok(result))
         } else {
+            // result may be a null pointer on failure.
             Some(Err(()))
         };
         ticket.waker.wake_by_ref();

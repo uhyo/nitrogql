@@ -32,6 +32,15 @@ const configHelper = core.initConfigNamespace();
 const importObject = {
   wasi_snapshot_preview1: wasi,
   "nitrogql_helper/config": configHelper.namespace,
+  // Only used by content-mapper.mjs
+  "nitrogql_helper/content_mapper": {
+    read_message() {
+      throw new Error("Content mapper is not available in this mode");
+    },
+    write_message() {
+      throw new Error("Content mapper is not available in this mode");
+    },
+  },
 };
 
 const wasm = await WebAssembly.compile(
