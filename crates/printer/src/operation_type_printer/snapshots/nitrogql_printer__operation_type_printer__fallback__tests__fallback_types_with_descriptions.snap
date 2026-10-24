@@ -1,0 +1,29 @@
+---
+source: crates/printer/src/operation_type_printer/fallback.rs
+expression: printed
+---
+import type { TypedDocumentNode } from "@graphql-typed-document-node/core";
+
+/**
+ * Get the current user
+ */
+type GetMeResult = any;
+
+type GetMeVariables = any;
+
+/**
+ * Get the current user
+ */
+declare const GetMeQuery: TypedDocumentNode<GetMeResult, GetMeVariables>;
+
+export { GetMeQuery as default };
+
+/**
+ * User data
+ */
+export type F = any;
+
+/**
+ * User data
+ */
+export declare const F: TypedDocumentNode<F, never>;

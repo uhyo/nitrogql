@@ -1,11 +1,3 @@
-use std::{borrow::Cow, collections::HashMap};
-
-use graphql_type_system::{NamedType, Node, NonNullType, RootTypes, Schema, Text, Type};
-use nitrogql_ast::{
-    OperationDocument,
-    base::Pos,
-    operation::{ExecutableDefinition, FragmentDefinition, OperationType},
-};
 use nitrogql_config_file::{Config, GenerateMode};
 use nitrogql_utils::clone_into;
 use sourcemap_writer::SourceMapWriter;
@@ -17,16 +9,9 @@ use crate::{
         options::OperationBasePrinterOptions,
     },
     operation_js_printer::{print_fragment_runtime, print_operation_runtime},
-    ts_types::TSType,
 };
 
-use super::{
-    error::OperationTypePrinterError,
-    selection_tree::{GenerateSelectionTreeTypeContext, generate_selection_tree_type},
-    type_printer::{
-        QueryTypePrinterContext, get_type_for_selection_set, get_type_for_variable_definitions,
-    },
-};
+use super::type_source::OperationTypeSource;
 
 #[derive(Clone, Debug)]
 pub struct OperationTypePrinterOptions {
@@ -91,56 +76,36 @@ impl OperationTypePrinterOptions {
     }
 }
 
-pub struct OperationTypePrinterVisitor<'a, 'src> {
+/// Visitor that prints declarations of operations and fragments.
+/// Their types are provided by the type source.
+pub struct OperationTypePrinterVisitor<T> {
     options: OperationTypePrinterOptions,
-    context: OperationTypePrinterContext<'a, 'src, Cow<'src, str>>,
+    types: T,
 }
 
-impl<'a, 'src> OperationTypePrinterVisitor<'a, 'src>
-where
-    'a: 'src,
-{
-    pub fn new(
-        options: OperationTypePrinterOptions,
-        schema: &'a Schema<Cow<'src, str>, Pos>,
-        operation: &'a OperationDocument<'src>,
-    ) -> Self {
-        let fragment_definitions = operation
-            .definitions
-            .iter()
-            .filter_map(|def| match def {
-                ExecutableDefinition::OperationDefinition(_) => None,
-                ExecutableDefinition::FragmentDefinition(fragment_def) => {
-                    Some((fragment_def.name.name, fragment_def))
-                }
-            })
-            .collect();
-        let context = OperationTypePrinterContext {
-            schema,
-            fragment_definitions,
-        };
-        Self { options, context }
+impl<T: OperationTypeSource> OperationTypePrinterVisitor<T> {
+    pub fn new(options: OperationTypePrinterOptions, types: T) -> Self {
+        Self { options, types }
     }
 }
 
-pub struct OperationTypePrinterContext<'a, 'src, S: Text<'src>> {
-    pub schema: &'a Schema<S, Pos>,
-    pub fragment_definitions: HashMap<&'src str, &'a FragmentDefinition<'src>>,
-}
-
-impl OperationPrinterVisitor for OperationTypePrinterVisitor<'_, '_> {
-    type Error = OperationTypePrinterError;
+impl<T: OperationTypeSource> OperationPrinterVisitor for OperationTypePrinterVisitor<T> {
+    type Error = T::Error;
     fn print_header(&self, writer: &mut impl SourceMapWriter) {
         writeln!(
             writer,
             "import type {{ TypedDocumentNode }} from \"{}\";",
             self.options.typed_document_node_source
         );
-        write!(
-            writer,
-            "import type * as {} from \"{}\";\n\n",
-            self.options.schema_root_namespace, self.options.schema_source,
-        );
+        if self.types.uses_schema_types() {
+            write!(
+                writer,
+                "import type * as {} from \"{}\";\n\n",
+                self.options.schema_root_namespace, self.options.schema_source,
+            );
+        } else {
+            writer.write("\n");
+        }
     }
     fn print_trailer(&self, _writer: &mut impl SourceMapWriter) {}
     fn print_operation_definition(
@@ -162,38 +127,12 @@ impl OperationPrinterVisitor for OperationTypePrinterVisitor<'_, '_> {
         writer.write("type ");
         writer.write_for(&result_type_name, &operation.name_pos());
         writer.write_for(" = ", &operation.selection_set);
-
-        let root_types = self.context.schema.root_types().unwrap_or_default();
-        let parent_type = select_root_type(&root_types, operation.operation_type);
-        let parent_type = Type::NonNull(Box::new(NonNullType::from(Type::Named(NamedType::from(
-            parent_type.clone(),
-        )))));
-        let type_printer_context = QueryTypePrinterContext {
-            options: &self.options,
-            schema: self.context.schema,
-            fragment_definitions: &self.context.fragment_definitions,
-        };
-
-        let operation_type = get_type_for_selection_set(
-            &type_printer_context,
-            &operation.selection_set,
-            &parent_type,
-        )?;
-        let operation_type = generate_selection_tree_type(
-            &GenerateSelectionTreeTypeContext {
-                schema_root_namespace: &self.options.schema_root_namespace,
-            },
-            &operation_type,
-        );
-        operation_type.print_type(writer);
+        self.types
+            .operation_result_type(operation)?
+            .print_type(writer);
         writer.write(";\n\n");
 
-        let input_variable_type = operation
-            .variables_definition
-            .as_ref()
-            .map_or(TSType::empty_object(), |v| {
-                get_type_for_variable_definitions(&type_printer_context, v)
-            });
+        let input_variable_type = self.types.operation_variables_type(operation)?;
         let input_variable_name = format!(
             "{}{}",
             context.operation_names.operation_name, self.options.variables_type_suffix
@@ -267,32 +206,7 @@ impl OperationPrinterVisitor for OperationTypePrinterVisitor<'_, '_> {
         writer.write_for(&fragment_type_name, fragment);
 
         writer.write(" = ");
-
-        let parent_type = Type::NonNull(Box::new(NonNullType::from(Type::Named(NamedType::from(
-            Node::from(
-                fragment.type_condition.name,
-                fragment.type_condition.position,
-            ),
-        )))));
-
-        let type_printer_context = QueryTypePrinterContext {
-            options: &self.options,
-            schema: self.context.schema,
-            fragment_definitions: &self.context.fragment_definitions,
-        };
-
-        let fragment_type = get_type_for_selection_set(
-            &type_printer_context,
-            &fragment.selection_set,
-            &parent_type,
-        )?;
-        let fragment_type = generate_selection_tree_type(
-            &GenerateSelectionTreeTypeContext {
-                schema_root_namespace: &self.options.schema_root_namespace,
-            },
-            &fragment_type,
-        );
-        fragment_type.print_type(writer);
+        self.types.fragment_type(fragment)?.print_type(writer);
         writer.write(";\n\n");
 
         // runtime value
@@ -306,12 +220,7 @@ impl OperationPrinterVisitor for OperationTypePrinterVisitor<'_, '_> {
             writer.write("declare ");
         }
         writer.write("const ");
-
-        let fragment_variable_name = format!(
-            "{}{}",
-            fragment.name.name, self.options.base_options.fragment_variable_suffix
-        );
-        writer.write_for(&fragment_variable_name, fragment);
+        writer.write_for(context.var_name, fragment);
         writer.write(": ");
         writer.write("TypedDocumentNode<");
         writer.write_for(&fragment_type_name, fragment);
@@ -335,13 +244,5 @@ impl OperationPrinterVisitor for OperationTypePrinterVisitor<'_, '_> {
         writer.write("export { ");
         writer.write(&context.operation_names.operation_variable_name);
         writer.write(" as default };\n\n");
-    }
-}
-
-fn select_root_type<T>(root_types: &RootTypes<T>, operation_type: OperationType) -> &T {
-    match operation_type {
-        OperationType::Query => &root_types.query_type,
-        OperationType::Mutation => &root_types.mutation_type,
-        OperationType::Subscription => &root_types.subscription_type,
     }
 }
