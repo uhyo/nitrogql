@@ -259,7 +259,7 @@ pub fn run_generate(mut context: CliContext) -> Result<CliContext> {
                     &mapped_schema,
                     doc,
                     &mut writer,
-                );
+                )?;
 
                 let buffers = writer.into_buffers();
 

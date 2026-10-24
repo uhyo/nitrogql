@@ -1,3 +1,5 @@
+use std::convert::Infallible;
+
 use nitrogql_ast::OperationDocument;
 use sourcemap_writer::SourceMapWriter;
 
@@ -20,7 +22,7 @@ pub fn print_fallback_types_for_operation_document(
     let base_options = options.base_options.clone();
     let visitor = FallbackOperationTypePrinterVisitor { options };
     let mut printer = OperationPrinter::new(base_options, visitor, writer);
-    printer.print_document(operation);
+    let Ok(()) = printer.print_document(operation);
 }
 
 struct FallbackOperationTypePrinterVisitor {
@@ -28,6 +30,7 @@ struct FallbackOperationTypePrinterVisitor {
 }
 
 impl OperationPrinterVisitor for FallbackOperationTypePrinterVisitor {
+    type Error = Infallible;
     fn print_header(&self, writer: &mut impl SourceMapWriter) {
         writeln!(
             writer,
@@ -40,7 +43,7 @@ impl OperationPrinterVisitor for FallbackOperationTypePrinterVisitor {
         &self,
         context: PrintOperationContext,
         writer: &mut impl SourceMapWriter,
-    ) {
+    ) -> Result<(), Self::Error> {
         let operation = &context.operation;
         let result_type_name = format!(
             "{}{}",
@@ -78,12 +81,13 @@ impl OperationPrinterVisitor for FallbackOperationTypePrinterVisitor {
         writer.write(", ");
         writer.write(&input_variable_name);
         writer.write(">;\n\n");
+        Ok(())
     }
     fn print_fragment_definition(
         &self,
         context: PrintFragmentContext,
         writer: &mut impl SourceMapWriter,
-    ) {
+    ) -> Result<(), Self::Error> {
         let fragment = context.fragment;
         let fragment_type_name = format!(
             "{}{}",
@@ -105,6 +109,7 @@ impl OperationPrinterVisitor for FallbackOperationTypePrinterVisitor {
         writer.write(": TypedDocumentNode<");
         writer.write(&fragment_type_name);
         writer.write(", never>;\n\n");
+        Ok(())
     }
     fn print_default_exported_operation_definition(
         &self,

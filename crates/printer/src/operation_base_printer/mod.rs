@@ -34,7 +34,7 @@ where
         }
     }
 
-    pub fn print_document(&mut self, document: &OperationDocument) {
+    pub fn print_document(&mut self, document: &OperationDocument) -> Result<(), Visitor::Error> {
         self.visitor.print_header(self.writer);
 
         let operation_count = document
@@ -64,7 +64,7 @@ where
                         fragments: &fragments,
                     };
                     self.visitor
-                        .print_operation_definition(context, self.writer);
+                        .print_operation_definition(context, self.writer)?;
 
                     if self.options.default_export_for_operation && operation_count == 1 {
                         self.visitor
@@ -82,12 +82,14 @@ where
                         fragment: def,
                         fragments: &fragments,
                     };
-                    self.visitor.print_fragment_definition(context, self.writer);
+                    self.visitor
+                        .print_fragment_definition(context, self.writer)?;
                 }
             }
         }
 
         self.visitor.print_trailer(self.writer);
+        Ok(())
     }
 }
 

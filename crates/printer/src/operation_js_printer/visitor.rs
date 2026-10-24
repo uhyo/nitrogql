@@ -1,3 +1,5 @@
+use std::convert::Infallible;
+
 use sourcemap_writer::SourceMapWriter;
 
 use crate::operation_base_printer::{
@@ -15,13 +17,14 @@ impl OperationJSPrinterVisitor {
 }
 
 impl OperationPrinterVisitor for OperationJSPrinterVisitor {
+    type Error = Infallible;
     fn print_header(&self, _writer: &mut impl SourceMapWriter) {}
     fn print_trailer(&self, _writer: &mut impl SourceMapWriter) {}
     fn print_operation_definition(
         &self,
         context: PrintOperationContext,
         writer: &mut impl SourceMapWriter,
-    ) {
+    ) -> Result<(), Self::Error> {
         let operation = &context.operation;
         if context.exported {
             writer.write("export ");
@@ -34,13 +37,14 @@ impl OperationPrinterVisitor for OperationJSPrinterVisitor {
         writer.write(" = ");
         print_operation_runtime(writer, operation, context.fragments);
         writer.write(";\n\n");
+        Ok(())
     }
 
     fn print_fragment_definition(
         &self,
         context: PrintFragmentContext,
         writer: &mut impl SourceMapWriter,
-    ) {
+    ) -> Result<(), Self::Error> {
         let fragment = context.fragment;
         // TODO: implementation is duplicated from operation_type_printer
         if context.exported {
@@ -52,6 +56,7 @@ impl OperationPrinterVisitor for OperationJSPrinterVisitor {
         writer.write(" = ");
         print_fragment_runtime(writer, fragment, context.fragments);
         writer.write(";\n\n");
+        Ok(())
     }
     fn print_default_exported_operation_definition(
         &self,

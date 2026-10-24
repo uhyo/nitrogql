@@ -239,7 +239,12 @@ fn transform_operation_file(
     options.schema_source = schema_source;
 
     let mut writer = SpanWriter::new();
-    print_types_for_operation_document(options, &schema.type_system, &document, &mut writer);
+    if let Err(err) =
+        print_types_for_operation_document(options, &schema.type_system, &document, &mut writer)
+    {
+        // This means that the checker has missed an error.
+        return error_result(diagnose(&[err.into()], codes::VALIDATION_ERROR));
+    }
     let (text, spans) = writer.into_parts();
     TransformResult {
         mappings: to_mappings(&spans, root_index, &text, &index, encoding),

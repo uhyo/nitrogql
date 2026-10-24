@@ -21,5 +21,5 @@ pub fn print_js_for_operation_document(
     let base_options = options.base_options;
     let visitor = OperationJSPrinterVisitor::new();
     let mut printer = OperationPrinter::new(base_options, visitor, writer);
-    printer.print_document(operation);
+    let Ok(()) = printer.print_document(operation);
 }
