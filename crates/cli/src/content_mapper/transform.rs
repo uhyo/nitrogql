@@ -11,7 +11,7 @@ use nitrogql_error::PositionedError;
 use nitrogql_parser::parse_operation_document;
 use nitrogql_printer::{
     OperationTypePrinterOptions, SchemaTypePrinter, SchemaTypePrinterOptions,
-    print_types_for_operation_document,
+    print_fallback_types_for_operation_document, print_types_for_operation_document,
 };
 use nitrogql_semantics::{
     OperationExtension, OperationResolver, resolve_operation_extensions, resolve_operation_imports,
@@ -54,35 +54,7 @@ pub fn transform(
     if let Some(file_index) = project.schema_file_index(&file_name) {
         return transform_schema_file(project, file_index, content, encoding);
     }
-    match project.schema() {
-        Ok(schema) => transform_operation_file(project, schema, &file_name, content, encoding),
-        Err(errors) => {
-            let files = |idx: usize| project.file_store.get_file(idx).map(|(path, _, _)| path);
-            let index = LineIndex::new(content, encoding);
-            TransformResult {
-                text: EMPTY_MODULE.to_owned(),
-                extension: ".ts",
-                mappings: vec![],
-                // Project errors are never positioned in operation files.
-                diagnostics: to_diagnostics(
-                    errors,
-                    usize::MAX,
-                    &files,
-                    &index,
-                    codes::PROJECT_ERROR,
-                )
-                .into_iter()
-                .map(|mut diagnostic| {
-                    diagnostic.message_text = format!(
-                        "Failed to load nitrogql project: {}",
-                        diagnostic.message_text
-                    );
-                    diagnostic
-                })
-                .collect(),
-            }
-        }
-    }
+    transform_operation_file(project, &file_name, content, encoding)
 }
 
 /// Transforms a schema file.
@@ -155,9 +127,11 @@ fn transform_schema_file(
 }
 
 /// Transforms an operation file into type definitions.
+///
+/// If the file has errors but can be parsed, a fallback module is emitted along with diagnostics.
+/// It has the same exports as usual but all types are `any`, so that importing files keep working.
 fn transform_operation_file(
     project: &Project,
-    schema: &LoadedProjectSchema,
     file_name: &Path,
     content: &str,
     encoding: PositionEncoding,
@@ -173,23 +147,11 @@ fn transform_operation_file(
         }
     };
     let index = LineIndex::new(content, encoding);
-    let error_result = |errors: &[PositionedError], code: u32| TransformResult {
-        text: EMPTY_MODULE.to_owned(),
-        extension: ".ts",
-        mappings: vec![],
-        diagnostics: to_diagnostics(errors, root_index, &file_path, &index, code),
-    };
-    if !files.syntax_errors.is_empty() {
-        return error_result(&files.syntax_errors, codes::SYNTAX_ERROR);
-    }
-    if !files.errors.is_empty() {
-        return error_result(&files.errors, codes::VALIDATION_ERROR);
-    }
 
     let mut documents = HashMap::new();
     for (idx, (path, source)) in files.files.iter().enumerate() {
         set_current_file_of_pos(root_index + idx);
-        // Errors are already checked in load_operation_files.
+        // Errors are reported by load_operation_files.
         let Ok(document) = parse_operation_document(source) else {
             continue;
         };
@@ -198,15 +160,61 @@ fn transform_operation_file(
         };
         documents.insert(path.as_path(), document);
     }
+
+    let error_result = |diagnostics: Vec<MapperDiagnostic>| {
+        let Some((document, _)) = documents.get(file_name) else {
+            return TransformResult {
+                text: EMPTY_MODULE.to_owned(),
+                extension: ".ts",
+                mappings: vec![],
+                diagnostics,
+            };
+        };
+        let mut options = OperationTypePrinterOptions::from_config(&project.config);
+        options.print_values = false;
+        let mut writer = SpanWriter::new();
+        print_fallback_types_for_operation_document(options, document, &mut writer);
+        let (text, spans) = writer.into_parts();
+        TransformResult {
+            mappings: to_mappings(&spans, root_index, &text, &index, encoding),
+            text,
+            extension: ".ts",
+            diagnostics,
+        }
+    };
+    let diagnose = |errors: &[PositionedError], code: u32| {
+        to_diagnostics(errors, root_index, &file_path, &index, code)
+    };
+
+    if !files.syntax_errors.is_empty() {
+        return error_result(diagnose(&files.syntax_errors, codes::SYNTAX_ERROR));
+    }
+    if !files.errors.is_empty() {
+        return error_result(diagnose(&files.errors, codes::VALIDATION_ERROR));
+    }
+    let schema = match project.schema() {
+        Ok(schema) => schema,
+        Err(errors) => {
+            let mut diagnostics = diagnose(errors, codes::PROJECT_ERROR);
+            for diagnostic in diagnostics.iter_mut() {
+                diagnostic.message_text = format!(
+                    "Failed to load nitrogql project: {}",
+                    diagnostic.message_text
+                );
+            }
+            return error_result(diagnostics);
+        }
+    };
+
     let Some((document, extension)) = documents.get(file_name) else {
-        return error_result(&[], codes::SYNTAX_ERROR);
+        return error_result(vec![]);
     };
     let document = match resolve_operation_imports(
         (file_name, document, extension),
         &DocumentResolver(&documents),
     ) {
         Ok(document) => document,
-        Err(err) => return error_result(&[err.into()], codes::VALIDATION_ERROR),
+        Err(err) => return error_result(diagnose(&[err.into()], codes::VALIDATION_ERROR)),
     };
 
     let check_errors =
@@ -216,14 +224,14 @@ fn transform_operation_file(
             .into_iter()
             .map(PositionedError::from)
             .collect::<Vec<_>>();
-        return error_result(&errors, codes::VALIDATION_ERROR);
+        return error_result(diagnose(&errors, codes::VALIDATION_ERROR));
     }
 
     let Some(schema_source) = schema_source(project, schema, file_name) else {
-        return error_result(
+        return error_result(diagnose(
             &[TransformError::NoSchemaSource.into()],
             codes::PROJECT_ERROR,
-        );
+        ));
     };
     let mut options = OperationTypePrinterOptions::from_config(&project.config);
     // Runtime values are provided by loaders, not by content-mapped files.

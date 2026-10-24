@@ -309,3 +309,26 @@ fn watched_files_and_identity() {
     .unwrap();
     assert_eq!(open(&root).config_identity, identity2);
 }
+
+#[test]
+fn imported_file_error() {
+    let mut files = default_files();
+    let operation = r#"#import UserName from "./fragment.graphql"
+query GetMe {
+  me {
+    ...UserName
+    ...UserAge
+  }
+}
+fragment UserAge on User {
+  age
+}
+"#;
+    files[4] = ("app/fragment.graphql", "fragment UserName on User {");
+    files[5] = ("app/operation.graphql", operation);
+    let root = setup("imported_file_error", &files);
+    let project = open(&root);
+    // Exports of the transformed file are kept even if an imported file has errors.
+    let result = transform_file(&project, &root, "app/operation.graphql");
+    assert_snapshot!(print_result(&result, operation, &root));
+}

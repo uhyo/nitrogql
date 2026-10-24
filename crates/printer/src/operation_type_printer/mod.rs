@@ -8,8 +8,11 @@ use crate::operation_base_printer::OperationPrinter;
 
 use self::visitor::{OperationTypePrinterOptions, OperationTypePrinterVisitor};
 
+pub use self::fallback::print_fallback_types_for_operation_document;
+
 mod branching;
 mod deep_merge;
+mod fallback;
 mod selection_set_visitor;
 mod selection_tree;
 #[cfg(test)]

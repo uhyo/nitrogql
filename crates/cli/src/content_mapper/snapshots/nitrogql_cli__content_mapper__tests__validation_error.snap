@@ -2,5 +2,17 @@
 source: crates/cli/src/content_mapper/tests.rs
 expression: "print_result(&result, operation, &root)"
 ---
-export {};
+import type { TypedDocumentNode } from "@graphql-typed-document-node/core";
+
+type GetMeResult = any;
+
+type GetMeVariables = any;
+
+declare const GetMeQuery: TypedDocumentNode<GetMeResult, GetMeVariables>;
+
+export { GetMeQuery as default };
+
+// mapping: "GetMeResult" -> "GetMe" (Atom)
+// mapping: "GetMeVariables" -> "GetMe" (Atom)
+// mapping: "GetMeQuery" -> "GetMe" (Atom)
 // diagnostic 4: "Field 'nam' is not found on type 'User'\n<root>/schema/b.graphql:1:1: Definition of 'User'" at "nam"

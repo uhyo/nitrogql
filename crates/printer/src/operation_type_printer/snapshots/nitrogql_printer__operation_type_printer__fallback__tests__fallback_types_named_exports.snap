@@ -1,0 +1,17 @@
+---
+source: crates/printer/src/operation_type_printer/fallback.rs
+expression: printed
+---
+import type { TypedDocumentNode } from "@graphql-typed-document-node/core";
+
+export type AResult = any;
+
+export type AVariables = any;
+
+export declare const AQuery: TypedDocumentNode<AResult, AVariables>;
+
+export type BResult = any;
+
+export type BVariables = any;
+
+export declare const BMutation: TypedDocumentNode<BResult, BVariables>;

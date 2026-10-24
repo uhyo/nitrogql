@@ -52,6 +52,11 @@ export default function TypeScriptContentMapper() {
           validation errors against the schema) are reported by TypeScript as
           well.
         </p>
+        <p>
+          While a GraphQL file has errors, the operations and fragments it
+          exports are typed as <code>any</code>, so that code importing the file
+          does not get unrelated errors.
+        </p>
 
         <h3 id="setup">Setup</h3>
         <p>
