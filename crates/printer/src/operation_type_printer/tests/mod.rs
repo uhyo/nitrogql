@@ -327,7 +327,7 @@ fn print_values() {
         print_values: true,
         ..Default::default()
     };
-    print_types_for_operation_document(options, &schema, &doc, &mut writer);
+    print_types_for_operation_document(options, &schema, &doc, &mut writer).unwrap();
     assert_snapshot!(result);
 }
 
@@ -879,6 +879,99 @@ fragment UserProfile on User {
     }
 }
 
+/// Documents that are not valid against the schema make the printer return an error.
+mod type_system_errors {
+    use super::*;
+
+    /// Prints given (unchecked) document and returns the error as `line:column: message`.
+    fn print_error(source: &str) -> String {
+        set_current_file_of_pos(0);
+        let doc = parse_operation_document(source).unwrap();
+        let (doc, _) = resolve_operation_extensions(doc).unwrap();
+        let mut result = String::new();
+        let mut writer = JustWriter::new(&mut result);
+        let schema = type_system();
+        let schema = ast_to_type_system(&schema);
+        let err = print_types_for_operation_document(
+            OperationTypePrinterOptions::default(),
+            &schema,
+            &doc,
+            &mut writer,
+        )
+        .unwrap_err();
+        format!(
+            "{}:{}: {}",
+            err.position.line + 1,
+            err.position.column + 1,
+            err.message
+        )
+    }
+
+    #[test]
+    fn unknown_field() {
+        assert_eq!(
+            print_error("query {\n  me { foo }\n}"),
+            "2:8: Field 'foo' is not defined on type 'User'"
+        );
+    }
+
+    #[test]
+    fn selection_on_scalar() {
+        assert_eq!(
+            print_error("query {\n  me { id { foo } }\n}"),
+            "2:11: Type 'ID' does not have fields"
+        );
+    }
+
+    #[test]
+    fn unknown_fragment() {
+        assert_eq!(
+            print_error("query {\n  me { ...F }\n}"),
+            "2:11: Fragment 'F' is not defined"
+        );
+    }
+
+    #[test]
+    fn unknown_type_condition() {
+        assert_eq!(
+            print_error("query {\n  me { ... on Foo { id } }\n}"),
+            "2:15: Type 'Foo' is not defined"
+        );
+    }
+
+    #[test]
+    fn missing_root_type() {
+        assert_eq!(
+            print_error("mutation {\n  foo\n}"),
+            "1:10: Type 'Mutation' is not defined"
+        );
+    }
+
+    #[test]
+    fn missing_if_argument() {
+        assert_eq!(
+            print_error("query {\n  me { id @skip }\n}"),
+            "2:11: Directive '@skip' needs an 'if' argument"
+        );
+    }
+
+    #[test]
+    fn field_shape_mismatch() {
+        assert_eq!(
+            print_error("query {\n  me { a: name a: posts { id } }\n}"),
+            "2:8: Cannot merge selections of field 'a' that have different shapes"
+        );
+    }
+
+    #[test]
+    fn nested_field_shape_mismatch() {
+        assert_eq!(
+            print_error("query {\n  me { a: name }\n  me { a: posts { id } }\n}"),
+            "2:3: Cannot merge selections of field 'a' that have different shapes"
+        );
+    }
+}
+
 fn static_parse(
     code: &'static str,
     file_id: usize,
@@ -909,6 +1002,6 @@ fn print_document(document: &OperationDocument, options: OperationTypePrinterOpt
     let mut writer = JustWriter::new(&mut result);
     let schema = type_system();
     let schema = ast_to_type_system(&schema);
-    print_types_for_operation_document(options, &schema, document, &mut writer);
+    print_types_for_operation_document(options, &schema, document, &mut writer).unwrap();
     result
 }

@@ -1,15 +1,18 @@
 use graphql_type_system::Text;
 use nitrogql_ast::selection_set::{Selection, SelectionSet};
 
-use super::type_printer::QueryTypePrinterContext;
+use super::{
+    error::{OperationTypePrinterErrorMessage, OperationTypePrinterResult},
+    type_printer::QueryTypePrinterContext,
+};
 
 /// Visits all fields in selection set. Nested fragments are visited as well.
 pub fn visit_fields_in_selection_set<'src, S: Text<'src>>(
     context: &QueryTypePrinterContext<'_, 'src, S>,
     selection_set: &SelectionSet<'src>,
     mut visitor: impl FnMut(&Selection<'src>),
-) {
-    visit_fields_in_selection_set_impl(context, selection_set, &mut vec![], &mut visitor);
+) -> OperationTypePrinterResult<()> {
+    visit_fields_in_selection_set_impl(context, selection_set, &mut vec![], &mut visitor)
 }
 
 fn visit_fields_in_selection_set_impl<'src, S: Text<'src>>(
@@ -17,7 +20,7 @@ fn visit_fields_in_selection_set_impl<'src, S: Text<'src>>(
     selection_set: &SelectionSet<'src>,
     seen_fragments: &mut Vec<&'src str>,
     visitor: &mut impl FnMut(&Selection<'src>),
-) {
+) -> OperationTypePrinterResult<()> {
     for sel in &selection_set.selections {
         visitor(sel);
         match sel {
@@ -30,13 +33,18 @@ fn visit_fields_in_selection_set_impl<'src, S: Text<'src>>(
                 let fragment_def = context
                     .fragment_definitions
                     .get(fragment.fragment_name.name)
-                    .expect("Type system error");
+                    .ok_or_else(|| {
+                        OperationTypePrinterErrorMessage::UnknownFragment {
+                            name: fragment.fragment_name.name.to_owned(),
+                        }
+                        .with_pos(fragment.fragment_name.position)
+                    })?;
                 visit_fields_in_selection_set_impl(
                     context,
                     &fragment_def.selection_set,
                     seen_fragments,
                     visitor,
-                );
+                )?;
             }
             Selection::InlineFragment(fragment) => {
                 visit_fields_in_selection_set_impl(
@@ -44,8 +52,9 @@ fn visit_fields_in_selection_set_impl<'src, S: Text<'src>>(
                     &fragment.selection_set,
                     seen_fragments,
                     visitor,
-                );
+                )?;
             }
         }
     }
+    Ok(())
 }

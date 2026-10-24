@@ -21,6 +21,7 @@ use crate::{
 };
 
 use super::{
+    error::OperationTypePrinterError,
     selection_tree::{GenerateSelectionTreeTypeContext, generate_selection_tree_type},
     type_printer::{
         QueryTypePrinterContext, get_type_for_selection_set, get_type_for_variable_definitions,
@@ -128,6 +129,7 @@ pub struct OperationTypePrinterContext<'a, 'src, S: Text<'src>> {
 }
 
 impl OperationPrinterVisitor for OperationTypePrinterVisitor<'_, '_> {
+    type Error = OperationTypePrinterError;
     fn print_header(&self, writer: &mut impl SourceMapWriter) {
         writeln!(
             writer,
@@ -145,7 +147,7 @@ impl OperationPrinterVisitor for OperationTypePrinterVisitor<'_, '_> {
         &self,
         context: PrintOperationContext,
         writer: &mut impl SourceMapWriter,
-    ) {
+    ) -> Result<(), Self::Error> {
         let operation = &context.operation;
         let result_type_name = format!(
             "{}{}",
@@ -176,7 +178,7 @@ impl OperationPrinterVisitor for OperationTypePrinterVisitor<'_, '_> {
             &type_printer_context,
             &operation.selection_set,
             &parent_type,
-        );
+        )?;
         let operation_type = generate_selection_tree_type(
             &GenerateSelectionTreeTypeContext {
                 schema_root_namespace: &self.options.schema_root_namespace,
@@ -227,7 +229,7 @@ impl OperationPrinterVisitor for OperationTypePrinterVisitor<'_, '_> {
         writer.write(&input_variable_name);
         if !self.options.print_values {
             writer.write(">;\n\n");
-            return;
+            return Ok(());
         }
         writer.write("> = ");
         print_operation_runtime(writer, operation, context.fragments);
@@ -239,13 +241,14 @@ impl OperationPrinterVisitor for OperationTypePrinterVisitor<'_, '_> {
         writer.write(", ");
         writer.write(&input_variable_name);
         writer.write(">;\n\n");
+        Ok(())
     }
 
     fn print_fragment_definition(
         &self,
         context: PrintFragmentContext,
         writer: &mut impl SourceMapWriter,
-    ) {
+    ) -> Result<(), Self::Error> {
         let fragment = context.fragment;
         // type of fragment
         if let Some(ref description) = fragment.description {
@@ -282,7 +285,7 @@ impl OperationPrinterVisitor for OperationTypePrinterVisitor<'_, '_> {
             &type_printer_context,
             &fragment.selection_set,
             &parent_type,
-        );
+        )?;
         let fragment_type = generate_selection_tree_type(
             &GenerateSelectionTreeTypeContext {
                 schema_root_namespace: &self.options.schema_root_namespace,
@@ -315,13 +318,14 @@ impl OperationPrinterVisitor for OperationTypePrinterVisitor<'_, '_> {
         writer.write(", never>");
         if !self.options.print_values {
             writer.write(";\n\n");
-            return;
+            return Ok(());
         }
         writer.write(" = ");
         print_fragment_runtime(writer, fragment, context.fragments);
         writer.write(" as unknown as TypedDocumentNode<");
         writer.write_for(&fragment_type_name, fragment);
         writer.write(", never>;\n\n");
+        Ok(())
     }
     fn print_default_exported_operation_definition(
         &self,

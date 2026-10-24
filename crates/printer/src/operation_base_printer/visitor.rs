@@ -6,6 +6,8 @@ use sourcemap_writer::SourceMapWriter;
 use super::OperationNames;
 
 pub trait OperationPrinterVisitor {
+    /// Error that may occur while printing a definition.
+    type Error;
     /// Prints header of a document.
     fn print_header(&self, writer: &mut impl SourceMapWriter);
     /// Prints trailer of a document.
@@ -15,13 +17,13 @@ pub trait OperationPrinterVisitor {
         &self,
         context: PrintOperationContext,
         writer: &mut impl SourceMapWriter,
-    );
+    ) -> Result<(), Self::Error>;
     /// Prints one fragment definition.
     fn print_fragment_definition(
         &self,
         context: PrintFragmentContext,
         writer: &mut impl SourceMapWriter,
-    );
+    ) -> Result<(), Self::Error>;
     /// Prints a default export of given operation.
     fn print_default_exported_operation_definition(
         &self,

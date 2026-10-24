@@ -7,11 +7,20 @@ use super::selection_tree::{
     SelectionTreeObject,
 };
 
+/// Error from merging fields whose selections have different shapes.
+#[derive(Debug)]
+pub struct FieldShapeMismatch<S> {
+    /// Response key of the merged fields at the level where merging failed.
+    pub key: S,
+    /// Name of the field (possibly nested in `key`) whose shapes differ.
+    pub name: S,
+}
+
 /// Merges selection tree fields of same name into one.
 /// If a field with the same name already exists, they are deeply merged into a single field.
 pub fn deep_merge_selection_tree<'src, S: Text<'src>>(
     fields: impl IntoIterator<Item = SelectionTreeField<S>>,
-) -> Vec<SelectionTreeField<S>> {
+) -> Result<Vec<SelectionTreeField<S>>, FieldShapeMismatch<S>> {
     let mut seen_fields = HashSet::<S>::new();
     let mut new_fields = Vec::<SelectionTreeField<S>>::new();
     for field in fields {
@@ -20,32 +29,34 @@ pub fn deep_merge_selection_tree<'src, S: Text<'src>>(
                 .iter_mut()
                 .find(|f| f.name() == field.name())
                 .expect("field was just inserted");
+            let key = field.name().clone();
             let existing_field = std::mem::replace(
                 existing,
-                SelectionTreeField::Empty(SelectionTreeEmptyLeaf {
-                    name: field.name().clone(),
-                }),
+                SelectionTreeField::Empty(SelectionTreeEmptyLeaf { name: key.clone() }),
             );
-            let new_field = merge_fields(existing_field, field);
+            let new_field = merge_fields(existing_field, field)
+                .map_err(|name| FieldShapeMismatch { key, name })?;
             *existing = new_field;
         } else {
             seen_fields.insert(field.name().clone());
             new_fields.push(field);
         }
     }
-    new_fields
+    Ok(new_fields)
 }
 
+/// Merges two fields of the same name.
+/// On error, returns the name of the (possibly nested) field whose shapes differ.
 fn merge_fields<'src, S: Text<'src>>(
     left: SelectionTreeField<S>,
     right: SelectionTreeField<S>,
-) -> SelectionTreeField<S> {
+) -> Result<SelectionTreeField<S>, S> {
     assert_eq!(
         left.name(),
         right.name(),
         "Cannot merge fields of different names"
     );
-    match (left, right) {
+    Ok(match (left, right) {
         (SelectionTreeField::Empty(left), SelectionTreeField::Empty(_)) => {
             SelectionTreeField::Empty(SelectionTreeEmptyLeaf { name: left.name })
         }
@@ -59,9 +70,12 @@ fn merge_fields<'src, S: Text<'src>>(
             SelectionTreeField::Leaf(right)
         }
         (SelectionTreeField::Object(left), SelectionTreeField::Object(right)) => {
+            let Some(selection) = merge_selection_trees(left.selection, right.selection)? else {
+                return Err(left.name);
+            };
             SelectionTreeField::Object(SelectionTreeObject {
                 name: left.name,
-                selection: merge_selection_trees(left.selection, right.selection),
+                selection,
             })
         }
         (SelectionTreeField::Empty(_), SelectionTreeField::Object(right)) => {
@@ -70,23 +84,29 @@ fn merge_fields<'src, S: Text<'src>>(
         (SelectionTreeField::Object(left), SelectionTreeField::Empty(_)) => {
             SelectionTreeField::Object(left)
         }
-        (left, right) => panic!(
-            "Cannot merge fields of different types\nleft: {:?}\nright: {:?}",
-            left, right
-        ),
-    }
+        (left, _) => return Err(left.name().clone()),
+    })
 }
 
+/// Merges two selection trees.
+/// Returns `None` if the trees themselves have different shapes,
+/// and an error with the name of the nested field whose shapes differ.
 fn merge_selection_trees<'src, S: Text<'src>>(
     left: SelectionTree<S>,
     right: SelectionTree<S>,
-) -> SelectionTree<S> {
-    match (left, right) {
+) -> Result<Option<SelectionTree<S>>, S> {
+    Ok(Some(match (left, right) {
         (SelectionTree::NonNull(left), SelectionTree::NonNull(right)) => {
-            SelectionTree::NonNull(Box::new(merge_selection_trees(*left, *right)))
+            let Some(inner) = merge_selection_trees(*left, *right)? else {
+                return Ok(None);
+            };
+            SelectionTree::NonNull(Box::new(inner))
         }
         (SelectionTree::List(left), SelectionTree::List(right)) => {
-            SelectionTree::List(Box::new(merge_selection_trees(*left, *right)))
+            let Some(inner) = merge_selection_trees(*left, *right)? else {
+                return Ok(None);
+            };
+            SelectionTree::List(Box::new(inner))
         }
         (SelectionTree::Object(left), SelectionTree::Object(right)) => {
             let mut new_selection = Vec::new();
@@ -104,13 +124,15 @@ fn merge_selection_trees<'src, S: Text<'src>>(
                                     .unaliased_fields
                                     .into_iter()
                                     .chain(right_branch.unaliased_fields),
-                            ),
+                            )
+                            .map_err(|err| err.name)?,
                             aliased_fields: deep_merge_selection_tree(
                                 left_branch
                                     .aliased_fields
                                     .into_iter()
                                     .chain(right_branch.aliased_fields),
-                            ),
+                            )
+                            .map_err(|err| err.name)?,
                         });
                     }
                     None => {
@@ -128,6 +150,6 @@ fn merge_selection_trees<'src, S: Text<'src>>(
             }
             SelectionTree::Object(new_selection)
         }
-        _ => panic!("Cannot merge selection trees of different types"),
-    }
+        _ => return Ok(None),
+    }))
 }
