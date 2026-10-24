@@ -31,6 +31,4 @@ export type F = Schema.__SelectionSet<Schema.__OperationOutput.User, {
   type: Schema.__OperationOutput.UserType;
 }, {}>;
 
-export const F: TypedDocumentNode<F, never>;
-
-
+export declare const F: TypedDocumentNode<F, never>;

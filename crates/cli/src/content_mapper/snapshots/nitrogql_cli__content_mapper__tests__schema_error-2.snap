@@ -1,0 +1,18 @@
+---
+source: crates/cli/src/content_mapper/tests.rs
+expression: "print_result(&result, OPERATION, &root)"
+---
+import type { TypedDocumentNode } from "@graphql-typed-document-node/core";
+
+type GetMeResult = any;
+
+type GetMeVariables = any;
+
+declare const GetMeQuery: TypedDocumentNode<GetMeResult, GetMeVariables>;
+
+export { GetMeQuery as default };
+
+// mapping: "GetMeResult" -> "GetMe" (Atom)
+// mapping: "GetMeVariables" -> "GetMe" (Atom)
+// mapping: "GetMeQuery" -> "GetMe" (Atom)
+// diagnostic 2: "Failed to load nitrogql project: <root>/schema/a.graphql:2:7: Type 'Usr' is not defined" at ""

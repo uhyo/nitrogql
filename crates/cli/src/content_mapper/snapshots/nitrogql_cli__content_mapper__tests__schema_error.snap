@@ -1,0 +1,6 @@
+---
+source: crates/cli/src/content_mapper/tests.rs
+expression: "print_result(&result, schema, &root)"
+---
+export {};
+// diagnostic 4: "Type 'Usr' is not defined" at "Usr"

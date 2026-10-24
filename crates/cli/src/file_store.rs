@@ -73,6 +73,17 @@ impl FileStore {
     pub fn schema_len(&self) -> usize {
         self.schema_files.len()
     }
+
+    /// Frees the contents of all files in the store.
+    ///
+    /// # Safety
+    /// No reference to file contents obtained from this store may be used after calling this.
+    pub unsafe fn free_contents(self) {
+        for (_, content, _) in self.schema_files.into_iter().chain(self.operation_files) {
+            // contents are created by `Box::leak` in `add_file`.
+            drop(unsafe { Box::from_raw(content as *const str as *mut str) });
+        }
+    }
 }
 
 impl Index<usize> for FileStore {

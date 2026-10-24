@@ -20,7 +20,8 @@ pub use resolver_type_printer::{
 };
 
 pub use operation_type_printer::{
-    print_types_for_operation_document, visitor::OperationTypePrinterOptions,
+    print_fallback_types_for_operation_document, print_types_for_operation_document,
+    visitor::OperationTypePrinterOptions,
 };
 
 pub use operation_js_printer::{

@@ -37,10 +37,14 @@ use nitrogql_config_file::load_config;
 use nitrogql_error::{PositionedError, print_positioned_error};
 use nitrogql_parser::{parse_operation_document, parse_type_system_document};
 
-use self::{check::run_check, context::CliConfig, generate::run_generate};
+use self::{
+    check::run_check, content_mapper::run_content_mapper, context::CliConfig,
+    generate::run_generate,
+};
 
 mod builtins;
 mod check;
+mod content_mapper;
 mod context;
 mod error;
 mod file_store;
@@ -71,7 +75,12 @@ struct Args {
 }
 
 fn main() {
-    nitrogql_async_runtime::spawn(run_cli(std::env::args()));
+    let args = std::env::args().collect::<Vec<_>>();
+    if args.get(1).map(String::as_str) == Some("content-mapper") {
+        nitrogql_async_runtime::spawn(run_content_mapper());
+    } else {
+        nitrogql_async_runtime::spawn(run_cli(args));
+    }
     nitrogql_async_runtime::drive();
 }
 
@@ -159,62 +168,13 @@ async fn run_cli_impl(
         return Err(CliError::NoSchemaSpecified.into());
     }
 
-    let schema_files = load_glob_files(&root_dir, &config.schema)?;
-    let mut schema_docs = vec![];
-    let mut schema_errors = vec![];
-    for (path, buf) in schema_files {
-        let res = match schema_kind_by_path(&path) {
-            SchemaFileKind::GraphQL => {
-                let file_idx = file_store.add_file(path, buf, FileKind::Schema);
-                let (path, buf, _) = file_store.get_file(file_idx).unwrap();
-                info!("parsing(schema) {} {}", path.to_string_lossy(), file_idx);
-                set_current_file_of_pos(file_idx);
-                let doc = parse_type_system_document(buf)?;
-                Ok(LoadedSchema::GraphQL(doc))
-            }
-            SchemaFileKind::IntrospectionJson => {
-                let file_idx = file_store.add_file(path, buf, FileKind::Schema);
-                let (path, buf, _) = file_store.get_file(file_idx).unwrap();
-                info!("parsing(introspection) {}", path.to_string_lossy());
-                let doc = schema_from_introspection_json(buf)?;
-                Ok(LoadedSchema::Introspection(doc))
-            }
-            SchemaFileKind::SchemaJavaScript => {
-                info!("loading schema js {}", path.to_string_lossy());
-                let LoadSchemaJsResult {
-                    schema,
-                    type_extensions,
-                } = load_schema_js(&path).await?;
-                let file_idx = file_store.add_file(path, schema, FileKind::Schema);
-                let (_, buf, _) = file_store.get_file(file_idx).unwrap();
-                set_current_file_of_pos(file_idx);
-                let doc = parse_type_system_document(buf)?;
-                for p in plugins.iter_mut() {
-                    p.load_schema_extensions(PluginSchemaExtensions {
-                        type_extensions: &type_extensions,
-                    });
-                }
-                Ok(LoadedSchema::GraphQL(doc))
-            }
-        };
-        match res {
-            Ok(doc) => schema_docs.push(doc),
-            Err(err) => schema_errors.push(err),
-        }
-    }
-    if !schema_errors.is_empty() {
-        return Err(CommandError::merge(schema_errors));
-    }
+    let merged_schema_doc =
+        load_schema(&root_dir, &config.schema, file_store, &mut plugins).await?;
 
     let config = CliConfig {
         root_dir,
         config,
         plugins,
-    };
-    let merged_schema_doc = {
-        let mut merged_schema_doc = resolve_loaded_schema(schema_docs)?;
-        extend_loaded_schema(&mut merged_schema_doc, file_store, &config.plugins)?;
-        merged_schema_doc
     };
 
     let operation_files = load_glob_files(&config.root_dir, &config.config.operations)?;
@@ -319,6 +279,66 @@ fn load_glob_files<'a, S: AsRef<str> + 'a>(
         .collect::<std::io::Result<_>>();
 
     results.map_err(|err| err.into())
+}
+
+/// Loads schema files matched by given globs.
+/// Returned schema is merged and extended with builtins and plugins.
+pub(crate) async fn load_schema<'src>(
+    root_dir: &Path,
+    schema_globs: &[String],
+    file_store: &mut FileStore,
+    plugins: &mut [Plugin<'src>],
+) -> Result<LoadedSchema<'src, TypeSystemOrExtensionDocument<'src>>, CommandError> {
+    let schema_files = load_glob_files(root_dir, schema_globs)?;
+    let mut schema_docs = vec![];
+    let mut schema_errors = vec![];
+    for (path, buf) in schema_files {
+        let res = match schema_kind_by_path(&path) {
+            SchemaFileKind::GraphQL => {
+                let file_idx = file_store.add_file(path, buf, FileKind::Schema);
+                let (path, buf, _) = file_store.get_file(file_idx).unwrap();
+                info!("parsing(schema) {} {}", path.to_string_lossy(), file_idx);
+                set_current_file_of_pos(file_idx);
+                let doc = parse_type_system_document(buf)?;
+                Ok(LoadedSchema::GraphQL(doc))
+            }
+            SchemaFileKind::IntrospectionJson => {
+                let file_idx = file_store.add_file(path, buf, FileKind::Schema);
+                let (path, buf, _) = file_store.get_file(file_idx).unwrap();
+                info!("parsing(introspection) {}", path.to_string_lossy());
+                let doc = schema_from_introspection_json(buf)?;
+                Ok(LoadedSchema::Introspection(doc))
+            }
+            SchemaFileKind::SchemaJavaScript => {
+                info!("loading schema js {}", path.to_string_lossy());
+                let LoadSchemaJsResult {
+                    schema,
+                    type_extensions,
+                } = load_schema_js(&path).await?;
+                let file_idx = file_store.add_file(path, schema, FileKind::Schema);
+                let (_, buf, _) = file_store.get_file(file_idx).unwrap();
+                set_current_file_of_pos(file_idx);
+                let doc = parse_type_system_document(buf)?;
+                for p in plugins.iter_mut() {
+                    p.load_schema_extensions(PluginSchemaExtensions {
+                        type_extensions: &type_extensions,
+                    });
+                }
+                Ok(LoadedSchema::GraphQL(doc))
+            }
+        };
+        match res {
+            Ok(doc) => schema_docs.push(doc),
+            Err(err) => schema_errors.push(err),
+        }
+    }
+    if !schema_errors.is_empty() {
+        return Err(CommandError::merge(schema_errors));
+    }
+
+    let mut merged_schema_doc = resolve_loaded_schema(schema_docs)?;
+    extend_loaded_schema(&mut merged_schema_doc, file_store, plugins)?;
+    Ok(merged_schema_doc)
 }
 
 fn resolve_loaded_schema<'src>(

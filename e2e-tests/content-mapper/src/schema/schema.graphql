@@ -1,0 +1,8 @@
+type Query {
+  me: User!
+  user(id: ID!): User
+}
+
+type Mutation {
+  updateName(id: ID!, name: String!): User!
+}

@@ -41,6 +41,14 @@ impl PositionedError {
     pub fn into_inner(self) -> anyhow::Error {
         self.inner
     }
+
+    pub fn inner(&self) -> &anyhow::Error {
+        &self.inner
+    }
+
+    pub fn additional_info(&self) -> &[(Pos, String)] {
+        &self.additional_info
+    }
 }
 
 impl<E> From<E> for PositionedError
