@@ -5,7 +5,7 @@
   "description": "",
   "type": "module",
   "scripts": {
-    "e2e-test": "tsc --runExternalCode"
+    "e2e-test": "tsc --runExternalCode && node --test protocol.test.mjs"
   },
   "keywords": [],
   "author": "uhyo <uhyo@uhy.ooo>",

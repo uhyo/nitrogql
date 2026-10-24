@@ -19,7 +19,8 @@
   "scripts": {
     "build": "tsc",
     "watch": "tsc --watch",
-    "check": "tsc"
+    "check": "tsc",
+    "test": "vitest --dir src"
   },
   "keywords": [
     "graphql"
@@ -36,6 +37,7 @@
   "devDependencies": {
     "@types/node": "^20.8.10",
     "graphql": "^16.8.1",
+    "vitest": "^4",
     "webpack": "^5.76.2"
   },
   "peerDependencies": {
