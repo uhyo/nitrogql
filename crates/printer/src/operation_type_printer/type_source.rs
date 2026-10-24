@@ -1,4 +1,9 @@
-use std::{borrow::Cow, collections::HashMap};
+use std::{
+    borrow::Cow,
+    cell::RefCell,
+    collections::{HashMap, HashSet},
+    convert::Infallible,
+};
 
 use graphql_type_system::{NamedType, Node, NonNullType, RootTypes, Schema, Type};
 use nitrogql_ast::{
@@ -140,6 +145,93 @@ impl OperationTypeSource for SchemaTypeSource<'_, '_> {
             &self.selection_tree_type_context(),
             &fragment_type,
         ))
+    }
+}
+
+/// Type source that chooses between the schema and `any` per definition.
+///
+/// Definitions for which `use_fallback` returns true (given the position of the definition)
+/// get `any` types. So do definitions whose types cannot be computed from the schema;
+/// errors for them are collected instead of aborting the printing.
+pub struct PerDefinitionTypeSource<'a, 'src, F> {
+    schema: SchemaTypeSource<'a, 'src>,
+    use_fallback: F,
+    uses_schema_types: bool,
+    /// Definitions that failed to print with the schema.
+    failed: RefCell<HashSet<Pos>>,
+    errors: RefCell<Vec<OperationTypePrinterError>>,
+}
+
+impl<'a, 'src, F: Fn(&Pos) -> bool> PerDefinitionTypeSource<'a, 'src, F> {
+    pub fn new(
+        options: OperationTypePrinterOptions,
+        schema: &'a Schema<Cow<'src, str>, Pos>,
+        operation: &'a OperationDocument<'src>,
+        use_fallback: F,
+    ) -> Self {
+        let uses_schema_types = operation.definitions.iter().any(|def| {
+            !use_fallback(match def {
+                ExecutableDefinition::OperationDefinition(def) => &def.position,
+                ExecutableDefinition::FragmentDefinition(def) => &def.position,
+            })
+        });
+        Self {
+            schema: SchemaTypeSource::new(options, schema, operation),
+            use_fallback,
+            uses_schema_types,
+            failed: RefCell::new(HashSet::new()),
+            errors: RefCell::new(vec![]),
+        }
+    }
+
+    /// Returns errors from definitions that fell back to `any` because they failed to print.
+    pub fn into_errors(self) -> Vec<OperationTypePrinterError> {
+        self.errors.into_inner()
+    }
+
+    fn type_for(
+        &self,
+        position: &Pos,
+        get_type: impl FnOnce() -> Result<TSType, OperationTypePrinterError>,
+    ) -> TSType {
+        if (self.use_fallback)(position) || self.failed.borrow().contains(position) {
+            return TSType::Any;
+        }
+        get_type().unwrap_or_else(|err| {
+            self.failed.borrow_mut().insert(*position);
+            self.errors.borrow_mut().push(err);
+            TSType::Any
+        })
+    }
+}
+
+impl<F: Fn(&Pos) -> bool> OperationTypeSource for PerDefinitionTypeSource<'_, '_, F> {
+    type Error = Infallible;
+
+    fn uses_schema_types(&self) -> bool {
+        self.uses_schema_types
+    }
+
+    fn operation_result_type(
+        &self,
+        operation: &OperationDefinition,
+    ) -> Result<TSType, Self::Error> {
+        Ok(self.type_for(&operation.position, || {
+            self.schema.operation_result_type(operation)
+        }))
+    }
+
+    fn operation_variables_type(
+        &self,
+        operation: &OperationDefinition,
+    ) -> Result<TSType, Self::Error> {
+        Ok(self.type_for(&operation.position, || {
+            self.schema.operation_variables_type(operation)
+        }))
+    }
+
+    fn fragment_type(&self, fragment: &FragmentDefinition) -> Result<TSType, Self::Error> {
+        Ok(self.type_for(&fragment.position, || self.schema.fragment_type(fragment)))
     }
 }
 

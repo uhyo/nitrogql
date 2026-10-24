@@ -21,6 +21,7 @@ use self::{
     transform::transform,
 };
 
+mod fallback;
 mod io;
 mod logger;
 mod position;

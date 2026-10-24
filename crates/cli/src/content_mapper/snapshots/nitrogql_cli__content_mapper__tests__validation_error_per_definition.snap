@@ -1,0 +1,53 @@
+---
+source: crates/cli/src/content_mapper/tests.rs
+expression: "print_result(&result, operation, &root)"
+---
+import type { TypedDocumentNode } from "@graphql-typed-document-node/core";
+import type * as Schema from "../schema/a.graphql";
+
+type GetMeResult = Schema.__SelectionSet<Schema.__OperationOutput.Query, {
+  me: Schema.__SelectionSet<Schema.__OperationOutput.User, {
+    name: Schema.__OperationOutput.String;
+  }, {}>;
+}, {}>;
+
+type GetMeVariables = {};
+
+declare const GetMeQuery: TypedDocumentNode<GetMeResult, GetMeVariables>;
+
+type GetAgeResult = any;
+
+type GetAgeVariables = any;
+
+declare const GetAgeQuery: TypedDocumentNode<GetAgeResult, GetAgeVariables>;
+
+type GetIdResult = any;
+
+type GetIdVariables = any;
+
+declare const GetIdQuery: TypedDocumentNode<GetIdResult, GetIdVariables>;
+
+export type UserAge = any;
+
+export declare const UserAge: TypedDocumentNode<UserAge, never>;
+
+type UserName = Schema.__SelectionSet<Schema.__OperationOutput.User, {
+  name: Schema.__OperationOutput.String;
+}, {}>;
+
+declare const UserName: TypedDocumentNode<UserName, never>;
+
+// mapping: "GetMeResult" -> "GetMe" (Atom)
+// mapping: "GetMeVariables" -> "GetMe" (Atom)
+// mapping: "GetMeQuery" -> "GetMe" (Atom)
+// mapping: "GetAgeResult" -> "GetAge" (Atom)
+// mapping: "GetAgeVariables" -> "GetAge" (Atom)
+// mapping: "GetAgeQuery" -> "GetAge" (Atom)
+// mapping: "GetIdResult" -> "GetId" (Atom)
+// mapping: "GetIdVariables" -> "GetId" (Atom)
+// mapping: "GetIdQuery" -> "GetId" (Atom)
+// mapping: "UserAge" -> "UserAge" (Verbatim)
+// mapping: "UserAge" -> "UserAge" (Verbatim)
+// mapping: "UserAge" -> "UserAge" (Verbatim)
+// diagnostic 4: "Field 'agee' is not found on type 'User'\n<root>/schema/b.graphql:1:1: Definition of 'User'" at "agee"
+// diagnostic 4: "Field 'idd' is not found on type 'User'\n<root>/schema/b.graphql:1:1: Definition of 'User'" at "idd"

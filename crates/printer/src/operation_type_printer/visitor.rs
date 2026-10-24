@@ -87,6 +87,11 @@ impl<T: OperationTypeSource> OperationTypePrinterVisitor<T> {
     pub fn new(options: OperationTypePrinterOptions, types: T) -> Self {
         Self { options, types }
     }
+
+    /// Consumes the visitor and returns the type source.
+    pub fn into_types(self) -> T {
+        self.types
+    }
 }
 
 impl<T: OperationTypeSource> OperationPrinterVisitor for OperationTypePrinterVisitor<T> {
