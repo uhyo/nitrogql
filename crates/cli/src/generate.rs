@@ -359,7 +359,7 @@ fn write_file_and_sourcemap(
     }
     let mut output_file = File::create(output_file_path)?;
 
-    writeln!(&mut output_file, "{}", &buffers.buffer)?;
+    writeln!(&mut output_file, "{}", buffers.buffer)?;
     writeln!(
         &mut output_file,
         "//# sourceMappingURL={}",

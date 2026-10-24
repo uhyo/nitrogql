@@ -19,10 +19,17 @@ jobs:
       - name: install rustup
         run: curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
       - uses: Swatinem/rust-cache@v2
+      - name: format
+        run: cargo fmt --all --check
       - name: test
         run: cargo test
       - name: lint
-        run: cargo clippy
+        run: cargo clippy --all-targets -- -D warnings
+      # some code is only compiled for the wasm targets, so lint those too
+      - name: lint (wasm)
+        run: |
+          cargo clippy --target wasm32-wasip1 -- -D warnings
+          cargo clippy --target wasm32-unknown-unknown -p graphql-loader -- -D warnings
       # currently `cargo wasi test` doesn't run, so ensure at least that it builds
       - name: build (wasi)
         run: cargo build --target wasm32-wasip1

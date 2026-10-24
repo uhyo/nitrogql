@@ -1,4 +1,5 @@
 mod config;
+#[cfg(feature = "fs")]
 mod error;
 #[cfg(feature = "execute_js")]
 mod execute;

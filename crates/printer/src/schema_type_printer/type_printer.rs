@@ -430,9 +430,7 @@ impl TypePrinter for InputObjectTypeDefinition<'_> {
                             }
                             let schema_field = schema_type
                                 .and_then(|t| t.as_input_object())
-                                .and_then(|t| {
-                                    t.fields.iter().find(|f| f.name == field.name.name)
-                                })
+                                .and_then(|t| t.fields.iter().find(|f| f.name == field.name.name))
                                 .expect("Type system error");
 
                             // The selected field must be given a non-null value.
