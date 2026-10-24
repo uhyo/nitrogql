@@ -1,10 +1,8 @@
 #!/usr/bin/env node
 
 import { argv, env, cwd, stdout } from "node:process";
-import { readFile } from "node:fs/promises";
 import { resolve } from "node:path";
-import * as core from "@nitrogql/core";
-import { initWASI } from "@nitrogql/wasi-preview1";
+import { runWasm } from "../lib/run-wasm.mjs";
 
 const CWD = cwd();
 const NITROGQL_FS_SCOPE = env.NITROGQL_FS_SCOPE
@@ -12,7 +10,7 @@ const NITROGQL_FS_SCOPE = env.NITROGQL_FS_SCOPE
   : CWD;
 const isTTY = stdout.isTTY;
 
-const wasi = initWASI({
+await runWasm({
   args: argv.slice(1),
   env: {
     // env_logger
@@ -26,29 +24,3 @@ const wasi = initWASI({
     [NITROGQL_FS_SCOPE]: NITROGQL_FS_SCOPE,
   },
 });
-
-const configHelper = core.initConfigNamespace();
-
-const importObject = {
-  wasi_snapshot_preview1: wasi,
-  "nitrogql_helper/config": configHelper.namespace,
-  // Only used by content-mapper.mjs
-  "nitrogql_helper/content_mapper": {
-    read_message() {
-      throw new Error("Content mapper is not available in this mode");
-    },
-    write_message() {
-      throw new Error("Content mapper is not available in this mode");
-    },
-  },
-};
-
-const wasm = await WebAssembly.compile(
-  await readFile(new URL("../wasm/nitrogql-cli.wasm", import.meta.url)),
-);
-const instance = await WebAssembly.instantiate(wasm, importObject);
-wasi.setMemory(instance.exports.memory);
-core.setMemory(instance.exports.memory);
-configHelper.setWasmModule(instance.exports);
-
-instance.exports._start();
