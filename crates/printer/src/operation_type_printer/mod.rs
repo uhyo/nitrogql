@@ -8,6 +8,7 @@ use crate::operation_base_printer::OperationPrinter;
 
 use self::{
     error::OperationTypePrinterResult,
+    type_source::SchemaTypeSource,
     visitor::{OperationTypePrinterOptions, OperationTypePrinterVisitor},
 };
 
@@ -22,6 +23,7 @@ mod selection_tree;
 #[cfg(test)]
 mod tests;
 pub mod type_printer;
+pub mod type_source;
 pub mod visitor;
 
 /// Print a TypeScript module for given operation document.
@@ -35,7 +37,8 @@ pub fn print_types_for_operation_document(
     writer: &mut impl SourceMapWriter,
 ) -> OperationTypePrinterResult<()> {
     let base_options = options.base_options.clone();
-    let visitor = OperationTypePrinterVisitor::new(options, schema, operation);
+    let types = SchemaTypeSource::new(options.clone(), schema, operation);
+    let visitor = OperationTypePrinterVisitor::new(options, types);
     let mut printer = OperationPrinter::new(base_options, visitor, writer);
     printer.print_document(operation)
 }

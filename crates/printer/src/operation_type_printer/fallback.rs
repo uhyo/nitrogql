@@ -1,13 +1,17 @@
 use std::convert::Infallible;
 
-use nitrogql_ast::OperationDocument;
+use nitrogql_ast::{
+    OperationDocument,
+    operation::{FragmentDefinition, OperationDefinition},
+};
 use sourcemap_writer::SourceMapWriter;
 
-use crate::operation_base_printer::{
-    OperationPrinter, OperationPrinterVisitor, PrintFragmentContext, PrintOperationContext,
-};
+use crate::{operation_base_printer::OperationPrinter, ts_types::TSType};
 
-use super::visitor::OperationTypePrinterOptions;
+use super::{
+    type_source::OperationTypeSource,
+    visitor::{OperationTypePrinterOptions, OperationTypePrinterVisitor},
+};
 
 /// Print a TypeScript module for given operation document, with all types being `any`.
 ///
@@ -20,105 +24,37 @@ pub fn print_fallback_types_for_operation_document(
     writer: &mut impl SourceMapWriter,
 ) {
     let base_options = options.base_options.clone();
-    let visitor = FallbackOperationTypePrinterVisitor { options };
+    let visitor = OperationTypePrinterVisitor::new(options, AnyTypeSource);
     let mut printer = OperationPrinter::new(base_options, visitor, writer);
     let Ok(()) = printer.print_document(operation);
 }
 
-struct FallbackOperationTypePrinterVisitor {
-    options: OperationTypePrinterOptions,
-}
+/// Type source in which all types are `any`.
+pub struct AnyTypeSource;
 
-impl OperationPrinterVisitor for FallbackOperationTypePrinterVisitor {
+impl OperationTypeSource for AnyTypeSource {
     type Error = Infallible;
-    fn print_header(&self, writer: &mut impl SourceMapWriter) {
-        writeln!(
-            writer,
-            "import type {{ TypedDocumentNode }} from \"{}\";\n",
-            self.options.typed_document_node_source
-        );
+
+    fn uses_schema_types(&self) -> bool {
+        false
     }
-    fn print_trailer(&self, _writer: &mut impl SourceMapWriter) {}
-    fn print_operation_definition(
+
+    fn operation_result_type(
         &self,
-        context: PrintOperationContext,
-        writer: &mut impl SourceMapWriter,
-    ) -> Result<(), Self::Error> {
-        let operation = &context.operation;
-        let result_type_name = format!(
-            "{}{}",
-            context.operation_names.operation_name, self.options.operation_result_type_suffix
-        );
-        let input_variable_name = format!(
-            "{}{}",
-            context.operation_names.operation_name, self.options.variables_type_suffix
-        );
-
-        if context.export_result_type {
-            writer.write("export ");
-        }
-        writer.write("type ");
-        writer.write_for(&result_type_name, &operation.name_pos());
-        writer.write(" = any;\n\n");
-
-        if context.export_input_type {
-            writer.write("export ");
-        }
-        writer.write("type ");
-        writer.write_for(&input_variable_name, &operation.name_pos());
-        writer.write(" = any;\n\n");
-
-        if context.exported {
-            writer.write("export ");
-        }
-        writer.write("declare const ");
-        writer.write_for(
-            &context.operation_names.operation_variable_name,
-            &operation.name_pos(),
-        );
-        writer.write(": TypedDocumentNode<");
-        writer.write(&result_type_name);
-        writer.write(", ");
-        writer.write(&input_variable_name);
-        writer.write(">;\n\n");
-        Ok(())
+        _operation: &OperationDefinition,
+    ) -> Result<TSType, Self::Error> {
+        Ok(TSType::Any)
     }
-    fn print_fragment_definition(
+
+    fn operation_variables_type(
         &self,
-        context: PrintFragmentContext,
-        writer: &mut impl SourceMapWriter,
-    ) -> Result<(), Self::Error> {
-        let fragment = context.fragment;
-        let fragment_type_name = format!(
-            "{}{}",
-            fragment.name.name, self.options.fragment_type_suffix
-        );
-
-        if context.exported {
-            writer.write("export ");
-        }
-        writer.write("type ");
-        writer.write_for(&fragment_type_name, fragment);
-        writer.write(" = any;\n\n");
-
-        if context.exported {
-            writer.write("export ");
-        }
-        writer.write("declare const ");
-        writer.write_for(context.var_name, fragment);
-        writer.write(": TypedDocumentNode<");
-        writer.write(&fragment_type_name);
-        writer.write(", never>;\n\n");
-        Ok(())
+        _operation: &OperationDefinition,
+    ) -> Result<TSType, Self::Error> {
+        Ok(TSType::Any)
     }
-    fn print_default_exported_operation_definition(
-        &self,
-        context: PrintOperationContext,
-        writer: &mut impl SourceMapWriter,
-    ) {
-        writer.write("export { ");
-        writer.write(&context.operation_names.operation_variable_name);
-        writer.write(" as default };\n\n");
+
+    fn fragment_type(&self, _fragment: &FragmentDefinition) -> Result<TSType, Self::Error> {
+        Ok(TSType::Any)
     }
 }
 
@@ -154,6 +90,21 @@ mod tests {
                 foo
             }
             ",
+            OperationTypePrinterOptions::default(),
+        );
+        assert_snapshot!(printed);
+    }
+
+    #[test]
+    fn fallback_types_with_descriptions() {
+        // Descriptions are printed in the same way as the schema-based printer.
+        let printed = print(
+            r#"
+            "Get the current user"
+            query GetMe { me { unknownField } }
+            "User data"
+            fragment F on UnknownType { foo }
+            "#,
             OperationTypePrinterOptions::default(),
         );
         assert_snapshot!(printed);
