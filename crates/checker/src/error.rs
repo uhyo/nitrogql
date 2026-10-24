@@ -128,9 +128,7 @@ pub enum CheckErrorMessage {
     OneOfInputNotExactlyOneField { name: String },
     #[error("Field '{field}' of @oneOf input object must not be null")]
     OneOfInputNullValue { field: String },
-    #[error(
-        "Variable '${name}' used for a field of @oneOf input object must be of non-null type"
-    )]
+    #[error("Variable '${name}' used for a field of @oneOf input object must be of non-null type")]
     OneOfInputNullableVariable { name: String },
     // Error that should be checked in type system check phase
     #[error("Type system error. This is a bug of checker")]

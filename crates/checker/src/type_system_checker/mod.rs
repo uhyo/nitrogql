@@ -457,9 +457,8 @@ fn check_input_object(
 
         if is_one_of {
             if f.r#type.is_nonnull() {
-                result.push(
-                    CheckErrorMessage::OneOfFieldNotNullable.with_pos(*f.r#type.position()),
-                );
+                result
+                    .push(CheckErrorMessage::OneOfFieldNotNullable.with_pos(*f.r#type.position()));
             }
             if let Some(ref default_value) = f.default_value {
                 result.push(
