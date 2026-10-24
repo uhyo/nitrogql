@@ -1,5 +1,5 @@
 use std::{
-    collections::HashMap,
+    collections::{HashMap, HashSet},
     fs,
     io::ErrorKind,
     path::{Path, PathBuf},
@@ -11,7 +11,7 @@ use nitrogql_error::PositionedError;
 use nitrogql_parser::parse_operation_document;
 use nitrogql_printer::{
     OperationTypePrinterOptions, SchemaTypePrinter, SchemaTypePrinterOptions,
-    print_fallback_types_for_operation_document, print_types_for_operation_document,
+    print_fallback_types_for_operation_document, print_types_for_operation_document_with_fallback,
 };
 use nitrogql_semantics::{
     OperationExtension, OperationResolver, resolve_operation_extensions, resolve_operation_imports,
@@ -23,6 +23,7 @@ use thiserror::Error;
 use crate::{generate::path_to_ts, schema_loader::LoadedSchema};
 
 use super::{
+    fallback::fallback_definitions,
     position::{LineIndex, encode_offset},
     project::{LoadedProjectSchema, Project},
     protocol::{
@@ -129,7 +130,9 @@ fn transform_schema_file(
 /// Transforms an operation file into type definitions.
 ///
 /// If the file has errors but can be parsed, a fallback module is emitted along with diagnostics.
-/// It has the same exports as usual but all types are `any`, so that importing files keep working.
+/// It has the same exports as usual but types are `any`, so that importing files keep working.
+/// Validation errors only make the affected definitions `any`;
+/// other errors (e.g. in the project or in imports) affect the whole file.
 fn transform_operation_file(
     project: &Project,
     file_name: &Path,
@@ -218,20 +221,22 @@ fn transform_operation_file(
     };
 
     let check_errors =
-        check_operation_document(&document, &OperationCheckContext::new(&schema.type_system));
-    if !check_errors.is_empty() {
-        let errors = check_errors
+        check_operation_document(&document, &OperationCheckContext::new(&schema.type_system))
             .into_iter()
             .map(PositionedError::from)
             .collect::<Vec<_>>();
-        return error_result(diagnose(&errors, codes::VALIDATION_ERROR));
-    }
+    let mut diagnostics = diagnose(&check_errors, codes::VALIDATION_ERROR);
+    // Definitions with errors get `any` types, so that other definitions keep their types.
+    let Some(fallback) = fallback_definitions(&document, &check_errors) else {
+        return error_result(diagnostics);
+    };
 
     let Some(schema_source) = schema_source(project, schema, file_name) else {
-        return error_result(diagnose(
+        diagnostics.extend(diagnose(
             &[TransformError::NoSchemaSource.into()],
             codes::PROJECT_ERROR,
         ));
+        return error_result(diagnostics);
     };
     let mut options = OperationTypePrinterOptions::from_config(&project.config);
     // Runtime values are provided by loaders, not by content-mapped files.
@@ -239,18 +244,28 @@ fn transform_operation_file(
     options.schema_source = schema_source;
 
     let mut writer = SpanWriter::new();
-    if let Err(err) =
-        print_types_for_operation_document(options, &schema.type_system, &document, &mut writer)
-    {
-        // This means that the checker has missed an error.
-        return error_result(diagnose(&[err.into()], codes::VALIDATION_ERROR));
-    }
+    let printer_errors = print_types_for_operation_document_with_fallback(
+        options,
+        &schema.type_system,
+        &document,
+        |pos| fallback.contains(pos),
+        &mut writer,
+    );
+    // Printer errors mean that the checker has missed an error.
+    // The same error is reported for every definition that spreads the erroneous fragment.
+    let mut seen = HashSet::new();
+    let printer_errors = printer_errors
+        .into_iter()
+        .filter(|err| seen.insert((err.position, err.message.to_string())))
+        .map(PositionedError::from)
+        .collect::<Vec<_>>();
+    diagnostics.extend(diagnose(&printer_errors, codes::VALIDATION_ERROR));
     let (text, spans) = writer.into_parts();
     TransformResult {
         mappings: to_mappings(&spans, root_index, &text, &index, encoding),
         text,
         extension: ".ts",
-        diagnostics: vec![],
+        diagnostics,
     }
 }
 

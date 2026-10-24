@@ -345,3 +345,60 @@ fragment UserAge on User {
     let result = transform_file(&project, &root, "app/operation.graphql");
     assert_snapshot!(print_result(&result, operation, &root));
 }
+
+#[test]
+fn validation_error_per_definition() {
+    // Only definitions with errors, and those that depend on them, fall back to `any`.
+    let mut files = default_files();
+    let operation = r#"#import UserName from "./fragment.graphql"
+query GetMe {
+  me {
+    ...UserName
+  }
+}
+query GetAge {
+  me {
+    ...UserAge
+  }
+}
+query GetId {
+  me {
+    idd
+  }
+}
+fragment UserAge on User {
+  agee
+}
+"#;
+    files[5] = ("app/operation.graphql", operation);
+    let root = setup("validation_error_per_definition", &files);
+    let project = open(&root);
+    let result = transform_file(&project, &root, "app/operation.graphql");
+    assert_snapshot!(print_result(&result, operation, &root));
+}
+
+#[test]
+fn imported_fragment_validation_error() {
+    let mut files = default_files();
+    let operation = r#"#import UserName from "./fragment.graphql"
+query GetMe {
+  me {
+    ...UserName
+  }
+}
+query GetId {
+  me {
+    id
+  }
+}
+"#;
+    files[4] = (
+        "app/fragment.graphql",
+        "fragment UserName on User {\n  nam\n}\n",
+    );
+    files[5] = ("app/operation.graphql", operation);
+    let root = setup("imported_fragment_validation_error", &files);
+    let project = open(&root);
+    let result = transform_file(&project, &root, "app/operation.graphql");
+    assert_snapshot!(print_result(&result, operation, &root));
+}

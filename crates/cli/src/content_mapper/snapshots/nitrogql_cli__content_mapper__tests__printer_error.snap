@@ -3,6 +3,7 @@ source: crates/cli/src/content_mapper/tests.rs
 expression: "print_result(&result, operation, &root)"
 ---
 import type { TypedDocumentNode } from "@graphql-typed-document-node/core";
+import type * as Schema from "../schema/a.graphql";
 
 type GetMeResult = any;
 

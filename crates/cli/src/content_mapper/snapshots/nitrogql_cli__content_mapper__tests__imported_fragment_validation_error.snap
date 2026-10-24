@@ -1,0 +1,34 @@
+---
+source: crates/cli/src/content_mapper/tests.rs
+expression: "print_result(&result, operation, &root)"
+---
+import type { TypedDocumentNode } from "@graphql-typed-document-node/core";
+import type * as Schema from "../schema/a.graphql";
+
+type GetMeResult = any;
+
+type GetMeVariables = any;
+
+declare const GetMeQuery: TypedDocumentNode<GetMeResult, GetMeVariables>;
+
+type GetIdResult = Schema.__SelectionSet<Schema.__OperationOutput.Query, {
+  me: Schema.__SelectionSet<Schema.__OperationOutput.User, {
+    id: Schema.__OperationOutput.ID;
+  }, {}>;
+}, {}>;
+
+type GetIdVariables = {};
+
+declare const GetIdQuery: TypedDocumentNode<GetIdResult, GetIdVariables>;
+
+type UserName = any;
+
+declare const UserName: TypedDocumentNode<UserName, never>;
+
+// mapping: "GetMeResult" -> "GetMe" (Atom)
+// mapping: "GetMeVariables" -> "GetMe" (Atom)
+// mapping: "GetMeQuery" -> "GetMe" (Atom)
+// mapping: "GetIdResult" -> "GetId" (Atom)
+// mapping: "GetIdVariables" -> "GetId" (Atom)
+// mapping: "GetIdQuery" -> "GetId" (Atom)
+// diagnostic 4: "<root>/app/fragment.graphql:2:3: Field 'nam' is not found on type 'User'\n<root>/schema/b.graphql:1:1: Definition of 'User'" at ""

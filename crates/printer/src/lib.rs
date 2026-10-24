@@ -22,6 +22,7 @@ pub use resolver_type_printer::{
 pub use operation_type_printer::{
     error::{OperationTypePrinterError, OperationTypePrinterErrorMessage},
     print_fallback_types_for_operation_document, print_types_for_operation_document,
+    print_types_for_operation_document_with_fallback,
     visitor::OperationTypePrinterOptions,
 };
 
