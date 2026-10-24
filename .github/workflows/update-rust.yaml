@@ -45,6 +45,8 @@ jobs:
             - Latest stable: `${{ steps.latest.outputs.version }}`
 
             This PR bumps `rust-toolchain.toml`. Merge once CI is green.
+            CI fails on clippy warnings, so lints added in the new release
+            need to be fixed in this PR.
           branch: update-rust-toolchain
           base: master
           delete-branch: true

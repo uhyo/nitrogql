@@ -163,7 +163,7 @@ where
         write!(
             self.writer,
             "export type {}<Context> = ",
-            &context.options.root_resolver_type
+            context.options.root_resolver_type
         );
         root_resolvers_type.print_type(self.writer);
         writeln!(self.writer, ";");
@@ -171,7 +171,7 @@ where
         write!(
             self.writer,
             "export type {}<T extends ",
-            &context.options.resolver_output_type
+            context.options.resolver_output_type
         );
         type_names_type.print_type(self.writer);
         writeln!(self.writer, "> = ");

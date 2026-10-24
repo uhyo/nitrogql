@@ -19,10 +19,17 @@ jobs:
       - name: install rustup
         run: curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
       - uses: Swatinem/rust-cache@v2
+      - name: format
+        run: cargo fmt --all --check
       - name: test
         run: cargo test
       - name: lint
-        run: cargo clippy
+        run: cargo clippy --all-targets -- -D warnings
+      # some code is only compiled for the wasm targets, so lint those too
+      - name: lint (wasm)
+        run: |
+          cargo clippy --target wasm32-wasip1 -- -D warnings
+          cargo clippy --target wasm32-unknown-unknown -p graphql-loader -- -D warnings
       # currently `cargo wasi test` doesn't run, so ensure at least that it builds
       - name: build (wasi)
         run: cargo build --target wasm32-wasip1
@@ -71,3 +78,25 @@ jobs:
           npm run generate
           npm run build
         working-directory: examples/vite
+  # The content mapper exposes the whole drive to the wasm module and receives
+  # paths from TypeScript, so path handling differs on Windows.
+  e2e-test-content-mapper-windows:
+    runs-on: windows-latest
+    name: e2e-test content mapper (Windows)
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v7
+      - uses: Swatinem/rust-cache@v2
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+      - run: npm install
+      - name: build rust
+        run: ./build/build-rust.sh
+      - name: build node
+        run: ./build/build-node.sh
+      - name: run e2e tests
+        run: npm run e2e-test
+        working-directory: e2e-tests/content-mapper

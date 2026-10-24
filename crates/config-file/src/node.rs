@@ -1,12 +1,16 @@
+use std::{io, path::Path};
+
+#[cfg(not(target_os = "wasi"))]
 use std::{
     cell::RefCell,
-    io::{self, BufRead, BufReader, Write},
-    path::Path,
+    io::{BufRead, BufReader, Write},
     process::{Child, Command, Stdio},
 };
 
+#[cfg(not(target_os = "wasi"))]
 use once_cell::sync::Lazy;
 
+#[cfg(not(target_os = "wasi"))]
 thread_local! {
     // @nitrogql/esbuild-register requires different usage
     // depending on Node.js version.
@@ -40,6 +44,7 @@ thread_local! {
 
 /// @nitrogql/esbuild-register requires different usage
 /// depending on Node.js version.
+#[cfg(not(target_os = "wasi"))]
 fn check_if_node_supports_module_register_api() -> bool {
     let command = Command::new("node")
         .arg("--version")
@@ -103,12 +108,9 @@ pub async fn run_node(code: &str) -> io::Result<String> {
     #[cfg(target_os = "wasi")]
     {
         use crate::execute::execute_js;
-        execute_js(code).await.map_err(|err| {
-            io::Error::new(
-                io::ErrorKind::Other,
-                format!("Failed to execute config file: {}", err),
-            )
-        })
+        execute_js(code)
+            .await
+            .map_err(|err| io::Error::other(format!("Failed to execute config file: {}", err)))
     }
 }
 

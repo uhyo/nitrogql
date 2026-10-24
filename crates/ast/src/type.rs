@@ -59,8 +59,8 @@ impl Type<'_> {
 impl Display for Type<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Type::NonNull(inner) => write!(f, "{}!", &inner.r#type),
-            Type::List(inner) => write!(f, "[{}]", &inner.r#type),
+            Type::NonNull(inner) => write!(f, "{}!", inner.r#type),
+            Type::List(inner) => write!(f, "[{}]", inner.r#type),
             Type::Named(name) => write!(f, "{}", name.name.name),
         }
     }
