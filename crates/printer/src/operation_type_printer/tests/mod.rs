@@ -972,6 +972,99 @@ mod type_system_errors {
     }
 }
 
+mod per_definition_fallback {
+    use nitrogql_ast::{base::Pos, operation::ExecutableDefinition};
+
+    use super::*;
+    use crate::print_types_for_operation_document_with_fallback;
+
+    /// Prints given document with definitions of given names falling back to `any`.
+    fn print(source: &str, fallback_names: &[&str]) -> (String, Vec<String>) {
+        set_current_file_of_pos(0);
+        let doc = parse_operation_document(source).unwrap();
+        let (doc, _) = resolve_operation_extensions(doc).unwrap();
+        let fallback_positions = doc
+            .definitions
+            .iter()
+            .filter_map(|def| match def {
+                ExecutableDefinition::OperationDefinition(def) => def
+                    .name
+                    .filter(|name| fallback_names.contains(&name.name))
+                    .map(|_| def.position),
+                ExecutableDefinition::FragmentDefinition(def) => fallback_names
+                    .contains(&def.name.name)
+                    .then_some(def.position),
+            })
+            .collect::<Vec<Pos>>();
+        let mut result = String::new();
+        let mut writer = JustWriter::new(&mut result);
+        let schema = type_system();
+        let schema = ast_to_type_system(&schema);
+        let errors = print_types_for_operation_document_with_fallback(
+            OperationTypePrinterOptions::default(),
+            &schema,
+            &doc,
+            |pos| fallback_positions.contains(pos),
+            &mut writer,
+        );
+        let errors = errors
+            .into_iter()
+            .map(|err| {
+                format!(
+                    "{}:{}: {}",
+                    err.position.line + 1,
+                    err.position.column + 1,
+                    err.message
+                )
+            })
+            .collect();
+        (result, errors)
+    }
+
+    #[test]
+    fn fallback_for_some_definitions() {
+        let (printed, errors) = print(
+            "
+            query A { me { id } }
+            query B { me { unknownField } }
+            fragment F on User { name }
+            fragment G on UnknownType { foo }
+            ",
+            &["B", "G"],
+        );
+        assert_snapshot!(printed);
+        assert!(errors.is_empty());
+    }
+
+    #[test]
+    fn fallback_for_all_definitions() {
+        // Schema types are not imported if no definition uses them.
+        let (printed, errors) = print(
+            "
+            query B { me { unknownField } }
+            fragment G on UnknownType { foo }
+            ",
+            &["B", "G"],
+        );
+        assert_snapshot!(printed);
+        assert!(errors.is_empty());
+    }
+
+    #[test]
+    fn fallback_on_printer_error() {
+        // Definitions that cannot be printed fall back to `any` without affecting others.
+        let (printed, errors) = print(
+            "query A { me { id } }\nquery B { a: __typename a: me { id } }\n",
+            &[],
+        );
+        assert_snapshot!(printed);
+        assert_eq!(
+            errors,
+            vec!["2:11: Cannot merge selections of field 'a' that have different shapes"]
+        );
+    }
+}
+
 fn static_parse(
     code: &'static str,
     file_id: usize,

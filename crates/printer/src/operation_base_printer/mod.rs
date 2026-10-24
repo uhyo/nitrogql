@@ -91,6 +91,11 @@ where
         self.visitor.print_trailer(self.writer);
         Ok(())
     }
+
+    /// Consumes the printer and returns the visitor.
+    pub fn into_visitor(self) -> Visitor {
+        self.visitor
+    }
 }
 
 #[derive(Debug)]
