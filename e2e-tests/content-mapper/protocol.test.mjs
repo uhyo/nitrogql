@@ -7,11 +7,20 @@ import { fileURLToPath } from "node:url";
 import { after, before, describe, it } from "node:test";
 import assert from "node:assert/strict";
 
-const projectDir = fileURLToPath(new URL(".", import.meta.url));
-const tsconfig = fileURLToPath(new URL("tsconfig.json", import.meta.url));
-const getUserFile = fileURLToPath(
-  new URL("src/app/getUser.graphql", import.meta.url),
-);
+/**
+ * Returns an absolute path in the form TypeScript uses,
+ * i.e. with forward slashes even on Windows.
+ */
+function tsPath(relative) {
+  return fileURLToPath(new URL(relative, import.meta.url)).replaceAll(
+    "\\",
+    "/",
+  );
+}
+
+const projectDir = tsPath(".");
+const tsconfig = tsPath("tsconfig.json");
+const getUserFile = tsPath("src/app/getUser.graphql");
 const mapperScript = fileURLToPath(
   new URL("content-mapper.mjs", import.meta.resolve("@nitrogql/cli")),
 );
@@ -124,9 +133,8 @@ describe("content mapper protocol", { timeout: 60_000 }, () => {
     const { configIdentity, watchedFiles, optionDiagnostics } = response.result;
     assert.equal(typeof configIdentity, "string");
     assert.equal(optionDiagnostics, undefined);
-    const watched = watchedFiles.map((file) =>
-      file.replaceAll("\\", "/").slice(projectDir.replaceAll("\\", "/").length),
-    );
+    // Paths are returned in the form TypeScript sent them.
+    const watched = watchedFiles.map((file) => file.slice(projectDir.length));
     for (const file of [
       "graphql.config.yaml",
       "src/schema/schema.graphql",
