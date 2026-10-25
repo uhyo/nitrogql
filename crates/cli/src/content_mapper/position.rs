@@ -6,16 +6,47 @@ use super::protocol::PositionEncoding;
 pub struct SourceText<'a> {
     text: &'a str,
     encoding: PositionEncoding,
+    /// For UTF-16, byte offsets of line starts along with their UTF-16 offsets,
+    /// so that converting an offset only scans the line that contains it.
+    line_starts: Vec<(usize, usize)>,
 }
 
 impl<'a> SourceText<'a> {
     pub fn new(text: &'a str, encoding: PositionEncoding) -> Self {
-        SourceText { text, encoding }
+        let line_starts = match encoding {
+            PositionEncoding::Utf8 => vec![],
+            PositionEncoding::Utf16 => {
+                let mut line_starts = vec![(0, 0)];
+                let mut encoded = 0;
+                for (offset, ch) in text.char_indices() {
+                    encoded += ch.len_utf16();
+                    if ch == '\n' {
+                        line_starts.push((offset + 1, encoded));
+                    }
+                }
+                line_starts
+            }
+        };
+        SourceText {
+            text,
+            encoding,
+            line_starts,
+        }
     }
 
     /// Converts a byte offset to an offset in the specified encoding.
     pub fn encode(&self, byte_offset: usize) -> usize {
-        encode_offset(self.text, byte_offset, self.encoding)
+        match self.encoding {
+            PositionEncoding::Utf8 => byte_offset,
+            PositionEncoding::Utf16 => {
+                let line = self
+                    .line_starts
+                    .partition_point(|(start, _)| *start <= byte_offset)
+                    - 1;
+                let (line_start, encoded) = self.line_starts[line];
+                encoded + self.text[line_start..byte_offset].encode_utf16().count()
+            }
+        }
     }
 
     /// Returns the span (start and length, in the specified encoding) of the node at given position.
@@ -37,14 +68,6 @@ impl<'a> SourceText<'a> {
         }
         let encoded_start = self.encode(pos.start);
         Some((encoded_start, self.encode(pos.end) - encoded_start))
-    }
-}
-
-/// Converts a byte offset in given text to an offset in the specified encoding.
-pub fn encode_offset(text: &str, byte_offset: usize, encoding: PositionEncoding) -> usize {
-    match encoding {
-        PositionEncoding::Utf8 => byte_offset,
-        PositionEncoding::Utf16 => text[..byte_offset].encode_utf16().count(),
     }
 }
 
@@ -92,6 +115,17 @@ mod tests {
         let text = "query Foo {\r\n  a\r\n}";
         let utf8 = SourceText::new(text, PositionEncoding::Utf8);
         assert_eq!(utf8.span(&pos_of(text, text)), Some((0, 11)));
+    }
+
+    #[test]
+    fn encode() {
+        let text = "a😀\nb\r\n\ncé😀d\n";
+        let utf16 = SourceText::new(text, PositionEncoding::Utf16);
+        let utf8 = SourceText::new(text, PositionEncoding::Utf8);
+        for (offset, _) in text.char_indices().chain([(text.len(), ' ')]) {
+            assert_eq!(utf16.encode(offset), text[..offset].encode_utf16().count());
+            assert_eq!(utf8.encode(offset), offset);
+        }
     }
 
     #[test]

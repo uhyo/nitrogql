@@ -1,6 +1,7 @@
 use std::{
     borrow::Cow,
-    collections::BTreeMap,
+    cell::OnceCell,
+    collections::{BTreeMap, HashMap},
     fs,
     path::{Path, PathBuf},
 };
@@ -15,13 +16,19 @@ use nitrogql_plugin::Plugin;
 use nitrogql_semantics::ast_to_type_system;
 use nitrogql_utils::normalize_path;
 use self_cell::self_cell;
+use sourcemap_writer::RecordedSpan;
 use thiserror::Error;
 use typed_arena::Arena;
 
 use crate::{
-    SchemaSource, check::resolve_schema, error::CliError, file_store::FileStore, load_glob_files,
-    load_plugins, parse_schema_files, plugin_host::PLUGIN_FILE_NAME, read_schema_files,
-    schema_loader::LoadedSchema,
+    SchemaSource,
+    check::resolve_schema,
+    error::CliError,
+    file_store::FileStore,
+    load_glob_files, load_plugins, parse_schema_files,
+    plugin_host::PLUGIN_FILE_NAME,
+    read_schema_files,
+    schema_loader::{LoadedSchema, SchemaFileKind, schema_kind_by_path},
 };
 
 /// Options given to the content mapper via the `options` field of tsconfig's `contentMappers` entry.
@@ -43,6 +50,8 @@ pub enum ProjectError {
 
 /// A project opened by TypeScript.
 pub struct Project {
+    /// tsconfig.json given by TypeScript.
+    pub ts_config_file: PathBuf,
     /// Directory that contains the nitrogql config file.
     pub root_dir: PathBuf,
     pub config: Config,
@@ -53,6 +62,22 @@ pub struct Project {
     /// Absolute paths of loaded schema files, along with their indices in the file store.
     pub schema_files: Vec<(PathBuf, usize)>,
     files: LoadedFiles,
+    /// Schema types printed for the schema module, computed on first request.
+    schema_module: OnceCell<Result<SchemaModule, PositionedError>>,
+    /// Imports of operation files matched by the config, by path.
+    operation_imports: HashMap<PathBuf, OperationImports>,
+}
+
+/// Schema types printed for the file that provides them.
+pub struct SchemaModule {
+    pub text: String,
+    pub spans: Vec<RecordedSpan>,
+}
+
+/// Files imported from an operation file, along with the content they were computed from.
+struct OperationImports {
+    content: String,
+    imports: Vec<PathBuf>,
 }
 
 self_cell!(
@@ -92,8 +117,18 @@ pub struct LoadedProjectSchema<'src> {
 
 impl Project {
     /// Opens a project for given tsconfig.json.
-    pub async fn open(ts_config_file: &Path, options: &MapperOptions) -> Project {
+    ///
+    /// `previous` is a closed project for the same tsconfig.json.
+    /// Its work is reused where inputs are unchanged: the schema is not parsed again
+    /// if the config and schema files are the same, and operation files are not parsed again
+    /// if their contents are the same.
+    pub async fn open(
+        ts_config_file: &Path,
+        options: &MapperOptions,
+        mut previous: Option<Project>,
+    ) -> Project {
         let mut project = Project {
+            ts_config_file: ts_config_file.to_owned(),
             root_dir: ts_config_file
                 .parent()
                 .map(normalize_path)
@@ -103,16 +138,33 @@ impl Project {
             watched_files: vec![],
             schema_files: vec![],
             files: LoadedFiles::from_errors(vec![]),
+            schema_module: OnceCell::new(),
+            operation_imports: HashMap::new(),
         };
+        let previous_imports = previous
+            .as_mut()
+            .map(|previous| std::mem::take(&mut previous.operation_imports))
+            .unwrap_or_default();
         project.files = match project.load(ts_config_file, options).await {
-            Ok((plugins, schema_sources)) => LoadedFiles::new(Arena::new(), |sources| {
-                let mut file_store = FileStore::new(sources);
-                let state = match parse_schema(schema_sources, &mut file_store, &plugins) {
-                    Ok(schema) => ProjectState::Loaded(Box::new(schema)),
-                    Err(errors) => ProjectState::Error(errors),
-                };
-                ProjectFiles { file_store, state }
-            }),
+            Ok((plugins, schema_sources)) => {
+                match previous
+                    .filter(|previous| previous.has_same_schema(&project.config, &schema_sources))
+                {
+                    Some(previous) => {
+                        debug!("Reusing the schema of the previous project");
+                        project.schema_module = previous.schema_module;
+                        previous.files
+                    }
+                    None => LoadedFiles::new(Arena::new(), |sources| {
+                        let mut file_store = FileStore::new(sources);
+                        let state = match parse_schema(schema_sources, &mut file_store, &plugins) {
+                            Ok(schema) => ProjectState::Loaded(Box::new(schema)),
+                            Err(errors) => ProjectState::Error(errors),
+                        };
+                        ProjectFiles { file_store, state }
+                    }),
+                }
+            }
             Err(errors) => LoadedFiles::from_errors(errors),
         };
         project.schema_files = project
@@ -122,8 +174,42 @@ impl Project {
             .filter(|(_, (path, _, _))| *path != Path::new(PLUGIN_FILE_NAME))
             .map(|(idx, (path, _, _))| (normalize_path(path), idx))
             .collect();
-        project.compute_watched_files();
+        project.compute_watched_files(previous_imports);
         project
+    }
+
+    /// Returns whether this project loaded the same schema as given config and sources would load.
+    fn has_same_schema(
+        &self,
+        config: &Config,
+        schema_sources: &[Result<SchemaSource, PositionedError>],
+    ) -> bool {
+        // Options are compared by their debug output, as in the project identity.
+        if format!("{:?}", self.config) != format!("{config:?}") {
+            return false;
+        }
+        let mut sources = vec![];
+        for source in schema_sources {
+            let Ok(source) = source else {
+                return false;
+            };
+            // JavaScript schemas also provide type extensions to plugins, which are not compared.
+            if matches!(
+                schema_kind_by_path(&source.path),
+                SchemaFileKind::SchemaJavaScript
+            ) {
+                return false;
+            }
+            sources.push((source.path.as_path(), source.content.as_str()));
+        }
+        let loaded = self
+            .file_store()
+            .iter()
+            .filter(|(_, (path, _, _))| *path != Path::new(PLUGIN_FILE_NAME))
+            .map(|(_, (path, content, _))| (path, content))
+            .collect::<Vec<_>>();
+        // A project that failed to load has no files, and is never reused.
+        !loaded.is_empty() && loaded == sources
     }
 
     /// Loads the config and reads schema files.
@@ -160,7 +246,8 @@ impl Project {
     ///
     /// Watched files are the config file, schema files, and operation files that are imported from other files.
     /// Imported operation files are watched because they affect the output of importing files.
-    fn compute_watched_files(&mut self) {
+    /// Imports of operation files are taken from `previous_imports` if their contents are unchanged.
+    fn compute_watched_files(&mut self, mut previous_imports: HashMap<PathBuf, OperationImports>) {
         let mut watched: BTreeMap<PathBuf, Option<String>> = BTreeMap::new();
         for path in self.watched_files.drain(..) {
             let content = fs::read_to_string(&path).ok();
@@ -173,10 +260,28 @@ impl Project {
         if !self.config.operations.is_empty() {
             match load_glob_files(&self.root_dir, &self.config.operations) {
                 Ok(operation_files) => {
-                    for path in imported_operation_files(&operation_files) {
-                        watched
-                            .entry(path)
-                            .or_insert_with_key(|path| fs::read_to_string(path).ok());
+                    for (path, content) in operation_files {
+                        let imports = match previous_imports.remove(&path) {
+                            Some(imports) if imports.content == content => imports,
+                            _ => OperationImports {
+                                imports: imported_files(&path, &content),
+                                content,
+                            },
+                        };
+                        self.operation_imports.insert(path, imports);
+                    }
+                    for path in self
+                        .operation_imports
+                        .values()
+                        .flat_map(|file| &file.imports)
+                    {
+                        if !watched.contains_key(path) {
+                            let content = match self.operation_imports.get(path) {
+                                Some(file) => Some(file.content.clone()),
+                                None => fs::read_to_string(path).ok(),
+                            };
+                            watched.insert(path.clone(), content);
+                        }
                     }
                 }
                 Err(err) => {
@@ -202,6 +307,11 @@ impl Project {
     /// Returns the store of loaded schema files.
     pub fn file_store(&self) -> &FileStore<'_> {
         &self.files.borrow_dependent().file_store
+    }
+
+    /// Returns the printed schema module, which is computed on first use.
+    pub fn schema_module(&self) -> &OnceCell<Result<SchemaModule, PositionedError>> {
+        &self.schema_module
     }
 
     /// Returns the loaded schema, or errors if the project could not be loaded.
@@ -241,13 +351,12 @@ fn parse_schema<'src>(
     })
 }
 
-/// Collects operation files that are imported from given operation files.
-fn imported_operation_files(operation_files: &[(PathBuf, String)]) -> Vec<PathBuf> {
+/// Returns files imported from given operation file.
+/// Files that cannot be parsed are treated as importing nothing.
+fn imported_files(path: &Path, content: &str) -> Vec<PathBuf> {
     let mut operations = OperationSet::new();
-    for (path, content) in operation_files {
-        // file index is not used, as positions are not reported from here.
-        operations.add_file(path, content, usize::MAX);
-    }
+    // file index is not used, as positions are not reported from here.
+    operations.add_file(path, content, usize::MAX);
     operations
         .files()
         .flat_map(|file| file.imports().map(|(path, _)| path))

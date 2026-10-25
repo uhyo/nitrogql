@@ -5,7 +5,10 @@
 //!
 //! Protocol is JSON-RPC 2.0 over stdio. Framing of messages is handled by the JavaScript host.
 
-use std::{collections::HashMap, path::Path};
+use std::{
+    collections::HashMap,
+    path::{Path, PathBuf},
+};
 
 use log::{debug, error};
 use nitrogql_error::ErrorCode;
@@ -76,6 +79,10 @@ pub async fn run_content_mapper() {
 struct Server {
     encoding: Option<PositionEncoding>,
     projects: HashMap<String, Project>,
+    /// The last closed project for each tsconfig.json.
+    /// TypeScript closes and reopens a project when a watched file changes,
+    /// and the reopened project reuses what is unchanged.
+    closed_projects: HashMap<PathBuf, Project>,
 }
 
 impl Server {
@@ -105,7 +112,9 @@ impl Server {
             "openProject" => {
                 let params: OpenProjectParams = parse_params(params)?;
                 let (options, option_diagnostics) = parse_options(params.options.as_ref());
-                let project = Project::open(Path::new(&params.config_file_name), &options).await;
+                let ts_config_file = Path::new(&params.config_file_name);
+                let previous = self.closed_projects.remove(ts_config_file);
+                let project = Project::open(ts_config_file, &options, previous).await;
                 let result = OpenProjectResult {
                     config_identity: project.config_identity.clone(),
                     watched_files: project
@@ -140,7 +149,10 @@ impl Server {
             }
             "closeProject" => {
                 let params: CloseProjectParams = parse_params(params)?;
-                self.projects.remove(&params.project_handle);
+                if let Some(project) = self.projects.remove(&params.project_handle) {
+                    self.closed_projects
+                        .insert(project.ts_config_file.clone(), project);
+                }
                 Ok(Value::Null)
             }
             _ => Err(JsonRpcError {
