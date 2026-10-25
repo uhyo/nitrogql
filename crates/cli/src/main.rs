@@ -15,7 +15,7 @@ use graphql_builtins::generate_builtins;
 use graphql_type_system::Schema;
 use itertools::Itertools;
 use log::info;
-use nitrogql_ast::{OperationDocumentExt, type_system::TypeSystemOrExtensionDocument};
+use nitrogql_ast::type_system::TypeSystemOrExtensionDocument;
 use nitrogql_introspection::schema_from_introspection_json;
 use nitrogql_plugin::{Plugin, PluginSchemaExtensions};
 use nitrogql_utils::{get_cwd, normalize_path};
@@ -33,7 +33,8 @@ use crate::{
 use nitrogql_config_file::load_config;
 
 use nitrogql_error::{PositionedError, print_positioned_error};
-use nitrogql_parser::{parse_operation_document, parse_type_system_document};
+use nitrogql_operation_set::OperationSet;
+use nitrogql_parser::parse_type_system_document;
 
 use self::{
     check::run_check, content_mapper::run_content_mapper, context::CliConfig,
@@ -177,26 +178,26 @@ async fn run_cli_impl(
 
     let operation_files = load_glob_files(&config.root_dir, &config.config.operations)?;
 
-    let (operation_docs, operation_errors): (Vec<_>, Vec<_>) = operation_files
-        .into_iter()
-        .map(
-            |(path, buf)| -> Result<(PathBuf, OperationDocumentExt, usize), CommandError> {
-                info!("parsing(operation) {}", path.to_string_lossy());
-                let file_idx = file_store.add_file(path.clone(), buf, FileKind::Operation);
-                let (_, buf, _) = file_store.get_file(file_idx).unwrap();
-                let doc = parse_operation_document(buf, file_idx)?;
-                Ok((path, doc, file_idx))
-            },
-        )
-        .partition_result();
-    if !operation_errors.is_empty() {
-        return Err(CommandError::merge(operation_errors));
+    let mut operations = OperationSet::new();
+    for (path, buf) in operation_files {
+        info!("parsing(operation) {}", path.to_string_lossy());
+        let file_idx = file_store.add_file(path.clone(), buf, FileKind::Operation);
+        let (_, buf, _) = file_store.get_file(file_idx).unwrap();
+        operations.add_file(&path, buf, file_idx);
+    }
+    // Other errors are reported by the check command.
+    let syntax_errors = operations.take_syntax_errors();
+    if !syntax_errors.is_empty() {
+        return Err(CommandError {
+            inner: syntax_errors,
+            command: None,
+        });
     }
 
     let mut context = CliContext::SchemaUnresolved {
         config,
         schema: merged_schema_doc,
-        operations: operation_docs,
+        operations,
         file_store,
         output,
     };

@@ -11,10 +11,8 @@ log = "0.4.33"
 nitrogql-ast = { path = "../ast" }
 nitrogql-config-file = { path = "../config-file" }
 nitrogql-error = { path = "../error" }
-nitrogql-parser = { path = "../parser" }
-nitrogql-semantics = { path = "../semantics" }
+nitrogql-operation-set = { path = "../operation-set" }
 nitrogql-printer = { path = "../printer" }
-nitrogql-utils = { path = "../utils" }
 sourcemap-writer = { path = "../sourcemap-writer" }
 thiserror = "2.0.18"
 
