@@ -51,6 +51,8 @@ pub struct Task {
     /// Set of loaded operation files.
     /// The root file should be present when initiating the task.
     operations: OperationSet<'static>,
+    /// Index of the next registered file.
+    next_file_index: usize,
     source_drop_list: Vec<(*mut u8, usize, usize)>,
 }
 
@@ -60,6 +62,7 @@ impl Task {
         Self {
             root_file_name,
             operations: OperationSet::new(),
+            next_file_index: 0,
             source_drop_list: Vec::new(),
         }
     }
@@ -74,10 +77,11 @@ impl Task {
         let raw_parts = (source.as_mut_ptr(), source.len(), source.capacity());
         let source = Box::leak(source.into_boxed_str());
         self.source_drop_list.push(raw_parts);
-        // All files of a task share file index 0. The printer exports definitions
-        // from the same file as the root document, so imported fragments are exported
-        // from the emitted module too (unlike in `nitrogql generate`).
-        self.operations.add_file(&file_name, source, 0);
+        // Each file gets its own index, so that only definitions in the root file
+        // are exported, as in `nitrogql generate`.
+        self.operations
+            .add_file(&file_name, source, self.next_file_index);
+        self.next_file_index += 1;
         let syntax_errors = self.operations.take_syntax_errors();
         match syntax_errors
             .into_iter()
