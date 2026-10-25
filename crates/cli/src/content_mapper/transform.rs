@@ -24,7 +24,7 @@ use crate::{generate::path_to_ts, schema_loader::LoadedSchema};
 
 use super::{
     fallback::fallback_definitions,
-    position::{LineIndex, encode_offset},
+    position::{SourceText, encode_offset},
     project::{LoadedProjectSchema, Project},
     protocol::{
         MapperDiagnostic, PositionEncoding, SpanMapKind, SpanMapping, TransformResult, codes,
@@ -69,7 +69,7 @@ fn transform_schema_file(
     let (_, loaded_content, _) = &project.file_store[file_index];
     // Positions are valid only if content is the same as the one loaded.
     let is_same_content = *loaded_content == content;
-    let index = LineIndex::new(content, encoding);
+    let index = SourceText::new(content, encoding);
     let files = |idx: usize| project.file_store.get_file(idx).map(|(path, _, _)| path);
     let mut result = TransformResult {
         text: EMPTY_MODULE.to_owned(),
@@ -149,7 +149,7 @@ fn transform_operation_file(
             files.files.get(idx - root_index).map(|(path, _)| path)
         }
     };
-    let index = LineIndex::new(content, encoding);
+    let index = SourceText::new(content, encoding);
 
     let mut documents = HashMap::new();
     for (idx, (path, source)) in files.files.iter().enumerate() {
@@ -398,7 +398,7 @@ fn to_mappings(
     spans: &[RecordedSpan],
     file_index: usize,
     generated: &str,
-    original: &LineIndex,
+    original: &SourceText,
     encoding: PositionEncoding,
 ) -> Vec<SpanMapping> {
     spans
@@ -432,7 +432,7 @@ fn to_diagnostics<'e, 'p>(
     errors: impl IntoIterator<Item = &'e PositionedError>,
     file_index: usize,
     file_path: &dyn Fn(usize) -> Option<&'p PathBuf>,
-    index: &LineIndex,
+    index: &SourceText,
     code: u32,
 ) -> Vec<MapperDiagnostic> {
     let describe = |pos: &Pos, message: &str| match file_path(pos.file) {
@@ -451,7 +451,7 @@ fn to_diagnostics<'e, 'p>(
             let span = err
                 .position()
                 .filter(|pos| pos.file == file_index && !pos.builtin)
-                .and_then(|pos| index.token_span(&pos));
+                .and_then(|pos| index.span(&pos));
             let mut message_text = match (span, err.position()) {
                 (Some(_), _) | (None, None) => message,
                 (None, Some(pos)) => describe(&pos, &message),

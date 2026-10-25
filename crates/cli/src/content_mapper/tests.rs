@@ -182,6 +182,18 @@ fn validation_error() {
 }
 
 #[test]
+fn diagnostic_spans() {
+    // Diagnostics cover the node they point to, cut at the end of its first line.
+    let mut files = default_files();
+    let operation = "query GetMe {\n  me {\n    id @unknown\n    ...Missing\n    ... on Query { me { id } }\n    age {\n      x\n    }\n  }\n}\n";
+    files[5] = ("app/operation.graphql", operation);
+    let root = setup("diagnostic_spans", &files);
+    let project = open(&root);
+    let result = transform_file(&project, &root, "app/operation.graphql");
+    assert_snapshot!(print_result(&result, operation, &root));
+}
+
+#[test]
 fn printer_error() {
     // The checker does not check that fields of the same response name can be merged,
     // but the type printer cannot print such a selection.

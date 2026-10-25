@@ -54,8 +54,12 @@ impl<'a> PairExt<'a> for Pair<'a, Rule> {
 
     fn to_pos(&self, file: usize) -> Pos {
         let (line, column) = self.line_col();
+        let span = self.as_span();
+        // A pair can end with ignored tokens (e.g. when an optional part at the end is absent),
+        // which are not part of the node.
+        let end = span.start() + trim_ignored_end(span.as_str());
         // convert 1-based to 0-based
-        Pos::new(line - 1, column - 1, file)
+        Pos::new(line - 1, column - 1, span.start()..end, file)
     }
     // fn to_punc(&self) -> Punc<'a> {
     //     Punc {
@@ -75,6 +79,65 @@ impl<'a> PairExt<'a> for Pair<'a, Rule> {
             name: self.as_str(),
         }
     }
+}
+
+fn is_ignored_char(c: char) -> bool {
+    matches!(c, '\u{FEFF}' | '\t' | ' ' | '\n' | '\r' | ',')
+}
+
+/// Returns the length of given text without trailing ignored tokens
+/// (whitespace, commas and comments).
+/// `text` must be a sequence of tokens and ignored tokens.
+/// `#import` statements are treated as comments too; they only appear at the top level.
+fn trim_ignored_end(text: &str) -> usize {
+    // Comments end with a newline, so text can only end with ignored tokens
+    // if it ends with an ignored character.
+    if !text.ends_with(is_ignored_char) {
+        return text.len();
+    }
+    let mut end = 0;
+    let mut rest = text;
+    while let Some(c) = rest.chars().next() {
+        let offset = text.len() - rest.len();
+        let token_len = if is_ignored_char(c) {
+            rest = &rest[c.len_utf8()..];
+            continue;
+        } else if c == '#' {
+            rest = &rest[rest.find('\n').map_or(rest.len(), |idx| idx + 1)..];
+            continue;
+        } else if let Some(content) = rest.strip_prefix("\"\"\"") {
+            // block string; `\"""` is an escaped delimiter
+            let mut len = 3;
+            let mut content = content;
+            loop {
+                match content.find("\"\"\"") {
+                    Some(idx) if content[..idx].ends_with('\\') => {
+                        len += idx + 3;
+                        content = &content[idx + 3..];
+                    }
+                    Some(idx) => break len + idx + 3,
+                    None => break rest.len(),
+                }
+            }
+        } else if c == '"' {
+            let mut chars = rest.char_indices().skip(1);
+            loop {
+                match chars.next() {
+                    Some((_, '\\')) => {
+                        chars.next();
+                    }
+                    Some((idx, '"')) => break idx + 1,
+                    Some(_) => {}
+                    None => break rest.len(),
+                }
+            }
+        } else {
+            c.len_utf8()
+        };
+        end = offset + token_len;
+        rest = &rest[token_len..];
+    }
+    end
 }
 
 #[macro_export]
@@ -122,4 +185,33 @@ macro_rules! parts {
             ),*
         )
     }};
+}
+
+#[cfg(test)]
+mod tests {
+    use super::trim_ignored_end;
+
+    fn trimmed(text: &str) -> &str {
+        &text[..trim_ignored_end(text)]
+    }
+
+    #[test]
+    fn trims_ignored_tokens() {
+        assert_eq!(trimmed("foo"), "foo");
+        assert_eq!(trimmed("foo bar \n\t,\r\n"), "foo bar");
+        assert_eq!(trimmed("foo # comment\n  # another\n "), "foo");
+        assert_eq!(trimmed("foo\u{FEFF} "), "foo");
+        assert_eq!(trimmed(" \n"), "");
+    }
+
+    #[test]
+    fn keeps_strings() {
+        assert_eq!(trimmed("foo: \"a # b \" \n"), "foo: \"a # b \"");
+        assert_eq!(trimmed("foo: \"a \\\" b\" \n"), "foo: \"a \\\" b\"");
+        assert_eq!(trimmed("foo: \"\" \n"), "foo: \"\"");
+        assert_eq!(
+            trimmed("\"\"\"\n # a \\\"\"\" b \n\"\"\"\n"),
+            "\"\"\"\n # a \\\"\"\" b \n\"\"\""
+        );
+    }
 }

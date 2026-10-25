@@ -41,25 +41,26 @@ pub enum ExtensionErrorMessage {
 
 #[derive(Debug)]
 pub struct ExtensionError {
-    pub message: ExtensionErrorMessage,
+    // boxed to keep `Result`s small
+    pub message: Box<ExtensionErrorMessage>,
 }
 
 impl From<ExtensionError> for PositionedError {
     fn from(value: ExtensionError) -> Self {
-        let position = match &value.message {
+        let position = match &*value.message {
             ExtensionErrorMessage::DuplicateOriginal { first, .. } => *first,
             ExtensionErrorMessage::NoOriginal {
                 first_extension, ..
             } => *first_extension,
         };
-        let additional_info = match &value.message {
+        let additional_info = match &*value.message {
             ExtensionErrorMessage::DuplicateOriginal { name, second, .. } => {
                 vec![(*second, format!("Another declaration of '{name}'"))]
             }
             ExtensionErrorMessage::NoOriginal { .. } => vec![],
         };
 
-        PositionedError::new(value.message.into(), Some(position), additional_info)
+        PositionedError::new((*value.message).into(), Some(position), additional_info)
     }
 }
 
@@ -76,12 +77,12 @@ impl<OriginalType: HasPos, ExtensionType: HasPos> ExtensionList<'_, OriginalType
         let item = self.items.entry(name.clone()).or_default();
         if let Some(ref first) = item.original {
             return Err(ExtensionError {
-                message: ExtensionErrorMessage::DuplicateOriginal {
+                message: Box::new(ExtensionErrorMessage::DuplicateOriginal {
                     name_of_elem: self.name_of_elem.to_owned(),
                     name: name.unwrap_or_default(),
                     first: *first.position(),
                     second: *original.position(),
-                },
+                }),
             });
         }
         item.original = Some(original);
@@ -103,10 +104,10 @@ impl<OriginalType: HasPos, ExtensionType: HasPos> ExtensionList<'_, OriginalType
                 None => match item.extensions.into_iter().next() {
                     None => None,
                     Some(first) => Some(Err(ExtensionError {
-                        message: ExtensionErrorMessage::NoOriginal {
+                        message: Box::new(ExtensionErrorMessage::NoOriginal {
                             name_of_elem: self.name_of_elem.to_owned(),
                             first_extension: *first.position(),
-                        },
+                        }),
                     })),
                 },
                 Some(orig) => Some(Ok((orig, item.extensions))),

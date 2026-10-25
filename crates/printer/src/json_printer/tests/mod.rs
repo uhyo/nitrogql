@@ -9,6 +9,8 @@ use super::to_json::JsonPrintable;
 static POS: Pos = Pos {
     line: 0,
     column: 0,
+    start: 0,
+    end: 0,
     file: 0,
     builtin: false,
 };

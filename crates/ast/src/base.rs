@@ -1,14 +1,21 @@
 //! This module contains AST nodes for basic components of ASTs.
 
-use std::fmt::Display;
+use std::{fmt::Display, ops::Range};
 
 /// Position in source file.
+///
+/// Besides the start (line and column), it records the span of the node
+/// as byte offsets in the source.
 #[derive(Copy, Clone, Debug, Hash, PartialEq, Eq)]
 pub struct Pos {
     /// 0-based line
     pub line: usize,
-    /// 0-base column
+    /// 0-base column (counted in characters)
     pub column: usize,
+    /// Byte offset of the start of the node.
+    pub start: usize,
+    /// Byte offset of the end of the node (exclusive).
+    pub end: usize,
     /// file (specified by index)
     pub file: usize,
     /// Flag that indicates that this Pos is not from parsed document, but is a built-in structure.
@@ -17,10 +24,13 @@ pub struct Pos {
 
 impl Pos {
     /// Generates a non-built-in Pos.
-    pub fn new(line: usize, column: usize, file: usize) -> Self {
+    /// `span` is the range of the node in bytes.
+    pub fn new(line: usize, column: usize, span: Range<usize>, file: usize) -> Self {
         Pos {
             line,
             column,
+            start: span.start,
+            end: span.end,
             file,
             builtin: false,
         }
@@ -31,9 +41,16 @@ impl Pos {
         Pos {
             line: 0,
             column: 0,
+            start: 0,
+            end: 0,
             file: 0,
             builtin: true,
         }
+    }
+
+    /// Returns the span of the node in bytes.
+    pub fn span(&self) -> Range<usize> {
+        self.start..self.end
     }
 }
 
