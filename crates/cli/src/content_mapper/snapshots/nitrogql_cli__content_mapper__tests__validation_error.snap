@@ -15,4 +15,4 @@ export { GetMeQuery as default };
 // mapping: "GetMeResult" -> "GetMe" (Atom)
 // mapping: "GetMeVariables" -> "GetMe" (Atom)
 // mapping: "GetMeQuery" -> "GetMe" (Atom)
-// diagnostic 4: "Field 'nam' is not found on type 'User'\n<root>/schema/b.graphql:1:1: Definition of 'User'" at "nam"
+// diagnostic 4007: "Field 'nam' is not found on type 'User'\n<root>/schema/b.graphql:1:1: Definition of 'User'" at "nam"

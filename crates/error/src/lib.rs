@@ -7,12 +7,17 @@ use std::result::Result as StdResult;
 use nitrogql_ast::base::Pos;
 use nitrogql_utils::{first_non_space_byte_index, skip_chars};
 
+mod code;
+
+pub use code::ErrorCode;
+
 /// Error that may be positioned.
 #[derive(Debug)]
 pub struct PositionedError {
     inner: anyhow::Error,
     position: Option<Pos>,
     additional_info: Vec<(Pos, String)>,
+    code: Option<ErrorCode>,
 }
 
 pub type Result<T> = StdResult<T, PositionedError>;
@@ -27,7 +32,18 @@ impl PositionedError {
             inner,
             position,
             additional_info,
+            code: None,
         }
+    }
+
+    /// Sets the code of the error.
+    pub fn with_code(mut self, code: impl Into<Option<ErrorCode>>) -> Self {
+        self.code = code.into();
+        self
+    }
+
+    pub fn code(&self) -> Option<ErrorCode> {
+        self.code
     }
 
     pub fn has_position(&self) -> bool {
@@ -60,6 +76,7 @@ where
             inner: value.into(),
             position: None,
             additional_info: vec![],
+            code: None,
         }
     }
 }
@@ -70,17 +87,20 @@ pub fn print_positioned_error<S: AsRef<str>, T>(
     error: &PositionedError,
     files: &impl Index<usize, Output = (PathBuf, S, T)>,
 ) -> String {
-    let inner = &error.inner;
+    let inner = match error.code {
+        Some(code) => format!("{code}: {}", error.inner),
+        None => error.inner.to_string(),
+    };
     let Some(position) = error.position else {
-        return format!("{inner}");
+        return inner;
     };
     if position.builtin {
-        return format!("{inner}");
+        return inner;
     }
 
     let (ref file_path, ref source, _) = files[position.file];
 
-    let mut message = message_for_line(file_path, source.as_ref(), position, inner, false);
+    let mut message = message_for_line(file_path, source.as_ref(), position, &inner, false);
 
     for (pos, mes) in error.additional_info.iter() {
         if pos.builtin {
@@ -167,4 +187,42 @@ fn message_for_line(
         }
     }
     result
+}
+
+#[cfg(test)]
+mod tests {
+    use std::path::PathBuf;
+
+    use nitrogql_ast::base::Pos;
+
+    use super::{ErrorCode, PositionedError, print_positioned_error};
+
+    #[test]
+    fn print_code() {
+        colored::control::set_override(false);
+        let files = vec![(PathBuf::from("a.graphql"), "query { foo }", ())];
+        let error = PositionedError::new(
+            anyhow::anyhow!("Field 'foo' is not found on type 'Query'"),
+            Some(Pos::new(0, 8, 8..11, 0)),
+            vec![],
+        )
+        .with_code(ErrorCode::FieldNotFound);
+        assert_eq!(
+            print_positioned_error(&error, &files),
+            "a.graphql:1:9\nquery { foo }\n        ^\n        nitrogql4007: Field 'foo' is not found on type 'Query'\n"
+        );
+
+        let error = PositionedError::from(anyhow::anyhow!("Config file not found"))
+            .with_code(ErrorCode::ProjectError);
+        assert_eq!(
+            print_positioned_error(&error, &files),
+            "nitrogql9002: Config file not found"
+        );
+
+        let error = PositionedError::from(anyhow::anyhow!("Config file not found"));
+        assert_eq!(
+            print_positioned_error(&error, &files),
+            "Config file not found"
+        );
+    }
 }

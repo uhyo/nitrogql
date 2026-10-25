@@ -8,6 +8,7 @@
 use std::{collections::HashMap, path::Path};
 
 use log::{debug, error};
+use nitrogql_error::ErrorCode;
 use serde::{Serialize, de::DeserializeOwned};
 use serde_json::{Value, json};
 
@@ -16,7 +17,7 @@ use self::{
     protocol::{
         CloseProjectParams, INTERNAL_ERROR, INVALID_PARAMS, InitializeParams, InitializeResult,
         JsonRpcError, JsonRpcRequest, JsonRpcResponse, METHOD_NOT_FOUND, OpenProjectParams,
-        OpenProjectResult, OptionDiagnostic, PositionEncoding, TransformParams, codes,
+        OpenProjectResult, OptionDiagnostic, PositionEncoding, TransformParams,
     },
     transform::transform,
 };
@@ -175,7 +176,7 @@ fn parse_options(options: Option<&Value>) -> (MapperOptions, Vec<OptionDiagnosti
         diagnostics.push(OptionDiagnostic {
             path: vec![],
             message_text: "Options of nitrogql content mapper must be an object.".to_owned(),
-            code: codes::INVALID_OPTION,
+            code: ErrorCode::InvalidMapperOption.number(),
         });
         return (result, diagnostics);
     };
@@ -187,12 +188,12 @@ fn parse_options(options: Option<&Value>) -> (MapperOptions, Vec<OptionDiagnosti
             ("configFile", _) => diagnostics.push(OptionDiagnostic {
                 path: vec![json!(key)],
                 message_text: "'configFile' must be a string.".to_owned(),
-                code: codes::INVALID_OPTION,
+                code: ErrorCode::InvalidMapperOption.number(),
             }),
             _ => diagnostics.push(OptionDiagnostic {
                 path: vec![json!(key)],
                 message_text: format!("Unknown option '{key}'."),
-                code: codes::INVALID_OPTION,
+                code: ErrorCode::InvalidMapperOption.number(),
             }),
         }
     }

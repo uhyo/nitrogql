@@ -22,4 +22,4 @@ export declare const UserAge: TypedDocumentNode<UserAge, never>;
 // mapping: "UserAge" -> "UserAge" (Verbatim)
 // mapping: "UserAge" -> "UserAge" (Verbatim)
 // mapping: "UserAge" -> "UserAge" (Verbatim)
-// diagnostic 3: "<root>/app/fragment.graphql:1:28: Parse error: expected Selection" at ""
+// diagnostic 1001: "<root>/app/fragment.graphql:1:28: Parse error: expected Selection" at ""

@@ -1,5 +1,5 @@
 use nitrogql_ast::{TypeSystemOrExtensionDocument, base::Pos, operation_ext::OperationDocumentExt};
-use nitrogql_error::PositionedError;
+use nitrogql_error::{ErrorCode, PositionedError};
 use pest::Parser;
 use pest_derive::Parser;
 use thiserror::Error;
@@ -67,6 +67,7 @@ impl From<ParseError> for PositionedError {
         let inner = ParseErrorMessage(value.message).into();
 
         PositionedError::new(inner, Some(position), additional_info)
+            .with_code(ErrorCode::SyntaxError)
     }
 }
 

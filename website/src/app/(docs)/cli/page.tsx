@@ -123,6 +123,10 @@ export default function CLIUsage() {
         line: number;
         column: number;
       }
+      /**
+       * Error code such as "nitrogql2001", if any.
+       */
+      code: string | null;
       message: string;
     }[]
   }

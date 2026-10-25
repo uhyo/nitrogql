@@ -4,7 +4,7 @@ use nitrogql_ast::{
     operation::ExecutableDefinition,
     operation_ext::{ExecutableDefinitionExt, ImportTarget},
 };
-use nitrogql_error::PositionedError;
+use nitrogql_error::{ErrorCode, PositionedError};
 use thiserror::Error;
 
 use self::operation_extension::{Import, ImportTargets, OperationExtension};
@@ -110,6 +110,13 @@ impl From<ExtensionError> for PositionedError {
             ExtensionErrorMessage::WildcardCannotBeCombinedWithSpecific { .. } => vec![],
         };
 
-        PositionedError::new(value.message.into(), Some(position), additional_info)
+        let code = match &value.message {
+            ExtensionErrorMessage::WildcardOnlyOnce { .. } => ErrorCode::ImportWildcardMoreThanOnce,
+            ExtensionErrorMessage::WildcardCannotBeCombinedWithSpecific { .. } => {
+                ErrorCode::ImportWildcardCombinedWithSpecific
+            }
+        };
+
+        PositionedError::new(value.message.into(), Some(position), additional_info).with_code(code)
     }
 }

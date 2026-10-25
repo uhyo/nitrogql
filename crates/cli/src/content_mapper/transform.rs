@@ -7,7 +7,7 @@ use std::{
 
 use nitrogql_ast::base::Pos;
 use nitrogql_checker::{OperationCheckContext, check_operation_document};
-use nitrogql_error::PositionedError;
+use nitrogql_error::{ErrorCode, PositionedError};
 use nitrogql_operation_set::OperationSet;
 use nitrogql_printer::{
     OperationTypePrinterOptions, SchemaTypePrinter, SchemaTypePrinterOptions,
@@ -24,9 +24,7 @@ use super::{
     fallback::fallback_definitions,
     position::{SourceText, encode_offset},
     project::{LoadedProjectSchema, Project},
-    protocol::{
-        MapperDiagnostic, PositionEncoding, SpanMapKind, SpanMapping, TransformResult, codes,
-    },
+    protocol::{MapperDiagnostic, PositionEncoding, SpanMapKind, SpanMapping, TransformResult},
 };
 
 /// Virtual content for files that do not export anything.
@@ -89,13 +87,7 @@ fn transform_schema_file(
                     .iter()
                     .filter(|err| err.position().is_some_and(|pos| pos.file == file_index))
                     .collect::<Vec<_>>();
-                result.diagnostics = to_diagnostics(
-                    errors_in_file,
-                    file_index,
-                    &files,
-                    &index,
-                    codes::VALIDATION_ERROR,
-                );
+                result.diagnostics = to_diagnostics(errors_in_file, file_index, &files, &index);
             }
             return result;
         }
@@ -113,13 +105,8 @@ fn transform_schema_file(
     let mut writer = SpanWriter::new();
     let mut printer = SchemaTypePrinter::new(options, &mut writer);
     if let Err(err) = printer.print_document(document) {
-        result.diagnostics = to_diagnostics(
-            [&PositionedError::from(err)],
-            file_index,
-            &files,
-            &index,
-            codes::VALIDATION_ERROR,
-        );
+        result.diagnostics =
+            to_diagnostics([&PositionedError::from(err)], file_index, &files, &index);
         return result;
     }
     let (text, spans) = writer.into_parts();
@@ -180,21 +167,22 @@ fn transform_operation_file(
             diagnostics,
         }
     };
-    let diagnose = |errors: &[PositionedError], code: u32| {
-        to_diagnostics(errors, root_index, &file_path, &index, code)
-    };
+    let diagnose =
+        |errors: &[PositionedError]| to_diagnostics(errors, root_index, &file_path, &index);
 
     if !operations.syntax_errors().is_empty() {
-        return error_result(diagnose(operations.syntax_errors(), codes::SYNTAX_ERROR));
+        return error_result(diagnose(operations.syntax_errors()));
     }
     if !operations.errors().is_empty() {
-        return error_result(diagnose(operations.errors(), codes::VALIDATION_ERROR));
+        return error_result(diagnose(operations.errors()));
     }
     let schema = match project.schema() {
         Ok(schema) => schema,
         Err(errors) => {
-            let mut diagnostics = diagnose(errors, codes::PROJECT_ERROR);
+            let mut diagnostics = diagnose(errors);
+            // Errors in the project are not errors in this file.
             for diagnostic in diagnostics.iter_mut() {
+                diagnostic.code = ErrorCode::ProjectError.number();
                 diagnostic.message_text = format!(
                     "Failed to load nitrogql project: {}",
                     diagnostic.message_text
@@ -207,7 +195,7 @@ fn transform_operation_file(
     let document = match operations.resolve_imports(file_name) {
         None => return error_result(vec![]),
         Some(Ok(document)) => document,
-        Some(Err(err)) => return error_result(diagnose(&[err], codes::VALIDATION_ERROR)),
+        Some(Err(err)) => return error_result(diagnose(&[err])),
     };
 
     let check_errors =
@@ -215,17 +203,14 @@ fn transform_operation_file(
             .into_iter()
             .map(PositionedError::from)
             .collect::<Vec<_>>();
-    let mut diagnostics = diagnose(&check_errors, codes::VALIDATION_ERROR);
+    let mut diagnostics = diagnose(&check_errors);
     // Definitions with errors get `any` types, so that other definitions keep their types.
     let Some(fallback) = fallback_definitions(&document, &check_errors) else {
         return error_result(diagnostics);
     };
 
     let Some(schema_source) = schema_source(project, schema, file_name) else {
-        diagnostics.extend(diagnose(
-            &[TransformError::NoSchemaSource.into()],
-            codes::PROJECT_ERROR,
-        ));
+        diagnostics.extend(diagnose(&[TransformError::NoSchemaSource.into()]));
         return error_result(diagnostics);
     };
     let mut options = OperationTypePrinterOptions::from_config(&project.config);
@@ -249,7 +234,7 @@ fn transform_operation_file(
         .filter(|err| seen.insert((err.position, err.message.to_string())))
         .map(PositionedError::from)
         .collect::<Vec<_>>();
-    diagnostics.extend(diagnose(&printer_errors, codes::VALIDATION_ERROR));
+    diagnostics.extend(diagnose(&printer_errors));
     let (text, spans) = writer.into_parts();
     TransformResult {
         mappings: to_mappings(&spans, root_index, &text, &index, encoding),
@@ -365,12 +350,12 @@ fn to_mappings(
 
 /// Converts errors into diagnostics of the file with given index.
 /// Errors positioned in other files are reported at the start of the file.
+/// Errors without codes are problems outside GraphQL documents, such as in the config file.
 fn to_diagnostics<'e, 'p>(
     errors: impl IntoIterator<Item = &'e PositionedError>,
     file_index: usize,
     file_path: &dyn Fn(usize) -> Option<&'p Path>,
     index: &SourceText,
-    code: u32,
 ) -> Vec<MapperDiagnostic> {
     let describe = |pos: &Pos, message: &str| match file_path(pos.file) {
         Some(path) if !pos.builtin => format!(
@@ -402,7 +387,7 @@ fn to_diagnostics<'e, 'p>(
                 message_text,
                 start,
                 length,
-                code,
+                code: err.code().unwrap_or(ErrorCode::ProjectError).number(),
             }
         })
         .collect()

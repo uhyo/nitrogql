@@ -1,5 +1,5 @@
 use nitrogql_ast::base::Pos;
-use nitrogql_error::PositionedError;
+use nitrogql_error::{ErrorCode, PositionedError};
 use thiserror::Error;
 
 /// Error from the operation type printer.
@@ -45,6 +45,8 @@ pub type OperationTypePrinterResult<T> = Result<T, OperationTypePrinterError>;
 
 impl From<OperationTypePrinterError> for PositionedError {
     fn from(value: OperationTypePrinterError) -> Self {
+        // The checker should have reported the error, so this is a bug of nitrogql.
         PositionedError::new(value.message.into(), Some(value.position), vec![])
+            .with_code(ErrorCode::InternalError)
     }
 }

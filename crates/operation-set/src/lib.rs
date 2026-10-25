@@ -9,7 +9,7 @@ use std::{
 };
 
 use nitrogql_ast::{OperationDocument, base::Pos};
-use nitrogql_error::PositionedError;
+use nitrogql_error::{ErrorCode, PositionedError};
 use nitrogql_parser::parse_operation_document;
 use nitrogql_semantics::{
     OperationExtension, OperationResolver, resolve_operation_extensions, resolve_operation_imports,
@@ -142,8 +142,10 @@ impl<'src> OperationSet<'src> {
                 match read(&path) {
                     Ok((source, file_index)) => self.add_file(&path, source, file_index),
                     Err(err) => {
-                        self.errors
-                            .push(PositionedError::new(err.into(), Some(position), vec![]));
+                        self.errors.push(
+                            PositionedError::new(err.into(), Some(position), vec![])
+                                .with_code(ErrorCode::ImportFileNotFound),
+                        );
                         // remember the file so that it is not read again
                         self.push_entry(path.clone(), path, usize::MAX, None);
                     }

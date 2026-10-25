@@ -50,7 +50,8 @@ export default function TypeScriptContentMapper() {
         <p>
           Additionally, errors in your GraphQL files (syntax errors and
           validation errors against the schema) are reported by TypeScript as
-          well.
+          well. Each error has a code such as <code>nitrogql2001</code>; see{" "}
+          <Link href="/references/error-codes">Error codes</Link> for the list.
         </p>
         <p>
           While a GraphQL file has errors, the operations and fragments it

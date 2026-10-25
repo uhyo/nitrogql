@@ -15,4 +15,4 @@ export { GetMeQuery as default };
 // mapping: "GetMeResult" -> "GetMe" (Atom)
 // mapping: "GetMeVariables" -> "GetMe" (Atom)
 // mapping: "GetMeQuery" -> "GetMe" (Atom)
-// diagnostic 2: "Failed to load nitrogql project: <root>/schema/a.graphql:2:7: Type 'Usr' is not defined" at ""
+// diagnostic 9002: "Failed to load nitrogql project: <root>/schema/a.graphql:2:7: Type 'Usr' is not defined" at ""
