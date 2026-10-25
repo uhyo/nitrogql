@@ -1,12 +1,7 @@
-use std::{
-    collections::HashMap,
-    path::{Path, PathBuf},
-};
+use std::{collections::HashMap, path::PathBuf};
 
-use nitrogql_ast::OperationDocument;
 use nitrogql_error::Result;
-use nitrogql_parser::parse_operation_document;
-use nitrogql_semantics::{OperationExtension, resolve_operation_extensions};
+use nitrogql_operation_set::OperationSet;
 
 /// Set of tasks.
 #[derive(Debug)]
@@ -55,7 +50,9 @@ pub struct Task {
     pub root_file_name: PathBuf,
     /// Set of loaded operation files.
     /// The root file should be present when initiating the task.
-    loaded_files: HashMap<PathBuf, (OperationDocument<'static>, OperationExtension<'static>)>,
+    operations: OperationSet<'static>,
+    /// Index of the next registered file.
+    next_file_index: usize,
     source_drop_list: Vec<(*mut u8, usize, usize)>,
 }
 
@@ -64,40 +61,14 @@ impl Task {
     pub fn new(root_file_name: PathBuf) -> Self {
         Self {
             root_file_name,
-            loaded_files: HashMap::new(),
+            operations: OperationSet::new(),
+            next_file_index: 0,
             source_drop_list: Vec::new(),
         }
     }
-    /// Gets the root document.
-    /// Panics if the root file is not registered yet.
-    pub fn get_root_document(&self) -> (&OperationDocument<'_>, &OperationExtension<'_>) {
-        let (doc, extension) = self
-            .loaded_files
-            .get(&self.root_file_name)
-            .expect("Root file should be present");
-        (doc, extension)
-    }
-    /// Checks if the given file is loaded.
-    pub fn contains_file(&self, file_name: &Path) -> bool {
-        self.loaded_files.contains_key(file_name)
-    }
-    /// Gets the document and extension for the given file.
-    pub fn get_file(
-        &self,
-        file_name: &Path,
-    ) -> Option<&(OperationDocument<'_>, OperationExtension<'_>)> {
-        self.loaded_files.get(file_name)
-    }
-    /// Returns an iterator over loaded files.
-    pub fn iter_loaded_files(
-        &self,
-    ) -> impl Iterator<
-        Item = (
-            &PathBuf,
-            &(OperationDocument<'static>, OperationExtension<'static>),
-        ),
-    > {
-        self.loaded_files.iter()
+    /// Gets the set of loaded operation files.
+    pub fn operations(&self) -> &OperationSet<'_> {
+        &self.operations
     }
 
     /// Registers a source.
@@ -106,20 +77,27 @@ impl Task {
         let raw_parts = (source.as_mut_ptr(), source.len(), source.capacity());
         let source = Box::leak(source.into_boxed_str());
         self.source_drop_list.push(raw_parts);
-        // All files of a task share file index 0. The printer exports definitions
-        // from the same file as the root document, so imported fragments are exported
-        // from the emitted module too (unlike in `nitrogql generate`).
-        let document = parse_operation_document(source, 0)?;
-        let (document, extensions) = resolve_operation_extensions(document)?;
-        self.loaded_files.insert(file_name, (document, extensions));
-        Ok(())
+        // Each file gets its own index, so that only definitions in the root file
+        // are exported, as in `nitrogql generate`.
+        self.operations
+            .add_file(&file_name, source, self.next_file_index);
+        self.next_file_index += 1;
+        let syntax_errors = self.operations.take_syntax_errors();
+        match syntax_errors
+            .into_iter()
+            .chain(self.operations.take_errors())
+            .next()
+        {
+            Some(err) => Err(err),
+            None => Ok(()),
+        }
     }
 }
 
 impl Drop for Task {
     fn drop(&mut self) {
-        // need to drop loaded_files first
-        self.loaded_files.clear();
+        // need to drop loaded files first
+        self.operations = OperationSet::new();
         // then drop sources
         for (ptr, len, capacity) in self.source_drop_list.drain(..) {
             let _ = unsafe { String::from_raw_parts(ptr, len, capacity) };

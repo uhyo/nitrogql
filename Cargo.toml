@@ -10,6 +10,7 @@ members = [
   "crates/error",
   "crates/graphql-loader",
   "crates/introspection",
+  "crates/operation-set",
   "crates/parser",
   "crates/plugin",
   "crates/printer",

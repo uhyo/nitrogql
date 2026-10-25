@@ -1,25 +1,17 @@
-use std::{
-    borrow::Cow,
-    collections::HashMap,
-    path::{Path, PathBuf},
-};
+use std::{borrow::Cow, path::PathBuf};
 
 use itertools::Itertools;
 use log::{debug, info};
 
-use nitrogql_ast::{
-    OperationDocument, OperationDocumentExt, TypeSystemDocument, TypeSystemOrExtensionDocument,
-};
+use nitrogql_ast::{OperationDocument, TypeSystemDocument, TypeSystemOrExtensionDocument};
 use nitrogql_checker::{
     CheckError, CheckErrorMessage, OperationCheckContext, check_operation_document,
     check_type_system_document,
 };
 use nitrogql_error::{PositionedError, Result};
+use nitrogql_operation_set::OperationSet;
 use nitrogql_plugin::Plugin;
-use nitrogql_semantics::{
-    OperationExtension, OperationResolver, ast_to_type_system, resolve_operation_extensions,
-    resolve_operation_imports, resolve_schema_extensions,
-};
+use nitrogql_semantics::{OperationExtension, ast_to_type_system, resolve_schema_extensions};
 
 use crate::{output::InputFileKind, schema_loader::LoadedSchema};
 
@@ -68,7 +60,7 @@ pub fn run_check(context: CliContext) -> Result<CliContext> {
 
 struct CheckImplInput<'src, 'a> {
     pub schema: LoadedSchema<'src, TypeSystemOrExtensionDocument<'src>>,
-    pub operations: Vec<(PathBuf, OperationDocumentExt<'src>, usize)>,
+    pub operations: OperationSet<'src>,
     pub plugins: &'a [Plugin<'src>],
 }
 
@@ -197,63 +189,28 @@ type ResolveOperationsResult<'src> = std::result::Result<
     Vec<PositionedError>,
 >;
 
-fn resolve_operations(
-    operations: Vec<(PathBuf, OperationDocumentExt, usize)>,
-) -> ResolveOperationsResult {
+fn resolve_operations(mut operations: OperationSet<'_>) -> ResolveOperationsResult<'_> {
+    let resolve_errors = operations.take_errors();
+    if !resolve_errors.is_empty() {
+        return Err(resolve_errors);
+    }
+
     let (operations, resolve_errors): (Vec<_>, Vec<_>) = operations
-        .into_iter()
-        .map(|(path, doc, file_by_index)| -> std::result::Result<_, _> {
-            let (doc, ext) = resolve_operation_extensions(doc)?;
-            // resolve_operation_imports((&path, &doc, &ext), operation_resolver);
-            Ok((path, doc, ext, file_by_index))
+        .files()
+        .map(|file| -> std::result::Result<_, _> {
+            let doc = operations
+                .resolve_imports(file.path)
+                .expect("file should be loaded")?;
+            Ok((
+                file.path.to_owned(),
+                doc,
+                file.extension.clone(),
+                file.file_index,
+            ))
         })
         .partition_result();
     if !resolve_errors.is_empty() {
         return Err(resolve_errors);
     }
-
-    let operation_resolver = Operations::new(&operations);
-    let (operations, resolve_errors): (Vec<_>, Vec<_>) = operations
-        .iter()
-        .map(
-            |(path, doc, ext, file_by_index)| -> std::result::Result<_, _> {
-                let doc = resolve_operation_imports((path, doc, ext), &operation_resolver)?;
-                Ok((path.clone(), doc, ext.clone(), *file_by_index))
-            },
-        )
-        .partition_result();
-    if !resolve_errors.is_empty() {
-        return Err(resolve_errors);
-    }
     Ok(operations)
-}
-
-struct Operations<'a, 'src> {
-    file_by_path: HashMap<&'a Path, (&'a OperationDocument<'src>, &'a OperationExtension<'src>)>,
-}
-
-impl<'a, 'src> Operations<'a, 'src> {
-    pub fn new(
-        operations: &'a [(
-            PathBuf,
-            OperationDocument<'src>,
-            OperationExtension<'src>,
-            usize,
-        )],
-    ) -> Self {
-        let file_by_path = operations
-            .iter()
-            .map(|(path, doc, ext, _)| (path.as_path(), (doc, ext)))
-            .collect();
-        Self { file_by_path }
-    }
-}
-
-impl<'src> OperationResolver<'src> for Operations<'_, 'src> {
-    fn resolve(
-        &self,
-        path: &Path,
-    ) -> Option<(&OperationDocument<'src>, &OperationExtension<'src>)> {
-        self.file_by_path.get(path).copied()
-    }
 }

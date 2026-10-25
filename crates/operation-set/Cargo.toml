@@ -1,0 +1,14 @@
+[package]
+name = "nitrogql-operation-set"
+version = "0.1.0"
+edition = "2024"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+anyhow = "1.0.102"
+nitrogql-ast = { path = "../ast" }
+nitrogql-error = { path = "../error" }
+nitrogql-parser = { path = "../parser" }
+nitrogql-semantics = { path = "../semantics" }
+nitrogql-utils = { path = "../utils" }

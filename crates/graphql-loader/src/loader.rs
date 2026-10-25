@@ -1,10 +1,7 @@
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 
-use nitrogql_ast::OperationDocument;
 use nitrogql_config_file::Config;
 use nitrogql_error::{PositionedError, Result};
-use nitrogql_semantics::{OperationExtension, OperationResolver, resolve_operation_imports};
-use nitrogql_utils::resolve_relative_path;
 use thiserror::Error;
 
 use crate::{
@@ -33,17 +30,12 @@ pub fn get_required_files(tasks: &mut Tasks, task_id: usize) -> Result<Vec<PathB
         .get_task_mut(task_id)
         .ok_or_else(|| PositionedError::new(LoaderError::TaskNotFound.into(), None, vec![]))?;
 
-    let mut required_files = vec![];
-    for (from_file, (_, extensions)) in task.iter_loaded_files() {
-        for import in extensions.imports.iter() {
-            let path = Path::new(import.path.value.as_str());
-            let path = resolve_relative_path(from_file, path);
-            if task.contains_file(&path) || required_files.contains(&path) {
-                continue;
-            }
-            required_files.push(path);
-        }
-    }
+    let required_files = task
+        .operations()
+        .missing_imports()
+        .into_iter()
+        .map(|(path, _)| path)
+        .collect();
     Ok(required_files)
 }
 
@@ -66,23 +58,12 @@ pub fn emit_js(tasks: &Tasks, task_id: usize, config: &Config) -> Result<String>
     let task = tasks
         .get_task(task_id)
         .ok_or_else(|| PositionedError::new(LoaderError::TaskNotFound.into(), None, vec![]))?;
-    let (document, extensions) = task.get_root_document();
-    let document = resolve_operation_imports(
-        (&task.root_file_name, document, extensions),
-        &TaskOperationResolver(task),
-    )?;
+    let document = task
+        .operations()
+        .resolve_imports(&task.root_file_name)
+        .expect("Root file should be present")?;
     let js = print_js(&document, config);
     Ok(js)
-}
-
-struct TaskOperationResolver<'a>(&'a Task);
-
-impl<'a> OperationResolver<'a> for TaskOperationResolver<'a> {
-    fn resolve(&self, path: &Path) -> Option<(&OperationDocument<'a>, &OperationExtension<'a>)> {
-        let task = self.0;
-        let (document, extension) = task.get_file(path)?;
-        Some((document, extension))
-    }
 }
 
 #[cfg(test)]
