@@ -1,0 +1,21 @@
+---
+source: crates/cli/src/content_mapper/tests.rs
+expression: "print_result(&result, operation, &root)"
+---
+import type { TypedDocumentNode } from "@graphql-typed-document-node/core";
+
+type GetMeResult = any;
+
+type GetMeVariables = any;
+
+declare const GetMeQuery: TypedDocumentNode<GetMeResult, GetMeVariables>;
+
+export { GetMeQuery as default };
+
+// mapping: "GetMeResult" -> "GetMe" (Atom)
+// mapping: "GetMeVariables" -> "GetMe" (Atom)
+// mapping: "GetMeQuery" -> "GetMe" (Atom)
+// diagnostic 4: "Directive 'unknown' is not defined" at "unknown"
+// diagnostic 4: "Fragment 'Missing' is not defined" at "Missing"
+// diagnostic 4: "Fragment condition 'Query' never matches scope type 'User'\n<root>/schema/b.graphql:1:1: Definition of 'Query'\n<root>/schema/a.graphql:1:1: Definition of 'User'" at "... on Query { me { id } }"
+// diagnostic 4: "Cannot select fields of scalar 'Int'\nDefinition of 'Int'" at "{"

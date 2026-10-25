@@ -8,6 +8,8 @@ ExtensionError {
         position: Pos {
             line: 1,
             column: 27,
+            start: 28,
+            end: 51,
             file: 0,
             builtin: false,
         },

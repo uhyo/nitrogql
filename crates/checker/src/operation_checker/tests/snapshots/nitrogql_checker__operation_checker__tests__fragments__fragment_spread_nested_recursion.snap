@@ -7,6 +7,8 @@ expression: "check_operation_document(&schema, &doc)"
         position: Pos {
             line: 9,
             column: 20,
+            start: 205,
+            end: 209,
             file: 0,
             builtin: false,
         },

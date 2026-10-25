@@ -7,6 +7,8 @@ expression: "check_operation_document(&schema, &doc)"
         position: Pos {
             line: 3,
             column: 36,
+            start: 149,
+            end: 153,
             file: 0,
             builtin: false,
         },
@@ -19,6 +21,8 @@ expression: "check_operation_document(&schema, &doc)"
         position: Pos {
             line: 4,
             column: 36,
+            start: 198,
+            end: 207,
             file: 0,
             builtin: false,
         },

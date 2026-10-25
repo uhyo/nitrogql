@@ -7,6 +7,8 @@ expression: "test_check(schema, doc)"
         position: Pos {
             line: 2,
             column: 31,
+            start: 52,
+            end: 56,
             file: 0,
             builtin: false,
         },
