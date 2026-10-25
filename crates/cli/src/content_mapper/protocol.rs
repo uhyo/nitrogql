@@ -78,6 +78,7 @@ pub struct OpenProjectResult {
 pub struct OptionDiagnostic {
     pub path: Vec<Value>,
     pub message_text: String,
+    /// Number of an `ErrorCode`.
     pub code: u32,
 }
 
@@ -123,6 +124,7 @@ pub struct MapperDiagnostic {
     pub message_text: String,
     pub start: usize,
     pub length: usize,
+    /// Number of an `ErrorCode`.
     pub code: u32,
 }
 
@@ -130,16 +132,4 @@ pub struct MapperDiagnostic {
 #[serde(rename_all = "camelCase")]
 pub struct CloseProjectParams {
     pub project_handle: String,
-}
-
-/// Diagnostic codes reported by nitrogql's content mapper.
-pub mod codes {
-    /// Invalid content mapper options.
-    pub const INVALID_OPTION: u32 = 1;
-    /// Project could not be loaded (e.g. config or schema errors).
-    pub const PROJECT_ERROR: u32 = 2;
-    /// Syntax error in a GraphQL document.
-    pub const SYNTAX_ERROR: u32 = 3;
-    /// Validation error in a GraphQL document.
-    pub const VALIDATION_ERROR: u32 = 4;
 }

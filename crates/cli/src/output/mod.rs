@@ -112,6 +112,8 @@ impl CliOutput {
                     }
                     None => obj.value("file", None::<&bool>),
                 }
+                let code = error.code().map(|code| code.to_string());
+                obj.value("code", code.as_deref());
                 obj.value("message", &error.into_inner().to_string());
             }
         }
@@ -143,6 +145,11 @@ impl CliOutput {
             for (_, error) in self.check_errors {
                 let mut obj = diagnostics.object();
                 let position = error.position().unwrap_or_default();
+                if let Some(code) = error.code() {
+                    let mut obj = obj.object("code");
+                    obj.value("value", &code.to_string());
+                    obj.value("url", &code.url());
+                }
                 obj.value("message", &error.into_inner().to_string());
                 {
                     let mut location = obj.object("location");

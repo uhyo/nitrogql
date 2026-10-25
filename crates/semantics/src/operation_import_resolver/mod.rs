@@ -5,7 +5,7 @@ use std::{
 
 use log::debug;
 use nitrogql_ast::{OperationDocument, base::Pos, operation::ExecutableDefinition};
-use nitrogql_error::PositionedError;
+use nitrogql_error::{ErrorCode, PositionedError};
 use nitrogql_utils::resolve_relative_path;
 use thiserror::Error;
 
@@ -151,6 +151,11 @@ impl From<ExtensionError> for PositionedError {
             _ => vec![],
         };
 
-        PositionedError::new(value.message.into(), Some(position), additional_info)
+        let code = match &value.message {
+            ExtensionErrorMessage::FileNotFound { .. } => ErrorCode::ImportFileNotFound,
+            ExtensionErrorMessage::FragmentNotFound { .. } => ErrorCode::ImportedFragmentNotFound,
+        };
+
+        PositionedError::new(value.message.into(), Some(position), additional_info).with_code(code)
     }
 }

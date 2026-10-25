@@ -26,6 +26,12 @@ export default function References() {
           </li>
         </ul>
 
+        <h3>Error Codes</h3>
+        <p>
+          Errors found in GraphQL documents have stable codes. See{" "}
+          <Link href="/references/error-codes">Error codes</Link> for the list.
+        </p>
+
         <h3>Packages</h3>
         <p>
           Packages not listed here are considered internal. They are not meant

@@ -15,7 +15,7 @@ export { GetMeQuery as default };
 // mapping: "GetMeResult" -> "GetMe" (Atom)
 // mapping: "GetMeVariables" -> "GetMe" (Atom)
 // mapping: "GetMeQuery" -> "GetMe" (Atom)
-// diagnostic 4: "Directive 'unknown' is not defined" at "unknown"
-// diagnostic 4: "Fragment 'Missing' is not defined" at "Missing"
-// diagnostic 4: "Fragment condition 'Query' never matches scope type 'User'\n<root>/schema/b.graphql:1:1: Definition of 'Query'\n<root>/schema/a.graphql:1:1: Definition of 'User'" at "... on Query { me { id } }"
-// diagnostic 4: "Cannot select fields of scalar 'Int'\nDefinition of 'Int'" at "{"
+// diagnostic 2002: "Directive 'unknown' is not defined" at "unknown"
+// diagnostic 4010: "Fragment 'Missing' is not defined" at "Missing"
+// diagnostic 4011: "Fragment condition 'Query' never matches scope type 'User'\n<root>/schema/b.graphql:1:1: Definition of 'Query'\n<root>/schema/a.graphql:1:1: Definition of 'User'" at "... on Query { me { id } }"
+// diagnostic 4005: "Cannot select fields of scalar 'Int'\nDefinition of 'Int'" at "{"

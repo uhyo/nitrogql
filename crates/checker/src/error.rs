@@ -3,7 +3,7 @@ use std::fmt::Display;
 use thiserror::Error;
 
 use nitrogql_ast::{base::Pos, operation::OperationType};
-use nitrogql_error::PositionedError;
+use nitrogql_error::{ErrorCode, PositionedError};
 
 #[derive(Debug)]
 pub struct CheckError {
@@ -71,11 +71,9 @@ pub enum CheckErrorMessage {
         field_name: String,
         interface_name: String,
     },
-    #[error(
-        "Type of this argument does not match the same argument from interface '{interface_name}'"
-    )]
+    #[error("Type of this field does not match the same field from interface '{interface_name}'")]
     FieldTypeMisMatchWithInterface { interface_name: String },
-    #[error("Type of this filed does not match the same field from interface '{interface_name}'")]
+    #[error("This field must have an argument '{argument_name}' from interface '{interface_name}'")]
     InterfaceArgumentNotImplemented {
         argument_name: String,
         interface_name: String,
@@ -153,10 +151,73 @@ impl CheckErrorMessage {
             additional_info: vec![],
         }
     }
+
+    /// Returns the code of this error.
+    /// Messages that are only used as additional info do not have codes.
+    pub fn code(&self) -> Option<ErrorCode> {
+        use CheckErrorMessage::*;
+        let code = match self {
+            UnknownDirective { .. } => ErrorCode::UnknownDirective,
+            DirectiveLocationNotAllowed { .. } => ErrorCode::DirectiveLocationNotAllowed,
+            RepeatedDirective { .. } => ErrorCode::RepeatedDirective,
+            ArgumentsNotNeeded { .. } => ErrorCode::ArgumentsNotNeeded,
+            RequiredArgumentNotSpecified { .. } => ErrorCode::RequiredArgumentNotSpecified,
+            TypeMismatch { .. } => ErrorCode::TypeMismatch,
+            UnknownVariable { .. } => ErrorCode::UnknownVariable,
+            UnknownEnumMember { .. } => ErrorCode::UnknownEnumMember,
+            UnknownArgument { .. } => ErrorCode::UnknownArgument,
+            RequiredFieldNotSpecified { .. } => ErrorCode::RequiredInputFieldNotSpecified,
+            UnknownField { .. } => ErrorCode::UnknownInputField,
+            UnscoUnsco => ErrorCode::ReservedName,
+            DuplicatedName { .. } => ErrorCode::DuplicatedName,
+            UnknownType { .. } => ErrorCode::UnknownType,
+            RecursingDirective { .. } => ErrorCode::RecursingDirective,
+            NoOutputType { .. } => ErrorCode::OutputTypeNotAllowed,
+            NoInputType { .. } => ErrorCode::InputTypeNotAllowed,
+            NotInterface { .. } => ErrorCode::NotInterface,
+            InterfaceNotImplemented { .. } => ErrorCode::InterfaceNotImplemented,
+            NoImplementSelf => ErrorCode::InterfaceImplementsItself,
+            InterfaceFieldNotImplemented { .. } => ErrorCode::InterfaceFieldNotImplemented,
+            FieldTypeMisMatchWithInterface { .. } => ErrorCode::FieldTypeMismatchWithInterface,
+            InterfaceArgumentNotImplemented { .. } => ErrorCode::InterfaceArgumentNotImplemented,
+            ArgumentTypeMisMatchWithInterface { .. } => {
+                ErrorCode::ArgumentTypeMismatchWithInterface
+            }
+            ArgumentTypeNonNullAgainstInterface { .. } => {
+                ErrorCode::ArgumentTypeNonNullAgainstInterface
+            }
+            NonObjectTypeUnionMember { .. } => ErrorCode::NonObjectUnionMember,
+            OneOfFieldNotNullable => ErrorCode::OneOfFieldNotNullable,
+            OneOfFieldWithDefaultValue => ErrorCode::OneOfFieldWithDefaultValue,
+            UnNamedOperationMustBeSingle => ErrorCode::UnnamedOperationNotSingle,
+            DuplicateOperationName { .. } => ErrorCode::DuplicatedOperationName,
+            DuplicateFragmentName { .. } => ErrorCode::DuplicatedFragmentName,
+            NoRootType { .. } => ErrorCode::NoRootType,
+            SelectionOnInvalidType { .. } => ErrorCode::SelectionOnInvalidType,
+            MustSpecifySelectionSet { .. } => ErrorCode::MissingSelectionSet,
+            FieldNotFound { .. } => ErrorCode::FieldNotFound,
+            DuplicatedVariableName { .. } => ErrorCode::DuplicatedVariableName,
+            InvalidFragmentTarget { .. } => ErrorCode::InvalidFragmentTarget,
+            UnknownFragment { .. } => ErrorCode::UnknownFragment,
+            FragmentConditionNeverMatches { .. } => ErrorCode::FragmentConditionNeverMatches,
+            RecursingFragmentSpread { .. } => ErrorCode::RecursingFragmentSpread,
+            SubscriptionMustHaveExactlyOneRootField => ErrorCode::SubscriptionNotSingleRootField,
+            OneOfInputNotExactlyOneField { .. } => ErrorCode::OneOfInputNotExactlyOneField,
+            OneOfInputNullValue { .. } => ErrorCode::OneOfInputNullValue,
+            OneOfInputNullableVariable { .. } => ErrorCode::OneOfInputNullableVariable,
+            TypeSystemError => ErrorCode::InternalError,
+            AnotherDefinitionPos { .. } | DefinitionPos { .. } | RootTypesAreDefinedHere => {
+                return None;
+            }
+            Plugin { .. } => ErrorCode::PluginError,
+        };
+        Some(code)
+    }
 }
 
 impl From<CheckError> for PositionedError {
     fn from(value: CheckError) -> Self {
+        let code = value.message.code();
         PositionedError::new(
             value.message.into(),
             Some(value.position),
@@ -166,6 +227,7 @@ impl From<CheckError> for PositionedError {
                 .map(|(pos, err)| (pos, err.to_string()))
                 .collect(),
         )
+        .with_code(code)
     }
 }
 

@@ -16,4 +16,4 @@ export { GetMeQuery as default };
 // mapping: "GetMeResult" -> "GetMe" (Atom)
 // mapping: "GetMeVariables" -> "GetMe" (Atom)
 // mapping: "GetMeQuery" -> "GetMe" (Atom)
-// diagnostic 4: "Cannot merge selections of field 'a' that have different shapes" at "a"
+// diagnostic 9999: "Cannot merge selections of field 'a' that have different shapes" at "a"

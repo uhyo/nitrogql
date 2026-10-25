@@ -31,4 +31,4 @@ declare const UserName: TypedDocumentNode<UserName, never>;
 // mapping: "GetIdResult" -> "GetId" (Atom)
 // mapping: "GetIdVariables" -> "GetId" (Atom)
 // mapping: "GetIdQuery" -> "GetId" (Atom)
-// diagnostic 4: "<root>/app/fragment.graphql:2:3: Field 'nam' is not found on type 'User'\n<root>/schema/b.graphql:1:1: Definition of 'User'" at ""
+// diagnostic 4007: "<root>/app/fragment.graphql:2:3: Field 'nam' is not found on type 'User'\n<root>/schema/b.graphql:1:1: Definition of 'User'" at ""

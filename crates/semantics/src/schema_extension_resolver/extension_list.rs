@@ -2,7 +2,7 @@ use indexmap::IndexMap;
 use thiserror::Error;
 
 use nitrogql_ast::base::{HasPos, Pos};
-use nitrogql_error::PositionedError;
+use nitrogql_error::{ErrorCode, PositionedError};
 
 pub struct ExtensionList<'a, OriginalType: HasPos, ExtensionType: HasPos> {
     name_of_elem: &'a str,
@@ -60,7 +60,13 @@ impl From<ExtensionError> for PositionedError {
             ExtensionErrorMessage::NoOriginal { .. } => vec![],
         };
 
+        let code = match &*value.message {
+            ExtensionErrorMessage::DuplicateOriginal { .. } => ErrorCode::DuplicatedDeclaration,
+            ExtensionErrorMessage::NoOriginal { .. } => ErrorCode::ExtensionWithoutDeclaration,
+        };
+
         PositionedError::new((*value.message).into(), Some(position), additional_info)
+            .with_code(code)
     }
 }
 

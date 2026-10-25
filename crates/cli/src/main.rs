@@ -103,13 +103,7 @@ pub async fn run_cli(args: impl IntoIterator<Item = String>) {
             let message = err
                 .inner
                 .into_iter()
-                .map(|e| {
-                    if e.has_position() {
-                        print_positioned_error(&e, &file_store)
-                    } else {
-                        format!("{}", e.into_inner())
-                    }
-                })
+                .map(|e| print_positioned_error(&e, &file_store))
                 .join("\n");
             output.command_error(err.command, message);
             1
