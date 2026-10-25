@@ -53,6 +53,8 @@ pub struct Task {
     /// Set of loaded operation files.
     /// The root file should be present when initiating the task.
     files: TaskFiles,
+    /// Index of the next registered file.
+    next_file_index: usize,
 }
 
 self_cell!(
@@ -76,6 +78,7 @@ impl Task {
         Self {
             root_file_name,
             files: TaskFiles::new(Arena::new(), |_| OperationSet::new()),
+            next_file_index: 0,
         }
     }
     /// Gets the set of loaded operation files.
@@ -86,12 +89,13 @@ impl Task {
     /// Registers a source.
     /// Source will be dropped when the task is dropped.
     pub fn register_file(&mut self, file_name: PathBuf, source: String) -> Result<()> {
+        // Each file gets its own index, so that only definitions in the root file
+        // are exported, as in `nitrogql generate`.
+        let file_index = self.next_file_index;
+        self.next_file_index += 1;
         self.files.with_dependent_mut(|sources, operations| {
             let source = sources.alloc(source);
-            // All files of a task share file index 0. The printer exports definitions
-            // from the same file as the root document, so imported fragments are exported
-            // from the emitted module too (unlike in `nitrogql generate`).
-            operations.add_file(&file_name, source, 0);
+            operations.add_file(&file_name, source, file_index);
             let syntax_errors = operations.take_syntax_errors();
             match syntax_errors
                 .into_iter()
