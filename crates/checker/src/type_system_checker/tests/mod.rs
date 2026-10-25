@@ -244,6 +244,7 @@ mod directives {
         input InputType { foo: Int! }
         enum MyEnum { A,B,C }
         ",
+            0,
         )
         .unwrap();
         doc.extend(generate_builtins());
@@ -1686,7 +1687,7 @@ mod one_of {
 fn parse_to_type_system_document(source: &str) -> TypeSystemDocument<'_> {
     use graphql_builtins::generate_builtins;
 
-    let mut doc = parse_type_system_document(source).unwrap();
+    let mut doc = parse_type_system_document(source, 0).unwrap();
     doc.extend(generate_builtins());
 
     resolve_schema_extensions(doc).unwrap()

@@ -4,8 +4,8 @@ use pest::iterators::Pair;
 use crate::parts;
 use nitrogql_ast::selection_set::{Field, FragmentSpread, InlineFragment, Selection, SelectionSet};
 
-pub fn build_selection_set(pair: Pair<Rule>) -> SelectionSet {
-    let position = pair.to_pos();
+pub fn build_selection_set(pair: Pair<Rule>, file: usize) -> SelectionSet {
+    let position = pair.to_pos(file);
     SelectionSet {
         position,
         selections: pair
@@ -14,9 +14,13 @@ pub fn build_selection_set(pair: Pair<Rule>) -> SelectionSet {
             .map(|pair| {
                 let pair = pair.only_child();
                 match pair.as_rule() {
-                    Rule::Field => Selection::Field(build_field(pair)),
-                    Rule::FragmentSpread => Selection::FragmentSpread(build_fragment_spread(pair)),
-                    Rule::InlineFragment => Selection::InlineFragment(build_inline_fragment(pair)),
+                    Rule::Field => Selection::Field(build_field(pair, file)),
+                    Rule::FragmentSpread => {
+                        Selection::FragmentSpread(build_fragment_spread(pair, file))
+                    }
+                    Rule::InlineFragment => {
+                        Selection::InlineFragment(build_inline_fragment(pair, file))
+                    }
                     rule => panic!("Unexpected rule {:?} as a child of Selection", rule),
                 }
             })
@@ -24,7 +28,7 @@ pub fn build_selection_set(pair: Pair<Rule>) -> SelectionSet {
     }
 }
 
-fn build_field(pair: Pair<Rule>) -> Field {
+fn build_field(pair: Pair<Rule>, file: usize) -> Field {
     let (alias, name, arguments, directives, selection_set) = parts!(
         pair,
         Alias opt,
@@ -36,17 +40,17 @@ fn build_field(pair: Pair<Rule>) -> Field {
     Field {
         alias: alias.map(|pair| {
             let name_pair = pair.only_child();
-            name_pair.to_ident()
+            name_pair.to_ident(file)
         }),
-        name: name.to_ident(),
-        arguments: arguments.map(build_arguments),
-        directives: directives.map_or(vec![], build_directives),
-        selection_set: selection_set.map(build_selection_set),
+        name: name.to_ident(file),
+        arguments: arguments.map(|pair| build_arguments(pair, file)),
+        directives: directives.map_or(vec![], |pair| build_directives(pair, file)),
+        selection_set: selection_set.map(|pair| build_selection_set(pair, file)),
     }
 }
 
-fn build_fragment_spread(pair: Pair<Rule>) -> FragmentSpread {
-    let position = pair.to_pos();
+fn build_fragment_spread(pair: Pair<Rule>, file: usize) -> FragmentSpread {
+    let position = pair.to_pos(file);
     let (name, directives) = parts!(
         pair,
         FragmentName,
@@ -54,13 +58,13 @@ fn build_fragment_spread(pair: Pair<Rule>) -> FragmentSpread {
     );
     FragmentSpread {
         position,
-        fragment_name: name.to_ident(),
-        directives: directives.map_or(vec![], build_directives),
+        fragment_name: name.to_ident(file),
+        directives: directives.map_or(vec![], |pair| build_directives(pair, file)),
     }
 }
 
-fn build_inline_fragment(pair: Pair<Rule>) -> InlineFragment {
-    let position = pair.to_pos();
+fn build_inline_fragment(pair: Pair<Rule>, file: usize) -> InlineFragment {
+    let position = pair.to_pos(file);
     let (type_condition, directives, selection_set) = parts!(
         pair,
         TypeCondition opt,
@@ -71,9 +75,9 @@ fn build_inline_fragment(pair: Pair<Rule>) -> InlineFragment {
         position,
         type_condition: type_condition.map(|type_condition_pair| {
             let (_, name) = parts!(type_condition_pair, KEYWORD_on, NamedType);
-            name.to_ident()
+            name.to_ident(file)
         }),
-        directives: directives.map_or(vec![], build_directives),
-        selection_set: build_selection_set(selection_set),
+        directives: directives.map_or(vec![], |pair| build_directives(pair, file)),
+        selection_set: build_selection_set(selection_set, file),
     }
 }

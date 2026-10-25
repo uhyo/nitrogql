@@ -5,7 +5,7 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use nitrogql_ast::{OperationDocument, base::Pos, set_current_file_of_pos};
+use nitrogql_ast::{OperationDocument, base::Pos};
 use nitrogql_checker::{OperationCheckContext, check_operation_document};
 use nitrogql_error::PositionedError;
 use nitrogql_parser::parse_operation_document;
@@ -153,9 +153,8 @@ fn transform_operation_file(
 
     let mut documents = HashMap::new();
     for (idx, (path, source)) in files.files.iter().enumerate() {
-        set_current_file_of_pos(root_index + idx);
         // Errors are reported by load_operation_files.
-        let Ok(document) = parse_operation_document(source) else {
+        let Ok(document) = parse_operation_document(source, root_index + idx) else {
             continue;
         };
         let Ok(document) = resolve_operation_extensions(document) else {
@@ -286,8 +285,7 @@ fn load_operation_files(file_name: &Path, content: &str, root_index: usize) -> O
     let mut idx = 0;
     while idx < result.files.len() {
         let (path, source) = &result.files[idx];
-        set_current_file_of_pos(root_index + idx);
-        let imports = match parse_operation_document(source) {
+        let imports = match parse_operation_document(source, root_index + idx) {
             Err(err) => {
                 result.syntax_errors.push(err.into());
                 vec![]

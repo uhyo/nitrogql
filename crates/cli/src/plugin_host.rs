@@ -14,11 +14,11 @@ impl<'host> PluginHost<'host> {
 }
 
 impl nitrogql_plugin::PluginHost for PluginHost<'_> {
-    fn load_virtual_file(&mut self, content: String) -> &'static str {
+    fn load_virtual_file(&mut self, content: String) -> (&'static str, usize) {
         let index = self
             .file_store
             .add_file(PLUGIN_FILE_NAME.into(), content, FileKind::Schema);
         let (_, content, _) = self.file_store.get_file(index).unwrap();
-        content
+        (content, index)
     }
 }

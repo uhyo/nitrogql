@@ -9,11 +9,11 @@ use nitrogql_ast::value::{
 };
 
 /// Builds Value from given Pair for Value.
-pub fn build_value(pair: Pair<Rule>) -> Value {
+pub fn build_value(pair: Pair<Rule>, file: usize) -> Value {
     let pair = pair.only_child();
-    let position = pair.to_pos();
+    let position = pair.to_pos(file);
     match pair.as_rule() {
-        Rule::Variable => Value::Variable(build_variable(pair)),
+        Rule::Variable => Value::Variable(build_variable(pair, file)),
         Rule::IntValue => Value::IntValue(IntValue {
             position,
             value: pair.as_str(),
@@ -22,7 +22,7 @@ pub fn build_value(pair: Pair<Rule>) -> Value {
             position,
             value: pair.as_str(),
         }),
-        Rule::StringValue => Value::StringValue(build_string_value(pair)),
+        Rule::StringValue => Value::StringValue(build_string_value(pair, file)),
         Rule::BooleanValue => {
             let keyword = pair.only_child();
             Value::BooleanValue(BooleanValue {
@@ -47,7 +47,7 @@ pub fn build_value(pair: Pair<Rule>) -> Value {
             let values = pair
                 .all_children(Rule::Value)
                 .into_iter()
-                .map(build_value)
+                .map(|pair| build_value(pair, file))
                 .collect();
             Value::ListValue(ListValue { position, values })
         }
@@ -57,7 +57,7 @@ pub fn build_value(pair: Pair<Rule>) -> Value {
                 .into_iter()
                 .map(|field| {
                     let (name, value) = parts!(field, Name, Value);
-                    (name.to_ident(), build_value(value))
+                    (name.to_ident(file), build_value(value, file))
                 })
                 .collect();
             Value::ObjectValue(ObjectValue { position, fields })
@@ -67,8 +67,8 @@ pub fn build_value(pair: Pair<Rule>) -> Value {
 }
 
 /// Builds Arguments from given Pair for Arguments.
-pub fn build_arguments(pair: Pair<Rule>) -> Arguments {
-    let position = pair.to_pos();
+pub fn build_arguments(pair: Pair<Rule>, file: usize) -> Arguments {
+    let position = pair.to_pos(file);
     Arguments {
         position,
         arguments: pair
@@ -76,15 +76,15 @@ pub fn build_arguments(pair: Pair<Rule>) -> Arguments {
             .into_iter()
             .map(|pair| {
                 let (name, value) = parts!(pair, Name, Value);
-                (name.to_ident(), build_value(value))
+                (name.to_ident(file), build_value(value, file))
             })
             .collect(),
     }
 }
 
-pub fn build_string_value(pair: Pair<Rule>) -> StringValue {
+pub fn build_string_value(pair: Pair<Rule>, file: usize) -> StringValue {
     let pair = pair.only_child();
-    let position = pair.to_pos();
+    let position = pair.to_pos(file);
     match pair.as_rule() {
         Rule::EmptyStringValue => StringValue {
             position,

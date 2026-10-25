@@ -106,7 +106,10 @@ impl Task {
         let raw_parts = (source.as_mut_ptr(), source.len(), source.capacity());
         let source = Box::leak(source.into_boxed_str());
         self.source_drop_list.push(raw_parts);
-        let document = parse_operation_document(source)?;
+        // All files of a task share file index 0. The printer exports definitions
+        // from the same file as the root document, so imported fragments are exported
+        // from the emitted module too (unlike in `nitrogql generate`).
+        let document = parse_operation_document(source, 0)?;
         let (document, extensions) = resolve_operation_extensions(document)?;
         self.loaded_files.insert(file_name, (document, extensions));
         Ok(())

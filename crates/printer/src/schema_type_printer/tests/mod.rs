@@ -55,6 +55,7 @@ fn type_printing() {
                 me: User!
             }
             ",
+        0,
     )
     .unwrap();
     let doc = resolve_schema_extensions(doc).unwrap();
@@ -117,6 +118,7 @@ fn type_printing_with_desc() {
                 me: User!
             }
             "#,
+        0,
     )
     .unwrap();
     let doc = resolve_schema_extensions(doc).unwrap();
@@ -131,6 +133,7 @@ fn scalar_printing() {
         scalar BigInt
         scalar URL
         ",
+        0,
     )
     .unwrap();
     let doc = resolve_schema_extensions(doc).unwrap();
@@ -160,6 +163,7 @@ fn avoid_circular_reference_1() {
             date: Date!
         }
         ",
+        0,
     )
     .unwrap();
     let doc = resolve_schema_extensions(doc).unwrap();
@@ -190,6 +194,7 @@ fn avoid_circular_reference_2() {
             date: Date!
         }
         ",
+        0,
     )
     .unwrap();
     let doc = resolve_schema_extensions(doc).unwrap();
@@ -220,6 +225,7 @@ fn avoid_circular_reference_3() {
             rec2: Rec2!
         }
         ",
+        0,
     )
     .unwrap();
     let doc = resolve_schema_extensions(doc).unwrap();
@@ -263,6 +269,7 @@ fn deprecated_items() {
             me: User!
         }
         "#,
+        0,
     )
     .unwrap();
     let doc = resolve_schema_extensions(doc).unwrap();
@@ -290,6 +297,7 @@ fn one_of_input_object() {
             me: String!
         }
         "#,
+        0,
     )
     .unwrap();
     let doc = resolve_schema_extensions(doc).unwrap();
@@ -313,6 +321,7 @@ fn one_of_input_object_with_input_nullable_field_is_optional_false() {
             me: String!
         }
         "#,
+        0,
     )
     .unwrap();
     let doc = resolve_schema_extensions(doc).unwrap();
@@ -334,6 +343,7 @@ fn enum_runtime() {
             AdminUser
         }
         "#,
+        0,
     )
     .unwrap();
     let doc = resolve_schema_extensions(doc).unwrap();

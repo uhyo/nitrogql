@@ -168,7 +168,7 @@ fn can_print_mutually_recursive_fragments() {
 }
 
 fn parse(str: &str) -> OperationDocument<'_> {
-    let doc = parse_operation_document(str).unwrap();
+    let doc = parse_operation_document(str, 0).unwrap();
     let (document, _) = resolve_operation_extensions(doc).unwrap();
     document
 }

@@ -51,8 +51,8 @@ impl<'src> Plugin<'src> {
         }
         let addition = self.raw.schema_addition();
         if let Some(addition) = addition {
-            let host_buf = host.load_virtual_file(addition);
-            let parsed = parse_type_system_document(host_buf)?;
+            let (host_buf, file) = host.load_virtual_file(addition);
+            let parsed = parse_type_system_document(host_buf, file)?;
             *cached = Some(parsed.clone());
             Ok(Some(parsed))
         } else {

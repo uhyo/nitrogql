@@ -3,8 +3,8 @@ use std::path::Path;
 use insta::assert_snapshot;
 
 use graphql_builtins::generate_builtins;
+use nitrogql_ast::OperationDocumentExt;
 use nitrogql_ast::{OperationDocument, TypeSystemDocument};
-use nitrogql_ast::{OperationDocumentExt, set_current_file_of_pos};
 use nitrogql_parser::{parse_operation_document, parse_type_system_document};
 use nitrogql_semantics::{
     OperationExtension, OperationResolver, ast_to_type_system, resolve_operation_extensions,
@@ -61,6 +61,7 @@ fn type_system() -> TypeSystemDocument<'static> {
                 nullablePosts: [Post]!
             }
             ",
+        0,
     )
     .unwrap();
     doc.extend(generate_builtins());
@@ -78,6 +79,7 @@ fn basic_type_printing() {
             }
         }
         ",
+        0,
     )
     .unwrap();
     let printed = print_document_default(&doc);
@@ -93,6 +95,7 @@ fn nested_list_and_non_null() {
             nullablePosts { id body }
         }
         ",
+        0,
     )
     .unwrap();
     let printed = print_document_default(&doc);
@@ -109,6 +112,7 @@ fn export_input_and_result_type() {
             }
         }
         ",
+        0,
     )
     .unwrap();
     let (doc, _) = resolve_operation_extensions(doc).unwrap();
@@ -149,6 +153,7 @@ fn descriptions() {
             id
         }
         "#,
+        0,
     )
     .unwrap();
     let printed = print_document_default(&doc);
@@ -172,6 +177,7 @@ fn fragment_spread() {
             id
         }
         ",
+        0,
     )
     .unwrap();
     let printed = print_document_default(&doc);
@@ -200,6 +206,7 @@ fn fragment_spread_cond() {
             body
         }
         ",
+        0,
     )
     .unwrap();
     let printed = print_document_default(&doc);
@@ -221,6 +228,7 @@ fn fragment_inline_spread() {
             }
         }
         ",
+        0,
     )
     .unwrap();
     let printed = print_document_default(&doc);
@@ -238,6 +246,7 @@ fn typename_field() {
             }
         }
         ",
+        0,
     )
     .unwrap();
     let printed = print_document_default(&doc);
@@ -260,6 +269,7 @@ fn typename_field_on_union() {
             }
         }
         ",
+        0,
     )
     .unwrap();
     let printed = print_document_default(&doc);
@@ -276,6 +286,7 @@ fn query_variables() {
             }
         }
         ",
+        0,
     )
     .unwrap();
     let printed = print_document_default(&doc);
@@ -292,6 +303,7 @@ fn variable_disallow_undefined() {
             }
         }
         ",
+        0,
     )
     .unwrap();
     let (doc, _) = resolve_operation_extensions(doc).unwrap();
@@ -316,6 +328,7 @@ fn print_values() {
             }
         }
         ",
+        0,
     )
     .unwrap();
     let (doc, _) = resolve_operation_extensions(doc).unwrap();
@@ -345,6 +358,7 @@ mod skip_include {
                 }
             }
             ",
+            0,
         )
         .unwrap();
         let printed = print_document_default(&doc);
@@ -362,6 +376,7 @@ mod skip_include {
                 }
             }
             ",
+            0,
         )
         .unwrap();
         let printed = print_document_default(&doc);
@@ -379,6 +394,7 @@ mod skip_include {
                 }
             }
             ",
+            0,
         )
         .unwrap();
         let printed = print_document_default(&doc);
@@ -396,6 +412,7 @@ mod skip_include {
                 }
             }
             ",
+            0,
         )
         .unwrap();
         let printed = print_document_default(&doc);
@@ -413,6 +430,7 @@ mod skip_include {
                 }
             }
             ",
+            0,
         )
         .unwrap();
         let printed = print_document_default(&doc);
@@ -430,6 +448,7 @@ mod skip_include {
                 }
             }
             ",
+            0,
         )
         .unwrap();
         let printed = print_document_default(&doc);
@@ -449,6 +468,7 @@ mod skip_include {
                 }
             }
             ",
+            0,
         )
         .unwrap();
         let printed = print_document_default(&doc);
@@ -466,6 +486,7 @@ mod skip_include {
                 }
             }
             ",
+            0,
         )
         .unwrap();
         let printed = print_document_default(&doc);
@@ -486,6 +507,7 @@ mod skip_include {
                 age
             }
             ",
+            0,
         )
         .unwrap();
         let printed = print_document_default(&doc);
@@ -506,6 +528,7 @@ mod skip_include {
                 age
             }
             ",
+            0,
         )
         .unwrap();
         let printed = print_document_default(&doc);
@@ -525,6 +548,7 @@ mod skip_include {
                 }
             }
             ",
+            0,
         )
         .unwrap();
         let printed = print_document_default(&doc);
@@ -544,6 +568,7 @@ mod skip_include {
                 }
             }
             ",
+            0,
         )
         .unwrap();
         let printed = print_document_default(&doc);
@@ -564,6 +589,7 @@ mod skip_include {
                 age
             }
             ",
+            0,
         )
         .unwrap();
         let printed = print_document_default(&doc);
@@ -583,6 +609,7 @@ mod skip_include {
                 }
             }
             ",
+            0,
         )
         .unwrap();
         let printed = print_document_default(&doc);
@@ -603,6 +630,7 @@ mod skip_include {
                 age
             }
             ",
+            0,
         )
         .unwrap();
         let printed = print_document_default(&doc);
@@ -623,6 +651,7 @@ mod skip_include {
                 age
             }
             ",
+            0,
         )
         .unwrap();
         let printed = print_document_default(&doc);
@@ -642,6 +671,7 @@ mod skip_include {
                 }
             }
             ",
+            0,
         )
         .unwrap();
         let printed = print_document_default(&doc);
@@ -661,6 +691,7 @@ mod skip_include {
                 }
             }
             ",
+            0,
         )
         .unwrap();
         let printed = print_document_default(&doc);
@@ -684,6 +715,7 @@ mod skip_include {
                 type
             }
             ",
+            0,
         )
         .unwrap();
         let printed = print_document_default(&doc);
@@ -711,6 +743,7 @@ mod fragment_merging {
             name
         }
         ",
+            0,
         )
         .unwrap();
         let printed = print_document_default(&doc);
@@ -736,6 +769,7 @@ mod fragment_merging {
             }
         }
         ",
+            0,
         )
         .unwrap();
         let printed = print_document_default(&doc);
@@ -763,6 +797,7 @@ mod fragment_merging {
             }
         }
         ",
+            0,
         )
         .unwrap();
         let printed = print_document_default(&doc);
@@ -798,6 +833,7 @@ mod fragment_merging {
             }
         }
         ",
+            0,
         )
         .unwrap();
         let printed = print_document_default(&doc);
@@ -823,6 +859,7 @@ mod fragment_merging {
             }
         }
         ",
+            0,
         )
         .unwrap();
         let printed = print_document_default(&doc);
@@ -845,6 +882,7 @@ mod import_fragments {
                 }
             }
             ",
+            0,
         )
         .unwrap();
         let (doc, extensions) = resolve_operation_extensions(doc).unwrap();
@@ -885,8 +923,7 @@ mod type_system_errors {
 
     /// Prints given (unchecked) document and returns the error as `line:column: message`.
     fn print_error(source: &str) -> String {
-        set_current_file_of_pos(0);
-        let doc = parse_operation_document(source).unwrap();
+        let doc = parse_operation_document(source, 0).unwrap();
         let (doc, _) = resolve_operation_extensions(doc).unwrap();
         let mut result = String::new();
         let mut writer = JustWriter::new(&mut result);
@@ -980,8 +1017,7 @@ mod per_definition_fallback {
 
     /// Prints given document with definitions of given names falling back to `any`.
     fn print(source: &str, fallback_names: &[&str]) -> (String, Vec<String>) {
-        set_current_file_of_pos(0);
-        let doc = parse_operation_document(source).unwrap();
+        let doc = parse_operation_document(source, 0).unwrap();
         let (doc, _) = resolve_operation_extensions(doc).unwrap();
         let fallback_positions = doc
             .definitions
@@ -1072,15 +1108,13 @@ fn static_parse(
     &'static OperationDocument<'static>,
     &'static OperationExtension<'static>,
 ) {
-    set_current_file_of_pos(file_id);
-    let doc = parse_operation_document(code).unwrap();
+    let doc = parse_operation_document(code, file_id).unwrap();
     let (doc, extensions) = resolve_operation_extensions(doc).unwrap();
     let (doc, extensions) = (Box::leak(Box::new(doc)), Box::leak(Box::new(extensions)));
     (doc, extensions)
 }
 
 fn print_document_default(document: &OperationDocumentExt) -> String {
-    set_current_file_of_pos(0);
     let (document, extensions) = resolve_operation_extensions(document.clone()).unwrap();
     let document = resolve_operation_imports(
         (Path::new("/path/to/main.graphql"), &document, &extensions),

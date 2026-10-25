@@ -66,7 +66,7 @@ fn static_parse(
     &'static OperationDocument<'static>,
     &'static OperationExtension<'static>,
 ) {
-    let doc = parse_operation_document(code).unwrap();
+    let doc = parse_operation_document(code, 0).unwrap();
     let (doc, extensions) = resolve_operation_extensions(doc).unwrap();
     let (doc, extensions) = (Box::leak(Box::new(doc)), Box::leak(Box::new(extensions)));
     (doc, extensions)
@@ -80,6 +80,7 @@ fn no_import() {
             foo
         }
         "#,
+        0,
     )
     .unwrap();
     let (doc, extensions) = resolve_operation_extensions(doc).unwrap();
@@ -99,6 +100,7 @@ fn specific_import() {
             }
         }
         "#,
+        0,
     )
     .unwrap();
     let (doc, extensions) = resolve_operation_extensions(doc).unwrap();
@@ -118,6 +120,7 @@ fn transitive_import() {
             }
         }
         "#,
+        0,
     )
     .unwrap();
     let (doc, extensions) = resolve_operation_extensions(doc).unwrap();
@@ -139,6 +142,7 @@ fn multiple_imports() {
             }
         }
         "#,
+        0,
     )
     .unwrap();
     let (doc, extensions) = resolve_operation_extensions(doc).unwrap();
@@ -159,6 +163,7 @@ fn import_wildcard() {
             }
         }
         "#,
+        0,
     )
     .unwrap();
     let (doc, extensions) = resolve_operation_extensions(doc).unwrap();
@@ -178,6 +183,7 @@ fn recursive_import() {
             }
         }
         "#,
+        0,
     )
     .unwrap();
     let (doc, extensions) = resolve_operation_extensions(doc).unwrap();
@@ -199,6 +205,7 @@ fn import_twice() {
             }
         }
         "#,
+        0,
     )
     .unwrap();
     let (doc, extensions) = resolve_operation_extensions(doc).unwrap();
@@ -218,6 +225,7 @@ fn error_import_nonexistent() {
             }
         }
         "#,
+        0,
     )
     .unwrap();
     let (doc, extensions) = resolve_operation_extensions(doc).unwrap();
@@ -237,6 +245,7 @@ fn error_import_fragment_nonexistent() {
             }
         }
         "#,
+        0,
     )
     .unwrap();
     let (doc, extensions) = resolve_operation_extensions(doc).unwrap();

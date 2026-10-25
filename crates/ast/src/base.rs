@@ -2,8 +2,6 @@
 
 use std::fmt::Display;
 
-use crate::current_file::get_current_file_of_pos;
-
 /// Position in source file.
 #[derive(Copy, Clone, Debug, Hash, PartialEq, Eq)]
 pub struct Pos {
@@ -19,11 +17,11 @@ pub struct Pos {
 
 impl Pos {
     /// Generates a non-built-in Pos.
-    pub fn new(line: usize, column: usize) -> Self {
+    pub fn new(line: usize, column: usize, file: usize) -> Self {
         Pos {
             line,
             column,
-            file: get_current_file_of_pos(),
+            file,
             builtin: false,
         }
     }

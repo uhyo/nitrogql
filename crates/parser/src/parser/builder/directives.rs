@@ -4,11 +4,11 @@ use pest::iterators::Pair;
 use crate::parts;
 use nitrogql_ast::directive::Directive;
 
-pub fn build_directives(pair: Pair<Rule>) -> Vec<Directive> {
+pub fn build_directives(pair: Pair<Rule>, file: usize) -> Vec<Directive> {
     pair.all_children(Rule::Directive)
         .into_iter()
         .map(|pair| {
-            let position = pair.to_pos();
+            let position = pair.to_pos(file);
             let (name, arguments) = parts!(
                 pair,
                 Name,
@@ -16,8 +16,8 @@ pub fn build_directives(pair: Pair<Rule>) -> Vec<Directive> {
             );
             Directive {
                 position,
-                name: name.to_ident(),
-                arguments: arguments.map(build_arguments),
+                name: name.to_ident(file),
+                arguments: arguments.map(|pair| build_arguments(pair, file)),
             }
         })
         .collect()

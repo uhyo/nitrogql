@@ -61,7 +61,6 @@ impl OperationTypeSource for AnyTypeSource {
 #[cfg(test)]
 mod tests {
     use insta::assert_snapshot;
-    use nitrogql_ast::set_current_file_of_pos;
     use nitrogql_parser::parse_operation_document;
     use nitrogql_semantics::resolve_operation_extensions;
     use sourcemap_writer::JustWriter;
@@ -69,8 +68,7 @@ mod tests {
     use super::*;
 
     fn print(source: &str, options: OperationTypePrinterOptions) -> String {
-        set_current_file_of_pos(0);
-        let doc = parse_operation_document(source).unwrap();
+        let doc = parse_operation_document(source, 0).unwrap();
         let (doc, _) = resolve_operation_extensions(doc).unwrap();
         let mut result = String::new();
         let mut writer = JustWriter::new(&mut result);

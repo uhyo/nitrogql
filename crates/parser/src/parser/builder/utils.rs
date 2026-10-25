@@ -11,14 +11,14 @@ pub trait PairExt<'a> {
     fn is_rule(&self, rule: Rule) -> bool;
     /// Validates that all inner Pairs are of given rule and returns them.
     fn all_children(self, rule: Rule) -> Vec<Pair<'a, Rule>>;
-    /// Generate a Pos for this pair.
-    fn to_pos(&self) -> Pos;
+    /// Generate a Pos for this pair. `file` is the index of the file being parsed.
+    fn to_pos(&self, file: usize) -> Pos;
     // /// Generate a Punc from this pair.
     // fn to_punc(&self) -> Punc<'a>;
     /// Generate a Keyword from this pair.
-    fn to_keyword(&self) -> Keyword<'a>;
+    fn to_keyword(&self, file: usize) -> Keyword<'a>;
     /// Generate an Ident from this pair.
-    fn to_ident(&self) -> Ident<'a>;
+    fn to_ident(&self, file: usize) -> Ident<'a>;
 }
 
 impl<'a> PairExt<'a> for Pair<'a, Rule> {
@@ -52,10 +52,10 @@ impl<'a> PairExt<'a> for Pair<'a, Rule> {
             .collect()
     }
 
-    fn to_pos(&self) -> Pos {
+    fn to_pos(&self, file: usize) -> Pos {
         let (line, column) = self.line_col();
         // convert 1-based to 0-based
-        Pos::new(line - 1, column - 1)
+        Pos::new(line - 1, column - 1, file)
     }
     // fn to_punc(&self) -> Punc<'a> {
     //     Punc {
@@ -63,15 +63,15 @@ impl<'a> PairExt<'a> for Pair<'a, Rule> {
     //         token: self.as_str(),
     //     }
     // }
-    fn to_keyword(&self) -> Keyword<'a> {
+    fn to_keyword(&self, file: usize) -> Keyword<'a> {
         Keyword {
-            position: self.to_pos(),
+            position: self.to_pos(file),
             name: self.as_str(),
         }
     }
-    fn to_ident(&self) -> Ident<'a> {
+    fn to_ident(&self, file: usize) -> Ident<'a> {
         Ident {
-            position: self.to_pos(),
+            position: self.to_pos(file),
             name: self.as_str(),
         }
     }

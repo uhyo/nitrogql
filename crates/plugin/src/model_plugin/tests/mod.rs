@@ -1,7 +1,7 @@
 #![cfg(test)]
 
 use graphql_builtins::generate_builtins;
-use nitrogql_ast::TypeSystemDocument;
+use nitrogql_ast::{TypeSystemDocument, type_system::TypeSystemDefinitionOrExtension};
 use nitrogql_parser::parse_type_system_document;
 use nitrogql_semantics::resolve_schema_extensions;
 
@@ -182,7 +182,7 @@ type Post {
 }
 
 fn parse_to_type_system_document(source: &str) -> TypeSystemDocument<'_> {
-    let mut doc = parse_type_system_document(source).unwrap();
+    let mut doc = parse_type_system_document(source, 0).unwrap();
     doc.extend(generate_builtins());
 
     let model_plugin = Plugin::new(Box::new(ModelPlugin {}));
@@ -198,10 +198,22 @@ fn parse_to_type_system_document(source: &str) -> TypeSystemDocument<'_> {
     resolve_schema_extensions(doc).unwrap()
 }
 
+#[test]
+fn schema_addition_positions_point_to_virtual_file() {
+    let plugin = Plugin::new(Box::new(ModelPlugin {}));
+    let mut host = TestHost {};
+    let addition = plugin.schema_addition(&mut host).unwrap().unwrap();
+    let TypeSystemDefinitionOrExtension::DirectiveDefinition(def) = &addition.definitions[0] else {
+        panic!("expected a directive definition");
+    };
+    // TestHost assigns index 1 to the virtual file.
+    assert_eq!(def.name.position.file, 1);
+}
+
 struct TestHost {}
 
 impl PluginHost for TestHost {
-    fn load_virtual_file(&mut self, content: String) -> &'static str {
-        Box::leak(content.into_boxed_str())
+    fn load_virtual_file(&mut self, content: String) -> (&'static str, usize) {
+        (Box::leak(content.into_boxed_str()), 1)
     }
 }

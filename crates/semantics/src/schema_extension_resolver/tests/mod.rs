@@ -50,6 +50,7 @@ fn resolve() {
             }
 
             ",
+        0,
     )
     .unwrap();
     let resolved = resolve_schema_extensions(doc).unwrap();
@@ -64,6 +65,7 @@ fn error_handling() {
             extend schema { mutation: Mutation }
             type A { foo: Int! }
             ",
+        0,
     )
     .unwrap();
 
@@ -78,6 +80,7 @@ fn error_handling2() {
             type A { foo: Int! }
             type A { bar: Int! }
             ",
+        0,
     )
     .unwrap();
 
