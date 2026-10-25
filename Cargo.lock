@@ -398,10 +398,8 @@ dependencies = [
  "nitrogql-ast",
  "nitrogql-config-file",
  "nitrogql-error",
- "nitrogql-parser",
+ "nitrogql-operation-set",
  "nitrogql-printer",
- "nitrogql-semantics",
- "nitrogql-utils",
  "sourcemap-writer",
  "thiserror",
 ]
@@ -557,6 +555,7 @@ dependencies = [
  "nitrogql-config-file",
  "nitrogql-error",
  "nitrogql-introspection",
+ "nitrogql-operation-set",
  "nitrogql-parser",
  "nitrogql-plugin",
  "nitrogql-printer",
@@ -571,6 +570,7 @@ dependencies = [
  "simple_logger",
  "sourcemap-writer",
  "thiserror",
+ "typed-arena",
 ]
 
 [[package]]
@@ -607,6 +607,18 @@ dependencies = [
  "serde_json",
  "sourcemap-writer",
  "thiserror",
+]
+
+[[package]]
+name = "nitrogql-operation-set"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "nitrogql-ast",
+ "nitrogql-error",
+ "nitrogql-parser",
+ "nitrogql-semantics",
+ "nitrogql-utils",
 ]
 
 [[package]]
@@ -1017,6 +1029,12 @@ dependencies = [
  "num-conv",
  "time-core",
 ]
+
+[[package]]
+name = "typed-arena"
+version = "2.0.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6af6ae20167a9ece4bcb41af5b80f8a1f1df981f6391189ce00fd257af04126a"
 
 [[package]]
 name = "typenum"

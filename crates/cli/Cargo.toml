@@ -12,6 +12,7 @@ nitrogql-checker = { path = "../checker" }
 nitrogql-config-file = { path = "../config-file", features = ["fs", "execute_js"] }
 nitrogql-error = { path = "../error" }
 nitrogql-introspection = { path = "../introspection" }
+nitrogql-operation-set = { path = "../operation-set" }
 nitrogql-parser = { path = "../parser" }
 nitrogql-plugin = { path = "../plugin" }
 nitrogql-printer = { path = "../printer" }
@@ -38,6 +39,7 @@ serde_yaml = "0.9.34"
 itertools = "0.15.0"
 simple_logger = "5.2.0"
 futures = "0.3.32"
+typed-arena = "2.0.2"
 
 [dev-dependencies]
 insta = "1.48.0"

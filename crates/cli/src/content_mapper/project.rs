@@ -11,10 +11,10 @@ use log::{debug, info};
 use nitrogql_ast::{TypeSystemDocument, base::Pos};
 use nitrogql_config_file::{Config, load_config};
 use nitrogql_error::PositionedError;
-use nitrogql_parser::parse_operation_document;
+use nitrogql_operation_set::OperationSet;
 use nitrogql_plugin::Plugin;
-use nitrogql_semantics::{ast_to_type_system, resolve_operation_extensions};
-use nitrogql_utils::{normalize_path, resolve_relative_path};
+use nitrogql_semantics::ast_to_type_system;
+use nitrogql_utils::normalize_path;
 use thiserror::Error;
 
 use crate::{
@@ -215,24 +215,15 @@ impl Project {
 
 /// Collects operation files that are imported from given operation files.
 fn imported_operation_files(operation_files: &[(PathBuf, String)]) -> Vec<PathBuf> {
-    let mut result = vec![];
+    let mut operations = OperationSet::new();
     for (path, content) in operation_files {
         // file index is not used, as positions are not reported from here.
-        let Ok(document) = parse_operation_document(content, usize::MAX) else {
-            continue;
-        };
-        let Ok((_, extensions)) = resolve_operation_extensions(document) else {
-            continue;
-        };
-        for import in extensions.imports.iter() {
-            let imported = normalize_path(&resolve_relative_path(
-                path,
-                Path::new(import.path.value.as_str()),
-            ));
-            result.push(imported);
-        }
+        operations.add_file(path, content, usize::MAX);
     }
-    result
+    operations
+        .files()
+        .flat_map(|file| file.imports().map(|(path, _)| path))
+        .collect()
 }
 
 /// FNV-1a hash, used for computing project identity.

@@ -1,11 +1,11 @@
 use std::{path::PathBuf, str::FromStr};
 
 use nitrogql_ast::{
-    OperationDocumentExt,
     operation::OperationDocument,
     type_system::{TypeSystemDocument, TypeSystemOrExtensionDocument},
 };
 use nitrogql_config_file::Config;
+use nitrogql_operation_set::OperationSet;
 use nitrogql_plugin::Plugin;
 use nitrogql_semantics::OperationExtension;
 use thiserror::Error;
@@ -16,7 +16,7 @@ pub enum CliContext<'src> {
     SchemaUnresolved {
         config: CliConfig<'src>,
         schema: LoadedSchema<'src, TypeSystemOrExtensionDocument<'src>>,
-        operations: Vec<(PathBuf, OperationDocumentExt<'src>, usize)>,
+        operations: OperationSet<'src>,
         file_store: &'src mut FileStore,
         output: &'src mut CliOutput,
     },

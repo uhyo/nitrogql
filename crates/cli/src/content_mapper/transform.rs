@@ -1,24 +1,22 @@
 use std::{
-    collections::{HashMap, HashSet},
+    collections::HashSet,
     fs,
     io::ErrorKind,
     path::{Path, PathBuf},
 };
 
-use nitrogql_ast::{OperationDocument, base::Pos};
+use nitrogql_ast::base::Pos;
 use nitrogql_checker::{OperationCheckContext, check_operation_document};
 use nitrogql_error::PositionedError;
-use nitrogql_parser::parse_operation_document;
+use nitrogql_operation_set::OperationSet;
 use nitrogql_printer::{
     OperationTypePrinterOptions, SchemaTypePrinter, SchemaTypePrinterOptions,
     print_fallback_types_for_operation_document, print_types_for_operation_document_with_fallback,
 };
-use nitrogql_semantics::{
-    OperationExtension, OperationResolver, resolve_operation_extensions, resolve_operation_imports,
-};
-use nitrogql_utils::{normalize_path, relative_path, resolve_relative_path};
+use nitrogql_utils::{normalize_path, relative_path};
 use sourcemap_writer::{RecordedSpan, SpanWriter};
 use thiserror::Error;
+use typed_arena::Arena;
 
 use crate::{generate::path_to_ts, schema_loader::LoadedSchema};
 
@@ -70,7 +68,12 @@ fn transform_schema_file(
     // Positions are valid only if content is the same as the one loaded.
     let is_same_content = *loaded_content == content;
     let index = SourceText::new(content, encoding);
-    let files = |idx: usize| project.file_store.get_file(idx).map(|(path, _, _)| path);
+    let files = |idx: usize| {
+        project
+            .file_store
+            .get_file(idx)
+            .map(|(path, _, _)| path.as_path())
+    };
     let mut result = TransformResult {
         text: EMPTY_MODULE.to_owned(),
         extension: ".ts",
@@ -141,30 +144,23 @@ fn transform_operation_file(
 ) -> TransformResult {
     // Operation files are numbered after schema files.
     let root_index = project.file_store.schema_len();
-    let files = load_operation_files(file_name, content, root_index);
+    // Holds sources of imported files, which are borrowed by `operations`.
+    let sources = Arena::new();
+    let operations = load_operation_files(file_name, content, root_index, &sources);
     let file_path = |idx: usize| {
         if idx < root_index {
-            project.file_store.get_file(idx).map(|(path, _, _)| path)
+            project
+                .file_store
+                .get_file(idx)
+                .map(|(path, _, _)| path.as_path())
         } else {
-            files.files.get(idx - root_index).map(|(path, _)| path)
+            operations.file_path(idx)
         }
     };
     let index = SourceText::new(content, encoding);
 
-    let mut documents = HashMap::new();
-    for (idx, (path, source)) in files.files.iter().enumerate() {
-        // Errors are reported by load_operation_files.
-        let Ok(document) = parse_operation_document(source, root_index + idx) else {
-            continue;
-        };
-        let Ok(document) = resolve_operation_extensions(document) else {
-            continue;
-        };
-        documents.insert(path.as_path(), document);
-    }
-
     let error_result = |diagnostics: Vec<MapperDiagnostic>| {
-        let Some((document, _)) = documents.get(file_name) else {
+        let Some(file) = operations.get(file_name) else {
             return TransformResult {
                 text: EMPTY_MODULE.to_owned(),
                 extension: ".ts",
@@ -175,7 +171,7 @@ fn transform_operation_file(
         let mut options = OperationTypePrinterOptions::from_config(&project.config);
         options.print_values = false;
         let mut writer = SpanWriter::new();
-        print_fallback_types_for_operation_document(options, document, &mut writer);
+        print_fallback_types_for_operation_document(options, file.document, &mut writer);
         let (text, spans) = writer.into_parts();
         TransformResult {
             mappings: to_mappings(&spans, root_index, &text, &index, encoding),
@@ -188,11 +184,11 @@ fn transform_operation_file(
         to_diagnostics(errors, root_index, &file_path, &index, code)
     };
 
-    if !files.syntax_errors.is_empty() {
-        return error_result(diagnose(&files.syntax_errors, codes::SYNTAX_ERROR));
+    if !operations.syntax_errors().is_empty() {
+        return error_result(diagnose(operations.syntax_errors(), codes::SYNTAX_ERROR));
     }
-    if !files.errors.is_empty() {
-        return error_result(diagnose(&files.errors, codes::VALIDATION_ERROR));
+    if !operations.errors().is_empty() {
+        return error_result(diagnose(operations.errors(), codes::VALIDATION_ERROR));
     }
     let schema = match project.schema() {
         Ok(schema) => schema,
@@ -208,15 +204,10 @@ fn transform_operation_file(
         }
     };
 
-    let Some((document, extension)) = documents.get(file_name) else {
-        return error_result(vec![]);
-    };
-    let document = match resolve_operation_imports(
-        (file_name, document, extension),
-        &DocumentResolver(&documents),
-    ) {
-        Ok(document) => document,
-        Err(err) => return error_result(diagnose(&[err.into()], codes::VALIDATION_ERROR)),
+    let document = match operations.resolve_imports(file_name) {
+        None => return error_result(vec![]),
+        Some(Ok(document)) => document,
+        Some(Err(err)) => return error_result(diagnose(&[err], codes::VALIDATION_ERROR)),
     };
 
     let check_errors =
@@ -268,84 +259,30 @@ fn transform_operation_file(
     }
 }
 
-struct OperationFiles {
-    /// Loaded files. The first one is the transformed file, followed by imported files.
-    files: Vec<(PathBuf, String)>,
-    syntax_errors: Vec<PositionedError>,
-    errors: Vec<PositionedError>,
-}
-
 /// Loads given operation file and files imported from it.
-fn load_operation_files(file_name: &Path, content: &str, root_index: usize) -> OperationFiles {
-    let mut result = OperationFiles {
-        files: vec![(file_name.to_owned(), content.to_owned())],
-        syntax_errors: vec![],
-        errors: vec![],
-    };
-    let mut idx = 0;
-    while idx < result.files.len() {
-        let (path, source) = &result.files[idx];
-        let imports = match parse_operation_document(source, root_index + idx) {
-            Err(err) => {
-                result.syntax_errors.push(err.into());
-                vec![]
-            }
-            Ok(document) => match resolve_operation_extensions(document) {
-                Err(err) => {
-                    result.errors.push(err.into());
-                    vec![]
-                }
-                Ok((_, extension)) => extension
-                    .imports
-                    .iter()
-                    .map(|import| {
-                        let imported = normalize_path(&resolve_relative_path(
-                            path,
-                            Path::new(import.path.value.as_str()),
-                        ));
-                        (imported, import.path.position)
-                    })
-                    .collect(),
+/// Imported files are read from disk, and their sources are stored in `sources`.
+fn load_operation_files<'src>(
+    file_name: &Path,
+    content: &'src str,
+    root_index: usize,
+    sources: &'src Arena<String>,
+) -> OperationSet<'src> {
+    let mut operations = OperationSet::new();
+    operations.add_file(file_name, content, root_index);
+    let mut next_index = root_index + 1;
+    operations.load_imports(|path| {
+        let source = fs::read_to_string(path).map_err(|err| TransformError::ReadFile {
+            path: path.to_string_lossy().into_owned(),
+            message: match err.kind() {
+                ErrorKind::NotFound => "file not found".to_owned(),
+                _ => err.to_string(),
             },
-        };
-        for (imported, position) in imports {
-            if result.files.iter().any(|(path, _)| *path == imported) {
-                continue;
-            }
-            match fs::read_to_string(&imported) {
-                Ok(source) => result.files.push((imported, source)),
-                Err(err) => result.errors.push(PositionedError::new(
-                    TransformError::ReadFile {
-                        path: imported.to_string_lossy().into_owned(),
-                        message: match err.kind() {
-                            ErrorKind::NotFound => "file not found".to_owned(),
-                            _ => err.to_string(),
-                        },
-                    }
-                    .into(),
-                    Some(position),
-                    vec![],
-                )),
-            }
-        }
-        idx += 1;
-    }
-    result
-}
-
-struct DocumentResolver<'a, 'src>(
-    &'a HashMap<&'a Path, (OperationDocument<'src>, OperationExtension<'src>)>,
-);
-
-impl<'src> OperationResolver<'src> for DocumentResolver<'_, 'src> {
-    fn resolve(
-        &self,
-        path: &Path,
-    ) -> Option<(&OperationDocument<'src>, &OperationExtension<'src>)> {
-        self.0
-            .get(normalize_path(path).as_path())
-            .map(|(document, extension)| (document, extension))
-    }
+        })?;
+        let file_index = next_index;
+        next_index += 1;
+        Ok::<_, TransformError>((sources.alloc(source).as_str(), file_index))
+    });
+    operations
 }
 
 /// Returns the schema file that provides schema types, along with its index in the file store.
@@ -431,7 +368,7 @@ fn to_mappings(
 fn to_diagnostics<'e, 'p>(
     errors: impl IntoIterator<Item = &'e PositionedError>,
     file_index: usize,
-    file_path: &dyn Fn(usize) -> Option<&'p PathBuf>,
+    file_path: &dyn Fn(usize) -> Option<&'p Path>,
     index: &SourceText,
     code: u32,
 ) -> Vec<MapperDiagnostic> {
