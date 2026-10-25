@@ -1,6 +1,6 @@
 use std::{
     borrow::Cow,
-    collections::BTreeMap,
+    collections::{BTreeMap, BTreeSet, HashMap},
     fs,
     path::{Path, PathBuf},
 };
@@ -158,9 +158,17 @@ impl Project {
 
     /// Computes files to watch and identity of this project.
     ///
-    /// Watched files are the config file, schema files, and operation files that are imported from other files.
-    /// Imported operation files are watched because they affect the output of importing files.
+    /// Watched files are the config file, schema files, operation files matched by the config,
+    /// and operation files imported from them.
+    /// Imported operation files affect the output of importing files. Other operation files are
+    /// watched too, as adding an `#import` to one of them adds such a dependency.
+    ///
+    /// The identity is computed from what affects the output of other files: the config,
+    /// contents of the config file, schema files and imported operation files,
+    /// and imports of each operation file. Other changes to operation files keep the identity,
+    /// so that TypeScript does not transform every file again.
     fn compute_watched_files(&mut self) {
+        // Files whose contents affect the identity.
         let mut watched: BTreeMap<PathBuf, Option<String>> = BTreeMap::new();
         for path in self.watched_files.drain(..) {
             let content = fs::read_to_string(&path).ok();
@@ -170,13 +178,34 @@ impl Project {
             let (_, content, _) = &self.file_store()[*idx];
             watched.insert(path.clone(), Some(content.to_string()));
         }
+        // Files imported from each operation file.
+        let mut imports: BTreeMap<PathBuf, Vec<PathBuf>> = BTreeMap::new();
         if !self.config.operations.is_empty() {
             match load_glob_files(&self.root_dir, &self.config.operations) {
                 Ok(operation_files) => {
-                    for path in imported_operation_files(&operation_files) {
-                        watched
-                            .entry(path)
-                            .or_insert_with_key(|path| fs::read_to_string(path).ok());
+                    let mut contents = HashMap::new();
+                    for (path, content) in operation_files {
+                        let path = normalize_path(&path);
+                        imports.insert(path.clone(), imported_files(&path, &content));
+                        contents.insert(path, content);
+                    }
+                    // Imported files may not be matched by the config, and may import other files.
+                    let mut queue = imports.values().flatten().cloned().collect::<Vec<_>>();
+                    while let Some(path) = queue.pop() {
+                        if watched.contains_key(&path) {
+                            continue;
+                        }
+                        let content = contents
+                            .remove(&path)
+                            .or_else(|| fs::read_to_string(&path).ok());
+                        if let Some(ref content) = content
+                            && !imports.contains_key(&path)
+                        {
+                            let imported = imported_files(&path, content);
+                            queue.extend(imported.iter().cloned());
+                            imports.insert(path.clone(), imported);
+                        }
+                        watched.insert(path, content);
                     }
                 }
                 Err(err) => {
@@ -195,8 +224,19 @@ impl Project {
             }
             hasher.write(&[0]);
         }
+        hasher.write(&[1]);
+        for (path, imported) in imports.iter() {
+            hasher.write(path.to_string_lossy().as_bytes());
+            for imported in imported {
+                hasher.write(&[0]);
+                hasher.write(imported.to_string_lossy().as_bytes());
+            }
+            hasher.write(&[1]);
+        }
         self.config_identity = format!("{:016x}", hasher.finish());
-        self.watched_files = watched.into_keys().collect();
+        let mut watched_files = watched.into_keys().collect::<BTreeSet<_>>();
+        watched_files.extend(imports.into_keys());
+        self.watched_files = watched_files.into_iter().collect();
     }
 
     /// Returns the store of loaded schema files.
@@ -241,13 +281,12 @@ fn parse_schema<'src>(
     })
 }
 
-/// Collects operation files that are imported from given operation files.
-fn imported_operation_files(operation_files: &[(PathBuf, String)]) -> Vec<PathBuf> {
+/// Returns files imported from given operation file.
+/// Files that cannot be parsed are treated as importing nothing.
+fn imported_files(path: &Path, content: &str) -> Vec<PathBuf> {
     let mut operations = OperationSet::new();
-    for (path, content) in operation_files {
-        // file index is not used, as positions are not reported from here.
-        operations.add_file(path, content, usize::MAX);
-    }
+    // file index is not used, as positions are not reported from here.
+    operations.add_file(path, content, usize::MAX);
     operations
         .files()
         .flat_map(|file| file.imports().map(|(path, _)| path))
