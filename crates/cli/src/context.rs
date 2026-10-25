@@ -14,14 +14,14 @@ use crate::{file_store::FileStore, output::CliOutput, schema_loader::LoadedSchem
 
 pub enum CliContext<'src> {
     SchemaUnresolved {
-        config: CliConfig<'src>,
+        config: CliConfig,
         schema: LoadedSchema<'src, TypeSystemOrExtensionDocument<'src>>,
         operations: OperationSet<'src>,
-        file_store: &'src mut FileStore,
+        file_store: &'src FileStore<'src>,
         output: &'src mut CliOutput,
     },
     SchemaResolved {
-        config: CliConfig<'src>,
+        config: CliConfig,
         schema: LoadedSchema<'src, TypeSystemDocument<'src>>,
         operations: Vec<(
             PathBuf,
@@ -29,18 +29,18 @@ pub enum CliContext<'src> {
             OperationExtension<'src>,
             usize,
         )>,
-        file_store: &'src FileStore,
+        file_store: &'src FileStore<'src>,
         output: &'src mut CliOutput,
     },
 }
 
 #[derive(Debug)]
-pub struct CliConfig<'file_store> {
+pub struct CliConfig {
     /// Root directory for other paths.
     pub root_dir: PathBuf,
     pub config: Config,
     /// Loaded plugins.
-    pub plugins: Vec<Plugin<'file_store>>,
+    pub plugins: Vec<Plugin>,
 }
 
 #[derive(Copy, Clone, Debug)]

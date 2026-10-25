@@ -3,18 +3,18 @@ use crate::file_store::{FileKind, FileStore};
 /// File name for virtual files added by plugins.
 pub const PLUGIN_FILE_NAME: &str = "(plugin)";
 
-pub struct PluginHost<'host> {
-    pub file_store: &'host mut FileStore,
+pub struct PluginHost<'host, 'src> {
+    pub file_store: &'host mut FileStore<'src>,
 }
 
-impl<'host> PluginHost<'host> {
-    pub fn new(file_store: &'host mut FileStore) -> Self {
+impl<'host, 'src> PluginHost<'host, 'src> {
+    pub fn new(file_store: &'host mut FileStore<'src>) -> Self {
         Self { file_store }
     }
 }
 
-impl nitrogql_plugin::PluginHost for PluginHost<'_> {
-    fn load_virtual_file(&mut self, content: String) -> (&'static str, usize) {
+impl<'src> nitrogql_plugin::PluginHost<'src> for PluginHost<'_, 'src> {
+    fn load_virtual_file(&mut self, content: String) -> (&'src str, usize) {
         let index = self
             .file_store
             .add_file(PLUGIN_FILE_NAME.into(), content, FileKind::Schema);

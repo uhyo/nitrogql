@@ -1,4 +1,4 @@
-use std::{cell::RefCell, collections::HashMap};
+use std::collections::HashMap;
 
 use nitrogql_ast::{TypeSystemDocument, TypeSystemOrExtensionDocument};
 use nitrogql_parser::{ParseError, parse_type_system_document};
@@ -14,20 +14,15 @@ mod host;
 
 /// Wrapper of naked plugin.
 #[derive(Debug)]
-pub struct Plugin<'src> {
+pub struct Plugin {
     /// The naked plugin.
     raw: Box<dyn PluginV1Beta>,
-    /// Parsed schema addition.
-    parsed_schema_addition: RefCell<Option<TypeSystemOrExtensionDocument<'src>>>,
 }
 
-impl<'src> Plugin<'src> {
+impl Plugin {
     /// Creates a new plugin.
     pub fn new(raw: Box<dyn PluginV1Beta>) -> Self {
-        Self {
-            raw,
-            parsed_schema_addition: RefCell::new(None),
-        }
+        Self { raw }
     }
 
     /// Returns the name of the plugin.
@@ -41,19 +36,15 @@ impl<'src> Plugin<'src> {
     }
 
     /// Returns additional schema definition provided by the plugin.
-    pub fn schema_addition(
+    /// The definition is loaded as a virtual file of the host.
+    pub fn schema_addition<'src>(
         &self,
-        host: &mut impl PluginHost,
+        host: &mut impl PluginHost<'src>,
     ) -> Result<Option<TypeSystemOrExtensionDocument<'src>>, ParseError> {
-        let mut cached = self.parsed_schema_addition.borrow_mut();
-        if let Some(cached) = &*cached {
-            return Ok(Some(cached.clone()));
-        }
         let addition = self.raw.schema_addition();
         if let Some(addition) = addition {
             let (host_buf, file) = host.load_virtual_file(addition);
             let parsed = parse_type_system_document(host_buf, file)?;
-            *cached = Some(parsed.clone());
             Ok(Some(parsed))
         } else {
             Ok(None)
@@ -73,7 +64,7 @@ impl<'src> Plugin<'src> {
     }
 }
 
-impl ResolverTypePrinterPlugin for Plugin<'_> {
+impl ResolverTypePrinterPlugin for Plugin {
     fn transform_resolver_output_types<'src>(
         &self,
         document: &TypeSystemDocument<'src>,

@@ -22,6 +22,7 @@ use nitrogql_utils::{get_cwd, normalize_path};
 use output::CliOutput;
 use plugin_host::PluginHost;
 use schema_loader::LoadedSchema;
+use typed_arena::Arena;
 
 use crate::{
     context::CliContext,
@@ -91,10 +92,11 @@ pub async fn run_cli(args: impl IntoIterator<Item = String>) {
         .init()
         .unwrap();
     let mut output = CliOutput::new();
-    let file_store = Box::leak(Box::new(FileStore::new()));
+    let sources = Arena::new();
+    let mut file_store = FileStore::new(&sources);
     let args = Args::parse_from(args);
     let output_format = args.output_format;
-    let res = run_cli_impl(args, file_store, &mut output).await;
+    let res = run_cli_impl(args, &mut file_store, &mut output).await;
     let code = match res {
         Ok(()) => 0,
         Err(err) => {
@@ -103,7 +105,7 @@ pub async fn run_cli(args: impl IntoIterator<Item = String>) {
                 .into_iter()
                 .map(|e| {
                     if e.has_position() {
-                        print_positioned_error(&e, file_store)
+                        print_positioned_error(&e, &file_store)
                     } else {
                         format!("{}", e.into_inner())
                     }
@@ -116,13 +118,13 @@ pub async fn run_cli(args: impl IntoIterator<Item = String>) {
 
     match output_format {
         OutputFormat::Human => {
-            output.human_output(file_store);
+            output.human_output(&file_store);
         }
         OutputFormat::Json => {
-            output.json_output(file_store);
+            output.json_output(&file_store);
         }
         OutputFormat::Rdjson => {
-            output.rdjson_output(file_store);
+            output.rdjson_output(&file_store);
         }
     }
 
@@ -131,7 +133,7 @@ pub async fn run_cli(args: impl IntoIterator<Item = String>) {
 
 async fn run_cli_impl(
     args: Args,
-    file_store: &mut FileStore,
+    file_store: &mut FileStore<'_>,
     output: &mut CliOutput,
 ) -> Result<(), CommandError> {
     if args.commands.is_empty() {
@@ -198,7 +200,7 @@ async fn run_cli_impl(
         config,
         schema: merged_schema_doc,
         operations,
-        file_store,
+        file_store: &*file_store,
         output,
     };
 
@@ -283,48 +285,98 @@ fn load_glob_files<'a, S: AsRef<str> + 'a>(
 pub(crate) async fn load_schema<'src>(
     root_dir: &Path,
     schema_globs: &[String],
-    file_store: &mut FileStore,
-    plugins: &mut [Plugin<'src>],
+    file_store: &mut FileStore<'src>,
+    plugins: &mut [Plugin],
 ) -> Result<LoadedSchema<'src, TypeSystemOrExtensionDocument<'src>>, CommandError> {
+    let sources = read_schema_files(root_dir, schema_globs, plugins).await?;
+    parse_schema_files(sources, file_store, plugins)
+}
+
+/// Content of a schema file, which is not parsed yet.
+pub(crate) struct SchemaSource {
+    path: PathBuf,
+    content: String,
+    /// Whether the content is an introspection result. Otherwise, it is GraphQL.
+    is_introspection: bool,
+}
+
+/// Reads schema files matched by given globs.
+/// Schemas defined in JavaScript are executed here, and their type extensions are loaded into plugins.
+/// Files that fail to load are reported in place of their sources.
+pub(crate) async fn read_schema_files(
+    root_dir: &Path,
+    schema_globs: &[String],
+    plugins: &mut [Plugin],
+) -> Result<Vec<Result<SchemaSource, PositionedError>>, CommandError> {
     let schema_files = load_glob_files(root_dir, schema_globs)?;
+    let mut sources = vec![];
+    for (path, buf) in schema_files {
+        let source = match schema_kind_by_path(&path) {
+            SchemaFileKind::GraphQL => Ok(SchemaSource {
+                path,
+                content: buf,
+                is_introspection: false,
+            }),
+            SchemaFileKind::IntrospectionJson => Ok(SchemaSource {
+                path,
+                content: buf,
+                is_introspection: true,
+            }),
+            SchemaFileKind::SchemaJavaScript => {
+                info!("loading schema js {}", path.to_string_lossy());
+                load_schema_js(&path)
+                    .await
+                    .map(
+                        |LoadSchemaJsResult {
+                             schema,
+                             type_extensions,
+                         }| {
+                            for p in plugins.iter_mut() {
+                                p.load_schema_extensions(PluginSchemaExtensions {
+                                    type_extensions: &type_extensions,
+                                });
+                            }
+                            SchemaSource {
+                                path,
+                                content: schema,
+                                is_introspection: false,
+                            }
+                        },
+                    )
+                    .map_err(PositionedError::from)
+            }
+        };
+        sources.push(source);
+    }
+    Ok(sources)
+}
+
+/// Parses schema files read by `read_schema_files` and adds them to the file store.
+/// Returned schema is merged and extended with builtins and plugins.
+pub(crate) fn parse_schema_files<'src>(
+    sources: Vec<Result<SchemaSource, PositionedError>>,
+    file_store: &mut FileStore<'src>,
+    plugins: &[Plugin],
+) -> Result<LoadedSchema<'src, TypeSystemOrExtensionDocument<'src>>, CommandError> {
     let mut schema_docs = vec![];
     let mut schema_errors = vec![];
-    for (path, buf) in schema_files {
-        let res = match schema_kind_by_path(&path) {
-            SchemaFileKind::GraphQL => {
-                let file_idx = file_store.add_file(path, buf, FileKind::Schema);
-                let (path, buf, _) = file_store.get_file(file_idx).unwrap();
+    for source in sources {
+        let res = source.and_then(|source| {
+            let file_idx = file_store.add_file(source.path, source.content, FileKind::Schema);
+            let (path, buf, _) = file_store.get_file(file_idx).unwrap();
+            if source.is_introspection {
+                info!("parsing(introspection) {}", path.to_string_lossy());
+                let doc = schema_from_introspection_json(buf)?;
+                Ok(LoadedSchema::Introspection(doc))
+            } else {
                 info!("parsing(schema) {} {}", path.to_string_lossy(), file_idx);
                 let doc = parse_type_system_document(buf, file_idx)?;
                 Ok(LoadedSchema::GraphQL(doc))
             }
-            SchemaFileKind::IntrospectionJson => {
-                let file_idx = file_store.add_file(path, buf, FileKind::Schema);
-                let (path, buf, _) = file_store.get_file(file_idx).unwrap();
-                info!("parsing(introspection) {}", path.to_string_lossy());
-                let doc = schema_from_introspection_json(buf)?;
-                Ok(LoadedSchema::Introspection(doc))
-            }
-            SchemaFileKind::SchemaJavaScript => {
-                info!("loading schema js {}", path.to_string_lossy());
-                let LoadSchemaJsResult {
-                    schema,
-                    type_extensions,
-                } = load_schema_js(&path).await?;
-                let file_idx = file_store.add_file(path, schema, FileKind::Schema);
-                let (_, buf, _) = file_store.get_file(file_idx).unwrap();
-                let doc = parse_type_system_document(buf, file_idx)?;
-                for p in plugins.iter_mut() {
-                    p.load_schema_extensions(PluginSchemaExtensions {
-                        type_extensions: &type_extensions,
-                    });
-                }
-                Ok(LoadedSchema::GraphQL(doc))
-            }
-        };
+        });
         match res {
             Ok(doc) => schema_docs.push(doc),
-            Err(err) => schema_errors.push(err),
+            Err(err) => schema_errors.push(CommandError::from(err)),
         }
     }
     if !schema_errors.is_empty() {
@@ -367,8 +419,8 @@ fn resolve_loaded_schema<'src>(
 /// Extend loaded schema with builtins and plugins.
 fn extend_loaded_schema<'src>(
     schema: &mut LoadedSchema<'src, TypeSystemOrExtensionDocument<'src>>,
-    file_store: &mut FileStore,
-    plugins: &[Plugin<'src>],
+    file_store: &mut FileStore<'src>,
+    plugins: &[Plugin],
 ) -> Result<(), CommandError> {
     let mut plugin_host = PluginHost::new(file_store);
     match schema {

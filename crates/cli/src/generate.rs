@@ -308,7 +308,7 @@ fn generate_operation_type_printer_options(
 
 #[derive(Debug)]
 struct FileMap<'src> {
-    pub file_store: &'src FileStore,
+    pub file_store: &'src FileStore<'src>,
     /// Mapping from file index in file_store to source map index.
     pub file_indices: Vec<usize>,
 }

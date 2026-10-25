@@ -1,13 +1,19 @@
 use std::{
+    fmt::Debug,
     ops::Index,
     path::{Path, PathBuf},
 };
 
+use typed_arena::Arena;
+
 /// Struct that holds files loaded by CLI.
-#[derive(Debug)]
-pub struct FileStore {
-    schema_files: Vec<(PathBuf, &'static str, FileKind)>,
-    operation_files: Vec<(PathBuf, &'static str, FileKind)>,
+///
+/// Contents of files are owned by an arena, so that they can be borrowed (`'src`)
+/// while more files are added.
+pub struct FileStore<'src> {
+    sources: &'src Arena<String>,
+    schema_files: Vec<(PathBuf, &'src str, FileKind)>,
+    operation_files: Vec<(PathBuf, &'src str, FileKind)>,
 }
 
 #[derive(Copy, Clone, PartialEq, Eq, Debug)]
@@ -16,10 +22,11 @@ pub enum FileKind {
     Operation,
 }
 
-impl FileStore {
-    /// Create a new file store.
-    pub fn new() -> Self {
+impl<'src> FileStore<'src> {
+    /// Create a new file store whose contents are stored in given arena.
+    pub fn new(sources: &'src Arena<String>) -> Self {
         Self {
+            sources,
             schema_files: vec![],
             operation_files: vec![],
         }
@@ -34,22 +41,21 @@ impl FileStore {
             panic!("Cannot add schema file after operation file is added");
         }
         let schema_len = self.schema_files.len();
+        let content = self.sources.alloc(content).as_str();
         match kind {
             FileKind::Schema => {
-                self.schema_files
-                    .push((path, Box::leak(content.into_boxed_str()), kind));
+                self.schema_files.push((path, content, kind));
                 schema_len
             }
             FileKind::Operation => {
-                self.operation_files
-                    .push((path, Box::leak(content.into_boxed_str()), kind));
+                self.operation_files.push((path, content, kind));
                 schema_len + self.operation_files.len() - 1
             }
         }
     }
 
     /// Get a file by index.
-    pub fn get_file(&self, index: usize) -> Option<&(PathBuf, &'static str, FileKind)> {
+    pub fn get_file(&self, index: usize) -> Option<&(PathBuf, &'src str, FileKind)> {
         if index < self.schema_files.len() {
             self.schema_files.get(index)
         } else {
@@ -58,7 +64,7 @@ impl FileStore {
     }
 
     /// Iterate over all files.
-    pub fn iter(&self) -> impl Iterator<Item = (usize, (&Path, &'static str, FileKind))> {
+    pub fn iter(&self) -> impl Iterator<Item = (usize, (&Path, &'src str, FileKind))> {
         self.schema_files
             .iter()
             .chain(self.operation_files.iter())
@@ -73,21 +79,19 @@ impl FileStore {
     pub fn schema_len(&self) -> usize {
         self.schema_files.len()
     }
+}
 
-    /// Frees the contents of all files in the store.
-    ///
-    /// # Safety
-    /// No reference to file contents obtained from this store may be used after calling this.
-    pub unsafe fn free_contents(self) {
-        for (_, content, _) in self.schema_files.into_iter().chain(self.operation_files) {
-            // contents are created by `Box::leak` in `add_file`.
-            drop(unsafe { Box::from_raw(content as *const str as *mut str) });
-        }
+impl Debug for FileStore<'_> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("FileStore")
+            .field("schema_files", &self.schema_files)
+            .field("operation_files", &self.operation_files)
+            .finish_non_exhaustive()
     }
 }
 
-impl Index<usize> for FileStore {
-    type Output = (PathBuf, &'static str, FileKind);
+impl<'src> Index<usize> for FileStore<'src> {
+    type Output = (PathBuf, &'src str, FileKind);
 
     fn index(&self, index: usize) -> &Self::Output {
         self.get_file(index).expect("File index out of range")

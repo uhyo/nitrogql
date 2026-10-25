@@ -2,7 +2,6 @@ use std::{
     borrow::Cow,
     collections::BTreeMap,
     fs,
-    mem::ManuallyDrop,
     path::{Path, PathBuf},
 };
 
@@ -15,11 +14,14 @@ use nitrogql_operation_set::OperationSet;
 use nitrogql_plugin::Plugin;
 use nitrogql_semantics::ast_to_type_system;
 use nitrogql_utils::normalize_path;
+use self_cell::self_cell;
 use thiserror::Error;
+use typed_arena::Arena;
 
 use crate::{
-    check::resolve_schema, error::CliError, file_store::FileStore, load_glob_files, load_plugins,
-    load_schema, plugin_host::PLUGIN_FILE_NAME, schema_loader::LoadedSchema,
+    SchemaSource, check::resolve_schema, error::CliError, file_store::FileStore, load_glob_files,
+    load_plugins, parse_schema_files, plugin_host::PLUGIN_FILE_NAME, read_schema_files,
+    schema_loader::LoadedSchema,
 };
 
 /// Options given to the content mapper via the `options` field of tsconfig's `contentMappers` entry.
@@ -50,32 +52,42 @@ pub struct Project {
     pub watched_files: Vec<PathBuf>,
     /// Absolute paths of loaded schema files, along with their indices in the file store.
     pub schema_files: Vec<(PathBuf, usize)>,
-    pub state: ManuallyDrop<ProjectState>,
-    /// Holds sources of schema files, which are borrowed by `state`.
-    pub file_store: ManuallyDrop<FileStore>,
+    files: LoadedFiles,
 }
 
-pub enum ProjectState {
-    Loaded(Box<LoadedProjectSchema>),
+self_cell!(
+    /// Sources of loaded files, along with data that borrows from them.
+    struct LoadedFiles {
+        owner: Arena<String>,
+        #[covariant]
+        dependent: ProjectFiles,
+    }
+);
+
+struct ProjectFiles<'src> {
+    file_store: FileStore<'src>,
+    state: ProjectState<'src>,
+}
+
+impl LoadedFiles {
+    /// Creates a project that could not be loaded.
+    fn from_errors(errors: Vec<PositionedError>) -> Self {
+        LoadedFiles::new(Arena::new(), |sources| ProjectFiles {
+            file_store: FileStore::new(sources),
+            state: ProjectState::Error(errors),
+        })
+    }
+}
+
+enum ProjectState<'src> {
+    Loaded(Box<LoadedProjectSchema<'src>>),
     /// Project could not be loaded. Errors are reported on transform.
     Error(Vec<PositionedError>),
 }
 
-pub struct LoadedProjectSchema {
-    pub schema: LoadedSchema<'static, TypeSystemDocument<'static>>,
-    pub type_system: Schema<Cow<'static, str>, Pos>,
-    // Kept alive as plugins may borrow from the file store.
-    _plugins: Vec<Plugin<'static>>,
-}
-
-impl Drop for Project {
-    fn drop(&mut self) {
-        unsafe {
-            // state borrows from file store, so it must be dropped first.
-            ManuallyDrop::drop(&mut self.state);
-            ManuallyDrop::take(&mut self.file_store).free_contents();
-        }
-    }
+pub struct LoadedProjectSchema<'src> {
+    pub schema: LoadedSchema<'src, TypeSystemDocument<'src>>,
+    pub type_system: Schema<Cow<'src, str>, Pos>,
 }
 
 impl Project {
@@ -90,16 +102,21 @@ impl Project {
             config_identity: String::new(),
             watched_files: vec![],
             schema_files: vec![],
-            state: ManuallyDrop::new(ProjectState::Error(vec![])),
-            file_store: ManuallyDrop::new(FileStore::new()),
+            files: LoadedFiles::from_errors(vec![]),
         };
-        let state = match project.load(ts_config_file, options).await {
-            Ok(schema) => ProjectState::Loaded(Box::new(schema)),
-            Err(errors) => ProjectState::Error(errors),
+        project.files = match project.load(ts_config_file, options).await {
+            Ok((plugins, schema_sources)) => LoadedFiles::new(Arena::new(), |sources| {
+                let mut file_store = FileStore::new(sources);
+                let state = match parse_schema(schema_sources, &mut file_store, &plugins) {
+                    Ok(schema) => ProjectState::Loaded(Box::new(schema)),
+                    Err(errors) => ProjectState::Error(errors),
+                };
+                ProjectFiles { file_store, state }
+            }),
+            Err(errors) => LoadedFiles::from_errors(errors),
         };
-        *project.state = state;
         project.schema_files = project
-            .file_store
+            .file_store()
             .iter()
             // exclude virtual files added by plugins
             .filter(|(_, (path, _, _))| *path != Path::new(PLUGIN_FILE_NAME))
@@ -109,11 +126,13 @@ impl Project {
         project
     }
 
+    /// Loads the config and reads schema files.
     async fn load(
         &mut self,
         ts_config_file: &Path,
         options: &MapperOptions,
-    ) -> Result<LoadedProjectSchema, Vec<PositionedError>> {
+    ) -> Result<(Vec<Plugin>, Vec<Result<SchemaSource, PositionedError>>), Vec<PositionedError>>
+    {
         if ts_config_file.as_os_str().is_empty() {
             return Err(vec![ProjectError::NoTsConfig.into()]);
         }
@@ -131,25 +150,10 @@ impl Project {
             return Err(vec![CliError::NoSchemaSpecified.into()]);
         }
         let mut plugins = load_plugins(&self.config.plugins).map_err(|err| vec![err.into()])?;
-        // Sources in the file store are released when this project is dropped; see `Drop` impl.
-        let schema = load_schema(
-            &self.root_dir,
-            &self.config.schema,
-            &mut self.file_store,
-            &mut plugins,
-        )
-        .await
-        .map_err(|err| err.inner)?;
-        let schema = resolve_schema(schema, &plugins)?;
-        let type_system = match schema {
-            LoadedSchema::GraphQL(ref doc) => ast_to_type_system(doc),
-            LoadedSchema::Introspection(ref schema) => schema.clone(),
-        };
-        Ok(LoadedProjectSchema {
-            schema,
-            type_system,
-            _plugins: plugins,
-        })
+        let schema_sources = read_schema_files(&self.root_dir, &self.config.schema, &mut plugins)
+            .await
+            .map_err(|err| err.inner)?;
+        Ok((plugins, schema_sources))
     }
 
     /// Computes files to watch and identity of this project.
@@ -163,7 +167,7 @@ impl Project {
             watched.insert(path, content);
         }
         for (path, idx) in self.schema_files.iter() {
-            let (_, content, _) = &self.file_store[*idx];
+            let (_, content, _) = &self.file_store()[*idx];
             watched.insert(path.clone(), Some(content.to_string()));
         }
         if !self.config.operations.is_empty() {
@@ -195,9 +199,14 @@ impl Project {
         self.watched_files = watched.into_keys().collect();
     }
 
+    /// Returns the store of loaded schema files.
+    pub fn file_store(&self) -> &FileStore<'_> {
+        &self.files.borrow_dependent().file_store
+    }
+
     /// Returns the loaded schema, or errors if the project could not be loaded.
-    pub fn schema(&self) -> Result<&LoadedProjectSchema, &[PositionedError]> {
-        match &*self.state {
+    pub fn schema(&self) -> Result<&LoadedProjectSchema<'_>, &[PositionedError]> {
+        match &self.files.borrow_dependent().state {
             ProjectState::Loaded(schema) => Ok(schema),
             ProjectState::Error(errors) => Err(errors),
         }
@@ -211,6 +220,25 @@ impl Project {
             .find(|(schema_path, _)| schema_path == path)
             .map(|(_, idx)| *idx)
     }
+}
+
+/// Parses schema files and resolves the schema.
+fn parse_schema<'src>(
+    schema_sources: Vec<Result<SchemaSource, PositionedError>>,
+    file_store: &mut FileStore<'src>,
+    plugins: &[Plugin],
+) -> Result<LoadedProjectSchema<'src>, Vec<PositionedError>> {
+    let schema =
+        parse_schema_files(schema_sources, file_store, plugins).map_err(|err| err.inner)?;
+    let schema = resolve_schema(schema, plugins)?;
+    let type_system = match schema {
+        LoadedSchema::GraphQL(ref doc) => ast_to_type_system(doc),
+        LoadedSchema::Introspection(ref schema) => schema.clone(),
+    };
+    Ok(LoadedProjectSchema {
+        schema,
+        type_system,
+    })
 }
 
 /// Collects operation files that are imported from given operation files.
