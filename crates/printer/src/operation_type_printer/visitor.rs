@@ -208,7 +208,7 @@ impl<T: OperationTypeSource> OperationPrinterVisitor for OperationTypePrinterVis
             fragment.name.name, self.options.fragment_type_suffix
         );
 
-        writer.write_for(&fragment_type_name, fragment);
+        writer.write_for(&fragment_type_name, &fragment.name);
 
         writer.write(" = ");
         self.types.fragment_type(fragment)?.print_type(writer);
@@ -225,10 +225,10 @@ impl<T: OperationTypeSource> OperationPrinterVisitor for OperationTypePrinterVis
             writer.write("declare ");
         }
         writer.write("const ");
-        writer.write_for(context.var_name, fragment);
+        writer.write_for(context.var_name, &fragment.name);
         writer.write(": ");
         writer.write("TypedDocumentNode<");
-        writer.write_for(&fragment_type_name, fragment);
+        writer.write_for(&fragment_type_name, &fragment.name);
         writer.write(", never>");
         if !self.options.print_values {
             writer.write(";\n\n");
@@ -237,7 +237,7 @@ impl<T: OperationTypeSource> OperationPrinterVisitor for OperationTypePrinterVis
         writer.write(" = ");
         print_fragment_runtime(writer, fragment, context.fragments);
         writer.write(" as unknown as TypedDocumentNode<");
-        writer.write_for(&fragment_type_name, fragment);
+        writer.write_for(&fragment_type_name, &fragment.name);
         writer.write(", never>;\n\n");
         Ok(())
     }

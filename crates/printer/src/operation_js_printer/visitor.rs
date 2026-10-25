@@ -52,7 +52,7 @@ impl OperationPrinterVisitor for OperationJSPrinterVisitor {
         }
         writer.write("const ");
 
-        writer.write_for(context.var_name, fragment);
+        writer.write_for(context.var_name, &fragment.name);
         writer.write(" = ");
         print_fragment_runtime(writer, fragment, context.fragments);
         writer.write(";\n\n");

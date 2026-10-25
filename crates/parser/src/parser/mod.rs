@@ -29,16 +29,34 @@ impl ParseError {
         self.message
     }
 
-    fn from_pest(error: pest::error::Error<Rule>, file: usize) -> Self {
+    fn from_pest(error: pest::error::Error<Rule>, document: &str, file: usize) -> Self {
         // convert 1-based line and column to 0-based
         let (line, col) = match error.line_col {
             pest::error::LineColLocation::Pos((line, column)) => (line - 1, column - 1),
             pest::error::LineColLocation::Span((line, column), _) => (line - 1, column - 1),
         };
-        let position = Pos::new(line, col, file);
+        let span = match error.location {
+            pest::error::InputLocation::Pos(start) => start..token_end(document, start),
+            pest::error::InputLocation::Span((start, end)) => start..end,
+        };
+        let position = Pos::new(line, col, span, file);
         let message = error.variant.message().into_owned();
 
         ParseError { position, message }
+    }
+}
+
+/// Returns the end of the token starting at given byte offset.
+/// A token is either a name or a single character other than whitespace.
+fn token_end(document: &str, start: usize) -> usize {
+    let rest = &document[start..];
+    let is_name_char = |c: char| c.is_ascii_alphanumeric() || c == '_';
+    match rest.chars().next() {
+        Some(c) if is_name_char(c) => {
+            start + rest.find(|c: char| !is_name_char(c)).unwrap_or(rest.len())
+        }
+        Some(c) if !c.is_whitespace() => start + c.len_utf8(),
+        _ => start,
     }
 }
 
@@ -59,7 +77,7 @@ pub fn parse_operation_document(
     file: usize,
 ) -> Result<OperationDocumentExt<'_>, ParseError> {
     let res = RawParser::parse(Rule::ExecutableDocument, document)
-        .map_err(|error| ParseError::from_pest(error, file))?;
+        .map_err(|error| ParseError::from_pest(error, document, file))?;
 
     Ok(build_operation_document(res, file))
 }
@@ -71,7 +89,7 @@ pub fn parse_type_system_document(
     file: usize,
 ) -> Result<TypeSystemOrExtensionDocument<'_>, ParseError> {
     let res = RawParser::parse(Rule::TypeSystemExtensionDocument, document)
-        .map_err(|error| ParseError::from_pest(error, file))?;
+        .map_err(|error| ParseError::from_pest(error, document, file))?;
 
     Ok(build_type_system_or_extension_document(res, file))
 }

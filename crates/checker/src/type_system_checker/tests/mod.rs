@@ -28,6 +28,8 @@ mod directives {
                 position: Pos {
                     line: 1,
                     column: 8,
+                    start: 9,
+                    end: 18,
                     file: 0,
                     builtin: false,
                 },
@@ -63,6 +65,8 @@ mod directives {
                 position: Pos {
                     line: 1,
                     column: 8,
+                    start: 9,
+                    end: 18,
                     file: 0,
                     builtin: false,
                 },
@@ -75,6 +79,8 @@ mod directives {
                 position: Pos {
                     line: 6,
                     column: 8,
+                    start: 148,
+                    end: 157,
                     file: 0,
                     builtin: false,
                 },
@@ -106,6 +112,8 @@ mod directives {
                 position: Pos {
                     line: 1,
                     column: 19,
+                    start: 20,
+                    end: 28,
                     file: 0,
                     builtin: false,
                 },
@@ -135,6 +143,8 @@ mod directives {
                 position: Pos {
                     line: 1,
                     column: 26,
+                    start: 27,
+                    end: 33,
                     file: 0,
                     builtin: false,
                 },
@@ -164,6 +174,8 @@ mod directives {
                 position: Pos {
                     line: 1,
                     column: 41,
+                    start: 42,
+                    end: 46,
                     file: 0,
                     builtin: false,
                 },
@@ -202,6 +214,8 @@ mod directives {
                 position: Pos {
                     line: 2,
                     column: 18,
+                    start: 46,
+                    end: 52,
                     file: 0,
                     builtin: false,
                 },
@@ -214,6 +228,8 @@ mod directives {
                 position: Pos {
                     line: 3,
                     column: 18,
+                    start: 72,
+                    end: 83,
                     file: 0,
                     builtin: false,
                 },
@@ -226,6 +242,8 @@ mod directives {
                 position: Pos {
                     line: 4,
                     column: 18,
+                    start: 103,
+                    end: 110,
                     file: 0,
                     builtin: false,
                 },
@@ -279,6 +297,8 @@ mod schemas {
                 position: Pos {
                     line: 2,
                     column: 20,
+                    start: 54,
+                    end: 58,
                     file: 0,
                     builtin: false,
                 },
@@ -320,6 +340,8 @@ mod schemas {
                 position: Pos {
                     line: 2,
                     column: 15,
+                    start: 66,
+                    end: 70,
                     file: 0,
                     builtin: false,
                 },
@@ -355,6 +377,8 @@ mod scalars {
                 position: Pos {
                     line: 1,
                     column: 19,
+                    start: 20,
+                    end: 25,
                     file: 0,
                     builtin: false,
                 },
@@ -379,6 +403,8 @@ mod scalars {
                 position: Pos {
                     line: 2,
                     column: 19,
+                    start: 70,
+                    end: 74,
                     file: 0,
                     builtin: false,
                 },
@@ -418,6 +444,8 @@ mod objects {
                 position: Pos {
                     line: 1,
                     column: 17,
+                    start: 18,
+                    end: 26,
                     file: 0,
                     builtin: false,
                 },
@@ -446,6 +474,8 @@ mod objects {
                 position: Pos {
                     line: 3,
                     column: 16,
+                    start: 72,
+                    end: 75,
                     file: 0,
                     builtin: false,
                 },
@@ -475,6 +505,8 @@ mod objects {
                 position: Pos {
                     line: 2,
                     column: 16,
+                    start: 43,
+                    end: 48,
                     file: 0,
                     builtin: false,
                 },
@@ -502,6 +534,8 @@ mod objects {
                 position: Pos {
                     line: 2,
                     column: 31,
+                    start: 58,
+                    end: 63,
                     file: 0,
                     builtin: false,
                 },
@@ -540,6 +574,8 @@ mod objects {
                 position: Pos {
                     line: 2,
                     column: 23,
+                    start: 50,
+                    end: 55,
                     file: 0,
                     builtin: false,
                 },
@@ -550,6 +586,8 @@ mod objects {
                 position: Pos {
                     line: 3,
                     column: 16,
+                    start: 88,
+                    end: 94,
                     file: 0,
                     builtin: false,
                 },
@@ -562,6 +600,8 @@ mod objects {
                 position: Pos {
                     line: 4,
                     column: 34,
+                    start: 138,
+                    end: 141,
                     file: 0,
                     builtin: false,
                 },
@@ -574,6 +614,8 @@ mod objects {
                 position: Pos {
                     line: 5,
                     column: 28,
+                    start: 186,
+                    end: 192,
                     file: 0,
                     builtin: false,
                 },
@@ -602,6 +644,8 @@ mod objects {
                 position: Pos {
                     line: 2,
                     column: 28,
+                    start: 55,
+                    end: 60,
                     file: 0,
                     builtin: false,
                 },
@@ -651,6 +695,8 @@ mod objects {
                 position: Pos {
                     line: 10,
                     column: 16,
+                    start: 277,
+                    end: 281,
                     file: 0,
                     builtin: false,
                 },
@@ -663,6 +709,8 @@ mod objects {
                 position: Pos {
                     line: 8,
                     column: 17,
+                    start: 200,
+                    end: 206,
                     file: 0,
                     builtin: false,
                 },
@@ -676,6 +724,8 @@ mod objects {
                 position: Pos {
                     line: 13,
                     column: 16,
+                    start: 360,
+                    end: 363,
                     file: 0,
                     builtin: false,
                 },
@@ -689,6 +739,8 @@ mod objects {
                 position: Pos {
                     line: 13,
                     column: 20,
+                    start: 364,
+                    end: 376,
                     file: 0,
                     builtin: false,
                 },
@@ -701,6 +753,8 @@ mod objects {
                 position: Pos {
                     line: 16,
                     column: 20,
+                    start: 471,
+                    end: 474,
                     file: 0,
                     builtin: false,
                 },
@@ -713,6 +767,8 @@ mod objects {
                 position: Pos {
                     line: 19,
                     column: 35,
+                    start: 583,
+                    end: 587,
                     file: 0,
                     builtin: false,
                 },
@@ -725,6 +781,8 @@ mod objects {
                 position: Pos {
                     line: 19,
                     column: 16,
+                    start: 564,
+                    end: 567,
                     file: 0,
                     builtin: false,
                 },
@@ -753,6 +811,8 @@ mod objects {
                 position: Pos {
                     line: 1,
                     column: 25,
+                    start: 26,
+                    end: 29,
                     file: 0,
                     builtin: false,
                 },
@@ -781,6 +841,8 @@ mod objects {
                 position: Pos {
                     line: 2,
                     column: 30,
+                    start: 57,
+                    end: 60,
                     file: 0,
                     builtin: false,
                 },
@@ -818,6 +880,8 @@ mod interfaces {
                 position: Pos {
                     line: 1,
                     column: 22,
+                    start: 23,
+                    end: 36,
                     file: 0,
                     builtin: false,
                 },
@@ -845,6 +909,8 @@ mod interfaces {
                 position: Pos {
                     line: 3,
                     column: 16,
+                    start: 77,
+                    end: 80,
                     file: 0,
                     builtin: false,
                 },
@@ -874,6 +940,8 @@ mod interfaces {
                 position: Pos {
                     line: 2,
                     column: 16,
+                    start: 53,
+                    end: 58,
                     file: 0,
                     builtin: false,
                 },
@@ -914,6 +982,8 @@ mod interfaces {
                 position: Pos {
                     line: 7,
                     column: 36,
+                    start: 246,
+                    end: 254,
                     file: 0,
                     builtin: false,
                 },
@@ -949,6 +1019,8 @@ mod interfaces {
                 position: Pos {
                     line: 2,
                     column: 23,
+                    start: 55,
+                    end: 60,
                     file: 0,
                     builtin: false,
                 },
@@ -959,6 +1031,8 @@ mod interfaces {
                 position: Pos {
                     line: 3,
                     column: 16,
+                    start: 93,
+                    end: 99,
                     file: 0,
                     builtin: false,
                 },
@@ -971,6 +1045,8 @@ mod interfaces {
                 position: Pos {
                     line: 4,
                     column: 34,
+                    start: 143,
+                    end: 146,
                     file: 0,
                     builtin: false,
                 },
@@ -983,6 +1059,8 @@ mod interfaces {
                 position: Pos {
                     line: 5,
                     column: 28,
+                    start: 191,
+                    end: 197,
                     file: 0,
                     builtin: false,
                 },
@@ -1032,6 +1110,8 @@ mod interfaces {
                 position: Pos {
                     line: 10,
                     column: 16,
+                    start: 282,
+                    end: 286,
                     file: 0,
                     builtin: false,
                 },
@@ -1044,6 +1124,8 @@ mod interfaces {
                 position: Pos {
                     line: 8,
                     column: 22,
+                    start: 205,
+                    end: 211,
                     file: 0,
                     builtin: false,
                 },
@@ -1057,6 +1139,8 @@ mod interfaces {
                 position: Pos {
                     line: 13,
                     column: 16,
+                    start: 370,
+                    end: 373,
                     file: 0,
                     builtin: false,
                 },
@@ -1070,6 +1154,8 @@ mod interfaces {
                 position: Pos {
                     line: 13,
                     column: 20,
+                    start: 374,
+                    end: 386,
                     file: 0,
                     builtin: false,
                 },
@@ -1082,6 +1168,8 @@ mod interfaces {
                 position: Pos {
                     line: 16,
                     column: 20,
+                    start: 486,
+                    end: 489,
                     file: 0,
                     builtin: false,
                 },
@@ -1094,6 +1182,8 @@ mod interfaces {
                 position: Pos {
                     line: 19,
                     column: 35,
+                    start: 603,
+                    end: 607,
                     file: 0,
                     builtin: false,
                 },
@@ -1106,6 +1196,8 @@ mod interfaces {
                 position: Pos {
                     line: 19,
                     column: 16,
+                    start: 584,
+                    end: 587,
                     file: 0,
                     builtin: false,
                 },
@@ -1134,6 +1226,8 @@ mod interfaces {
                 position: Pos {
                     line: 1,
                     column: 35,
+                    start: 36,
+                    end: 37,
                     file: 0,
                     builtin: false,
                 },
@@ -1170,6 +1264,8 @@ mod unions {
                 position: Pos {
                     line: 1,
                     column: 18,
+                    start: 19,
+                    end: 22,
                     file: 0,
                     builtin: false,
                 },
@@ -1196,6 +1292,8 @@ mod unions {
                 position: Pos {
                     line: 2,
                     column: 22,
+                    start: 77,
+                    end: 81,
                     file: 0,
                     builtin: false,
                 },
@@ -1224,6 +1322,8 @@ mod unions {
                 position: Pos {
                     line: 1,
                     column: 32,
+                    start: 33,
+                    end: 34,
                     file: 0,
                     builtin: false,
                 },
@@ -1256,6 +1356,8 @@ mod unions {
                 position: Pos {
                     line: 1,
                     column: 25,
+                    start: 26,
+                    end: 29,
                     file: 0,
                     builtin: false,
                 },
@@ -1268,6 +1370,8 @@ mod unions {
                 position: Pos {
                     line: 1,
                     column: 37,
+                    start: 38,
+                    end: 43,
                     file: 0,
                     builtin: false,
                 },
@@ -1280,6 +1384,8 @@ mod unions {
                 position: Pos {
                     line: 1,
                     column: 45,
+                    start: 46,
+                    end: 50,
                     file: 0,
                     builtin: false,
                 },
@@ -1292,6 +1398,8 @@ mod unions {
                 position: Pos {
                     line: 1,
                     column: 52,
+                    start: 53,
+                    end: 58,
                     file: 0,
                     builtin: false,
                 },
@@ -1327,6 +1435,8 @@ mod enums {
                 position: Pos {
                     line: 1,
                     column: 17,
+                    start: 18,
+                    end: 21,
                     file: 0,
                     builtin: false,
                 },
@@ -1357,6 +1467,8 @@ mod enums {
                 position: Pos {
                     line: 4,
                     column: 21,
+                    start: 140,
+                    end: 142,
                     file: 0,
                     builtin: false,
                 },
@@ -1369,6 +1481,8 @@ mod enums {
                 position: Pos {
                     line: 6,
                     column: 18,
+                    start: 188,
+                    end: 190,
                     file: 0,
                     builtin: false,
                 },
@@ -1406,6 +1520,8 @@ mod input_objects {
                 position: Pos {
                     line: 1,
                     column: 18,
+                    start: 19,
+                    end: 24,
                     file: 0,
                     builtin: false,
                 },
@@ -1437,6 +1553,8 @@ mod input_objects {
                 position: Pos {
                     line: 4,
                     column: 26,
+                    start: 185,
+                    end: 187,
                     file: 0,
                     builtin: false,
                 },
@@ -1449,6 +1567,8 @@ mod input_objects {
                 position: Pos {
                     line: 5,
                     column: 28,
+                    start: 220,
+                    end: 222,
                     file: 0,
                     builtin: false,
                 },
@@ -1479,6 +1599,8 @@ mod input_objects {
                 position: Pos {
                     line: 2,
                     column: 16,
+                    start: 43,
+                    end: 50,
                     file: 0,
                     builtin: false,
                 },
@@ -1489,6 +1611,8 @@ mod input_objects {
                 position: Pos {
                     line: 4,
                     column: 16,
+                    start: 102,
+                    end: 108,
                     file: 0,
                     builtin: false,
                 },
@@ -1526,6 +1650,8 @@ mod input_objects {
                 position: Pos {
                     line: 3,
                     column: 24,
+                    start: 80,
+                    end: 86,
                     file: 0,
                     builtin: false,
                 },
@@ -1538,6 +1664,8 @@ mod input_objects {
                 position: Pos {
                     line: 4,
                     column: 23,
+                    start: 111,
+                    end: 118,
                     file: 0,
                     builtin: false,
                 },
@@ -1590,6 +1718,8 @@ mod one_of {
                 position: Pos {
                     line: 2,
                     column: 20,
+                    start: 55,
+                    end: 57,
                     file: 0,
                     builtin: false,
                 },
@@ -1617,6 +1747,8 @@ mod one_of {
                 position: Pos {
                     line: 2,
                     column: 25,
+                    start: 60,
+                    end: 67,
                     file: 0,
                     builtin: false,
                 },
@@ -1643,6 +1775,8 @@ mod one_of {
                 position: Pos {
                     line: 1,
                     column: 24,
+                    start: 25,
+                    end: 31,
                     file: 0,
                     builtin: false,
                 },
@@ -1673,6 +1807,8 @@ mod one_of {
                 position: Pos {
                     line: 3,
                     column: 23,
+                    start: 74,
+                    end: 80,
                     file: 0,
                     builtin: false,
                 },

@@ -117,6 +117,8 @@ mod tests {
             position: Pos {
                 line: 1,
                 column: 2,
+                start: 5,
+                end: 8,
                 file: 0,
                 builtin: false,
             },

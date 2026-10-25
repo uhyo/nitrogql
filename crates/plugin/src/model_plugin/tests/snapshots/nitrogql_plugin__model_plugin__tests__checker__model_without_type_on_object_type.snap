@@ -7,6 +7,8 @@ expression: errors
         position: Pos {
             line: 1,
             column: 10,
+            start: 11,
+            end: 17,
             file: 0,
             builtin: false,
         },
@@ -19,6 +21,8 @@ expression: errors
         position: Pos {
             line: 8,
             column: 10,
+            start: 97,
+            end: 103,
             file: 0,
             builtin: false,
         },

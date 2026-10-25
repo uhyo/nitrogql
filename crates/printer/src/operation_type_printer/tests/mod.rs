@@ -1132,3 +1132,35 @@ fn print_document(document: &OperationDocument, options: OperationTypePrinterOpt
     print_types_for_operation_document(options, &schema, document, &mut writer).unwrap();
     result
 }
+
+/// Mappings of named definitions point to their names.
+mod mappings {
+    use super::*;
+    use sourcemap_writer::SpanWriter;
+
+    #[test]
+    fn mappings_point_to_names() {
+        let source = "\"Description\"\nfragment UserName on User { name }\nquery GetMe { me { ...UserName } }\n";
+        let doc = parse_operation_document(source, 0).unwrap();
+        let (doc, _) = resolve_operation_extensions(doc).unwrap();
+        let schema = type_system();
+        let schema = ast_to_type_system(&schema);
+        let mut writer = SpanWriter::new();
+        print_types_for_operation_document(
+            OperationTypePrinterOptions::default(),
+            &schema,
+            &doc,
+            &mut writer,
+        )
+        .unwrap();
+        let (_, spans) = writer.into_parts();
+        assert!(!spans.is_empty());
+        for span in spans {
+            assert_eq!(
+                &source[span.original_pos.span()],
+                span.original_name,
+                "{span:?}"
+            );
+        }
+    }
+}

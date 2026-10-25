@@ -566,3 +566,84 @@ mod file_index {
         assert_eq!(second.position.file, 2);
     }
 }
+
+#[cfg(test)]
+mod spans {
+    use crate::parser::{parse_operation_document, parse_type_system_document};
+    use nitrogql_ast::{
+        base::{HasPos, Pos},
+        operation_ext::ExecutableDefinitionExt,
+        selection_set::Selection,
+        type_system::{TypeDefinition, TypeSystemDefinitionOrExtension},
+    };
+    use nitrogql_error::PositionedError;
+
+    fn text<'a>(source: &'a str, pos: &Pos) -> &'a str {
+        &source[pos.span()]
+    }
+
+    #[test]
+    fn operation_spans() {
+        let source = "# 😀\n\"Description\"\nfragment Foo on User {\n  name\n  ...Bar\n}\n";
+        let doc = parse_operation_document(source, 0).unwrap();
+        let ExecutableDefinitionExt::FragmentDefinition(fragment) = &doc.definitions[0] else {
+            panic!("expected a fragment");
+        };
+        // names cover exactly the name
+        assert_eq!(text(source, &fragment.name.position), "Foo");
+        assert_eq!(text(source, &fragment.type_condition.position), "User");
+        // other nodes cover the whole node
+        assert_eq!(
+            text(source, &fragment.position),
+            "\"Description\"\nfragment Foo on User {\n  name\n  ...Bar\n}"
+        );
+        assert_eq!(
+            text(source, &fragment.selection_set.position),
+            "{\n  name\n  ...Bar\n}"
+        );
+        let Selection::FragmentSpread(spread) = &fragment.selection_set.selections[1] else {
+            panic!("expected a fragment spread");
+        };
+        assert_eq!(text(source, &spread.position), "...Bar");
+        // line and column are kept
+        assert_eq!(
+            (fragment.name.position.line, fragment.name.position.column),
+            (2, 9)
+        );
+    }
+
+    #[test]
+    fn type_system_spans() {
+        let source = "type Query {\n  foo(arg: Int = 1): [String!] @deprecated\n}";
+        let doc = parse_type_system_document(source, 0).unwrap();
+        let TypeSystemDefinitionOrExtension::TypeDefinition(TypeDefinition::Object(def)) =
+            &doc.definitions[0]
+        else {
+            panic!("expected an object type");
+        };
+        assert_eq!(text(source, &def.name.position), "Query");
+        assert_eq!(text(source, &def.type_keyword.position), "type");
+        let field = &def.fields[0];
+        assert_eq!(text(source, &field.name.position), "foo");
+        assert_eq!(text(source, field.r#type.position()), "[String!]");
+        assert_eq!(text(source, &field.directives[0].position), "@deprecated");
+        let arguments = field.arguments.as_ref().unwrap();
+        assert_eq!(
+            text(source, &arguments.input_values[0].name.position),
+            "arg"
+        );
+    }
+
+    #[test]
+    fn parse_error_spans() {
+        let error_text = |source: &'static str| {
+            let err: PositionedError = parse_operation_document(source, 0).unwrap_err().into();
+            &source[err.position().unwrap().span()]
+        };
+        // the token at the error
+        assert_eq!(error_text("query Foo { bar } extra"), "extra");
+        assert_eq!(error_text("query Foo { bar ) }"), ")");
+        // end of input
+        assert_eq!(error_text("query Foo {"), "");
+    }
+}
