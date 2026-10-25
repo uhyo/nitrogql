@@ -61,7 +61,7 @@ pub fn run_check(context: CliContext) -> Result<CliContext> {
 struct CheckImplInput<'src, 'a> {
     pub schema: LoadedSchema<'src, TypeSystemOrExtensionDocument<'src>>,
     pub operations: OperationSet<'src>,
-    pub plugins: &'a [Plugin<'src>],
+    pub plugins: &'a [Plugin],
 }
 
 enum CheckImplOutput<'src> {
@@ -138,7 +138,7 @@ fn check_impl<'src>(input: CheckImplInput<'src, '_>) -> CheckImplOutput<'src> {
 
 pub(crate) fn resolve_schema<'src>(
     schema: LoadedSchema<'src, TypeSystemOrExtensionDocument<'src>>,
-    plugins: &[Plugin<'src>],
+    plugins: &[Plugin],
 ) -> std::result::Result<LoadedSchema<'src, TypeSystemDocument<'src>>, Vec<PositionedError>> {
     match schema {
         LoadedSchema::GraphQL(document) => {

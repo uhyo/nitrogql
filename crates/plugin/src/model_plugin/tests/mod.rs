@@ -212,7 +212,7 @@ fn schema_addition_positions_point_to_virtual_file() {
 
 struct TestHost {}
 
-impl PluginHost for TestHost {
+impl PluginHost<'static> for TestHost {
     fn load_virtual_file(&mut self, content: String) -> (&'static str, usize) {
         (Box::leak(content.into_boxed_str()), 1)
     }

@@ -3,7 +3,7 @@ use nitrogql_plugin::{GraphQLScalarsPlugin, ModelPlugin, Plugin, PluginV1Beta};
 use crate::error::CliError;
 
 /// Load plugins by name.
-pub fn load_plugins<'host, S: AsRef<str>>(plugins: &[S]) -> Result<Vec<Plugin<'host>>, CliError> {
+pub fn load_plugins<S: AsRef<str>>(plugins: &[S]) -> Result<Vec<Plugin>, CliError> {
     plugins
         .iter()
         .map(|plugin| {

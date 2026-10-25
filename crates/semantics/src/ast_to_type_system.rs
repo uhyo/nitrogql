@@ -134,8 +134,8 @@ fn convert_type_definition<'src>(
                 ),
             )])
         }
-        AstTypeDefinition::InputObject(def) => {
-            builder.extend::<Vec<(_, Node<TypeDefinition<_, _>, _>)>>(vec![(
+        AstTypeDefinition::InputObject(def) => builder
+            .extend::<Vec<(_, Node<TypeDefinition<_, _>, _>)>>(vec![(
                 def.name.name.into(),
                 Node::from(
                     TypeDefinition::InputObject(InputObjectDefinition {
@@ -149,10 +149,7 @@ fn convert_type_definition<'src>(
                                 description: convert_description(&input.description),
                                 r#type: convert_type(&input.r#type),
                                 default_value: input.default_value.as_ref().map(|value| {
-                                    // TODO: do not leak
-                                    let value_disp = value.to_string().into_boxed_str();
-                                    let value_disp = Box::leak(value_disp);
-                                    Node::from(&*value_disp, *value.position())
+                                    Node::from(Cow::Owned(value.to_string()), *value.position())
                                 }),
                                 deprecation: convert_deprecation(&input.directives),
                             })
@@ -161,8 +158,7 @@ fn convert_type_definition<'src>(
                     }),
                     def.position,
                 ),
-            )])
-        }
+            )]),
     }
 }
 
@@ -205,12 +201,10 @@ fn convert_arguments<'src>(
                 name: ident_to_node(&input.name),
                 description: convert_description(&input.description),
                 r#type: convert_type(&input.r#type),
-                default_value: input.default_value.as_ref().map(|value| {
-                    // TODO: do not leak
-                    let value_disp = value.to_string().into_boxed_str();
-                    let value_disp = Box::leak(value_disp);
-                    Node::from(&*value_disp, *value.position())
-                }),
+                default_value: input
+                    .default_value
+                    .as_ref()
+                    .map(|value| Node::from(Cow::Owned(value.to_string()), *value.position())),
                 deprecation: convert_deprecation(&input.directives),
             })
             .collect()

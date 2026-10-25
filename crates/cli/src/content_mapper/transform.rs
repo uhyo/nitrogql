@@ -64,13 +64,13 @@ fn transform_schema_file(
     content: &str,
     encoding: PositionEncoding,
 ) -> TransformResult {
-    let (_, loaded_content, _) = &project.file_store[file_index];
+    let (_, loaded_content, _) = &project.file_store()[file_index];
     // Positions are valid only if content is the same as the one loaded.
     let is_same_content = *loaded_content == content;
     let index = SourceText::new(content, encoding);
     let files = |idx: usize| {
         project
-            .file_store
+            .file_store()
             .get_file(idx)
             .map(|(path, _, _)| path.as_path())
     };
@@ -143,14 +143,14 @@ fn transform_operation_file(
     encoding: PositionEncoding,
 ) -> TransformResult {
     // Operation files are numbered after schema files.
-    let root_index = project.file_store.schema_len();
+    let root_index = project.file_store().schema_len();
     // Holds sources of imported files, which are borrowed by `operations`.
     let sources = Arena::new();
     let operations = load_operation_files(file_name, content, root_index, &sources);
     let file_path = |idx: usize| {
         if idx < root_index {
             project
-                .file_store
+                .file_store()
                 .get_file(idx)
                 .map(|(path, _, _)| path.as_path())
         } else {
@@ -289,7 +289,7 @@ fn load_operation_files<'src>(
 /// This is used only if schema types are not provided by other means.
 fn schema_module_file<'a>(
     project: &'a Project,
-    schema: &LoadedProjectSchema,
+    schema: &LoadedProjectSchema<'_>,
 ) -> Option<&'a (PathBuf, usize)> {
     let generate = &project.config.generate;
     if generate.schema_output.is_some() || generate.schema_module_specifier.is_some() {
@@ -309,7 +309,7 @@ fn schema_module_file<'a>(
 /// Determines the module specifier to import schema types from.
 fn schema_source(
     project: &Project,
-    schema: &LoadedProjectSchema,
+    schema: &LoadedProjectSchema<'_>,
     file_name: &Path,
 ) -> Option<String> {
     let generate = &project.config.generate;
