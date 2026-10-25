@@ -20,15 +20,15 @@ mod type_system;
 mod utils;
 mod value;
 
-pub fn build_operation_document(pairs: Pairs<Rule>) -> OperationDocumentExt {
+pub fn build_operation_document(pairs: Pairs<Rule>, file: usize) -> OperationDocumentExt {
     if let Some(pair) = pairs.into_iter().next() {
         match pair.as_rule() {
             Rule::ExecutableDocument => {
-                let position = pair.to_pos();
+                let position = pair.to_pos(file);
                 let definitions: Vec<_> = pair
                     .into_inner()
                     .filter(|pair| pair.is_rule(Rule::ExecutableDefinition))
-                    .map(build_executable_definition)
+                    .map(|pair| build_executable_definition(pair, file))
                     .collect();
                 return OperationDocumentExt {
                     position,
@@ -43,6 +43,7 @@ pub fn build_operation_document(pairs: Pairs<Rule>) -> OperationDocumentExt {
 
 pub fn build_type_system_or_extension_document(
     pairs: Pairs<Rule>,
+    file: usize,
 ) -> TypeSystemOrExtensionDocument {
     if let Some(pair) = pairs.into_iter().next() {
         match pair.as_rule() {
@@ -50,7 +51,7 @@ pub fn build_type_system_or_extension_document(
                 let definitions: Vec<_> = pair
                     .into_inner()
                     .filter(|pair| pair.is_rule(Rule::TypeSystemDefinitionOrExtension))
-                    .map(build_type_system_definition_or_extension)
+                    .map(|pair| build_type_system_definition_or_extension(pair, file))
                     .collect();
                 return TypeSystemOrExtensionDocument { definitions };
             }

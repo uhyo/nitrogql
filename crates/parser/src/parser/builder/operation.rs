@@ -18,18 +18,21 @@ use super::{
 use pest::iterators::Pair;
 
 /// Parses a VariablesDefinition Pair.
-pub fn build_variables_definition(pair: Pair<Rule>) -> VariablesDefinition {
-    let position = pair.to_pos();
+pub fn build_variables_definition(pair: Pair<Rule>, file: usize) -> VariablesDefinition {
+    let position = pair.to_pos(file);
     let defs = pair.all_children(Rule::VariableDefinition);
     VariablesDefinition {
         position,
-        definitions: defs.into_iter().map(build_variable_definition).collect(),
+        definitions: defs
+            .into_iter()
+            .map(|pair| build_variable_definition(pair, file))
+            .collect(),
     }
 }
 
 /// Parses one VariableDefinition Pair.
-pub fn build_variable_definition(pair: Pair<Rule>) -> VariableDefinition {
-    let pos = pair.to_pos();
+pub fn build_variable_definition(pair: Pair<Rule>, file: usize) -> VariableDefinition {
+    let pos = pair.to_pos(file);
     let (description, variable, ty, default_value, directives) = parts!(
         pair,
         Description opt,
@@ -41,20 +44,20 @@ pub fn build_variable_definition(pair: Pair<Rule>) -> VariableDefinition {
 
     VariableDefinition {
         pos,
-        description: description.map(build_description),
-        name: build_variable(variable),
-        r#type: build_type(ty),
+        description: description.map(|pair| build_description(pair, file)),
+        name: build_variable(variable, file),
+        r#type: build_type(ty, file),
         default_value: default_value.map(|pair| {
             let child = pair.only_child();
-            build_value(child)
+            build_value(child, file)
         }),
-        directives: directives.map_or(vec![], build_directives),
+        directives: directives.map_or(vec![], |pair| build_directives(pair, file)),
     }
 }
 
-pub fn build_executable_definition(pair: Pair<Rule>) -> ExecutableDefinitionExt {
+pub fn build_executable_definition(pair: Pair<Rule>, file: usize) -> ExecutableDefinitionExt {
     let pair = pair.only_child();
-    let position = pair.to_pos();
+    let position = pair.to_pos(file);
     match pair.as_rule() {
         Rule::OperationDefinition => {
             // The grammar allows two forms for an OperationDefinition:
@@ -76,7 +79,7 @@ pub fn build_executable_definition(pair: Pair<Rule>) -> ExecutableDefinitionExt 
                     name: None,
                     variables_definition: None,
                     directives: vec![],
-                    selection_set: build_selection_set(selection_set),
+                    selection_set: build_selection_set(selection_set, file),
                 })
             } else {
                 let (
@@ -97,12 +100,13 @@ pub fn build_executable_definition(pair: Pair<Rule>) -> ExecutableDefinitionExt 
                 );
                 ExecutableDefinitionExt::OperationDefinition(OperationDefinition {
                     position,
-                    description: description.map(build_description),
+                    description: description.map(|pair| build_description(pair, file)),
                     operation_type: str_to_operation_type(operation_type.as_str()),
-                    name: name.map(|pair| pair.to_ident()),
-                    variables_definition: variables_definition.map(build_variables_definition),
-                    directives: directives.map_or(vec![], build_directives),
-                    selection_set: build_selection_set(selection_set),
+                    name: name.map(|pair| pair.to_ident(file)),
+                    variables_definition: variables_definition
+                        .map(|pair| build_variables_definition(pair, file)),
+                    directives: directives.map_or(vec![], |pair| build_directives(pair, file)),
+                    selection_set: build_selection_set(selection_set, file),
                 })
             }
         }
@@ -118,14 +122,14 @@ pub fn build_executable_definition(pair: Pair<Rule>) -> ExecutableDefinitionExt 
             );
             ExecutableDefinitionExt::FragmentDefinition(FragmentDefinition {
                 position,
-                description: description.map(build_description),
-                name: name.to_ident(),
+                description: description.map(|pair| build_description(pair, file)),
+                name: name.to_ident(file),
                 type_condition: {
                     let (_, name) = parts!(type_condition, KEYWORD_on, NamedType);
-                    name.to_ident()
+                    name.to_ident(file)
                 },
-                directives: directives.map_or(vec![], build_directives),
-                selection_set: build_selection_set(selection_set),
+                directives: directives.map_or(vec![], |pair| build_directives(pair, file)),
+                selection_set: build_selection_set(selection_set, file),
             })
         }
         Rule::ext_ImportStatement => {
@@ -144,14 +148,14 @@ pub fn build_executable_definition(pair: Pair<Rule>) -> ExecutableDefinitionExt 
                     .into_inner()
                     .map(|pair| {
                         if pair.is_rule(Rule::Name) {
-                            ImportTarget::Name(pair.to_ident())
+                            ImportTarget::Name(pair.to_ident(file))
                         } else {
                             // "*"
                             ImportTarget::Wildcard
                         }
                     })
                     .collect(),
-                path: build_string_value(path),
+                path: build_string_value(path, file),
             })
         }
         rule => panic!("Unexpected {:?} as a child of ExecutableDefinition", rule),

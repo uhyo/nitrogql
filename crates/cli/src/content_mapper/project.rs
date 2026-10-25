@@ -8,7 +8,7 @@ use std::{
 
 use graphql_type_system::Schema;
 use log::{debug, info};
-use nitrogql_ast::{TypeSystemDocument, base::Pos, set_current_file_of_pos};
+use nitrogql_ast::{TypeSystemDocument, base::Pos};
 use nitrogql_config_file::{Config, load_config};
 use nitrogql_error::PositionedError;
 use nitrogql_parser::parse_operation_document;
@@ -218,8 +218,7 @@ fn imported_operation_files(operation_files: &[(PathBuf, String)]) -> Vec<PathBu
     let mut result = vec![];
     for (path, content) in operation_files {
         // file index is not used, as positions are not reported from here.
-        set_current_file_of_pos(usize::MAX);
-        let Ok(document) = parse_operation_document(content) else {
+        let Ok(document) = parse_operation_document(content, usize::MAX) else {
             continue;
         };
         let Ok((_, extensions)) = resolve_operation_extensions(document) else {

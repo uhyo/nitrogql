@@ -28,16 +28,14 @@ impl ParseError {
     pub fn into_message(self) -> String {
         self.message
     }
-}
 
-impl From<pest::error::Error<Rule>> for ParseError {
-    fn from(error: pest::error::Error<Rule>) -> Self {
+    fn from_pest(error: pest::error::Error<Rule>, file: usize) -> Self {
         // convert 1-based line and column to 0-based
         let (line, col) = match error.line_col {
             pest::error::LineColLocation::Pos((line, column)) => (line - 1, column - 1),
             pest::error::LineColLocation::Span((line, column), _) => (line - 1, column - 1),
         };
-        let position = Pos::new(line, col);
+        let position = Pos::new(line, col, file);
         let message = error.variant.message().into_owned();
 
         ParseError { position, message }
@@ -54,16 +52,26 @@ impl From<ParseError> for PositionedError {
     }
 }
 
-pub fn parse_operation_document(document: &str) -> Result<OperationDocumentExt<'_>, ParseError> {
-    let res = RawParser::parse(Rule::ExecutableDocument, document)?;
+/// Parses an operation document.
+/// `file` is the index of the file, recorded in every `Pos` of the result.
+pub fn parse_operation_document(
+    document: &str,
+    file: usize,
+) -> Result<OperationDocumentExt<'_>, ParseError> {
+    let res = RawParser::parse(Rule::ExecutableDocument, document)
+        .map_err(|error| ParseError::from_pest(error, file))?;
 
-    Ok(build_operation_document(res))
+    Ok(build_operation_document(res, file))
 }
 
+/// Parses a type system document.
+/// `file` is the index of the file, recorded in every `Pos` of the result.
 pub fn parse_type_system_document(
     document: &str,
+    file: usize,
 ) -> Result<TypeSystemOrExtensionDocument<'_>, ParseError> {
-    let res = RawParser::parse(Rule::TypeSystemExtensionDocument, document)?;
+    let res = RawParser::parse(Rule::TypeSystemExtensionDocument, document)
+        .map_err(|error| ParseError::from_pest(error, file))?;
 
-    Ok(build_type_system_or_extension_document(res))
+    Ok(build_type_system_or_extension_document(res, file))
 }

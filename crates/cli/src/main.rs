@@ -15,9 +15,7 @@ use graphql_builtins::generate_builtins;
 use graphql_type_system::Schema;
 use itertools::Itertools;
 use log::info;
-use nitrogql_ast::{
-    OperationDocumentExt, set_current_file_of_pos, type_system::TypeSystemOrExtensionDocument,
-};
+use nitrogql_ast::{OperationDocumentExt, type_system::TypeSystemOrExtensionDocument};
 use nitrogql_introspection::schema_from_introspection_json;
 use nitrogql_plugin::{Plugin, PluginSchemaExtensions};
 use nitrogql_utils::{get_cwd, normalize_path};
@@ -186,9 +184,7 @@ async fn run_cli_impl(
                 info!("parsing(operation) {}", path.to_string_lossy());
                 let file_idx = file_store.add_file(path.clone(), buf, FileKind::Operation);
                 let (_, buf, _) = file_store.get_file(file_idx).unwrap();
-                set_current_file_of_pos(file_idx);
-
-                let doc = parse_operation_document(buf)?;
+                let doc = parse_operation_document(buf, file_idx)?;
                 Ok((path, doc, file_idx))
             },
         )
@@ -298,8 +294,7 @@ pub(crate) async fn load_schema<'src>(
                 let file_idx = file_store.add_file(path, buf, FileKind::Schema);
                 let (path, buf, _) = file_store.get_file(file_idx).unwrap();
                 info!("parsing(schema) {} {}", path.to_string_lossy(), file_idx);
-                set_current_file_of_pos(file_idx);
-                let doc = parse_type_system_document(buf)?;
+                let doc = parse_type_system_document(buf, file_idx)?;
                 Ok(LoadedSchema::GraphQL(doc))
             }
             SchemaFileKind::IntrospectionJson => {
@@ -317,8 +312,7 @@ pub(crate) async fn load_schema<'src>(
                 } = load_schema_js(&path).await?;
                 let file_idx = file_store.add_file(path, schema, FileKind::Schema);
                 let (_, buf, _) = file_store.get_file(file_idx).unwrap();
-                set_current_file_of_pos(file_idx);
-                let doc = parse_type_system_document(buf)?;
+                let doc = parse_type_system_document(buf, file_idx)?;
                 for p in plugins.iter_mut() {
                     p.load_schema_extensions(PluginSchemaExtensions {
                         type_extensions: &type_extensions,

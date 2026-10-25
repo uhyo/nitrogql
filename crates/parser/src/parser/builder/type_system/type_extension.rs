@@ -16,24 +16,24 @@ use nitrogql_ast::type_system::{
     ScalarTypeExtension, TypeExtension, UnionTypeExtension,
 };
 
-pub fn build_type_extension(pair: Pair<Rule>) -> TypeExtension {
+pub fn build_type_extension(pair: Pair<Rule>, file: usize) -> TypeExtension {
     let pair = pair.only_child();
     match pair.as_rule() {
-        Rule::ScalarTypeExtension => TypeExtension::Scalar(build_scalar_type_extension(pair)),
-        Rule::ObjectTypeExtension => TypeExtension::Object(build_object_type_extension(pair)),
+        Rule::ScalarTypeExtension => TypeExtension::Scalar(build_scalar_type_extension(pair, file)),
+        Rule::ObjectTypeExtension => TypeExtension::Object(build_object_type_extension(pair, file)),
         Rule::InterfaceTypeExtension => {
-            TypeExtension::Interface(build_interface_type_extension(pair))
+            TypeExtension::Interface(build_interface_type_extension(pair, file))
         }
-        Rule::UnionTypeExtension => TypeExtension::Union(build_union_type_extension(pair)),
-        Rule::EnumTypeExtension => TypeExtension::Enum(build_enum_type_extension(pair)),
+        Rule::UnionTypeExtension => TypeExtension::Union(build_union_type_extension(pair, file)),
+        Rule::EnumTypeExtension => TypeExtension::Enum(build_enum_type_extension(pair, file)),
         Rule::InputObjectTypeExtension => {
-            TypeExtension::InputObject(build_input_object_type_extension(pair))
+            TypeExtension::InputObject(build_input_object_type_extension(pair, file))
         }
         rule => panic!("Unexpected child of TypeExtension: {:?}", rule),
     }
 }
 
-fn build_scalar_type_extension(pair: Pair<Rule>) -> ScalarTypeExtension {
+fn build_scalar_type_extension(pair: Pair<Rule>, file: usize) -> ScalarTypeExtension {
     let (keyword, _, name, directives) = parts!(
         pair,
         KEYWORD_extend,
@@ -42,13 +42,13 @@ fn build_scalar_type_extension(pair: Pair<Rule>) -> ScalarTypeExtension {
         Directives opt
     );
     ScalarTypeExtension {
-        position: keyword.to_pos(),
-        name: name.to_ident(),
-        directives: directives.map_or(vec![], build_directives),
+        position: keyword.to_pos(file),
+        name: name.to_ident(file),
+        directives: directives.map_or(vec![], |pair| build_directives(pair, file)),
     }
 }
 
-fn build_object_type_extension(pair: Pair<Rule>) -> ObjectTypeExtension {
+fn build_object_type_extension(pair: Pair<Rule>, file: usize) -> ObjectTypeExtension {
     let (keyword, _, name, implements, directives, fields) = parts!(
         pair,
         KEYWORD_extend,
@@ -60,15 +60,15 @@ fn build_object_type_extension(pair: Pair<Rule>) -> ObjectTypeExtension {
     );
 
     ObjectTypeExtension {
-        position: keyword.to_pos(),
-        name: name.to_ident(),
-        implements: implements.map_or(vec![], build_implements_interfaces),
-        directives: directives.map_or(vec![], build_directives),
-        fields: fields.map_or(vec![], build_fields_definition),
+        position: keyword.to_pos(file),
+        name: name.to_ident(file),
+        implements: implements.map_or(vec![], |pair| build_implements_interfaces(pair, file)),
+        directives: directives.map_or(vec![], |pair| build_directives(pair, file)),
+        fields: fields.map_or(vec![], |pair| build_fields_definition(pair, file)),
     }
 }
 
-fn build_interface_type_extension(pair: Pair<Rule>) -> InterfaceTypeExtension {
+fn build_interface_type_extension(pair: Pair<Rule>, file: usize) -> InterfaceTypeExtension {
     let (keyword, _, name, implements, directives, fields) = parts!(
         pair,
         KEYWORD_extend,
@@ -79,15 +79,15 @@ fn build_interface_type_extension(pair: Pair<Rule>) -> InterfaceTypeExtension {
         FieldsDefinition opt
     );
     InterfaceTypeExtension {
-        position: keyword.to_pos(),
-        name: name.to_ident(),
-        implements: implements.map_or(vec![], build_implements_interfaces),
-        directives: directives.map_or(vec![], build_directives),
-        fields: fields.map_or(vec![], build_fields_definition),
+        position: keyword.to_pos(file),
+        name: name.to_ident(file),
+        implements: implements.map_or(vec![], |pair| build_implements_interfaces(pair, file)),
+        directives: directives.map_or(vec![], |pair| build_directives(pair, file)),
+        fields: fields.map_or(vec![], |pair| build_fields_definition(pair, file)),
     }
 }
 
-fn build_union_type_extension(pair: Pair<Rule>) -> UnionTypeExtension {
+fn build_union_type_extension(pair: Pair<Rule>, file: usize) -> UnionTypeExtension {
     let (keyword, _, name, directives, members) = parts!(
         pair,
         KEYWORD_extend,
@@ -97,17 +97,17 @@ fn build_union_type_extension(pair: Pair<Rule>) -> UnionTypeExtension {
         UnionMemberTypes opt
     );
     UnionTypeExtension {
-        position: keyword.to_pos(),
-        name: name.to_ident(),
-        directives: directives.map_or(vec![], build_directives),
+        position: keyword.to_pos(file),
+        name: name.to_ident(file),
+        directives: directives.map_or(vec![], |pair| build_directives(pair, file)),
         members: members.map_or(vec![], |members| {
             let pairs = members.all_children(Rule::NamedType);
-            pairs.into_iter().map(|pair| pair.to_ident()).collect()
+            pairs.into_iter().map(|pair| pair.to_ident(file)).collect()
         }),
     }
 }
 
-fn build_enum_type_extension(pair: Pair<Rule>) -> EnumTypeExtension {
+fn build_enum_type_extension(pair: Pair<Rule>, file: usize) -> EnumTypeExtension {
     let (keyword, _, name, directives, values) = parts!(
         pair,
         KEYWORD_extend,
@@ -117,17 +117,20 @@ fn build_enum_type_extension(pair: Pair<Rule>) -> EnumTypeExtension {
         EnumValuesDefinition opt
     );
     EnumTypeExtension {
-        position: keyword.to_pos(),
-        name: name.to_ident(),
-        directives: directives.map_or(vec![], build_directives),
+        position: keyword.to_pos(file),
+        name: name.to_ident(file),
+        directives: directives.map_or(vec![], |pair| build_directives(pair, file)),
         values: values.map_or(vec![], |pair| {
             let pairs = pair.all_children(Rule::EnumValueDefinition);
-            pairs.into_iter().map(build_enum_value_definition).collect()
+            pairs
+                .into_iter()
+                .map(|pair| build_enum_value_definition(pair, file))
+                .collect()
         }),
     }
 }
 
-fn build_input_object_type_extension(pair: Pair<Rule>) -> InputObjectTypeExtension {
+fn build_input_object_type_extension(pair: Pair<Rule>, file: usize) -> InputObjectTypeExtension {
     let (keyword, _, name, directives, fields) = parts!(
         pair,
         KEYWORD_extend,
@@ -137,9 +140,9 @@ fn build_input_object_type_extension(pair: Pair<Rule>) -> InputObjectTypeExtensi
         InputFieldsDefinition opt
     );
     InputObjectTypeExtension {
-        position: keyword.to_pos(),
-        name: name.to_ident(),
-        directives: directives.map_or(vec![], build_directives),
-        fields: fields.map_or(vec![], build_input_fields_definition),
+        position: keyword.to_pos(file),
+        name: name.to_ident(file),
+        directives: directives.map_or(vec![], |pair| build_directives(pair, file)),
+        fields: fields.map_or(vec![], |pair| build_input_fields_definition(pair, file)),
     }
 }

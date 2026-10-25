@@ -48,6 +48,7 @@ mod operations {
             subscription a { foo { hoge piyo } }
             subscription b { foo { hoge } bar }
         ",
+            0,
         )
         .unwrap();
 
@@ -64,6 +65,7 @@ mod operations {
                 ...F
             }
         ",
+            0,
         )
         .unwrap();
 
@@ -115,6 +117,7 @@ mod operation_directives {
                 foo
             }
         ",
+            0,
         )
         .unwrap();
 
@@ -129,6 +132,7 @@ mod operation_directives {
                 foo
             }
         ",
+            0,
         )
         .unwrap();
 
@@ -144,6 +148,7 @@ mod operation_directives {
                 foo
             }
         ",
+            0,
         )
         .unwrap();
 
@@ -159,6 +164,7 @@ mod operation_directives {
                 foo
             }
         ",
+            0,
         )
         .unwrap();
 
@@ -180,6 +186,7 @@ mod operation_directives {
                 bar
             }
         ",
+            0,
         )
         .unwrap();
 
@@ -201,6 +208,7 @@ mod operation_directives {
                 @dir_bool(bool: $b2)
             }
         ",
+            0,
         )
         .unwrap();
 
@@ -220,6 +228,7 @@ mod operation_directives {
                 foo @dir_bool(bool: $b2)
             }
         ",
+            0,
         )
         .unwrap();
 
@@ -237,6 +246,7 @@ mod operation_directives {
                 foo
             }
         ",
+            0,
         )
         .unwrap();
 
@@ -254,6 +264,7 @@ mod operation_directives {
                 foo
             }
         ",
+            0,
         )
         .unwrap();
 
@@ -271,6 +282,7 @@ mod operation_directives {
                 foo
             }
         ",
+            0,
         )
         .unwrap();
 
@@ -288,6 +300,7 @@ mod operation_directives {
                 foo
             }
         ",
+            0,
         )
         .unwrap();
 
@@ -347,6 +360,7 @@ mod selection_set {
                 user2
             }
         ",
+            0,
         )
         .unwrap();
 
@@ -367,6 +381,7 @@ mod selection_set {
                 alias: user { id name } # ← this is ok
             }
         ",
+            0,
         )
         .unwrap();
 
@@ -384,6 +399,7 @@ mod selection_set {
                 user: foo 
             }
         ",
+            0,
         )
         .unwrap();
 
@@ -399,6 +415,7 @@ mod selection_set {
                 foo { value }
             }
         ",
+            0,
         )
         .unwrap();
 
@@ -415,6 +432,7 @@ mod selection_set {
                 user(arg: 123) { id }
             }
         ",
+            0,
         )
         .unwrap();
 
@@ -432,6 +450,7 @@ mod selection_set {
                 users2: users(name: $maybeNum) { id }
             }
         ",
+            0,
         )
         .unwrap();
 
@@ -458,6 +477,7 @@ mod selection_set {
                 }
             }
         ",
+            0,
         )
         .unwrap();
 
@@ -481,6 +501,7 @@ mod selection_set {
                 }
             }
         ",
+            0,
         )
         .unwrap();
 
@@ -564,6 +585,7 @@ mod fragments {
                 id
             }
         ",
+            0,
         )
         .unwrap();
 
@@ -586,6 +608,7 @@ mod fragments {
                 arg
             }
         ",
+            0,
         )
         .unwrap();
 
@@ -605,6 +628,7 @@ mod fragments {
                 title
             }
         ",
+            0,
         )
         .unwrap();
 
@@ -623,6 +647,7 @@ mod fragments {
                 title
             }
         ",
+            0,
         )
         .unwrap();
 
@@ -646,6 +671,7 @@ mod fragments {
                 }
             }
         ",
+            0,
         )
         .unwrap();
 
@@ -672,6 +698,7 @@ mod fragments {
                 title
             }
         ",
+            0,
         )
         .unwrap();
 
@@ -704,6 +731,7 @@ mod fragments {
                 }
             }
         ",
+            0,
         )
         .unwrap();
 
@@ -736,6 +764,7 @@ mod fragments {
                 }
             }
         ",
+            0,
         )
         .unwrap();
 
@@ -755,6 +784,7 @@ mod fragments {
                 name @dir_bool(bool: $b2)
             }
         ",
+            0,
         )
         .unwrap();
 
@@ -777,6 +807,7 @@ mod fragments {
                 }
             }}
         ",
+            0,
         )
         .unwrap();
 
@@ -795,6 +826,7 @@ mod fragments {
                 }
             }}
         ",
+            0,
         )
         .unwrap();
 
@@ -819,6 +851,7 @@ mod fragments {
                 }
             }
         ",
+            0,
         )
         .unwrap();
 
@@ -843,6 +876,7 @@ mod fragments {
                 }
             }
         ",
+            0,
         )
         .unwrap();
 
@@ -864,6 +898,7 @@ mod fragments {
                 ...F
             }
         ",
+            0,
         )
         .unwrap();
 
@@ -889,6 +924,7 @@ mod fragments {
                 ...F
             }
         ",
+            0,
         )
         .unwrap();
 
@@ -912,6 +948,7 @@ mod fragments {
                 }
             }
         ",
+            0,
         )
         .unwrap();
 
@@ -998,6 +1035,7 @@ mod imports {
                 }
             }
         ",
+            0,
         )
         .unwrap();
 
@@ -1045,6 +1083,7 @@ mod one_of {
                 user(by: { id: \"123\" }) { name }
             }
         ",
+            0,
         )
         .unwrap();
 
@@ -1060,6 +1099,7 @@ mod one_of {
                 user(by: { id: \"123\", email: \"foo@example.com\" }) { name }
             }
         ",
+            0,
         )
         .unwrap();
 
@@ -1075,6 +1115,7 @@ mod one_of {
                 user(by: {}) { name }
             }
         ",
+            0,
         )
         .unwrap();
 
@@ -1090,6 +1131,7 @@ mod one_of {
                 user(by: { id: null }) { name }
             }
         ",
+            0,
         )
         .unwrap();
 
@@ -1105,6 +1147,7 @@ mod one_of {
                 user(by: { id: $id }) { name }
             }
         ",
+            0,
         )
         .unwrap();
 
@@ -1120,6 +1163,7 @@ mod one_of {
                 user(by: { id: $id }) { name }
             }
         ",
+            0,
         )
         .unwrap();
 
@@ -1135,6 +1179,7 @@ mod one_of {
                 user(by: $by) { name }
             }
         ",
+            0,
         )
         .unwrap();
 
@@ -1143,7 +1188,7 @@ mod one_of {
 }
 
 fn parse_to_type_system_document(source: &str) -> TypeSystemDocument<'_> {
-    let mut doc = parse_type_system_document(source).unwrap();
+    let mut doc = parse_type_system_document(source, 0).unwrap();
     doc.extend(generate_builtins());
 
     resolve_schema_extensions(doc).unwrap()

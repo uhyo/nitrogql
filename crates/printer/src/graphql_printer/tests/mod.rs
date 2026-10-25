@@ -60,6 +60,7 @@ fn schema_printing() {
                 me: User!
             }
             "#,
+        0,
     )
     .unwrap();
     let doc = resolve_schema_extensions(doc).unwrap();

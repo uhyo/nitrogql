@@ -9,13 +9,13 @@ mod operation {
     #[test]
     fn simple_query() {
         assert_snapshot!(print_graphql(
-            parse_operation_document("query { foo bar }").unwrap()
+            parse_operation_document("query { foo bar }", 0).unwrap()
         ))
     }
     #[test]
     fn shorthand_query() {
         assert_snapshot!(print_graphql(
-            parse_operation_document("{ foo bar }").unwrap()
+            parse_operation_document("{ foo bar }", 0).unwrap()
         ))
     }
     #[test]
@@ -30,7 +30,8 @@ mod operation {
                         nested2
                     }
                  }
-"
+",
+                0
             )
             .unwrap()
         ))
@@ -43,7 +44,8 @@ mod operation {
                 query sample($foo: Int!, $bar: Int!) {
                     foo @dedede(foo: $foo)
                  }
-"
+",
+                0
             )
             .unwrap()
         ))
@@ -58,7 +60,8 @@ mod operation {
                     foo
                     bar
                  }
-"
+",
+                0
             )
             .unwrap()
         ))
@@ -73,7 +76,8 @@ mod operation {
                     foo
                     ...Fragment
                 }
-                "
+                ",
+                0
             )
             .unwrap()
         ))
@@ -90,7 +94,8 @@ mod operation {
                         baz
                     }
                 }
-                "
+                ",
+                0
             )
             .unwrap()
         ));
@@ -118,7 +123,8 @@ mod operation {
                 fragment F on Foo {
                     bar
                 }
-                "#
+                "#,
+                0
             )
             .unwrap()
         ));
@@ -139,7 +145,8 @@ sample#comment
     # comment
     bar
 } # comment
-"
+",
+                0
             )
             .unwrap()
         ));
@@ -172,7 +179,8 @@ mod import_syntax {
                         ...Frag1
                     }
                 }
-                "#
+                "#,
+                0
             )
             .unwrap()
         ));
@@ -189,7 +197,8 @@ mod import_syntax {
                         ...Frag1
                     }
                 }
-                "#
+                "#,
+                0
             )
             .unwrap()
         ));
@@ -207,7 +216,8 @@ mod import_syntax {
                         ...Frag2
                     }
                 }
-                "#
+                "#,
+                0
             )
             .unwrap()
         ));
@@ -225,7 +235,8 @@ mod import_syntax {
                         ...Frag2
                     }
                 }
-                "#
+                "#,
+                0
             )
             .unwrap()
         ));
@@ -243,7 +254,8 @@ mod import_syntax {
                         ...Frag2
                     }
                 }
-                "#
+                "#,
+                0
             )
             .unwrap()
         ));
@@ -260,7 +272,8 @@ mod import_syntax {
                         ...Frag1
                     }
                 }
-                "#
+                "#,
+                0
             )
             .unwrap()
         ));
@@ -280,7 +293,8 @@ mod import_syntax {
                         id
                     }
                 }
-                "#
+                "#,
+                0
             )
             .unwrap()
         ));
@@ -311,7 +325,8 @@ mod definition {
                 scalar String @string
 
                 extend scalar Int @heyhey(foo: \"bar\")
-                "
+                ",
+                0
             )
             .unwrap()
         ));
@@ -341,7 +356,8 @@ mod definition {
                 }
                 extend type Bar implements J & K & L
                 extend type Baz @wow
-                "
+                ",
+                0
             )
             .unwrap()
         ));
@@ -366,7 +382,8 @@ mod definition {
                 }
                 extend interface _Lion implements MyI2 @abc
                 extend interface aiu @heyhey
-                "
+                ",
+                0
             )
             .unwrap()
         ));
@@ -383,7 +400,8 @@ mod definition {
 
                 extend union ABC = D
                 extend union XYZ @xyz
-                "
+                ",
+                0
             )
             .unwrap()
         ));
@@ -403,7 +421,8 @@ mod definition {
 
                 extend enum Ehh { EEEEE, EEEE, \"heyhey\" EEE }
                 extend enum EEE @eeeee
-                "
+                ",
+                0
             )
             .unwrap()
         ));
@@ -433,7 +452,8 @@ mod definition {
                     foo2: String! @foo(num: 2)
                 }
                 extend input Bar @barber
-                "
+                ",
+                0
             )
             .unwrap()
         ));
@@ -450,7 +470,8 @@ mod definition {
                 \"\"\"
                 directive @bar repeatable on INPUT_FIELD_DEFINITION
                 directive @baz(arg1: Int! @arg, arg2: Int! @arg) on INPUT_OBJECT
-                "
+                ",
+                0
             )
             .unwrap()
         ));
@@ -474,7 +495,8 @@ Foo # comment
     # comment
     bar: String! # comment
 }
-"
+",
+                0
             )
             .unwrap()
         ));
@@ -485,5 +507,62 @@ Foo # comment
         let mut writer = JustWriter::new(&mut result);
         value.print_graphql(&mut writer);
         result
+    }
+}
+
+#[cfg(test)]
+mod file_index {
+    use crate::parser::{parse_operation_document, parse_type_system_document};
+    use nitrogql_ast::{
+        operation_ext::ExecutableDefinitionExt,
+        selection_set::Selection,
+        type_system::{TypeDefinition, TypeSystemDefinitionOrExtension},
+    };
+    use nitrogql_error::PositionedError;
+
+    #[test]
+    fn operation_positions_have_given_file() {
+        let doc = parse_operation_document("query Q { foo }", 3).unwrap();
+        assert_eq!(doc.position.file, 3);
+        let ExecutableDefinitionExt::OperationDefinition(op) = &doc.definitions[0] else {
+            panic!("expected an operation");
+        };
+        assert_eq!(op.position.file, 3);
+        assert_eq!(op.name.unwrap().position.file, 3);
+        let Selection::Field(field) = &op.selection_set.selections[0] else {
+            panic!("expected a field");
+        };
+        assert_eq!(field.name.position.file, 3);
+        assert!(!field.name.position.builtin);
+    }
+
+    #[test]
+    fn type_system_positions_have_given_file() {
+        let doc = parse_type_system_document("type Query { foo: String }", 5).unwrap();
+        let TypeSystemDefinitionOrExtension::TypeDefinition(TypeDefinition::Object(def)) =
+            &doc.definitions[0]
+        else {
+            panic!("expected an object type");
+        };
+        assert_eq!(def.position.file, 5);
+        assert_eq!(def.name.position.file, 5);
+        assert_eq!(def.fields[0].name.position.file, 5);
+    }
+
+    #[test]
+    fn parse_error_has_given_file() {
+        let err: PositionedError = parse_operation_document("query {", 7).unwrap_err().into();
+        assert_eq!(err.position().unwrap().file, 7);
+        let err: PositionedError = parse_type_system_document("type {", 2).unwrap_err().into();
+        assert_eq!(err.position().unwrap().file, 2);
+    }
+
+    #[test]
+    fn parses_are_independent() {
+        // The file index of one parse does not leak into the next.
+        let first = parse_operation_document("{ foo }", 1).unwrap();
+        let second = parse_operation_document("{ foo }", 2).unwrap();
+        assert_eq!(first.position.file, 1);
+        assert_eq!(second.position.file, 2);
     }
 }
