@@ -30,6 +30,7 @@ enum Expect {
     /// Both are identical.
     Exact,
     /// Types with fragment references are strictly wider than expanded types.
+    #[allow(dead_code, reason = "no case is known to be wider at the moment")]
     Wider,
 }
 
@@ -240,12 +241,52 @@ const CASES: &[Case] = &[
         expect: Expect::Exact,
     },
     Case {
-        // Branches of the fragment and of the operation are combined as if the variable
-        // could have different values in each.
         name: "same_variable_in_operation_and_fragment",
         main: "query Test($flag: Boolean!) { me { name @include(if: $flag) ...F } }",
         modules: &[("f", "fragment F on User { age @include(if: $flag) }")],
-        expect: Expect::Wider,
+        expect: Expect::Exact,
+    },
+    Case {
+        name: "same_variable_in_operation_and_fragment_with_others",
+        main: "query Test($a: Boolean!, $b: Boolean!, $c: Boolean!) { me { name @include(if: $a) id @skip(if: $b) ...F } }",
+        modules: &[(
+            "f",
+            "fragment F on User { age @include(if: $a) type @include(if: $c) }",
+        )],
+        expect: Expect::Exact,
+    },
+    Case {
+        name: "same_variable_in_two_fragments",
+        main: "query Test($flag: Boolean!) { me { ...F ...G } }",
+        modules: &[
+            ("f", "fragment F on User { age @include(if: $flag) }"),
+            ("g", "fragment G on User { name @skip(if: $flag) }"),
+        ],
+        expect: Expect::Exact,
+    },
+    Case {
+        name: "same_variable_in_skipped_fragment",
+        main: "query Test($flag: Boolean!) { me { id ...F @include(if: $flag) } }",
+        modules: &[("f", "fragment F on User { age @skip(if: $flag) name }")],
+        expect: Expect::Exact,
+    },
+    Case {
+        name: "same_variable_in_nested_merging",
+        main: "query Test($flag: Boolean!) { me { name @include(if: $flag) } ...F }",
+        modules: &[(
+            "f",
+            "fragment F on Query { me { age @include(if: $flag) } }",
+        )],
+        expect: Expect::Exact,
+    },
+    Case {
+        name: "same_variable_in_fragment_chain",
+        main: "query Test($flag: Boolean!) { me { name @include(if: $flag) ...A } }",
+        modules: &[
+            ("a", "fragment A on User { id @include(if: $flag) ...B }"),
+            ("b", "fragment B on User { age @skip(if: $flag) }"),
+        ],
+        expect: Expect::Exact,
     },
     Case {
         name: "variables_in_nested_merging",
@@ -274,7 +315,10 @@ fn write_fragment_ref_cases() {
         "export interface TypedDocumentNode<Result, Variables> {\n  __result?: Result;\n  __variables?: Variables;\n}\n",
     )
     .unwrap();
-    for case in CASES.iter().chain([stress_case(), colocation_case()]) {
+    for case in CASES
+        .iter()
+        .chain([stress_case(), colocation_case(false), colocation_case(true)])
+    {
         write_case(&out_dir.join(case.name), case);
     }
 }
@@ -308,16 +352,18 @@ fn stress_case() -> &'static Case {
 
 /// Case that resembles fragment colocation: operations spread fragments of components,
 /// which spread fragments of their child components.
-fn colocation_case() -> &'static Case {
+/// With `variables`, the operations and the fragments include fields by the same variable.
+fn colocation_case(variables: bool) -> &'static Case {
     let operations = std::env::var("NITROGQL_FRAGMENT_REF_COLOCATION_OPERATIONS")
         .map_or(20, |value| value.parse().unwrap());
     let leak = |s: String| -> &'static str { Box::leak(s.into_boxed_str()) };
     let mut modules = vec![];
     for idx in 0..operations * 2 {
-        let fields = if idx % 2 == 0 {
-            "id title tags"
-        } else {
-            "id body"
+        let fields = match (idx % 2 == 0, variables) {
+            (true, false) => "id title tags",
+            (true, true) => "id title @skip(if: $flag) tags",
+            (false, false) => "id body",
+            (false, true) => "id body @include(if: $flag)",
         };
         modules.push((
             leak(format!("postItem{idx}")),
@@ -328,23 +374,37 @@ fn colocation_case() -> &'static Case {
         modules.push((
             leak(format!("userCard{idx}")),
             leak(format!(
-                "fragment UserCard{idx} on User {{ id name posts {{ ...PostItem{} ...PostItem{} }} }}",
+                "fragment UserCard{idx} on User {{ id name{} posts {{ ...PostItem{} ...PostItem{} }} }}",
+                if variables {
+                    " age @include(if: $flag)"
+                } else {
+                    ""
+                },
                 idx * 2,
                 idx * 2 + 1
             )),
         ));
     }
+    let (variable_definitions, own_fields) = if variables {
+        ("($flag: Boolean!)", " age @skip(if: $flag)")
+    } else {
+        ("", "")
+    };
     let main = (0..operations)
         .map(|idx| {
             format!(
-                "query Q{idx} {{ me {{ id ...UserCard{idx} ...UserCard{} }} posts {{ id ...PostItem{idx} }} }}",
+                "query Q{idx}{variable_definitions} {{ me {{ id{own_fields} ...UserCard{idx} ...UserCard{} }} posts {{ id ...PostItem{idx} }} }}",
                 (idx + 1) % operations
             )
         })
         .collect::<Vec<_>>()
         .join("\n");
     Box::leak(Box::new(Case {
-        name: "colocation",
+        name: if variables {
+            "colocation_variables"
+        } else {
+            "colocation"
+        },
         main: leak(main),
         modules: modules.leak(),
         expect: Expect::Exact,

@@ -40,13 +40,16 @@ type GetMeResult = __Nitrogql.Render<
 
 With `export_fragment_trees`, each module exports `__NitrogqlFragments`, which maps names of
 its fragments to their selection trees: unions of `Branch` types for each concrete object
-type and combination of variable values. Wildcard imports look fragments up in all wildcard
+type and combination of variable values. Branches selected under values of variables carry
+them as a fifth type argument, such as `{ flag: true }`. Wildcard imports look fragments up in all wildcard
 imported modules; `Fragment` gives `any` for fragments that a module does not provide.
 
 The utility types are in `packages/cli/fragment-types.d.ts`, shipped with `@nitrogql/cli`
 so that they always match the printer:
 
 - `MergeFragment` merges a fragment's fields into branches of the same object type, deeply.
+  Branches whose values of a shared variable differ are not merged, as they cannot happen
+  together.
 - `CombineFragments` combines the fragments spread in one selection. The printer combines them
   as a balanced tree, because TypeScript limits the depth of nested instantiations (TS2589).
 - `SkipFragment` handles `@skip`/`@include` on spreads.
@@ -75,21 +78,14 @@ imports. `check.ts` asserts that the types are identical, using the strict `Equa
 
 ## Findings
 
-All 31 cases pass with TypeScript 7.1.0-beta.
+All 37 cases pass with TypeScript 7.1.0-beta.
 
-- **Identical types** (29 cases): fragments on interfaces spread on object types and the other
+- **Identical types** (all cases): fragments on interfaces spread on object types and the other
   way around, nested and list merging, nullable lists, inline fragments inside fragments,
   `__typename`, aliases, chains of fragments across modules, local fragments that spread
   imported ones, `@skip`/`@include` on spreads (constant and variable), variables used inside
-  fragments, and the stress and colocation benchmarks.
-- **Wider types** (2 cases):
-  - When the operation and a fragment use the same variable for `@skip`/`@include`, the
-    reference version cannot tell that the values are the same. It includes combinations
-    that cannot happen. The result is still a supertype of the real one, so it is sound.
-  - `variables_in_nested_merging` shows a bug in the **current** printer:
-    `merge_selection_trees` pairs each branch with only the first branch of the same object
-    type. Combinations are missing, e.g. `age` is typed as absent even when `$y` is true.
-    The reference version gets this right.
+  fragments, the same variable used in the operation and in fragments (directly, nested, in
+  chains of fragments and on skipped spreads), and the stress and colocation benchmarks.
 - **Cost**: resolving the types takes more type instantiations. See below.
 
 ## Type checking cost
@@ -118,6 +114,26 @@ What made the difference:
 
 Tried without gain: an intersection fast path for overlaps on leaves only (checking costs more
 than it saves).
+
+### Variables
+
+`bench.sh` also runs `colocation_variables`, the same project where the operations and both
+kinds of fragments include fields by the same `$flag`. Merging only branches that agree on
+shared variables (#128) measured as follows, in the same run:
+
+| Case                   | Expanded | Ignoring variables (wider) | Matching variables |
+| ---------------------- | -------- | -------------------------- | ------------------ |
+| `colocation`           | 179k     | 539k                       | 542k               |
+| `colocation_variables` | 374k     | 2,356k                     | 1,051k             |
+
+Without variables, the previous helpers measured 528k, so carrying variables costs +2.7%
+(about half of it from intersecting the variables of merged branches). With shared variables, matching them halves the cost, as
+combinations that cannot happen are no longer built.
+
+The pattern for agreeing branches is `{ " $vars": Partial<Vars> & { [name: string]: boolean } }`.
+Without the index signature, the pattern is a weak type, which rejects branches that share no
+variables with it. Tried without gain: excluding branches that match a union of conflicting
+values (552k and 1,113k), and skipping the intersection when one side has no variables.
 
 Merging fragments one at a time nests instantiations, and 50 spreads in one selection
 failed with TS2589. Combining them as a balanced tree removes that limit (tested up to 120).
