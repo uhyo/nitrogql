@@ -213,6 +213,11 @@ fn get_object_type_for_selection_set<'src, S: Text<'src>>(
     let aliased = deep_merge_selection_tree(aliased).map_err(shape_mismatch)?;
     Ok(SelectionTreeBranch {
         type_name: branch.parent_obj.name.to_string(),
+        variables: branch
+            .boolean_variables
+            .iter()
+            .map(|&(name, value)| (name.to_owned(), value))
+            .collect(),
         unaliased_fields: unaliased,
         aliased_fields: aliased,
         fragment_refs: selected.fragment_refs,

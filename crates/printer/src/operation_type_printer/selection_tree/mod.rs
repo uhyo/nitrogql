@@ -22,6 +22,8 @@ pub enum SelectionTree<S> {
 pub struct SelectionTreeBranch<S> {
     /// Name of GraphQL type that this selection corresponds to.
     pub type_name: String,
+    /// Values of boolean variables under which this branch is selected.
+    pub variables: Vec<(String, bool)>,
     /// List of unaliased fields that are selected.
     pub unaliased_fields: Vec<SelectionTreeField<S>>,
     /// List of aliased fields that are selected.
