@@ -1,6 +1,5 @@
-use std::collections::BTreeMap;
+use std::cell::RefCell;
 
-use itertools::Itertools;
 use nitrogql_config_file::{Config, GenerateMode};
 use nitrogql_utils::clone_into;
 use sourcemap_writer::SourceMapWriter;
@@ -14,7 +13,13 @@ use crate::{
     operation_js_printer::{print_fragment_runtime, print_operation_runtime},
 };
 
-use super::type_source::OperationTypeSource;
+use super::{
+    fragment_imports::{
+        FRAGMENTS_EXPORT_NAME, FragmentImport, SourceNode, UTILITIES_NAMESPACE, import_namespace,
+    },
+    type_source::OperationTypeSource,
+};
+use crate::ts_types::TSType;
 
 #[derive(Clone, Debug)]
 pub struct OperationTypePrinterOptions {
@@ -35,17 +40,14 @@ pub struct OperationTypePrinterOptions {
     pub fragment_type_suffix: String,
     /// Whether to allow undefined as input value.
     pub allow_undefined_as_optional_input: bool,
-    /// Fragments defined in other modules, mapped to the module specifiers to import them from.
-    /// Spreads of these fragments refer to their imported selection trees instead of being
+    /// Fragments imported from other modules.
+    /// Spreads of them refer to selection trees exported from those modules instead of being
     /// expanded, so that printed types do not depend on contents of other modules.
-    pub external_fragments: BTreeMap<String, String>,
-    /// Whether to export selection trees of fragments, so that other modules can refer to them.
+    pub fragment_imports: Vec<FragmentImport>,
+    /// Whether to export selection trees of fragments, so that other modules can import them.
     pub export_fragment_trees: bool,
-}
-
-/// Name of the exported selection tree type of given fragment.
-pub fn fragment_tree_type_name(fragment_name: &str) -> String {
-    format!("__NitrogqlTree_{fragment_name}")
+    /// Source of utility types for merging imported fragments to import from.
+    pub fragment_utilities_source: String,
 }
 
 impl Default for OperationTypePrinterOptions {
@@ -60,8 +62,9 @@ impl Default for OperationTypePrinterOptions {
             operation_result_type_suffix: "Result".to_owned(),
             fragment_type_suffix: "".to_owned(),
             allow_undefined_as_optional_input: true,
-            external_fragments: BTreeMap::new(),
+            fragment_imports: vec![],
             export_fragment_trees: false,
+            fragment_utilities_source: "@nitrogql/cli/fragment-types".to_owned(),
         }
     }
 }
@@ -97,11 +100,17 @@ impl OperationTypePrinterOptions {
 pub struct OperationTypePrinterVisitor<T> {
     options: OperationTypePrinterOptions,
     types: T,
+    /// Selection trees of printed fragments, exported at the end of the module.
+    fragment_trees: RefCell<Vec<(String, TSType)>>,
 }
 
 impl<T: OperationTypeSource> OperationTypePrinterVisitor<T> {
     pub fn new(options: OperationTypePrinterOptions, types: T) -> Self {
-        Self { options, types }
+        Self {
+            options,
+            types,
+            fragment_trees: RefCell::new(vec![]),
+        }
     }
 
     /// Consumes the visitor and returns the type source.
@@ -127,25 +136,46 @@ impl<T: OperationTypeSource> OperationPrinterVisitor for OperationTypePrinterVis
         } else {
             writer.write("\n");
         }
-        let modules = self
-            .options
-            .external_fragments
-            .iter()
-            .map(|(name, module)| (module, name))
-            .into_group_map();
-        for (module, names) in modules.into_iter().sorted() {
-            let names = names
-                .into_iter()
-                .sorted()
-                .map(|name| fragment_tree_type_name(name))
-                .join(", ");
-            writeln!(writer, "import type {{ {names} }} from \"{module}\";");
-        }
-        if !self.options.external_fragments.is_empty() {
+        if !self.options.fragment_imports.is_empty() || self.options.export_fragment_trees {
+            writeln!(
+                writer,
+                "import type * as {UTILITIES_NAMESPACE} from \"{}\";",
+                self.options.fragment_utilities_source
+            );
+            for (index, import) in self.options.fragment_imports.iter().enumerate() {
+                write!(writer, "import type * as {} from ", import_namespace(index));
+                let specifier = format!("\"{}\"", import.module);
+                match import.source {
+                    Some((ref position, ref text)) => {
+                        writer.write_for(&specifier, &SourceNode { position, text })
+                    }
+                    None => writer.write(&specifier),
+                }
+                writer.write(";\n");
+            }
             writer.write("\n");
         }
     }
-    fn print_trailer(&self, _writer: &mut impl SourceMapWriter) {}
+    fn print_trailer(&self, writer: &mut impl SourceMapWriter) {
+        if !self.options.export_fragment_trees {
+            return;
+        }
+        let fields = self
+            .fragment_trees
+            .take()
+            .into_iter()
+            .map(|(name, tree)| crate::ts_types::ObjectField {
+                key: name.into(),
+                r#type: tree,
+                description: None,
+                optional: false,
+                readonly: false,
+            })
+            .collect();
+        write!(writer, "export type {FRAGMENTS_EXPORT_NAME} = ");
+        TSType::Object(fields).print_type(writer);
+        writer.write(";\n");
+    }
     fn print_operation_definition(
         &self,
         context: PrintOperationContext,
@@ -248,13 +278,10 @@ impl<T: OperationTypeSource> OperationPrinterVisitor for OperationTypePrinterVis
         writer.write(";\n\n");
 
         if self.options.export_fragment_trees {
-            write!(
-                writer,
-                "export type {} = ",
-                fragment_tree_type_name(fragment.name.name)
-            );
-            self.types.fragment_tree_type(fragment)?.print_type(writer);
-            writer.write(";\n\n");
+            let tree = self.types.fragment_tree_type(fragment)?;
+            self.fragment_trees
+                .borrow_mut()
+                .push((fragment.name.name.to_owned(), tree));
         }
 
         // runtime value

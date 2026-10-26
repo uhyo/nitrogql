@@ -4,18 +4,19 @@ use nitrogql_config_file::TypeTarget;
 use crate::ts_types::{ObjectField, TSType, ts_types_util::ts_union};
 
 use super::{
-    super::visitor::fragment_tree_type_name, SelectionTree, SelectionTreeBranch,
-    SelectionTreeField, SelectionTreeLeaf,
+    super::fragment_imports::{FragmentImport, UTILITIES_NAMESPACE, imported_fragment_tree},
+    SelectionTree, SelectionTreeBranch, SelectionTreeField, SelectionTreeLeaf,
 };
 
 #[derive(Debug, Copy, Clone)]
 pub struct GenerateSelectionTreeTypeContext<'a> {
     pub schema_root_namespace: &'a str,
+    pub fragment_imports: &'a [FragmentImport],
 }
 
 /// Generate a TypeScript representation of the selection tree.
 ///
-/// Trees that refer to fragments in other modules are printed unrendered,
+/// Trees that refer to imported fragments are printed unrendered,
 /// and the fragments are merged and the result is rendered at the type level.
 pub fn generate_selection_tree_type<'src, S: Text<'src>>(
     context: &GenerateSelectionTreeTypeContext,
@@ -23,14 +24,14 @@ pub fn generate_selection_tree_type<'src, S: Text<'src>>(
 ) -> TSType {
     if tree.has_fragment_refs() {
         return TSType::TypeFunc(
-            Box::new(schema_utility(context, "__Render")),
+            Box::new(utility("Render")),
             vec![generate_unrendered_type(context, tree, false)],
         );
     }
     generate_selection_tree_type_impl(context, tree, false)
 }
 
-/// Generate the unrendered type of given branches, which is a union of `__Branch` types.
+/// Generate the unrendered type of given branches, which is a union of `Branch` types.
 /// Other modules merge this type into their selections.
 pub fn generate_unrendered_branches_type<'src, S: Text<'src>>(
     context: &GenerateSelectionTreeTypeContext,
@@ -94,7 +95,7 @@ fn generate_unrendered_branch_type<'src, S: Text<'src>>(
         )
     };
     let branch_type = TSType::TypeFunc(
-        Box::new(schema_utility(context, "__Branch")),
+        Box::new(utility("Branch")),
         vec![
             TSType::StringLiteral(branch.type_name.clone()),
             TSType::NamespaceMember3(
@@ -110,20 +111,20 @@ fn generate_unrendered_branch_type<'src, S: Text<'src>>(
         .fragment_refs
         .iter()
         .map(|fragment_ref| {
-            let tree = TSType::Raw(fragment_tree_type_name(&fragment_ref.name.to_string()));
+            let tree = TSType::Raw(imported_fragment_tree(
+                context.fragment_imports,
+                &fragment_ref.name.to_string(),
+            ));
             if fragment_ref.skipped {
-                TSType::TypeFunc(
-                    Box::new(schema_utility(context, "__SkipFragment")),
-                    vec![tree],
-                )
+                TSType::TypeFunc(Box::new(utility("SkipFragment")), vec![tree])
             } else {
                 tree
             }
         })
         .collect::<Vec<_>>();
-    match combine_fragment_trees(context, trees) {
+    match combine_fragment_trees(trees) {
         Some(fragments) => TSType::TypeFunc(
-            Box::new(schema_utility(context, "__MergeFragment")),
+            Box::new(utility("MergeFragment")),
             vec![branch_type, fragments],
         ),
         None => branch_type,
@@ -132,19 +133,15 @@ fn generate_unrendered_branch_type<'src, S: Text<'src>>(
 
 /// Combines selection trees of fragments into one.
 /// They are combined as a balanced tree, as TypeScript limits the depth of nested instantiations.
-fn combine_fragment_trees(
-    context: &GenerateSelectionTreeTypeContext,
-    mut trees: Vec<TSType>,
-) -> Option<TSType> {
+fn combine_fragment_trees(mut trees: Vec<TSType>) -> Option<TSType> {
     while trees.len() > 1 {
         let mut pairs = trees.into_iter();
         trees = std::iter::from_fn(|| {
             let left = pairs.next()?;
             Some(match pairs.next() {
-                Some(right) => TSType::TypeFunc(
-                    Box::new(schema_utility(context, "__CombineFragments")),
-                    vec![left, right],
-                ),
+                Some(right) => {
+                    TSType::TypeFunc(Box::new(utility("CombineFragments")), vec![left, right])
+                }
                 None => left,
             })
         })
@@ -153,8 +150,9 @@ fn combine_fragment_trees(
     trees.pop()
 }
 
-fn schema_utility(context: &GenerateSelectionTreeTypeContext, name: &str) -> TSType {
-    TSType::NamespaceMember(context.schema_root_namespace.into(), name.into())
+/// Utility type for merging imported fragments.
+fn utility(name: &str) -> TSType {
+    TSType::NamespaceMember(UTILITIES_NAMESPACE.into(), name.into())
 }
 
 fn generate_selection_tree_type_impl<'src, S: Text<'src>>(

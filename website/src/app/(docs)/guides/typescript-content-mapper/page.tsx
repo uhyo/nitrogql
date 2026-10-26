@@ -137,6 +137,35 @@ documents: ./app/**/*.graphql
           schema type definition file.
         </p>
 
+        <h3 id="fragment-imports">Fragment Imports</h3>
+        <p>
+          Fragments imported with{" "}
+          <Link href="/references/syntax-import">
+            <code>#import</code>
+          </Link>{" "}
+          are not copied into the importing file. Instead, the types of the
+          importing file import the fragment from the imported file, and
+          TypeScript merges them into the types of operations. When you edit a
+          fragment, TypeScript updates the files that import it, like any other
+          module.
+        </p>
+        <p>
+          Because of this, the content mapper does not validate spreads of
+          imported fragments, such as whether the imported file defines the
+          fragment or whether its type condition can apply. Run{" "}
+          <code>nitrogql check</code> (for example in CI) to validate them.
+          Errors in a fragment are reported in the file that defines it; while
+          the fragment has errors, selections that spread it are typed as{" "}
+          <code>any</code>.
+        </p>
+        <p>
+          Merging is done by TypeScript&apos;s type checker, so operations that
+          spread many imported fragments take more time to type-check than
+          operations without them. The utility types for merging are provided by{" "}
+          <code>@nitrogql/cli</code>, which therefore needs to be resolvable
+          from your GraphQL files.
+        </p>
+
         <h3 id="options">Options</h3>
         <p>
           The content mapper accepts options via the <code>options</code> field

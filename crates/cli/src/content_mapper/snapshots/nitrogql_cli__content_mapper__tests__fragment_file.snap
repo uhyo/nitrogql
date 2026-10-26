@@ -5,12 +5,19 @@ expression: "print_result(&result, FRAGMENT, &root)"
 import type { TypedDocumentNode } from "@graphql-typed-document-node/core";
 import type * as Schema from "../schema/a.graphql";
 
+import type * as __Nitrogql from "@nitrogql/cli/fragment-types";
+
 export type UserName = Schema.__SelectionSet<Schema.__OperationOutput.User, {
   name: Schema.__OperationOutput.String;
 }, {}>;
 
 export declare const UserName: TypedDocumentNode<UserName, never>;
 
+export type __NitrogqlFragments = {
+  UserName: __Nitrogql.Branch<"User", Schema.__OperationOutput.User, {
+    name: Schema.__OperationOutput.String;
+  }, {}>;
+};
 // mapping: "UserName" -> "UserName" (Verbatim)
 // mapping: "UserName" -> "UserName" (Verbatim)
 // mapping: "UserName" -> "UserName" (Verbatim)

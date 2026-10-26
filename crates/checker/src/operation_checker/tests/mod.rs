@@ -593,6 +593,46 @@ mod fragments {
     }
 
     #[test]
+    fn imported_fragment() {
+        let schema = type_system();
+        let doc = parse_operation_document(
+            "
+            query { user { ...Imported ...Unknown } }
+        ",
+            0,
+        )
+        .unwrap();
+        let (doc, _) = resolve_operation_extensions(doc).unwrap();
+        let is_imported = |name: &str| name == "Imported";
+        let context = OperationCheckContext::new(&schema).with_imported_fragments(&is_imported);
+        let errors = check_operation_document(&doc, &context)
+            .into_iter()
+            .map(|err| err.message.to_string())
+            .collect::<Vec<_>>();
+        assert_eq!(errors, vec!["Fragment 'Unknown' is not defined"]);
+    }
+
+    #[test]
+    fn fragment_not_spread() {
+        // Fragments that are not spread from operations are checked on their own.
+        // Variables are not known, so they are not checked.
+        let schema = type_system();
+        let doc = parse_operation_document(
+            "
+            fragment A on Query { foo nam users(name: $name) { id } }
+            fragment B on Query { ...A }
+        ",
+            0,
+        )
+        .unwrap();
+        let errors = test_check(schema, doc)
+            .into_iter()
+            .map(|err| err.message.to_string())
+            .collect::<Vec<_>>();
+        assert_eq!(errors, vec!["Field 'nam' is not found on type 'Query'"]);
+    }
+
+    #[test]
     fn invalid_fragment_target() {
         let schema = type_system();
         let doc = parse_operation_document(

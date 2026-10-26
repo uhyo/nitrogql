@@ -142,13 +142,14 @@ describe("content mapper protocol", { timeout: 60_000 }, () => {
       "graphql.config.yaml",
       "src/schema/schema.graphql",
       "src/schema/user.graphql",
-      // Operation files are watched, as adding an import to one makes it depend on another file.
-      "src/app/getUser.graphql",
-      "src/app/updateName.graphql",
-      "src/app/userFields.graphql",
     ]) {
       assert.ok(watched.includes(file), `${file} is watched: ${watched}`);
     }
+    // Operation files are not watched; TypeScript tracks imports between them.
+    assert.ok(
+      !watched.includes("src/app/userFields.graphql"),
+      `operation files are not watched: ${watched}`,
+    );
   });
 
   it("transform", async () => {

@@ -1,39 +1,44 @@
-# Prototype: referring to fragments in other modules
+# Fragment imports: type equality harness
 
-The content mapper currently expands `#import`ed fragments into each importing file. As a
-result, the output of a file depends on the contents of other files, and the mapper has to
-track those dependencies itself (`config_identity`, watching every operation file).
+The content mapper does not expand `#import`ed fragments into importing files. Instead, each
+module exports selection trees of its fragments, and importing modules merge them at the type
+level. This way, the output of a file does not depend on contents of other files, and
+TypeScript tracks the dependencies.
 
-This prototype checks whether types can instead *refer* to fragments in other modules through
-TypeScript imports, so that TypeScript tracks the dependencies, while keeping types the same.
+This directory checks that the merged types are identical to the types printed for fully
+expanded selections, and measures the cost of type checking them.
 
 ## How it works
 
-With `OperationTypePrinterOptions::external_fragments`, spreads of fragments defined in other
-modules are not expanded. The printer imports their selection trees and prints selections in
-an unrendered form instead:
+With `OperationTypePrinterOptions::fragment_imports`, spreads of imported fragments are not
+expanded. The printer imports the modules as namespaces and prints selections in an
+unrendered form:
 
 ```ts
-import type { __NitrogqlTree_F } from "./f";
+import type * as __Nitrogql from "@nitrogql/cli/fragment-types";
+import type * as __NitrogqlImport0 from "./userFields.graphql";
 
-export type TestResult = Schema.__Render<Schema.__MergeFragment<
-  Schema.__Branch<"Query", Schema.__OperationOutput.Query, { me: Schema.__Branch<"User", ...> }, {}>,
-  __NitrogqlTree_F
->>;
+type GetMeResult = __Nitrogql.Render<__Nitrogql.Branch<"Query", Schema.__OperationOutput.Query, {
+  me: __Nitrogql.MergeFragment<
+    __Nitrogql.Branch<"User", Schema.__OperationOutput.User, { id: Schema.__OperationOutput.ID }, {}>,
+    __Nitrogql.Fragment<__NitrogqlImport0.__NitrogqlFragments, "UserFields">
+  >;
+}, {}>>;
 ```
 
-With `export_fragment_trees`, each fragment also exports its selection tree
-(`__NitrogqlTree_<Name>`), a union of `__Branch` types for each concrete object type and
-combination of variable values.
+With `export_fragment_trees`, each module exports `__NitrogqlFragments`, which maps names of
+its fragments to their selection trees: unions of `Branch` types for each concrete object
+type and combination of variable values. Wildcard imports look fragments up in all wildcard
+imported modules; `Fragment` gives `any` for fragments that a module does not provide.
 
-Utility types are emitted into the schema module with
-`SchemaTypePrinterOptions::emit_fragment_merge_utilities`:
+The utility types are in `packages/cli/fragment-types.d.ts`, shipped with `@nitrogql/cli`
+so that they always match the printer:
 
-- `__MergeFragment` merges a fragment's fields into branches of the same object type, deeply.
-- `__CombineFragments` combines the fragments spread in one selection. The printer combines them
+- `MergeFragment` merges a fragment's fields into branches of the same object type, deeply.
+- `CombineFragments` combines the fragments spread in one selection. The printer combines them
   as a balanced tree, because TypeScript limits the depth of nested instantiations (TS2589).
-- `__SkipFragment` handles `@skip`/`@include` on spreads.
-- `__Render` turns the result into the same `__SelectionSet` types the expanding printer prints.
+- `SkipFragment` handles `@skip`/`@include` on spreads.
+- `Render` turns the result into the same types the expanding printer prints.
 
 Fields omitted by `@skip`/`@include` are printed as `key?: never` in unrendered selections too.
 Merging maps over the keys of both sides, which keeps a field optional only if both omit it,
@@ -51,8 +56,8 @@ node measure.cjs [case]                # compare costs of resolving the types (T
 
 Cases are defined in `crates/printer/src/operation_type_printer/tests/fragment_refs.rs`.
 Each case is printed with all fragments expanded into one module (`expanded.ts`), and with
-fragments in separate modules (`main.ts` and others). `check.ts` asserts that the types are
-identical, using the strict `Equal` check.
+fragments in separate modules (`main.ts` and others), imported with specific and wildcard
+imports. `check.ts` asserts that the types are identical, using the strict `Equal` check.
 
 ## Findings
 
@@ -103,13 +108,10 @@ than it saves).
 Merging fragments one at a time nests instantiations, and 50 spreads in one selection
 failed with TS2589. Combining them as a balanced tree removes that limit (tested up to 120).
 
-## Not covered yet
+## Not covered
 
-- Validation: the checker still needs imported fragments for spread applicability, variables
-  used in fragments, and overlapping fields.
-- Wiring into the content mapper: emitting the imports from `#import` (`.graphql` specifiers;
-  wildcard imports need namespace imports), removing imported contents from `config_identity`.
-- Fallback: a fragment with errors exports `any` as its tree, which makes branches it is merged
-  into `any`. No case covers this yet.
-- Spreads of fragments that come from transitive imports (the current resolver makes them
-  visible to the importing file).
+- A fragment with errors exports `any` as its tree, which makes branches it is merged into
+  `any`. This is not compared with expanded types, which make the whole definition `any`.
+- Fragments that a file spreads without importing them, relying on an imported file importing
+  them (`nitrogql check` resolves imports transitively): the content mapper reports them as
+  unknown fragments, or types them as `any` when the file has wildcard imports.

@@ -5,11 +5,12 @@ expression: "print_result(&result, operation, &root)"
 import type { TypedDocumentNode } from "@graphql-typed-document-node/core";
 import type * as Schema from "../schema/a.graphql";
 
-type GetMeResult = Schema.__SelectionSet<Schema.__OperationOutput.Query, {
-  me: Schema.__SelectionSet<Schema.__OperationOutput.User, {
-    name: Schema.__OperationOutput.String;
-  }, {}>;
-}, {}>;
+import type * as __Nitrogql from "@nitrogql/cli/fragment-types";
+import type * as __NitrogqlImport0 from "./fragment.graphql";
+
+type GetMeResult = __Nitrogql.Render<__Nitrogql.Branch<"Query", Schema.__OperationOutput.Query, {
+  me: __Nitrogql.MergeFragment<__Nitrogql.Branch<"User", Schema.__OperationOutput.User, {}, {}>, (__Nitrogql.Fragment<__NitrogqlImport0.__NitrogqlFragments, "UserName">)>;
+}, {}>>;
 
 type GetMeVariables = {};
 
@@ -31,12 +32,10 @@ export type UserAge = any;
 
 export declare const UserAge: TypedDocumentNode<UserAge, never>;
 
-type UserName = Schema.__SelectionSet<Schema.__OperationOutput.User, {
-  name: Schema.__OperationOutput.String;
-}, {}>;
-
-declare const UserName: TypedDocumentNode<UserName, never>;
-
+export type __NitrogqlFragments = {
+  UserAge: any;
+};
+// mapping: "\"./fragment.graphql\"" -> "\"./fragment.graphql\"" (Verbatim)
 // mapping: "GetMeResult" -> "GetMe" (Atom)
 // mapping: "GetMeVariables" -> "GetMe" (Atom)
 // mapping: "GetMeQuery" -> "GetMe" (Atom)

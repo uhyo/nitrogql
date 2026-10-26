@@ -1,12 +1,13 @@
-//! Prototype harness for referring to fragments in other modules instead of expanding them.
+//! Harness for checking types of imported fragments, which are merged at the type level.
 //!
-//! Each case is printed twice: once with all fragments expanded into one module (as today),
-//! and once with fragments in separate modules that refer to each other's selection trees.
+//! Each case is printed twice: once with all fragments expanded into one module
+//! (as `nitrogql generate` does), and once with fragments in separate modules that import
+//! each other's selection trees (as the content mapper does).
 //! The generated `check.ts` of each case asserts that both give the same types.
 //!
 //! Run `prototypes/fragment-refs/run.sh` to generate the cases and type-check them.
 
-use std::{collections::BTreeMap, fmt::Write as _, fs, path::Path};
+use std::{fmt::Write as _, fs, path::Path};
 
 use nitrogql_ast::{
     OperationDocument,
@@ -19,7 +20,7 @@ use sourcemap_writer::JustWriter;
 use super::type_system;
 use crate::{
     OperationTypePrinterOptions, SchemaTypePrinter, SchemaTypePrinterOptions,
-    operation_base_printer::options::OperationBasePrinterOptions,
+    fragment_imports::FragmentImport, operation_base_printer::options::OperationBasePrinterOptions,
     print_types_for_operation_document,
 };
 
@@ -266,6 +267,11 @@ fn write_fragment_ref_cases() {
     fs::create_dir_all(out_dir).unwrap();
     fs::write(out_dir.join("schema.ts"), print_schema()).unwrap();
     fs::write(
+        out_dir.join("fragment-types.d.ts"),
+        include_str!("../../../../../packages/cli/fragment-types.d.ts"),
+    )
+    .unwrap();
+    fs::write(
         out_dir.join("typed-document-node.ts"),
         "export interface TypedDocumentNode<Result, Variables> {\n  __result?: Result;\n  __variables?: Variables;\n}\n",
     )
@@ -351,11 +357,7 @@ fn print_schema() -> String {
     let schema = type_system();
     let mut result = String::new();
     let mut writer = JustWriter::new(&mut result);
-    let options = SchemaTypePrinterOptions {
-        emit_fragment_merge_utilities: true,
-        ..Default::default()
-    };
-    SchemaTypePrinter::new(options, &mut writer)
+    SchemaTypePrinter::new(SchemaTypePrinterOptions::default(), &mut writer)
         .print_document(&schema)
         .unwrap();
     result
@@ -370,17 +372,19 @@ fn write_case(dir: &Path, case: &Case) {
         .enumerate()
         .map(|(idx, (name, source))| (*name, parse(source, idx + 1)))
         .collect::<Vec<_>>();
-    // Fragments of other modules, by name, with the module that defines them.
-    let fragment_modules = modules
-        .iter()
-        .flat_map(|(module, doc)| fragment_names(doc).map(move |name| (name, *module)))
-        .collect::<BTreeMap<_, _>>();
-    let external_fragments = |except: Option<&str>| {
-        fragment_modules
+    // Each module imports fragments of all other modules.
+    // Every other module is imported with a wildcard import, so that both kinds are covered.
+    let fragment_imports = |except: Option<&str>| {
+        modules
             .iter()
-            .filter(|(_, module)| Some(**module) != except)
-            .map(|(name, module)| (name.to_string(), format!("./{module}")))
-            .collect::<BTreeMap<_, _>>()
+            .enumerate()
+            .filter(|(_, (module, _))| Some(*module) != except)
+            .map(|(idx, (module, doc))| FragmentImport {
+                module: format!("./{module}"),
+                fragments: (idx % 2 == 0).then(|| fragment_names(doc).map(str::to_owned).collect()),
+                source: None,
+            })
+            .collect::<Vec<_>>()
     };
 
     // All fragments expanded into one module, like `#import` does today.
@@ -397,13 +401,13 @@ fn write_case(dir: &Path, case: &Case) {
     // Fragments in other modules are referred to.
     fs::write(
         dir.join("main.ts"),
-        print(&main, Some(external_fragments(None))),
+        print(&main, Some(fragment_imports(None))),
     )
     .unwrap();
     for (module, doc) in modules.iter() {
         fs::write(
             dir.join(format!("{module}.ts")),
-            print(doc, Some(external_fragments(Some(module)))),
+            print(doc, Some(fragment_imports(Some(module)))),
         )
         .unwrap();
     }
@@ -422,9 +426,9 @@ fn fragment_names<'a>(doc: &'a OperationDocument) -> impl Iterator<Item = &'a st
     })
 }
 
-/// Prints given document. Modules that refer to fragments in other modules are given
-/// `external_fragments`, and export their selection trees as well.
-fn print(doc: &OperationDocument, external_fragments: Option<BTreeMap<String, String>>) -> String {
+/// Prints given document. Modules that import fragments from other modules are given
+/// `fragment_imports`, and export their selection trees as well.
+fn print(doc: &OperationDocument, fragment_imports: Option<Vec<FragmentImport>>) -> String {
     let schema = type_system();
     let schema = ast_to_type_system(&schema);
     let options = OperationTypePrinterOptions {
@@ -435,8 +439,9 @@ fn print(doc: &OperationDocument, external_fragments: Option<BTreeMap<String, St
         },
         schema_source: "../schema".to_owned(),
         typed_document_node_source: "../typed-document-node".to_owned(),
-        export_fragment_trees: external_fragments.is_some(),
-        external_fragments: external_fragments.unwrap_or_default(),
+        export_fragment_trees: fragment_imports.is_some(),
+        fragment_imports: fragment_imports.unwrap_or_default(),
+        fragment_utilities_source: "../fragment-types".to_owned(),
         ..Default::default()
     };
     let mut result = String::new();

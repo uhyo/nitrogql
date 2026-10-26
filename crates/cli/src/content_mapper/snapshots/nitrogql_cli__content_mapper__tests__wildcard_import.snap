@@ -1,0 +1,27 @@
+---
+source: crates/cli/src/content_mapper/tests.rs
+expression: "print_result(&result, operation, &root)"
+---
+import type { TypedDocumentNode } from "@graphql-typed-document-node/core";
+import type * as Schema from "../schema/a.graphql";
+
+import type * as __Nitrogql from "@nitrogql/cli/fragment-types";
+import type * as __NitrogqlImport0 from "./fragment.graphql";
+import type * as __NitrogqlImport1 from "./other.graphql";
+
+type GetMeResult = __Nitrogql.Render<__Nitrogql.Branch<"Query", Schema.__OperationOutput.Query, {
+  me: __Nitrogql.MergeFragment<__Nitrogql.Branch<"User", Schema.__OperationOutput.User, {}, {}>, __Nitrogql.CombineFragments<(__Nitrogql.Fragment<__NitrogqlImport0.__NitrogqlFragments, "UserName">), (__Nitrogql.Fragment<__NitrogqlImport1.__NitrogqlFragments, "UserAge">)>>;
+}, {}>>;
+
+type GetMeVariables = {};
+
+declare const GetMeQuery: TypedDocumentNode<GetMeResult, GetMeVariables>;
+
+export { GetMeQuery as default };
+
+export type __NitrogqlFragments = {};
+// mapping: "\"./fragment.graphql\"" -> "\"./fragment.graphql\"" (Verbatim)
+// mapping: "\"./other.graphql\"" -> "\"other.graphql\"" (Atom)
+// mapping: "GetMeResult" -> "GetMe" (Atom)
+// mapping: "GetMeVariables" -> "GetMe" (Atom)
+// mapping: "GetMeQuery" -> "GetMe" (Atom)

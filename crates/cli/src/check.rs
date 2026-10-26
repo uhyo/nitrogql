@@ -1,4 +1,4 @@
-use std::{borrow::Cow, path::PathBuf};
+use std::{borrow::Cow, collections::HashSet, path::PathBuf};
 
 use itertools::Itertools;
 use log::{debug, info};
@@ -112,6 +112,8 @@ fn check_impl<'src>(input: CheckImplInput<'src, '_>) -> CheckImplOutput<'src> {
     };
 
     let context = OperationCheckContext::new(&schema);
+    // Fragments are checked in every document that imports them, so errors may be duplicated.
+    let mut seen_errors = HashSet::new();
     let errors = operations
         .iter()
         .flat_map(|(_, doc, _, file_by_index)| {
@@ -119,6 +121,7 @@ fn check_impl<'src>(input: CheckImplInput<'src, '_>) -> CheckImplOutput<'src> {
                 .into_iter()
                 .map(move |err| (err, file_by_index))
         })
+        .filter(|(err, _)| seen_errors.insert((err.position, err.message.to_string())))
         .collect::<Vec<_>>();
 
     if !errors.is_empty() {

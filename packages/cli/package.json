@@ -8,6 +8,9 @@
     ".": {
       "types": "./types.d.ts",
       "default": "./bin/main.mjs"
+    },
+    "./fragment-types": {
+      "types": "./fragment-types.d.ts"
     }
   },
   "repository": {

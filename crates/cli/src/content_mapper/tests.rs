@@ -271,11 +271,15 @@ fn utf16_positions() {
     let result = transform(&project, &path, OPERATION, PositionEncoding::Utf16);
     let utf8_result = transform(&project, &path, OPERATION, PositionEncoding::Utf8);
     let original_start = OPERATION.find("GetMe").unwrap();
+    let index = utf8_result
+        .mappings
+        .iter()
+        .position(|mapping| mapping.2 == original_start)
+        .unwrap();
     // 😀 is 4 bytes in UTF-8 and 2 code units in UTF-16.
-    assert_eq!(utf8_result.mappings[0].2, original_start);
-    assert_eq!(result.mappings[0].2, original_start - 2);
+    assert_eq!(result.mappings[index].2, original_start - 2);
     // generated code is ASCII only
-    assert_eq!(result.mappings[0].0, utf8_result.mappings[0].0);
+    assert_eq!(result.mappings[index].0, utf8_result.mappings[index].0);
 }
 
 #[test]
@@ -314,106 +318,77 @@ fn watched_files_and_identity() {
     assert_eq!(
         watched_files(&project, &root),
         vec![
-            "app/fragment.graphql",
-            "app/operation.graphql",
             "graphql.config.yaml",
             "schema/a.graphql",
-            "schema/b.graphql",
+            "schema/b.graphql"
         ]
     );
     let identity = project.config_identity.clone();
     assert_eq!(open(&root).config_identity, identity);
 
-    // Changes to imported files change identity
+    // Operation files do not affect other files, as imported fragments are not expanded.
     fs::write(
         root.join("app/fragment.graphql"),
         "fragment UserName on User { id }",
     )
     .unwrap();
-    let identity2 = open(&root).config_identity.clone();
-    assert_ne!(identity2, identity);
-    // but changes to other operation files do not, unless they change imports.
     fs::write(
         root.join("app/operation.graphql"),
-        OPERATION.replace("    id\n", "    id\n    age\n"),
-    )
-    .unwrap();
-    assert_eq!(open(&root).config_identity, identity2);
-}
-
-#[test]
-fn new_import() {
-    let mut files = default_files();
-    files.push((
-        "app/other.graphql",
-        "fragment UserAge on User {\n  age\n}\n",
-    ));
-    let root = setup("new_import", &files);
-    // Files are watched before they are imported, so that adding an import reopens the project.
-    let identity = open(&root).config_identity;
-    assert!(
-        open(&root)
-            .watched_files
-            .contains(&root.join("app/other.graphql"))
-    );
-    // Content of a file that is not imported does not affect the identity.
-    fs::write(
-        root.join("app/other.graphql"),
-        "fragment UserAge on User {\n  id\n}\n",
+        format!("#import * from \"./other.graphql\"\n{OPERATION}"),
     )
     .unwrap();
     assert_eq!(open(&root).config_identity, identity);
-
+    // Schema files do.
     fs::write(
-        root.join("app/operation.graphql"),
-        format!("#import UserAge from \"./other.graphql\"\n{OPERATION}"),
-    )
-    .unwrap();
-    let identity2 = open(&root).config_identity;
-    assert_ne!(identity2, identity);
-    // Once imported, content of the file affects the identity.
-    fs::write(
-        root.join("app/other.graphql"),
-        "fragment UserAge on User {\n  age\n}\n",
-    )
-    .unwrap();
-    assert_ne!(open(&root).config_identity, identity2);
-}
-
-#[test]
-fn imports_outside_documents() {
-    let mut files = default_files();
-    files[4] = (
-        "fragments/fragment.graphql",
-        "#import UserAge from \"./age.graphql\"\nfragment UserName on User {\n  name\n  ...UserAge\n}\n",
-    );
-    files.push((
-        "fragments/age.graphql",
-        "fragment UserAge on User {\n  age\n}\n",
-    ));
-    let operation = OPERATION.replace("./fragment.graphql", "../fragments/fragment.graphql");
-    files[5] = ("app/operation.graphql", &operation);
-    let root = setup("imports_outside_documents", &files);
-    let project = open(&root);
-    // Files imported transitively are watched, even if they are not matched by `documents`.
-    assert_eq!(
-        watched_files(&project, &root),
-        vec![
-            "app/operation.graphql",
-            "fragments/age.graphql",
-            "fragments/fragment.graphql",
-            "graphql.config.yaml",
-            "schema/a.graphql",
-            "schema/b.graphql",
-        ]
-    );
-    let identity = project.config_identity;
-    fs::write(
-        root.join("fragments/age.graphql"),
-        "fragment UserAge on User {\n  id\n}\n",
+        root.join("schema/b.graphql"),
+        USER_SCHEMA.replace("age: Int", "age: Int!"),
     )
     .unwrap();
     assert_ne!(open(&root).config_identity, identity);
+}
+
+#[test]
+fn wildcard_import() {
+    let mut files = default_files();
+    let operation = r#"#import UserName from "./fragment.graphql"
+#import * from "other.graphql"
+query GetMe {
+  me {
+    ...UserName
+    ...UserAge
+  }
+}
+"#;
+    files[5] = ("app/operation.graphql", operation);
+    let root = setup("wildcard_import", &files);
+    let project = open(&root);
+    // Paths without `./` are relative to the file as well.
+    let result = transform_file(&project, &root, "app/operation.graphql");
+    assert_snapshot!(print_result(&result, operation, &root));
+}
+
+#[test]
+fn transitive_import() {
+    // Fragments imported by an imported file are not imported to the importing file.
+    let mut files = default_files();
+    files[4] = (
+        "app/fragment.graphql",
+        "#import UserAge from \"./age.graphql\"\nfragment UserName on User {\n  name\n  ...UserAge\n}\n",
+    );
+    files.push(("app/age.graphql", "fragment UserAge on User {\n  age\n}\n"));
+    let operation = OPERATION.replace("...UserName", "...UserName\n    ...UserAge");
+    files[5] = ("app/operation.graphql", &operation);
+    let root = setup("transitive_import", &files);
+    let project = open(&root);
+    let result = transform_file(&project, &root, "app/fragment.graphql");
+    assert!(result.diagnostics.is_empty(), "{:?}", result.diagnostics);
+    let result = transform_file(&project, &root, "app/operation.graphql");
+    let messages = result
+        .diagnostics
+        .iter()
+        .map(|diagnostic| diagnostic.message_text.as_str())
+        .collect::<Vec<_>>();
+    assert_eq!(messages, vec!["Fragment 'UserAge' is not defined"]);
 }
 
 #[test]
@@ -434,9 +409,11 @@ fragment UserAge on User {
     files[5] = ("app/operation.graphql", operation);
     let root = setup("imported_file_error", &files);
     let project = open(&root);
-    // Exports of the transformed file are kept even if an imported file has errors.
+    // Errors of an imported file are reported in that file only.
     let result = transform_file(&project, &root, "app/operation.graphql");
-    assert_snapshot!(print_result(&result, operation, &root));
+    assert!(result.diagnostics.is_empty(), "{:?}", result.diagnostics);
+    let result = transform_file(&project, &root, "app/fragment.graphql");
+    assert_snapshot!(print_result(&result, "fragment UserName on User {", &root));
 }
 
 #[test]
@@ -493,7 +470,15 @@ query GetId {
     let root = setup("imported_fragment_validation_error", &files);
     let project = open(&root);
     let result = transform_file(&project, &root, "app/operation.graphql");
-    assert_snapshot!(print_result(&result, operation, &root));
+    assert!(result.diagnostics.is_empty(), "{:?}", result.diagnostics);
+    // The fragment falls back to `any` in the file that defines it,
+    // which makes selections it is merged into `any` in importing files.
+    let result = transform_file(&project, &root, "app/fragment.graphql");
+    assert_snapshot!(print_result(
+        &result,
+        "fragment UserName on User {\n  nam\n}\n",
+        &root
+    ));
 }
 
 fn reopen(root: &Path, previous: Project) -> Project {
@@ -565,30 +550,6 @@ fn reopen_config_changed() {
     assert!(!has_schema_module(&project));
     let result = transform_file(&project, &root, "schema/a.graphql");
     assert!(result.text.contains("ID = number"), "{}", result.text);
-}
-
-#[test]
-fn reopen_imports_changed() {
-    let mut files = default_files();
-    files.push((
-        "app/other.graphql",
-        "fragment UserAge on User {\n  age\n}\n",
-    ));
-    let root = setup("reopen_imports_changed", &files);
-    let project = open(&root);
-    transform_file(&project, &root, "schema/a.graphql");
-    let identity = project.config_identity.clone();
-    fs::write(
-        root.join("app/operation.graphql"),
-        format!("#import UserAge from \"./other.graphql\"\n{OPERATION}"),
-    )
-    .unwrap();
-    let project = reopen(&root, project);
-    // Imports of changed operation files are updated.
-    assert_ne!(project.config_identity, identity);
-    assert_eq!(project.config_identity, open(&root).config_identity);
-    assert_eq!(project.watched_files, open(&root).watched_files);
-    assert!(has_schema_module(&project));
 }
 
 /// Measures the time spent by each request on a large project.

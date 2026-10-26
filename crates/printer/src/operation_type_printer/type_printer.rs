@@ -22,6 +22,7 @@ use super::{
     branching::BranchingCondition,
     deep_merge::{FieldShapeMismatch, deep_merge_selection_tree},
     error::{OperationTypePrinterErrorMessage, OperationTypePrinterResult},
+    fragment_imports::is_imported_fragment,
     selection_set_visitor::visit_fields_in_selection_set,
     selection_tree::{
         FragmentRef, SelectionTree, SelectionTreeBranch, SelectionTreeEmptyLeaf,
@@ -37,10 +38,10 @@ pub struct QueryTypePrinterContext<'a, 'src, S: Text<'src>> {
 }
 
 impl<'src, S: Text<'src>> QueryTypePrinterContext<'_, 'src, S> {
-    /// Returns whether given fragment is defined in another module.
+    /// Returns whether given fragment is imported from another module.
     pub fn is_external_fragment(&self, name: &str) -> bool {
         !self.fragment_definitions.contains_key(name)
-            && self.options.external_fragments.contains_key(name)
+            && is_imported_fragment(&self.options.fragment_imports, name)
     }
 }
 
