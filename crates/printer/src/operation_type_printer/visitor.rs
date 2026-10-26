@@ -1,3 +1,6 @@
+use std::collections::BTreeMap;
+
+use itertools::Itertools;
 use nitrogql_config_file::{Config, GenerateMode};
 use nitrogql_utils::clone_into;
 use sourcemap_writer::SourceMapWriter;
@@ -32,6 +35,17 @@ pub struct OperationTypePrinterOptions {
     pub fragment_type_suffix: String,
     /// Whether to allow undefined as input value.
     pub allow_undefined_as_optional_input: bool,
+    /// Fragments defined in other modules, mapped to the module specifiers to import them from.
+    /// Spreads of these fragments refer to their imported selection trees instead of being
+    /// expanded, so that printed types do not depend on contents of other modules.
+    pub external_fragments: BTreeMap<String, String>,
+    /// Whether to export selection trees of fragments, so that other modules can refer to them.
+    pub export_fragment_trees: bool,
+}
+
+/// Name of the exported selection tree type of given fragment.
+pub fn fragment_tree_type_name(fragment_name: &str) -> String {
+    format!("__NitrogqlTree_{fragment_name}")
 }
 
 impl Default for OperationTypePrinterOptions {
@@ -46,6 +60,8 @@ impl Default for OperationTypePrinterOptions {
             operation_result_type_suffix: "Result".to_owned(),
             fragment_type_suffix: "".to_owned(),
             allow_undefined_as_optional_input: true,
+            external_fragments: BTreeMap::new(),
+            export_fragment_trees: false,
         }
     }
 }
@@ -109,6 +125,23 @@ impl<T: OperationTypeSource> OperationPrinterVisitor for OperationTypePrinterVis
                 self.options.schema_root_namespace, self.options.schema_source,
             );
         } else {
+            writer.write("\n");
+        }
+        let modules = self
+            .options
+            .external_fragments
+            .iter()
+            .map(|(name, module)| (module, name))
+            .into_group_map();
+        for (module, names) in modules.into_iter().sorted() {
+            let names = names
+                .into_iter()
+                .sorted()
+                .map(|name| fragment_tree_type_name(name))
+                .join(", ");
+            writeln!(writer, "import type {{ {names} }} from \"{module}\";");
+        }
+        if !self.options.external_fragments.is_empty() {
             writer.write("\n");
         }
     }
@@ -213,6 +246,16 @@ impl<T: OperationTypeSource> OperationPrinterVisitor for OperationTypePrinterVis
         writer.write(" = ");
         self.types.fragment_type(fragment)?.print_type(writer);
         writer.write(";\n\n");
+
+        if self.options.export_fragment_trees {
+            write!(
+                writer,
+                "export type {} = ",
+                fragment_tree_type_name(fragment.name.name)
+            );
+            self.types.fragment_tree_type(fragment)?.print_type(writer);
+            writer.write(";\n\n");
+        }
 
         // runtime value
         if let Some(ref description) = fragment.description {

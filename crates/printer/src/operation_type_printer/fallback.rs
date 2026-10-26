@@ -56,6 +56,10 @@ impl OperationTypeSource for AnyTypeSource {
     fn fragment_type(&self, _fragment: &FragmentDefinition) -> Result<TSType, Self::Error> {
         Ok(TSType::Any)
     }
+
+    fn fragment_tree_type(&self, _fragment: &FragmentDefinition) -> Result<TSType, Self::Error> {
+        Ok(TSType::Any)
+    }
 }
 
 #[cfg(test)]

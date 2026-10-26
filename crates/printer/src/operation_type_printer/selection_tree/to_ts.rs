@@ -3,7 +3,10 @@ use nitrogql_config_file::TypeTarget;
 
 use crate::ts_types::{ObjectField, TSType, ts_types_util::ts_union};
 
-use super::{SelectionTree, SelectionTreeField};
+use super::{
+    super::visitor::fragment_tree_type_name, SelectionTree, SelectionTreeBranch,
+    SelectionTreeField, SelectionTreeLeaf,
+};
 
 #[derive(Debug, Copy, Clone)]
 pub struct GenerateSelectionTreeTypeContext<'a> {
@@ -11,11 +14,145 @@ pub struct GenerateSelectionTreeTypeContext<'a> {
 }
 
 /// Generate a TypeScript representation of the selection tree.
+///
+/// Trees that refer to fragments in other modules are printed unrendered,
+/// and the fragments are merged and the result is rendered at the type level.
 pub fn generate_selection_tree_type<'src, S: Text<'src>>(
     context: &GenerateSelectionTreeTypeContext,
     tree: &SelectionTree<S>,
 ) -> TSType {
+    if tree.has_fragment_refs() {
+        return TSType::TypeFunc(
+            Box::new(schema_utility(context, "__Render")),
+            vec![generate_unrendered_type(context, tree, false)],
+        );
+    }
     generate_selection_tree_type_impl(context, tree, false)
+}
+
+/// Generate the unrendered type of given branches, which is a union of `__Branch` types.
+/// Other modules merge this type into their selections.
+pub fn generate_unrendered_branches_type<'src, S: Text<'src>>(
+    context: &GenerateSelectionTreeTypeContext,
+    branches: &[SelectionTreeBranch<S>],
+) -> TSType {
+    ts_union(
+        branches
+            .iter()
+            .map(|branch| generate_unrendered_branch_type(context, branch)),
+    )
+}
+
+fn generate_unrendered_type<'src, S: Text<'src>>(
+    context: &GenerateSelectionTreeTypeContext,
+    tree: &SelectionTree<S>,
+    is_non_null: bool,
+) -> TSType {
+    let result = match tree {
+        SelectionTree::NonNull(inner) => return generate_unrendered_type(context, inner, true),
+        SelectionTree::List(inner) => {
+            TSType::Array(Box::new(generate_unrendered_type(context, inner, false)))
+        }
+        SelectionTree::Object(branches) => generate_unrendered_branches_type(context, branches),
+    };
+    if is_non_null {
+        result
+    } else {
+        ts_union(vec![result, TSType::Null])
+    }
+}
+
+fn generate_unrendered_branch_type<'src, S: Text<'src>>(
+    context: &GenerateSelectionTreeTypeContext,
+    branch: &SelectionTreeBranch<S>,
+) -> TSType {
+    let fields = |fields: &[SelectionTreeField<S>]| {
+        TSType::Object(
+            fields
+                .iter()
+                .map(|field| {
+                    let r#type = match field {
+                        SelectionTreeField::Empty(_) => schema_utility(context, "__Empty"),
+                        SelectionTreeField::Leaf(leaf) => {
+                            leaf_type(context, leaf, &branch.type_name)
+                        }
+                        SelectionTreeField::Object(object) => {
+                            generate_unrendered_type(context, &object.selection, false)
+                        }
+                    };
+                    ObjectField {
+                        key: field.name().to_string().into(),
+                        r#type,
+                        description: None,
+                        optional: false,
+                        readonly: false,
+                    }
+                })
+                .collect(),
+        )
+    };
+    let branch_type = TSType::TypeFunc(
+        Box::new(schema_utility(context, "__Branch")),
+        vec![
+            TSType::StringLiteral(branch.type_name.clone()),
+            TSType::NamespaceMember3(
+                context.schema_root_namespace.into(),
+                TypeTarget::OperationOutput.to_string(),
+                branch.type_name.clone(),
+            ),
+            fields(&branch.unaliased_fields),
+            fields(&branch.aliased_fields),
+        ],
+    );
+    let trees = branch
+        .fragment_refs
+        .iter()
+        .map(|fragment_ref| {
+            let tree = TSType::Raw(fragment_tree_type_name(&fragment_ref.name.to_string()));
+            if fragment_ref.skipped {
+                TSType::TypeFunc(
+                    Box::new(schema_utility(context, "__SkipFragment")),
+                    vec![tree],
+                )
+            } else {
+                tree
+            }
+        })
+        .collect::<Vec<_>>();
+    match combine_fragment_trees(context, trees) {
+        Some(fragments) => TSType::TypeFunc(
+            Box::new(schema_utility(context, "__MergeFragment")),
+            vec![branch_type, fragments],
+        ),
+        None => branch_type,
+    }
+}
+
+/// Combines selection trees of fragments into one.
+/// They are combined as a balanced tree, as TypeScript limits the depth of nested instantiations.
+fn combine_fragment_trees(
+    context: &GenerateSelectionTreeTypeContext,
+    mut trees: Vec<TSType>,
+) -> Option<TSType> {
+    while trees.len() > 1 {
+        let mut pairs = trees.into_iter();
+        trees = std::iter::from_fn(|| {
+            let left = pairs.next()?;
+            Some(match pairs.next() {
+                Some(right) => TSType::TypeFunc(
+                    Box::new(schema_utility(context, "__CombineFragments")),
+                    vec![left, right],
+                ),
+                None => left,
+            })
+        })
+        .collect();
+    }
+    trees.pop()
+}
+
+fn schema_utility(context: &GenerateSelectionTreeTypeContext, name: &str) -> TSType {
+    TSType::NamespaceMember(context.schema_root_namespace.into(), name.into())
 }
 
 fn generate_selection_tree_type_impl<'src, S: Text<'src>>(
@@ -88,27 +225,13 @@ fn field_to_type<'src, S: Text<'src>>(
             optional: true,
             readonly: false,
         },
-        SelectionTreeField::Leaf(leaf) => {
-            let field_type = if leaf.name == "__typename" {
-                // special case for __typename
-                TSType::StringLiteral(parent_type_name.to_string())
-            } else {
-                map_to_tstype(&leaf.r#type, |ty| {
-                    TSType::NamespaceMember3(
-                        context.schema_root_namespace.into(),
-                        TypeTarget::OperationOutput.to_string(),
-                        ty.to_string(),
-                    )
-                })
-            };
-            ObjectField {
-                key: leaf.name.to_string().into(),
-                r#type: field_type,
-                description: None,
-                optional: false,
-                readonly: false,
-            }
-        }
+        SelectionTreeField::Leaf(leaf) => ObjectField {
+            key: leaf.name.to_string().into(),
+            r#type: leaf_type(context, leaf, parent_type_name),
+            description: None,
+            optional: false,
+            readonly: false,
+        },
         SelectionTreeField::Object(object) => ObjectField {
             key: object.name.clone().to_string().into(),
             r#type: generate_selection_tree_type_impl(context, &object.selection, false),
@@ -116,6 +239,25 @@ fn field_to_type<'src, S: Text<'src>>(
             optional: false,
             readonly: false,
         },
+    }
+}
+
+fn leaf_type<'src, S: Text<'src>>(
+    context: &GenerateSelectionTreeTypeContext,
+    leaf: &SelectionTreeLeaf<S>,
+    parent_type_name: &str,
+) -> TSType {
+    if leaf.name == "__typename" {
+        // special case for __typename
+        TSType::StringLiteral(parent_type_name.to_string())
+    } else {
+        map_to_tstype(&leaf.r#type, |ty| {
+            TSType::NamespaceMember3(
+                context.schema_root_namespace.into(),
+                TypeTarget::OperationOutput.to_string(),
+                ty.to_string(),
+            )
+        })
     }
 }
 

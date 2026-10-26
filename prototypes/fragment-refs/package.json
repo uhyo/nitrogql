@@ -1,0 +1,12 @@
+{
+  "name": "nitrogql-fragment-refs-prototype",
+  "private": true,
+  "scripts": {
+    "check": "./run.sh",
+    "dump": "node dump-types.cjs"
+  },
+  "devDependencies": {
+    "typescript": "7.1.0-beta",
+    "typescript6": "npm:typescript@^6.0.3"
+  }
+}

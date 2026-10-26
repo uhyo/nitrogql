@@ -24,8 +24,8 @@ use super::{
     error::{OperationTypePrinterErrorMessage, OperationTypePrinterResult},
     selection_set_visitor::visit_fields_in_selection_set,
     selection_tree::{
-        SelectionTree, SelectionTreeBranch, SelectionTreeEmptyLeaf, SelectionTreeField,
-        SelectionTreeLeaf, SelectionTreeObject,
+        FragmentRef, SelectionTree, SelectionTreeBranch, SelectionTreeEmptyLeaf,
+        SelectionTreeField, SelectionTreeLeaf, SelectionTreeObject,
     },
     visitor::OperationTypePrinterOptions,
 };
@@ -34,6 +34,22 @@ pub struct QueryTypePrinterContext<'a, 'src, S: Text<'src>> {
     pub options: &'a OperationTypePrinterOptions,
     pub schema: &'a Schema<S, Pos>,
     pub fragment_definitions: &'a HashMap<&'src str, &'a FragmentDefinition<'src>>,
+}
+
+impl<'src, S: Text<'src>> QueryTypePrinterContext<'_, 'src, S> {
+    /// Returns whether given fragment is defined in another module.
+    pub fn is_external_fragment(&self, name: &str) -> bool {
+        !self.fragment_definitions.contains_key(name)
+            && self.options.external_fragments.contains_key(name)
+    }
+}
+
+/// Fields selected by a selection set under a branching condition.
+struct SelectedFields<S> {
+    /// Left is for non-aliased fields. Right is for aliased fields.
+    fields: Vec<Either<SelectionTreeField<S>, SelectionTreeField<S>>>,
+    /// Spreads of fragments defined in other modules.
+    fragment_refs: Vec<FragmentRef<S>>,
 }
 
 pub fn get_type_for_selection_set<'src, S: Text<'src>>(
@@ -170,10 +186,9 @@ fn get_object_type_for_selection_set<'src, S: Text<'src>>(
     selection_set: &SelectionSet<'src>,
     branch: &BranchingCondition<S>,
 ) -> OperationTypePrinterResult<SelectionTreeBranch<S>> {
+    let selected = get_fields_for_selection_set(context, selection_set, branch)?;
     let (unaliased, aliased): (Vec<_>, Vec<_>) =
-        get_fields_for_selection_set(context, selection_set, branch)?
-            .into_iter()
-            .partition_map(identity);
+        selected.fields.into_iter().partition_map(identity);
     let shape_mismatch = |err: FieldShapeMismatch<S>| {
         // Point at the first field of the conflicting key if it is directly in this selection set.
         let position = selection_set
@@ -199,17 +214,16 @@ fn get_object_type_for_selection_set<'src, S: Text<'src>>(
         type_name: branch.parent_obj.name.to_string(),
         unaliased_fields: unaliased,
         aliased_fields: aliased,
+        fragment_refs: selected.fragment_refs,
     })
 }
 
-/// Returns a list of object fields.
-/// Left is for non-aliased fields.
-/// Right is for aliased fields.
+/// Returns fields selected by given selection set.
 fn get_fields_for_selection_set<'a, 'src, S: Text<'src>>(
     context: &'a QueryTypePrinterContext<'a, 'src, S>,
     selection_set: &'a SelectionSet<'src>,
     branch: &'a BranchingCondition<'a, S>,
-) -> OperationTypePrinterResult<Vec<Either<SelectionTreeField<S>, SelectionTreeField<S>>>> {
+) -> OperationTypePrinterResult<SelectedFields<S>> {
     let parent_type_name = &branch.parent_obj.name;
     let parent_fields = context
         .schema
@@ -277,9 +291,21 @@ fn get_fields_for_selection_set<'a, 'src, S: Text<'src>>(
     }
 
     let mut types_for_fragments = vec![];
+    let mut fragment_refs = vec![];
     for sel in &selection_set.selections {
         let (type_condition, fragment_selection_set, directives) = match sel {
             Selection::Field(_) => continue,
+            Selection::FragmentSpread(fragment)
+                if context.is_external_fragment(fragment.fragment_name.name) =>
+            {
+                // Type condition is checked at the type level,
+                // as the fragment's selection has no branch for other types.
+                fragment_refs.push(FragmentRef {
+                    name: fragment.fragment_name.name.into(),
+                    skipped: check_skip_directive(branch, &fragment.directives)?,
+                });
+                continue;
+            }
             Selection::FragmentSpread(fragment) => {
                 let fragment_def = context
                     .fragment_definitions
@@ -307,8 +333,15 @@ fn get_fields_for_selection_set<'a, 'src, S: Text<'src>>(
         {
             continue;
         }
-        let fields = get_fields_for_selection_set(context, fragment_selection_set, branch)?;
+        let SelectedFields {
+            fields,
+            fragment_refs: nested_refs,
+        } = get_fields_for_selection_set(context, fragment_selection_set, branch)?;
         if check_skip_directive(branch, directives)? {
+            fragment_refs.extend(nested_refs.into_iter().map(|fragment_ref| FragmentRef {
+                skipped: true,
+                ..fragment_ref
+            }));
             types_for_fragments.extend(fields.into_iter().map(|field| {
                 field.map(|field| {
                     SelectionTreeField::Empty(SelectionTreeEmptyLeaf {
@@ -317,11 +350,15 @@ fn get_fields_for_selection_set<'a, 'src, S: Text<'src>>(
                 })
             }));
         } else {
+            fragment_refs.extend(nested_refs);
             types_for_fragments.extend(fields);
         }
     }
     types_for_simple_fields.extend(types_for_fragments);
-    Ok(types_for_simple_fields)
+    Ok(SelectedFields {
+        fields: types_for_simple_fields,
+        fragment_refs,
+    })
 }
 
 /// Examine directives and returns whether field should be skipped.

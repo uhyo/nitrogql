@@ -16,7 +16,10 @@ use crate::ts_types::TSType;
 
 use super::{
     error::OperationTypePrinterError,
-    selection_tree::{GenerateSelectionTreeTypeContext, generate_selection_tree_type},
+    selection_tree::{
+        GenerateSelectionTreeTypeContext, SelectionTree, generate_selection_tree_type,
+        generate_unrendered_branches_type,
+    },
     type_printer::{
         QueryTypePrinterContext, get_type_for_selection_set, get_type_for_variable_definitions,
     },
@@ -42,6 +45,8 @@ pub trait OperationTypeSource {
     ) -> Result<TSType, Self::Error>;
     /// Type of the data of given fragment.
     fn fragment_type(&self, fragment: &FragmentDefinition) -> Result<TSType, Self::Error>;
+    /// Selection tree of given fragment, which other modules merge into their selections.
+    fn fragment_tree_type(&self, fragment: &FragmentDefinition) -> Result<TSType, Self::Error>;
 }
 
 /// Type source that computes types from the schema.
@@ -146,6 +151,25 @@ impl OperationTypeSource for SchemaTypeSource<'_, '_> {
             &fragment_type,
         ))
     }
+
+    fn fragment_tree_type(&self, fragment: &FragmentDefinition) -> Result<TSType, Self::Error> {
+        let parent_type = Type::Named(NamedType::from(Node::from(
+            fragment.type_condition.name,
+            fragment.type_condition.position,
+        )));
+        let SelectionTree::Object(branches) = get_type_for_selection_set(
+            &self.type_printer_context(),
+            &fragment.selection_set,
+            &parent_type,
+        )?
+        else {
+            unreachable!("selection tree of a named type is an object");
+        };
+        Ok(generate_unrendered_branches_type(
+            &self.selection_tree_type_context(),
+            &branches,
+        ))
+    }
 }
 
 /// Type source that chooses between the schema and `any` per definition.
@@ -232,6 +256,12 @@ impl<F: Fn(&Pos) -> bool> OperationTypeSource for PerDefinitionTypeSource<'_, '_
 
     fn fragment_type(&self, fragment: &FragmentDefinition) -> Result<TSType, Self::Error> {
         Ok(self.type_for(&fragment.position, || self.schema.fragment_type(fragment)))
+    }
+
+    fn fragment_tree_type(&self, fragment: &FragmentDefinition) -> Result<TSType, Self::Error> {
+        Ok(self.type_for(&fragment.position, || {
+            self.schema.fragment_tree_type(fragment)
+        }))
     }
 }
 
