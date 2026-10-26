@@ -106,6 +106,8 @@ function startMapper() {
 describe("content mapper protocol", { timeout: 60_000 }, () => {
   /** @type {ReturnType<typeof startMapper>} */
   let mapper;
+  /** @type {string} */
+  let configIdentity;
   before(() => {
     mapper = startMapper();
   });
@@ -130,7 +132,8 @@ describe("content mapper protocol", { timeout: 60_000 }, () => {
       projectHandle: "project",
     });
     assert.equal(response.error, undefined);
-    const { configIdentity, watchedFiles, optionDiagnostics } = response.result;
+    const { watchedFiles, optionDiagnostics } = response.result;
+    configIdentity = response.result.configIdentity;
     assert.equal(typeof configIdentity, "string");
     assert.equal(optionDiagnostics, undefined);
     // Paths are returned in the form TypeScript sent them.
@@ -215,6 +218,26 @@ describe("content mapper protocol", { timeout: 60_000 }, () => {
       projectHandle: "project",
     });
     assert.equal(transform.error.code, -32602);
+  });
+
+  it("reopens a closed project", async () => {
+    // TypeScript closes and reopens a project when a watched file changes.
+    const response = await mapper.request("openProject", {
+      configFileName: tsconfig,
+      projectHandle: "project",
+    });
+    assert.equal(response.error, undefined);
+    assert.equal(response.result.configIdentity, configIdentity);
+    const transform = await mapper.request("transform", {
+      fileName: getUserFile,
+      content: await readFile(getUserFile, "utf8"),
+      projectHandle: "project",
+    });
+    assert.match(
+      transform.result.text,
+      /declare const GetUserQuery: TypedDocumentNode</,
+    );
+    assert.equal(transform.result.diagnostics, undefined);
   });
 
   it("exits when stdin is closed", async () => {

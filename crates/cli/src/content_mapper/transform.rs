@@ -22,8 +22,8 @@ use crate::{generate::path_to_ts, schema_loader::LoadedSchema};
 
 use super::{
     fallback::fallback_definitions,
-    position::{SourceText, encode_offset},
-    project::{LoadedProjectSchema, Project},
+    position::SourceText,
+    project::{LoadedProjectSchema, Project, SchemaModule},
     protocol::{MapperDiagnostic, PositionEncoding, SpanMapKind, SpanMapping, TransformResult},
 };
 
@@ -99,21 +99,29 @@ fn transform_schema_file(
         return result;
     };
 
-    let mut options = SchemaTypePrinterOptions::from_config(&project.config);
-    // Content-mapped files only provide types.
-    options.emit_schema_runtime = false;
-    let mut writer = SpanWriter::new();
-    let mut printer = SchemaTypePrinter::new(options, &mut writer);
-    if let Err(err) = printer.print_document(document) {
-        result.diagnostics =
-            to_diagnostics([&PositionedError::from(err)], file_index, &files, &index);
-        return result;
+    // Schema types do not change during the project's lifetime.
+    let module = project.schema_module().get_or_init(|| {
+        let mut options = SchemaTypePrinterOptions::from_config(&project.config);
+        // Content-mapped files only provide types.
+        options.emit_schema_runtime = false;
+        let mut writer = SpanWriter::new();
+        let mut printer = SchemaTypePrinter::new(options, &mut writer);
+        printer.print_document(document)?;
+        let (text, spans) = writer.into_parts();
+        Ok(SchemaModule { text, spans })
+    });
+    match module {
+        Ok(module) => {
+            if is_same_content {
+                result.mappings =
+                    to_mappings(&module.spans, file_index, &module.text, &index, encoding);
+            }
+            result.text = module.text.clone();
+        }
+        Err(err) => {
+            result.diagnostics = to_diagnostics([err], file_index, &files, &index);
+        }
     }
-    let (text, spans) = writer.into_parts();
-    if is_same_content {
-        result.mappings = to_mappings(&spans, file_index, &text, &index, encoding);
-    }
-    result.text = text;
     result
 }
 
@@ -323,6 +331,7 @@ fn to_mappings(
     original: &SourceText,
     encoding: PositionEncoding,
 ) -> Vec<SpanMapping> {
+    let generated_text = SourceText::new(generated, encoding);
     spans
         .iter()
         .filter(|span| span.original_pos.file == file_index)
@@ -330,8 +339,8 @@ fn to_mappings(
             let (original_start, original_len) =
                 original.name_span(&span.original_pos, &span.original_name)?;
             let generated_end = span.generated_start + span.generated_len;
-            let generated_start = encode_offset(generated, span.generated_start, encoding);
-            let generated_len = encode_offset(generated, generated_end, encoding) - generated_start;
+            let generated_start = generated_text.encode(span.generated_start);
+            let generated_len = generated_text.encode(generated_end) - generated_start;
             let kind = if generated[span.generated_start..generated_end] == span.original_name {
                 SpanMapKind::Verbatim
             } else {
