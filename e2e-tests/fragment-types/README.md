@@ -18,12 +18,24 @@ unrendered form:
 import type * as __Nitrogql from "@nitrogql/cli/fragment-types";
 import type * as __NitrogqlImport0 from "./userFields.graphql";
 
-type GetMeResult = __Nitrogql.Render<__Nitrogql.Branch<"Query", Schema.__OperationOutput.Query, {
-  me: __Nitrogql.MergeFragment<
-    __Nitrogql.Branch<"User", Schema.__OperationOutput.User, { id: Schema.__OperationOutput.ID }, {}>,
-    __Nitrogql.Fragment<__NitrogqlImport0.__NitrogqlFragments, "UserFields">
-  >;
-}, {}>>;
+type GetMeResult = __Nitrogql.Render<
+  __Nitrogql.Branch<
+    "Query",
+    Schema.__OperationOutput.Query,
+    {
+      me: __Nitrogql.MergeFragment<
+        __Nitrogql.Branch<
+          "User",
+          Schema.__OperationOutput.User,
+          { id: Schema.__OperationOutput.ID },
+          {}
+        >,
+        __Nitrogql.Fragment<__NitrogqlImport0.__NitrogqlFragments, "UserFields">
+      >;
+    },
+    {}
+  >
+>;
 ```
 
 With `export_fragment_trees`, each module exports `__NitrogqlFragments`, which maps names of
@@ -87,11 +99,11 @@ All 31 cases pass with TypeScript 7.1.0-beta.
 Every result type is fully resolved, so this is the worst case: in real code, TypeScript only
 resolves what is used.
 
-| Helpers | Instantiations | Check time (TypeScript 7) |
-| --- | --- | --- |
-| Expanded (current printer) | 145k | 0.16–0.19s |
-| First version | 788k | 1.1–1.9s |
-| Current version | 477k | 0.74s |
+| Helpers                    | Instantiations | Check time (TypeScript 7) |
+| -------------------------- | -------------- | ------------------------- |
+| Expanded (current printer) | 145k           | 0.16–0.19s                |
+| First version              | 788k           | 1.1–1.9s                  |
+| Current version            | 477k           | 0.74s                     |
 
 Measured in the same run. Timings on this machine vary between runs by up to 2×; another run
 measured 0.33s expanded against 1.1s referred. Instantiations are stable.
