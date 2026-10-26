@@ -1,0 +1,18 @@
+---
+source: crates/semantics/src/operation_import_resolver/tests/mod.rs
+expression: err
+---
+ExtensionError {
+    message: FragmentNotFound {
+        name: "Frag999",
+        file: "./frag3.graphql",
+        position: Pos {
+            line: 2,
+            column: 16,
+            start: 62,
+            end: 69,
+            file: 0,
+            builtin: false,
+        },
+    },
+}

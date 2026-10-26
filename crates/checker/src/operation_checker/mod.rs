@@ -41,6 +41,8 @@ pub fn check_operation_document<'src, S: Text<'src>>(
 
     let fragment_map = generate_fragment_map(document);
 
+    check_fragment_visibility(document, &fragment_map, context, &mut result);
+
     let operation_num = document
         .definitions
         .iter()
@@ -174,6 +176,65 @@ pub fn check_operation_document<'src, S: Text<'src>>(
         );
     }
     result
+}
+
+/// Checks that spreads in definitions of the document's own file only refer to fragments
+/// that are defined in the file or imported by the file itself.
+/// Spreads in imported fragments are checked when their own files are checked.
+fn check_fragment_visibility(
+    document: &OperationDocument,
+    fragment_map: &FragmentMap,
+    context: &OperationCheckContext<'_, '_, impl Sized>,
+    result: &mut Vec<CheckError>,
+) {
+    fn visit(
+        selection_set: &SelectionSet,
+        file: usize,
+        fragment_map: &FragmentMap,
+        context: &OperationCheckContext<'_, '_, impl Sized>,
+        result: &mut Vec<CheckError>,
+    ) {
+        for selection in selection_set.selections.iter() {
+            match selection {
+                Selection::Field(field) => {
+                    if let Some(ref selection_set) = field.selection_set {
+                        visit(selection_set, file, fragment_map, context, result);
+                    }
+                }
+                Selection::FragmentSpread(spread) => {
+                    let name = spread.fragment_name.name;
+                    // Fragments that are not found at all are reported by check_fragment_spread.
+                    if let Some(target) = fragment_map.get(name)
+                        && target.position.file != file
+                        && !context.is_visible_fragment(name)
+                    {
+                        result.push(
+                            CheckErrorMessage::UnknownFragment {
+                                name: name.to_owned(),
+                            }
+                            .with_pos(spread.fragment_name.position),
+                        );
+                    }
+                }
+                Selection::InlineFragment(fragment) => {
+                    visit(&fragment.selection_set, file, fragment_map, context, result);
+                }
+            }
+        }
+    }
+    let file = document.position.file;
+    for def in document.definitions.iter() {
+        let selection_set = match def {
+            ExecutableDefinition::OperationDefinition(op) if op.position.file == file => {
+                &op.selection_set
+            }
+            ExecutableDefinition::FragmentDefinition(def) if def.position.file == file => {
+                &def.selection_set
+            }
+            _ => continue,
+        };
+        visit(selection_set, file, fragment_map, context, result);
+    }
 }
 
 /// Returns names of fragments that are (transitively) spread from given selection sets.

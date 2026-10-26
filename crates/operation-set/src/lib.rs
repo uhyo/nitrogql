@@ -4,7 +4,7 @@
 //! which differ only in how files are found and read.
 
 use std::{
-    collections::HashMap,
+    collections::{HashMap, HashSet},
     path::{Path, PathBuf},
 };
 
@@ -12,7 +12,8 @@ use nitrogql_ast::{OperationDocument, base::Pos};
 use nitrogql_error::{ErrorCode, PositionedError};
 use nitrogql_parser::parse_operation_document;
 use nitrogql_semantics::{
-    OperationExtension, OperationResolver, resolve_operation_extensions, resolve_operation_imports,
+    OperationExtension, OperationResolver, directly_imported_fragments,
+    resolve_operation_extensions, resolve_operation_imports,
 };
 use nitrogql_utils::{normalize_path, resolve_relative_path};
 
@@ -189,6 +190,16 @@ impl<'src> OperationSet<'src> {
             resolve_operation_imports((file.path, file.document, file.extension), self)
                 .map_err(PositionedError::from),
         )
+    }
+
+    /// Returns names of fragments that given file imports by itself, not through imported files.
+    /// Returns None if the file is not loaded successfully.
+    pub fn directly_imported_fragments(&self, path: &Path) -> Option<HashSet<&'src str>> {
+        let file = self.get(path)?;
+        Some(directly_imported_fragments(
+            (file.path, file.extension),
+            self,
+        ))
     }
 
     /// Syntax errors in added files.

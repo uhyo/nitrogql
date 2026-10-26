@@ -7,10 +7,9 @@ query Foo {
     ... Frag1
   }
 }
-fragment Frag2 on Foo {
-  baz
-}
 fragment Frag1 on Foo {
   bar
 }
-
+fragment Frag2 on Foo {
+  baz
+}

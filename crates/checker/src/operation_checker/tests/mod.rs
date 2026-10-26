@@ -999,14 +999,19 @@ mod fragments {
 }
 
 mod imports {
-    use std::borrow::Cow;
+    use std::{borrow::Cow, collections::HashMap, path::Path};
 
     use graphql_type_system::Schema;
     use insta::assert_debug_snapshot;
-    use nitrogql_semantics::ast_to_type_system;
+    use nitrogql_semantics::{
+        OperationExtension, OperationResolver, ast_to_type_system, directly_imported_fragments,
+        resolve_operation_extensions, resolve_operation_imports,
+    };
 
-    use crate::operation_checker::tests::test_check;
-    use nitrogql_ast::base::Pos;
+    use crate::{
+        OperationCheckContext, check_operation_document, operation_checker::tests::test_check,
+    };
+    use nitrogql_ast::{OperationDocument, base::Pos};
     use nitrogql_parser::parse_operation_document;
 
     use super::parse_to_type_system_document;
@@ -1080,6 +1085,139 @@ mod imports {
         .unwrap();
 
         assert_debug_snapshot!(test_check(schema, doc));
+    }
+
+    /// Checks main.graphql with imported fragments appended,
+    /// allowing only fragments imported by main.graphql itself.
+    fn check_with_imports(main: &'static str) -> Vec<String> {
+        let schema = type_system();
+        let files = TestOperationResolver::new(&[
+            ("/app/main.graphql", main),
+            (
+                "/app/userName.graphql",
+                "#import UserAge from \"./userAge.graphql\"
+                fragment UserName on User { name ...UserAge }",
+            ),
+            (
+                "/app/userAge.graphql",
+                "fragment UserAge on User { age }
+                fragment UserId on User { id }",
+            ),
+        ]);
+        let main_path = Path::new("/app/main.graphql");
+        let (doc, extension) = files.resolve(main_path).unwrap();
+        let resolved = resolve_operation_imports((main_path, doc, extension), &files).unwrap();
+        let visible = directly_imported_fragments((main_path, extension), &files);
+        let is_visible = |name: &str| visible.contains(name);
+        let context = OperationCheckContext::new(&schema).with_visible_fragments(&is_visible);
+        check_operation_document(&resolved, &context)
+            .into_iter()
+            .map(|err| {
+                format!(
+                    "{}:{} {}",
+                    err.position.file, err.position.line, err.message
+                )
+            })
+            .collect()
+    }
+
+    #[test]
+    fn transitively_imported_fragment() {
+        let errors = check_with_imports(
+            "#import UserName from \"./userName.graphql\"
+            query {
+                user {
+                    ...UserName
+                    ...UserAge
+                }
+            }",
+        );
+        assert_eq!(errors, vec!["0:4 Fragment 'UserAge' is not defined"]);
+    }
+
+    #[test]
+    fn transitively_imported_fragment_in_fragment() {
+        let errors = check_with_imports(
+            "#import UserName from \"./userName.graphql\"
+            fragment Me on User {
+                ...UserName
+                ... on User { ...UserAge }
+            }",
+        );
+        assert_eq!(errors, vec!["0:3 Fragment 'UserAge' is not defined"]);
+    }
+
+    #[test]
+    fn directly_imported_fragments_are_visible() {
+        let errors = check_with_imports(
+            "#import UserName from \"./userName.graphql\"
+            #import UserAge from \"./userAge.graphql\"
+            query {
+                user {
+                    ...UserName
+                    ...UserAge
+                }
+            }",
+        );
+        assert_eq!(errors, Vec::<String>::new());
+    }
+
+    #[test]
+    fn wildcard_imported_fragments() {
+        let errors = check_with_imports(
+            "#import * from \"./userName.graphql\"
+            #import * from \"./userAge.graphql\"
+            query {
+                user {
+                    ...UserName
+                    ...UserAge
+                    ...UserId
+                }
+            }",
+        );
+        assert_eq!(errors, Vec::<String>::new());
+    }
+
+    #[test]
+    fn wildcard_import_is_not_transitive() {
+        let errors = check_with_imports(
+            "#import * from \"./userName.graphql\"
+            query {
+                user {
+                    ...UserName
+                    ...UserAge
+                }
+            }",
+        );
+        assert_eq!(errors, vec!["0:4 Fragment 'UserAge' is not defined"]);
+    }
+
+    struct TestOperationResolver {
+        files: HashMap<&'static str, (OperationDocument<'static>, OperationExtension<'static>)>,
+    }
+
+    impl TestOperationResolver {
+        fn new(files: &[(&'static str, &'static str)]) -> Self {
+            let files = files
+                .iter()
+                .enumerate()
+                .map(|(file_index, (path, source))| {
+                    let doc = parse_operation_document(source, file_index).unwrap();
+                    (*path, resolve_operation_extensions(doc).unwrap())
+                })
+                .collect();
+            Self { files }
+        }
+    }
+
+    impl OperationResolver<'static> for TestOperationResolver {
+        fn resolve(
+            &self,
+            path: &Path,
+        ) -> Option<(&OperationDocument<'static>, &OperationExtension<'static>)> {
+            let (doc, extension) = self.files.get(path.to_str()?)?;
+            Some((doc, extension))
+        }
     }
 }
 
