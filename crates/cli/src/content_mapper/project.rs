@@ -1,5 +1,6 @@
 use std::{
     borrow::Cow,
+    cell::OnceCell,
     collections::{BTreeMap, BTreeSet, HashMap},
     fs,
     path::{Path, PathBuf},
@@ -15,13 +16,19 @@ use nitrogql_plugin::Plugin;
 use nitrogql_semantics::ast_to_type_system;
 use nitrogql_utils::normalize_path;
 use self_cell::self_cell;
+use sourcemap_writer::RecordedSpan;
 use thiserror::Error;
 use typed_arena::Arena;
 
 use crate::{
-    SchemaSource, check::resolve_schema, error::CliError, file_store::FileStore, load_glob_files,
-    load_plugins, parse_schema_files, plugin_host::PLUGIN_FILE_NAME, read_schema_files,
-    schema_loader::LoadedSchema,
+    SchemaSource,
+    check::resolve_schema,
+    error::CliError,
+    file_store::FileStore,
+    load_glob_files, load_plugins, parse_schema_files,
+    plugin_host::PLUGIN_FILE_NAME,
+    read_schema_files,
+    schema_loader::{LoadedSchema, SchemaFileKind, schema_kind_by_path},
 };
 
 /// Options given to the content mapper via the `options` field of tsconfig's `contentMappers` entry.
@@ -43,6 +50,8 @@ pub enum ProjectError {
 
 /// A project opened by TypeScript.
 pub struct Project {
+    /// tsconfig.json given by TypeScript.
+    pub ts_config_file: PathBuf,
     /// Directory that contains the nitrogql config file.
     pub root_dir: PathBuf,
     pub config: Config,
@@ -53,6 +62,36 @@ pub struct Project {
     /// Absolute paths of loaded schema files, along with their indices in the file store.
     pub schema_files: Vec<(PathBuf, usize)>,
     files: LoadedFiles,
+    /// Schema types printed for the schema module, computed on first request.
+    schema_module: OnceCell<Result<SchemaModule, PositionedError>>,
+    /// Imports of operation files matched by the config and of files imported from them,
+    /// by normalized path.
+    operation_imports: HashMap<PathBuf, OperationImports>,
+}
+
+/// Schema types printed for the file that provides them.
+pub struct SchemaModule {
+    pub text: String,
+    pub spans: Vec<RecordedSpan>,
+}
+
+/// Files imported from an operation file, along with the content they were computed from.
+struct OperationImports {
+    content: String,
+    imports: Vec<PathBuf>,
+}
+
+impl OperationImports {
+    /// Computes imports of given operation file, reusing `previous` if it has the same content.
+    fn new(path: &Path, content: String, previous: Option<OperationImports>) -> Self {
+        match previous {
+            Some(previous) if previous.content == content => previous,
+            _ => OperationImports {
+                imports: imported_files(path, &content),
+                content,
+            },
+        }
+    }
 }
 
 self_cell!(
@@ -92,8 +131,18 @@ pub struct LoadedProjectSchema<'src> {
 
 impl Project {
     /// Opens a project for given tsconfig.json.
-    pub async fn open(ts_config_file: &Path, options: &MapperOptions) -> Project {
+    ///
+    /// `previous` is a closed project for the same tsconfig.json.
+    /// Its work is reused where inputs are unchanged: the schema is not parsed again
+    /// if the config and schema files are the same, and operation files are not parsed again
+    /// if their contents are the same.
+    pub async fn open(
+        ts_config_file: &Path,
+        options: &MapperOptions,
+        mut previous: Option<Project>,
+    ) -> Project {
         let mut project = Project {
+            ts_config_file: ts_config_file.to_owned(),
             root_dir: ts_config_file
                 .parent()
                 .map(normalize_path)
@@ -103,16 +152,33 @@ impl Project {
             watched_files: vec![],
             schema_files: vec![],
             files: LoadedFiles::from_errors(vec![]),
+            schema_module: OnceCell::new(),
+            operation_imports: HashMap::new(),
         };
+        let previous_imports = previous
+            .as_mut()
+            .map(|previous| std::mem::take(&mut previous.operation_imports))
+            .unwrap_or_default();
         project.files = match project.load(ts_config_file, options).await {
-            Ok((plugins, schema_sources)) => LoadedFiles::new(Arena::new(), |sources| {
-                let mut file_store = FileStore::new(sources);
-                let state = match parse_schema(schema_sources, &mut file_store, &plugins) {
-                    Ok(schema) => ProjectState::Loaded(Box::new(schema)),
-                    Err(errors) => ProjectState::Error(errors),
-                };
-                ProjectFiles { file_store, state }
-            }),
+            Ok((plugins, schema_sources)) => {
+                match previous
+                    .filter(|previous| previous.has_same_schema(&project.config, &schema_sources))
+                {
+                    Some(previous) => {
+                        debug!("Reusing the schema of the previous project");
+                        project.schema_module = previous.schema_module;
+                        previous.files
+                    }
+                    None => LoadedFiles::new(Arena::new(), |sources| {
+                        let mut file_store = FileStore::new(sources);
+                        let state = match parse_schema(schema_sources, &mut file_store, &plugins) {
+                            Ok(schema) => ProjectState::Loaded(Box::new(schema)),
+                            Err(errors) => ProjectState::Error(errors),
+                        };
+                        ProjectFiles { file_store, state }
+                    }),
+                }
+            }
             Err(errors) => LoadedFiles::from_errors(errors),
         };
         project.schema_files = project
@@ -122,8 +188,42 @@ impl Project {
             .filter(|(_, (path, _, _))| *path != Path::new(PLUGIN_FILE_NAME))
             .map(|(idx, (path, _, _))| (normalize_path(path), idx))
             .collect();
-        project.compute_watched_files();
+        project.compute_watched_files(previous_imports);
         project
+    }
+
+    /// Returns whether this project loaded the same schema as given config and sources would load.
+    fn has_same_schema(
+        &self,
+        config: &Config,
+        schema_sources: &[Result<SchemaSource, PositionedError>],
+    ) -> bool {
+        // Options are compared by their debug output, as in the project identity.
+        if format!("{:?}", self.config) != format!("{config:?}") {
+            return false;
+        }
+        let mut sources = vec![];
+        for source in schema_sources {
+            let Ok(source) = source else {
+                return false;
+            };
+            // JavaScript schemas also provide type extensions to plugins, which are not compared.
+            if matches!(
+                schema_kind_by_path(&source.path),
+                SchemaFileKind::SchemaJavaScript
+            ) {
+                return false;
+            }
+            sources.push((source.path.as_path(), source.content.as_str()));
+        }
+        let loaded = self
+            .file_store()
+            .iter()
+            .filter(|(_, (path, _, _))| *path != Path::new(PLUGIN_FILE_NAME))
+            .map(|(_, (path, content, _))| (path, content))
+            .collect::<Vec<_>>();
+        // A project that failed to load has no files, and is never reused.
+        !loaded.is_empty() && loaded == sources
     }
 
     /// Loads the config and reads schema files.
@@ -167,7 +267,9 @@ impl Project {
     /// contents of the config file, schema files and imported operation files,
     /// and imports of each operation file. Other changes to operation files keep the identity,
     /// so that TypeScript does not transform every file again.
-    fn compute_watched_files(&mut self) {
+    ///
+    /// Imports of operation files are taken from `previous_imports` if their contents are unchanged.
+    fn compute_watched_files(&mut self, mut previous_imports: HashMap<PathBuf, OperationImports>) {
         // Files whose contents affect the identity.
         let mut watched: BTreeMap<PathBuf, Option<String>> = BTreeMap::new();
         for path in self.watched_files.drain(..) {
@@ -178,33 +280,39 @@ impl Project {
             let (_, content, _) = &self.file_store()[*idx];
             watched.insert(path.clone(), Some(content.to_string()));
         }
-        // Files imported from each operation file.
-        let mut imports: BTreeMap<PathBuf, Vec<PathBuf>> = BTreeMap::new();
         if !self.config.operations.is_empty() {
             match load_glob_files(&self.root_dir, &self.config.operations) {
                 Ok(operation_files) => {
-                    let mut contents = HashMap::new();
                     for (path, content) in operation_files {
                         let path = normalize_path(&path);
-                        imports.insert(path.clone(), imported_files(&path, &content));
-                        contents.insert(path, content);
+                        let file =
+                            OperationImports::new(&path, content, previous_imports.remove(&path));
+                        self.operation_imports.insert(path, file);
                     }
                     // Imported files may not be matched by the config, and may import other files.
-                    let mut queue = imports.values().flatten().cloned().collect::<Vec<_>>();
+                    let mut queue = self
+                        .operation_imports
+                        .values()
+                        .flat_map(|file| file.imports.iter().cloned())
+                        .collect::<Vec<_>>();
                     while let Some(path) = queue.pop() {
                         if watched.contains_key(&path) {
                             continue;
                         }
-                        let content = contents
-                            .remove(&path)
-                            .or_else(|| fs::read_to_string(&path).ok());
-                        if let Some(ref content) = content
-                            && !imports.contains_key(&path)
-                        {
-                            let imported = imported_files(&path, content);
-                            queue.extend(imported.iter().cloned());
-                            imports.insert(path.clone(), imported);
-                        }
+                        let content = match self.operation_imports.get(&path) {
+                            Some(file) => Some(file.content.clone()),
+                            None => fs::read_to_string(&path).ok().map(|content| {
+                                let file = OperationImports::new(
+                                    &path,
+                                    content,
+                                    previous_imports.remove(&path),
+                                );
+                                queue.extend(file.imports.iter().cloned());
+                                let content = file.content.clone();
+                                self.operation_imports.insert(path.clone(), file);
+                                content
+                            }),
+                        };
                         watched.insert(path, content);
                     }
                 }
@@ -225,7 +333,13 @@ impl Project {
             hasher.write(&[0]);
         }
         hasher.write(&[1]);
-        for (path, imported) in imports.iter() {
+        // Files imported from each operation file, in a stable order.
+        let imports = self
+            .operation_imports
+            .iter()
+            .map(|(path, file)| (path, &file.imports))
+            .collect::<BTreeMap<_, _>>();
+        for (path, imported) in imports {
             hasher.write(path.to_string_lossy().as_bytes());
             for imported in imported {
                 hasher.write(&[0]);
@@ -235,13 +349,18 @@ impl Project {
         }
         self.config_identity = format!("{:016x}", hasher.finish());
         let mut watched_files = watched.into_keys().collect::<BTreeSet<_>>();
-        watched_files.extend(imports.into_keys());
+        watched_files.extend(self.operation_imports.keys().cloned());
         self.watched_files = watched_files.into_iter().collect();
     }
 
     /// Returns the store of loaded schema files.
     pub fn file_store(&self) -> &FileStore<'_> {
         &self.files.borrow_dependent().file_store
+    }
+
+    /// Returns the printed schema module, which is computed on first use.
+    pub fn schema_module(&self) -> &OnceCell<Result<SchemaModule, PositionedError>> {
+        &self.schema_module
     }
 
     /// Returns the loaded schema, or errors if the project could not be loaded.

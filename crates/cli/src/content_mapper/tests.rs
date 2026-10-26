@@ -32,6 +32,7 @@ fn open(root: &Path) -> Project {
     block_on(Project::open(
         &root.join("tsconfig.json"),
         &MapperOptions::default(),
+        None,
     ))
 }
 
@@ -255,6 +256,7 @@ fn config_file_option() {
         &MapperOptions {
             config_file: Some("./config/nitrogql.yaml".into()),
         },
+        None,
     ));
     let result = transform_file(&project, &root, "app/operation.graphql");
     assert!(result.diagnostics.is_empty(), "{:?}", result.diagnostics);
@@ -492,4 +494,227 @@ query GetId {
     let project = open(&root);
     let result = transform_file(&project, &root, "app/operation.graphql");
     assert_snapshot!(print_result(&result, operation, &root));
+}
+
+fn reopen(root: &Path, previous: Project) -> Project {
+    block_on(Project::open(
+        &root.join("tsconfig.json"),
+        &MapperOptions::default(),
+        Some(previous),
+    ))
+}
+
+/// Whether the schema module is already printed,
+/// which tells that the schema was reused from the previous project.
+fn has_schema_module(project: &Project) -> bool {
+    project.schema_module().get().is_some()
+}
+
+#[test]
+fn reopen_unchanged() {
+    let root = setup("reopen_unchanged", &default_files());
+    let project = open(&root);
+    let identity = project.config_identity.clone();
+    let watched = project.watched_files.clone();
+    let schema_module = transform_file(&project, &root, "schema/a.graphql");
+
+    let project = reopen(&root, project);
+    // The schema is reused.
+    assert!(has_schema_module(&project));
+    assert_eq!(project.config_identity, identity);
+    assert_eq!(project.watched_files, watched);
+    assert_eq!(
+        transform_file(&project, &root, "schema/a.graphql"),
+        schema_module
+    );
+    let result = transform_file(&project, &root, "app/operation.graphql");
+    assert_snapshot!("operation_file", print_result(&result, OPERATION, &root));
+}
+
+#[test]
+fn reopen_schema_changed() {
+    let root = setup("reopen_schema_changed", &default_files());
+    let project = open(&root);
+    let identity = project.config_identity.clone();
+    transform_file(&project, &root, "schema/a.graphql");
+    fs::write(
+        root.join("schema/b.graphql"),
+        USER_SCHEMA.replace("age: Int", "age: Int!"),
+    )
+    .unwrap();
+    let project = reopen(&root, project);
+    assert!(!has_schema_module(&project));
+    assert_ne!(project.config_identity, identity);
+    let result = transform_file(&project, &root, "schema/a.graphql");
+    assert!(result.text.contains("age: Int;"), "{}", result.text);
+    assert!(!result.text.contains("age: Int | null"), "{}", result.text);
+}
+
+#[test]
+fn reopen_config_changed() {
+    let root = setup("reopen_config_changed", &default_files());
+    let project = open(&root);
+    let result = transform_file(&project, &root, "schema/a.graphql");
+    assert!(result.text.contains("ID = string"), "{}", result.text);
+    let config = format!(
+        "{CONFIG}extensions:\n  nitrogql:\n    generate:\n      type:\n        scalarTypes:\n          ID: number\n"
+    );
+    fs::write(root.join("graphql.config.yaml"), config).unwrap();
+    let project = reopen(&root, project);
+    // Config may affect the schema, so it is loaded again.
+    assert!(!has_schema_module(&project));
+    let result = transform_file(&project, &root, "schema/a.graphql");
+    assert!(result.text.contains("ID = number"), "{}", result.text);
+}
+
+#[test]
+fn reopen_imports_changed() {
+    let mut files = default_files();
+    files.push((
+        "app/other.graphql",
+        "fragment UserAge on User {\n  age\n}\n",
+    ));
+    let root = setup("reopen_imports_changed", &files);
+    let project = open(&root);
+    transform_file(&project, &root, "schema/a.graphql");
+    let identity = project.config_identity.clone();
+    fs::write(
+        root.join("app/operation.graphql"),
+        format!("#import UserAge from \"./other.graphql\"\n{OPERATION}"),
+    )
+    .unwrap();
+    let project = reopen(&root, project);
+    // Imports of changed operation files are updated.
+    assert_ne!(project.config_identity, identity);
+    assert_eq!(project.config_identity, open(&root).config_identity);
+    assert_eq!(project.watched_files, open(&root).watched_files);
+    assert!(has_schema_module(&project));
+}
+
+/// Measures the time spent by each request on a large project.
+/// Run with `cargo test --release -p nitrogql-cli content_mapper::tests::benchmark -- --ignored --nocapture`.
+#[test]
+#[ignore]
+fn benchmark() {
+    use std::time::{Duration, Instant};
+
+    const TYPES: usize = 2000;
+    const FRAGMENTS: usize = 200;
+    const OPERATIONS: usize = 500;
+    const IMPORTS: usize = 5;
+
+    let mut schema = String::from("type Query {\n");
+    for i in 0..TYPES {
+        writeln!(schema, "  t{i}(id: ID!): T{i}").unwrap();
+    }
+    schema.push_str("}\ninterface Node {\n  id: ID!\n}\n");
+    for i in 0..TYPES {
+        writeln!(
+            schema,
+            "\"\"\"Type {i}\"\"\"\ntype T{i} implements Node {{\n  id: ID!\n  name: String!\n  count: Int\n  next: T{}\n  list(first: Int = 10): [T{}!]!",
+            (i + 1) % TYPES,
+            (i + 7) % TYPES
+        )
+        .unwrap();
+        for f in 0..10 {
+            writeln!(schema, "  field{f}: String").unwrap();
+        }
+        schema.push_str("}\n");
+    }
+    let mut files = vec![
+        ("tsconfig.json".to_owned(), "{}".to_owned()),
+        ("graphql.config.yaml".to_owned(), CONFIG.to_owned()),
+        ("schema/schema.graphql".to_owned(), schema),
+    ];
+    for j in 0..FRAGMENTS {
+        files.push((
+            format!("app/fragments/f{j}.graphql"),
+            format!(
+                "fragment F{j} on T{j} {{\n  id\n  name\n  next {{\n    id\n    count\n  }}\n  list {{\n    field0\n    field1\n  }}\n}}\n"
+            ),
+        ));
+    }
+    for k in 0..OPERATIONS {
+        let mut operation = String::new();
+        let imported = (0..IMPORTS)
+            .map(|n| (k * IMPORTS + n) % FRAGMENTS)
+            .collect::<Vec<_>>();
+        for j in &imported {
+            writeln!(operation, "#import F{j} from \"../fragments/f{j}.graphql\"").unwrap();
+        }
+        writeln!(operation, "query Q{k}($id: ID!) {{").unwrap();
+        for j in &imported {
+            writeln!(
+                operation,
+                "  t{j}(id: $id) {{\n    ...F{j}\n    field2\n  }}"
+            )
+            .unwrap();
+        }
+        operation.push_str("}\n");
+        files.push((format!("app/ops/q{k}.graphql"), operation));
+    }
+    let files = files
+        .iter()
+        .map(|(path, content)| (path.as_str(), content.as_str()))
+        .collect::<Vec<_>>();
+    let root = setup("benchmark", &files);
+
+    fn measure<T>(name: &str, mut f: impl FnMut() -> T) -> T {
+        let mut times = vec![];
+        let mut result = None;
+        for _ in 0..10 {
+            let start = Instant::now();
+            result = Some(f());
+            times.push(start.elapsed());
+        }
+        times.sort();
+        let total: Duration = times.iter().sum();
+        println!(
+            "{name}: median {:?}, min {:?}, mean {:?}",
+            times[times.len() / 2],
+            times[0],
+            total / times.len() as u32
+        );
+        result.unwrap()
+    }
+
+    let mut project = Some(measure("open project", || open(&root)));
+    // TypeScript closes and reopens the project when a watched file changes.
+    measure("reopen project", || {
+        project = Some(block_on(Project::open(
+            &root.join("tsconfig.json"),
+            &MapperOptions::default(),
+            project.take(),
+        )));
+    });
+    let project = project.unwrap();
+
+    let operation_path = root.join("app/ops/q0.graphql");
+    let operation = fs::read_to_string(&operation_path).unwrap();
+    let mut n = 0;
+    let result = measure("transform operation file", || {
+        // TypeScript requests a transform when the content changes.
+        n += 1;
+        let content = format!("{operation}# {n}\n");
+        transform(&project, &operation_path, &content, PositionEncoding::Utf8)
+    });
+    assert!(result.diagnostics.is_empty(), "{:?}", result.diagnostics);
+
+    let schema_path = root.join("schema/schema.graphql");
+    let schema = fs::read_to_string(&schema_path).unwrap();
+    for encoding in [PositionEncoding::Utf8, PositionEncoding::Utf16] {
+        let start = Instant::now();
+        let project = open(&root);
+        let opened = start.elapsed();
+        let result = transform(&project, &schema_path, &schema, encoding);
+        println!(
+            "transform schema file ({encoding:?}, first): {:?}",
+            start.elapsed() - opened
+        );
+        assert!(result.diagnostics.is_empty(), "{:?}", result.diagnostics);
+        measure(&format!("transform schema file ({encoding:?})"), || {
+            transform(&project, &schema_path, &schema, encoding)
+        });
+    }
+    let _ = fs::remove_dir_all(&root);
 }
