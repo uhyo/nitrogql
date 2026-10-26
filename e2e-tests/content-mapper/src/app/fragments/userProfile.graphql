@@ -1,0 +1,6 @@
+#import * from "./userRole.graphql"
+
+fragment UserProfile on User {
+  id
+  ...UserRole
+}

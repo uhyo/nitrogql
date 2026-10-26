@@ -16,6 +16,8 @@ use crate::OperationTypePrinterOptions;
 use crate::operation_base_printer::options::OperationBasePrinterOptions;
 use crate::print_types_for_operation_document;
 
+mod fragment_refs;
+
 fn type_system() -> TypeSystemDocument<'static> {
     let mut doc = parse_type_system_document(
         "

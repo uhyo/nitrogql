@@ -1,7 +1,7 @@
 use std::{
     borrow::Cow,
     cell::OnceCell,
-    collections::{BTreeMap, BTreeSet, HashMap},
+    collections::BTreeMap,
     fs,
     path::{Path, PathBuf},
 };
@@ -11,7 +11,6 @@ use log::{debug, info};
 use nitrogql_ast::{TypeSystemDocument, base::Pos};
 use nitrogql_config_file::{Config, load_config};
 use nitrogql_error::PositionedError;
-use nitrogql_operation_set::OperationSet;
 use nitrogql_plugin::Plugin;
 use nitrogql_semantics::ast_to_type_system;
 use nitrogql_utils::normalize_path;
@@ -25,7 +24,7 @@ use crate::{
     check::resolve_schema,
     error::CliError,
     file_store::FileStore,
-    load_glob_files, load_plugins, parse_schema_files,
+    load_plugins, parse_schema_files,
     plugin_host::PLUGIN_FILE_NAME,
     read_schema_files,
     schema_loader::{LoadedSchema, SchemaFileKind, schema_kind_by_path},
@@ -64,34 +63,12 @@ pub struct Project {
     files: LoadedFiles,
     /// Schema types printed for the schema module, computed on first request.
     schema_module: OnceCell<Result<SchemaModule, PositionedError>>,
-    /// Imports of operation files matched by the config and of files imported from them,
-    /// by normalized path.
-    operation_imports: HashMap<PathBuf, OperationImports>,
 }
 
 /// Schema types printed for the file that provides them.
 pub struct SchemaModule {
     pub text: String,
     pub spans: Vec<RecordedSpan>,
-}
-
-/// Files imported from an operation file, along with the content they were computed from.
-struct OperationImports {
-    content: String,
-    imports: Vec<PathBuf>,
-}
-
-impl OperationImports {
-    /// Computes imports of given operation file, reusing `previous` if it has the same content.
-    fn new(path: &Path, content: String, previous: Option<OperationImports>) -> Self {
-        match previous {
-            Some(previous) if previous.content == content => previous,
-            _ => OperationImports {
-                imports: imported_files(path, &content),
-                content,
-            },
-        }
-    }
 }
 
 self_cell!(
@@ -133,13 +110,11 @@ impl Project {
     /// Opens a project for given tsconfig.json.
     ///
     /// `previous` is a closed project for the same tsconfig.json.
-    /// Its work is reused where inputs are unchanged: the schema is not parsed again
-    /// if the config and schema files are the same, and operation files are not parsed again
-    /// if their contents are the same.
+    /// Its schema is reused if the config and schema files are the same.
     pub async fn open(
         ts_config_file: &Path,
         options: &MapperOptions,
-        mut previous: Option<Project>,
+        previous: Option<Project>,
     ) -> Project {
         let mut project = Project {
             ts_config_file: ts_config_file.to_owned(),
@@ -153,12 +128,7 @@ impl Project {
             schema_files: vec![],
             files: LoadedFiles::from_errors(vec![]),
             schema_module: OnceCell::new(),
-            operation_imports: HashMap::new(),
         };
-        let previous_imports = previous
-            .as_mut()
-            .map(|previous| std::mem::take(&mut previous.operation_imports))
-            .unwrap_or_default();
         project.files = match project.load(ts_config_file, options).await {
             Ok((plugins, schema_sources)) => {
                 match previous
@@ -188,7 +158,7 @@ impl Project {
             .filter(|(_, (path, _, _))| *path != Path::new(PLUGIN_FILE_NAME))
             .map(|(idx, (path, _, _))| (normalize_path(path), idx))
             .collect();
-        project.compute_watched_files(previous_imports);
+        project.compute_watched_files();
         project
     }
 
@@ -258,19 +228,13 @@ impl Project {
 
     /// Computes files to watch and identity of this project.
     ///
-    /// Watched files are the config file, schema files, operation files matched by the config,
-    /// and operation files imported from them.
-    /// Imported operation files affect the output of importing files. Other operation files are
-    /// watched too, as adding an `#import` to one of them adds such a dependency.
+    /// Watched files are the config file and schema files. Operation files are not watched:
+    /// the output of an operation file only depends on its own contents and the project,
+    /// and TypeScript tracks the files it imports fragments from.
     ///
     /// The identity is computed from what affects the output of other files: the config,
-    /// contents of the config file, schema files and imported operation files,
-    /// and imports of each operation file. Other changes to operation files keep the identity,
-    /// so that TypeScript does not transform every file again.
-    ///
-    /// Imports of operation files are taken from `previous_imports` if their contents are unchanged.
-    fn compute_watched_files(&mut self, mut previous_imports: HashMap<PathBuf, OperationImports>) {
-        // Files whose contents affect the identity.
+    /// and contents of the config file and schema files.
+    fn compute_watched_files(&mut self) {
         let mut watched: BTreeMap<PathBuf, Option<String>> = BTreeMap::new();
         for path in self.watched_files.drain(..) {
             let content = fs::read_to_string(&path).ok();
@@ -279,47 +243,6 @@ impl Project {
         for (path, idx) in self.schema_files.iter() {
             let (_, content, _) = &self.file_store()[*idx];
             watched.insert(path.clone(), Some(content.to_string()));
-        }
-        if !self.config.operations.is_empty() {
-            match load_glob_files(&self.root_dir, &self.config.operations) {
-                Ok(operation_files) => {
-                    for (path, content) in operation_files {
-                        let path = normalize_path(&path);
-                        let file =
-                            OperationImports::new(&path, content, previous_imports.remove(&path));
-                        self.operation_imports.insert(path, file);
-                    }
-                    // Imported files may not be matched by the config, and may import other files.
-                    let mut queue = self
-                        .operation_imports
-                        .values()
-                        .flat_map(|file| file.imports.iter().cloned())
-                        .collect::<Vec<_>>();
-                    while let Some(path) = queue.pop() {
-                        if watched.contains_key(&path) {
-                            continue;
-                        }
-                        let content = match self.operation_imports.get(&path) {
-                            Some(file) => Some(file.content.clone()),
-                            None => fs::read_to_string(&path).ok().map(|content| {
-                                let file = OperationImports::new(
-                                    &path,
-                                    content,
-                                    previous_imports.remove(&path),
-                                );
-                                queue.extend(file.imports.iter().cloned());
-                                let content = file.content.clone();
-                                self.operation_imports.insert(path.clone(), file);
-                                content
-                            }),
-                        };
-                        watched.insert(path, content);
-                    }
-                }
-                Err(err) => {
-                    debug!("Failed to load operation files: {err}");
-                }
-            }
         }
 
         let mut hasher = Fnv1a::new();
@@ -332,25 +255,8 @@ impl Project {
             }
             hasher.write(&[0]);
         }
-        hasher.write(&[1]);
-        // Files imported from each operation file, in a stable order.
-        let imports = self
-            .operation_imports
-            .iter()
-            .map(|(path, file)| (path, &file.imports))
-            .collect::<BTreeMap<_, _>>();
-        for (path, imported) in imports {
-            hasher.write(path.to_string_lossy().as_bytes());
-            for imported in imported {
-                hasher.write(&[0]);
-                hasher.write(imported.to_string_lossy().as_bytes());
-            }
-            hasher.write(&[1]);
-        }
         self.config_identity = format!("{:016x}", hasher.finish());
-        let mut watched_files = watched.into_keys().collect::<BTreeSet<_>>();
-        watched_files.extend(self.operation_imports.keys().cloned());
-        self.watched_files = watched_files.into_iter().collect();
+        self.watched_files = watched.into_keys().collect();
     }
 
     /// Returns the store of loaded schema files.
@@ -398,18 +304,6 @@ fn parse_schema<'src>(
         schema,
         type_system,
     })
-}
-
-/// Returns files imported from given operation file.
-/// Files that cannot be parsed are treated as importing nothing.
-fn imported_files(path: &Path, content: &str) -> Vec<PathBuf> {
-    let mut operations = OperationSet::new();
-    // file index is not used, as positions are not reported from here.
-    operations.add_file(path, content, usize::MAX);
-    operations
-        .files()
-        .flat_map(|file| file.imports().map(|(path, _)| path))
-        .collect()
 }
 
 /// FNV-1a hash, used for computing project identity.

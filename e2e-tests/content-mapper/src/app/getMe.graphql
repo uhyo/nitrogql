@@ -1,0 +1,9 @@
+#import UserProfile from "./fragments/userProfile.graphql"
+#import UserFields from "./userFields.graphql"
+
+query GetMe($withProfile: Boolean!) {
+  me {
+    ...UserFields
+    ...UserProfile @include(if: $withProfile)
+  }
+}

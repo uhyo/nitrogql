@@ -4,6 +4,9 @@ expression: "print_result(&result, OPERATION, &root)"
 ---
 import type { TypedDocumentNode } from "@graphql-typed-document-node/core";
 
+import type * as __Nitrogql from "@nitrogql/cli/fragment-types";
+import type * as __NitrogqlImport0 from "./fragment.graphql";
+
 type GetMeResult = any;
 
 type GetMeVariables = any;
@@ -12,6 +15,8 @@ declare const GetMeQuery: TypedDocumentNode<GetMeResult, GetMeVariables>;
 
 export { GetMeQuery as default };
 
+export type __NitrogqlFragments = {};
+// mapping: "\"./fragment.graphql\"" -> "\"./fragment.graphql\"" (Verbatim)
 // mapping: "GetMeResult" -> "GetMe" (Atom)
 // mapping: "GetMeVariables" -> "GetMe" (Atom)
 // mapping: "GetMeQuery" -> "GetMe" (Atom)

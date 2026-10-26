@@ -1,4 +1,4 @@
-use std::borrow::Borrow;
+use std::{borrow::Borrow, collections::HashSet};
 
 use graphql_type_system::{Field, Node, OriginalNodeRef, RootTypes, Text, TypeDefinition};
 use nitrogql_ast::{
@@ -115,6 +115,100 @@ pub fn check_operation_document<'src, S: Text<'src>>(
                 check_fragment_definition(def, context, &mut result);
             }
         }
+    }
+
+    // Fragments that are spread from operations are checked there, with their variables.
+    // Other fragments of this file (e.g. ones that are only imported from other files)
+    // are checked on their own, without knowledge of variables.
+    // Fragments spread from such fragments are checked through them.
+    let operation_selections = document.definitions.iter().filter_map(|def| match def {
+        ExecutableDefinition::OperationDefinition(op) => Some(&op.selection_set),
+        ExecutableDefinition::FragmentDefinition(_) => None,
+    });
+    let spread_from_operations = spread_fragments(operation_selections, &fragment_map);
+    let unchecked_fragments = document
+        .definitions
+        .iter()
+        .filter_map(|def| match def {
+            ExecutableDefinition::FragmentDefinition(def)
+                if def.position.file == document.position.file
+                    && !spread_from_operations.contains(def.name.name) =>
+            {
+                Some(def)
+            }
+            _ => None,
+        })
+        .collect::<Vec<_>>();
+    let spread_from_fragments = spread_fragments(
+        unchecked_fragments.iter().map(|def| &def.selection_set),
+        &fragment_map,
+    );
+    for def in unchecked_fragments {
+        if spread_from_fragments.contains(def.name.name) {
+            continue;
+        }
+        let Some(target) = context.definitions.get_type(def.type_condition.name) else {
+            continue;
+        };
+        if !matches!(
+            **target,
+            TypeDefinition::Object(_) | TypeDefinition::Interface(_) | TypeDefinition::Union(_)
+        ) {
+            // Invalid type conditions are reported by check_fragment_definition.
+            continue;
+        }
+        let mut errors = vec![];
+        check_selection_set(
+            &fragment_map,
+            &[def.name.name],
+            None,
+            target,
+            &def.selection_set,
+            context,
+            &mut errors,
+        );
+        result.extend(
+            errors
+                .into_iter()
+                .filter(|err| !matches!(err.message, CheckErrorMessage::UnknownVariable { .. })),
+        );
+    }
+    result
+}
+
+/// Returns names of fragments that are (transitively) spread from given selection sets.
+fn spread_fragments<'a>(
+    selection_sets: impl IntoIterator<Item = &'a SelectionSet<'a>>,
+    fragment_map: &FragmentMap<'a, '_>,
+) -> HashSet<&'a str> {
+    fn visit<'a>(
+        selection_set: &'a SelectionSet,
+        fragment_map: &FragmentMap<'a, '_>,
+        result: &mut HashSet<&'a str>,
+    ) {
+        for selection in selection_set.selections.iter() {
+            match selection {
+                Selection::Field(field) => {
+                    if let Some(ref selection_set) = field.selection_set {
+                        visit(selection_set, fragment_map, result);
+                    }
+                }
+                Selection::FragmentSpread(spread) => {
+                    if result.insert(spread.fragment_name.name)
+                        && let Some(fragment) = fragment_map.get(spread.fragment_name.name)
+                    {
+                        visit(&fragment.selection_set, fragment_map, result);
+                    }
+                }
+                Selection::InlineFragment(fragment) => {
+                    visit(&fragment.selection_set, fragment_map, result);
+                }
+            }
+        }
+    }
+    let mut result = HashSet::new();
+    for selection_set in selection_sets {
+        visit(selection_set, fragment_map, &mut result);
     }
     result
 }
@@ -453,6 +547,10 @@ fn check_fragment_spread<'src, S: Text<'src>>(
         .collect();
     let seen_fragments = &seen_fragments;
     let Some(target) = fragment_map.get(fragment_spread.fragment_name.name) else {
+        if context.is_imported_fragment(fragment_spread.fragment_name.name) {
+            // Definition is in another document, which is checked on its own.
+            return;
+        }
         result.push(
             CheckErrorMessage::UnknownFragment {
                 name: fragment_spread.fragment_name.to_string(),

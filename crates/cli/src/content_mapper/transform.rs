@@ -1,7 +1,5 @@
 use std::{
     collections::HashSet,
-    fs,
-    io::ErrorKind,
     path::{Path, PathBuf},
 };
 
@@ -11,12 +9,13 @@ use nitrogql_error::{ErrorCode, PositionedError};
 use nitrogql_operation_set::OperationSet;
 use nitrogql_printer::{
     OperationTypePrinterOptions, SchemaTypePrinter, SchemaTypePrinterOptions,
+    fragment_imports::{FragmentImport, is_imported_fragment},
     print_fallback_types_for_operation_document, print_types_for_operation_document_with_fallback,
 };
+use nitrogql_semantics::{ImportTargets, OperationExtension};
 use nitrogql_utils::{normalize_path, relative_path};
 use sourcemap_writer::{RecordedSpan, SpanWriter};
 use thiserror::Error;
-use typed_arena::Arena;
 
 use crate::{generate::path_to_ts, schema_loader::LoadedSchema};
 
@@ -29,11 +28,12 @@ use super::{
 
 /// Virtual content for files that do not export anything.
 const EMPTY_MODULE: &str = "export {};\n";
+/// Virtual content for operation files that cannot be parsed.
+/// Importing files find no fragments in it.
+const EMPTY_OPERATION_MODULE: &str = "export type __NitrogqlFragments = {};\n";
 
 #[derive(Debug, Error)]
 enum TransformError {
-    #[error("Failed to read '{path}': {message}")]
-    ReadFile { path: String, message: String },
     #[error(
         "Cannot determine where to import schema types from. Set 'schemaOutput' or 'schemaModuleSpecifier' option in nitrogql config, or use GraphQL files as schema."
     )]
@@ -127,10 +127,14 @@ fn transform_schema_file(
 
 /// Transforms an operation file into type definitions.
 ///
+/// Fragments imported with `#import` are not read. Instead, the module imports their selection
+/// trees from the imported files, so that its output does not depend on other files.
+/// Spreads of imported fragments are therefore not validated here; `nitrogql check` does it.
+///
 /// If the file has errors but can be parsed, a fallback module is emitted along with diagnostics.
 /// It has the same exports as usual but types are `any`, so that importing files keep working.
 /// Validation errors only make the affected definitions `any`;
-/// other errors (e.g. in the project or in imports) affect the whole file.
+/// other errors (e.g. in the project) affect the whole file.
 fn transform_operation_file(
     project: &Project,
     file_name: &Path,
@@ -138,12 +142,11 @@ fn transform_operation_file(
     encoding: PositionEncoding,
 ) -> TransformResult {
     // Operation files are numbered after schema files.
-    let root_index = project.file_store().schema_len();
-    // Holds sources of imported files, which are borrowed by `operations`.
-    let sources = Arena::new();
-    let operations = load_operation_files(file_name, content, root_index, &sources);
+    let file_index = project.file_store().schema_len();
+    let mut operations = OperationSet::new();
+    operations.add_file(file_name, content, file_index);
     let file_path = |idx: usize| {
-        if idx < root_index {
+        if idx < file_index {
             project
                 .file_store()
                 .get_file(idx)
@@ -153,30 +156,40 @@ fn transform_operation_file(
         }
     };
     let index = SourceText::new(content, encoding);
+    let file = operations.get(file_name);
+    let imports = file
+        .map(|file| fragment_imports(file.extension, content))
+        .unwrap_or_default();
+    let options = || {
+        let mut options = OperationTypePrinterOptions::from_config(&project.config);
+        // Runtime values are provided by loaders, not by content-mapped files.
+        options.print_values = false;
+        options.fragment_imports = imports.clone();
+        options.export_fragment_trees = true;
+        options
+    };
 
     let error_result = |diagnostics: Vec<MapperDiagnostic>| {
-        let Some(file) = operations.get(file_name) else {
+        let Some(file) = file else {
             return TransformResult {
-                text: EMPTY_MODULE.to_owned(),
+                text: EMPTY_OPERATION_MODULE.to_owned(),
                 extension: ".ts",
                 mappings: vec![],
                 diagnostics,
             };
         };
-        let mut options = OperationTypePrinterOptions::from_config(&project.config);
-        options.print_values = false;
         let mut writer = SpanWriter::new();
-        print_fallback_types_for_operation_document(options, file.document, &mut writer);
+        print_fallback_types_for_operation_document(options(), file.document, &mut writer);
         let (text, spans) = writer.into_parts();
         TransformResult {
-            mappings: to_mappings(&spans, root_index, &text, &index, encoding),
+            mappings: to_mappings(&spans, file_index, &text, &index, encoding),
             text,
             extension: ".ts",
             diagnostics,
         }
     };
     let diagnose =
-        |errors: &[PositionedError]| to_diagnostics(errors, root_index, &file_path, &index);
+        |errors: &[PositionedError]| to_diagnostics(errors, file_index, &file_path, &index);
 
     if !operations.syntax_errors().is_empty() {
         return error_result(diagnose(operations.syntax_errors()));
@@ -184,6 +197,9 @@ fn transform_operation_file(
     if !operations.errors().is_empty() {
         return error_result(diagnose(operations.errors()));
     }
+    let Some(file) = file else {
+        return error_result(vec![]);
+    };
     let schema = match project.schema() {
         Ok(schema) => schema,
         Err(errors) => {
@@ -200,20 +216,18 @@ fn transform_operation_file(
         }
     };
 
-    let document = match operations.resolve_imports(file_name) {
-        None => return error_result(vec![]),
-        Some(Ok(document)) => document,
-        Some(Err(err)) => return error_result(diagnose(&[err])),
-    };
-
-    let check_errors =
-        check_operation_document(&document, &OperationCheckContext::new(&schema.type_system))
-            .into_iter()
-            .map(PositionedError::from)
-            .collect::<Vec<_>>();
+    let document = file.document;
+    let is_imported = |name: &str| is_imported_fragment(&imports, name);
+    let check_errors = check_operation_document(
+        document,
+        &OperationCheckContext::new(&schema.type_system).with_imported_fragments(&is_imported),
+    )
+    .into_iter()
+    .map(PositionedError::from)
+    .collect::<Vec<_>>();
     let mut diagnostics = diagnose(&check_errors);
     // Definitions with errors get `any` types, so that other definitions keep their types.
-    let Some(fallback) = fallback_definitions(&document, &check_errors) else {
+    let Some(fallback) = fallback_definitions(document, &check_errors) else {
         return error_result(diagnostics);
     };
 
@@ -221,16 +235,14 @@ fn transform_operation_file(
         diagnostics.extend(diagnose(&[TransformError::NoSchemaSource.into()]));
         return error_result(diagnostics);
     };
-    let mut options = OperationTypePrinterOptions::from_config(&project.config);
-    // Runtime values are provided by loaders, not by content-mapped files.
-    options.print_values = false;
+    let mut options = options();
     options.schema_source = schema_source;
 
     let mut writer = SpanWriter::new();
     let printer_errors = print_types_for_operation_document_with_fallback(
         options,
         &schema.type_system,
-        &document,
+        document,
         |pos| fallback.contains(pos),
         &mut writer,
     );
@@ -245,37 +257,41 @@ fn transform_operation_file(
     diagnostics.extend(diagnose(&printer_errors));
     let (text, spans) = writer.into_parts();
     TransformResult {
-        mappings: to_mappings(&spans, root_index, &text, &index, encoding),
+        mappings: to_mappings(&spans, file_index, &text, &index, encoding),
         text,
         extension: ".ts",
         diagnostics,
     }
 }
 
-/// Loads given operation file and files imported from it.
-/// Imported files are read from disk, and their sources are stored in `sources`.
-fn load_operation_files<'src>(
-    file_name: &Path,
-    content: &'src str,
-    root_index: usize,
-    sources: &'src Arena<String>,
-) -> OperationSet<'src> {
-    let mut operations = OperationSet::new();
-    operations.add_file(file_name, content, root_index);
-    let mut next_index = root_index + 1;
-    operations.load_imports(|path| {
-        let source = fs::read_to_string(path).map_err(|err| TransformError::ReadFile {
-            path: path.to_string_lossy().into_owned(),
-            message: match err.kind() {
-                ErrorKind::NotFound => "file not found".to_owned(),
-                _ => err.to_string(),
-            },
-        })?;
-        let file_index = next_index;
-        next_index += 1;
-        Ok::<_, TransformError>((sources.alloc(source).as_str(), file_index))
-    });
-    operations
+/// Converts `#import`s of an operation file into imports of TypeScript modules.
+fn fragment_imports(extension: &OperationExtension, content: &str) -> Vec<FragmentImport> {
+    extension
+        .imports
+        .iter()
+        .map(|import| {
+            let path = import.path.value.replace('\\', "/");
+            // `#import` paths are relative to the file even without `./`.
+            let module =
+                if path.starts_with("./") || path.starts_with("../") || path.starts_with('/') {
+                    path
+                } else {
+                    format!("./{path}")
+                };
+            FragmentImport {
+                module,
+                fragments: match import.targets {
+                    ImportTargets::Wildcard => None,
+                    ImportTargets::Specific(ref names) => {
+                        Some(names.iter().map(|name| name.name.to_owned()).collect())
+                    }
+                },
+                source: content
+                    .get(import.path.position.span())
+                    .map(|text| (import.path.position, text.to_owned())),
+            }
+        })
+        .collect()
 }
 
 /// Returns the schema file that provides schema types, along with its index in the file store.

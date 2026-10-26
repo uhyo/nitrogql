@@ -2,5 +2,5 @@
 source: crates/cli/src/content_mapper/tests.rs
 expression: "print_result(&result, operation, &root)"
 ---
-export {};
+export type __NitrogqlFragments = {};
 // diagnostic 1001: "Parse error: expected Selection" at ""

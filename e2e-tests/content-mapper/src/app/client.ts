@@ -1,4 +1,6 @@
 import type { ResultOf, VariablesOf } from "@graphql-typed-document-node/core";
+import { UserProfile } from "./fragments/userProfile.graphql";
+import getMeQuery from "./getMe.graphql";
 import getUserQuery from "./getUser.graphql";
 import updateNameMutation from "./updateName.graphql";
 import { UserFields } from "./userFields.graphql";
@@ -37,3 +39,18 @@ assertType<Equals<ResultOf<typeof UserFields>, { id: string; name: string }>>();
 
 // @ts-expect-error -- age is not selected in UserFields
 type _Age = ResultOf<typeof UserFields>["age"];
+
+// Imported fragments are merged at the type level.
+assertType<
+  Equals<ResultOf<typeof UserProfile>, { id: string; role: "ADMIN" | "USER" }>
+>();
+assertType<
+  Equals<
+    ResultOf<typeof getMeQuery>,
+    {
+      me:
+        | { id: string; name: string; role: undefined }
+        | { id: string; name: string; role: "ADMIN" | "USER" };
+    }
+  >
+>();

@@ -1,25 +1,6 @@
 ---
 source: crates/cli/src/content_mapper/tests.rs
-expression: "print_result(&result, operation, &root)"
+expression: "print_result(&result, \"fragment UserName on User {\", &root)"
 ---
-import type { TypedDocumentNode } from "@graphql-typed-document-node/core";
-
-type GetMeResult = any;
-
-type GetMeVariables = any;
-
-declare const GetMeQuery: TypedDocumentNode<GetMeResult, GetMeVariables>;
-
-export { GetMeQuery as default };
-
-export type UserAge = any;
-
-export declare const UserAge: TypedDocumentNode<UserAge, never>;
-
-// mapping: "GetMeResult" -> "GetMe" (Atom)
-// mapping: "GetMeVariables" -> "GetMe" (Atom)
-// mapping: "GetMeQuery" -> "GetMe" (Atom)
-// mapping: "UserAge" -> "UserAge" (Verbatim)
-// mapping: "UserAge" -> "UserAge" (Verbatim)
-// mapping: "UserAge" -> "UserAge" (Verbatim)
-// diagnostic 1001: "<root>/app/fragment.graphql:1:28: Parse error: expected Selection" at ""
+export type __NitrogqlFragments = {};
+// diagnostic 1001: "Parse error: expected Selection" at ""

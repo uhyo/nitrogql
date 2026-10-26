@@ -18,6 +18,7 @@ mod branching;
 mod deep_merge;
 pub mod error;
 mod fallback;
+pub mod fragment_imports;
 mod selection_set_visitor;
 mod selection_tree;
 #[cfg(test)]

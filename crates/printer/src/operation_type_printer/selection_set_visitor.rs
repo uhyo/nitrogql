@@ -6,7 +6,8 @@ use super::{
     type_printer::QueryTypePrinterContext,
 };
 
-/// Visits all fields in selection set. Nested fragments are visited as well.
+/// Visits all fields in selection set. Nested fragments are visited as well,
+/// except for fragments defined in other modules.
 pub fn visit_fields_in_selection_set<'src, S: Text<'src>>(
     context: &QueryTypePrinterContext<'_, 'src, S>,
     selection_set: &SelectionSet<'src>,
@@ -30,6 +31,10 @@ fn visit_fields_in_selection_set_impl<'src, S: Text<'src>>(
                     continue;
                 }
                 seen_fragments.push(fragment.fragment_name.name);
+                if context.is_external_fragment(fragment.fragment_name.name) {
+                    // Selections of fragments in other modules are not known here.
+                    continue;
+                }
                 let fragment_def = context
                     .fragment_definitions
                     .get(fragment.fragment_name.name)

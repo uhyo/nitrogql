@@ -133,6 +133,11 @@ fn merge_selection_trees<'src, S: Text<'src>>(
                                     .chain(right_branch.aliased_fields),
                             )
                             .map_err(|err| err.name)?,
+                            fragment_refs: left_branch
+                                .fragment_refs
+                                .into_iter()
+                                .chain(right_branch.fragment_refs)
+                                .collect(),
                         });
                     }
                     None => {
