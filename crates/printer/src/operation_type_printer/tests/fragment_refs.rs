@@ -194,6 +194,12 @@ const CASES: &[Case] = &[
         expect: Expect::Exact,
     },
     Case {
+        name: "skip_fragment_spread_with_aliases",
+        main: "query Test($skip: Boolean!) { me { n: name ...F @skip(if: $skip) } }",
+        modules: &[("f", "fragment F on User { a: age n: name p: posts { id } }")],
+        expect: Expect::Exact,
+    },
+    Case {
         name: "skip_fragment_spread_variable",
         main: "query Test($skip: Boolean!) { me { id name type ...F @skip(if: $skip) } }",
         modules: &[("f", "fragment F on User { age }")],
@@ -264,7 +270,7 @@ fn write_fragment_ref_cases() {
         "export interface TypedDocumentNode<Result, Variables> {\n  __result?: Result;\n  __variables?: Variables;\n}\n",
     )
     .unwrap();
-    for case in CASES.iter().chain([stress_case()]) {
+    for case in CASES.iter().chain([stress_case(), colocation_case()]) {
         write_case(&out_dir.join(case.name), case);
     }
 }
@@ -291,6 +297,51 @@ fn stress_case() -> &'static Case {
     Box::leak(Box::new(Case {
         name: "stress",
         main: leak(format!("query Test {{ {main} }}")),
+        modules: modules.leak(),
+        expect: Expect::Exact,
+    }))
+}
+
+/// Case that resembles fragment colocation: operations spread fragments of components,
+/// which spread fragments of their child components.
+fn colocation_case() -> &'static Case {
+    let operations = std::env::var("NITROGQL_FRAGMENT_REF_COLOCATION_OPERATIONS")
+        .map_or(20, |value| value.parse().unwrap());
+    let leak = |s: String| -> &'static str { Box::leak(s.into_boxed_str()) };
+    let mut modules = vec![];
+    for idx in 0..operations * 2 {
+        let fields = if idx % 2 == 0 {
+            "id title tags"
+        } else {
+            "id body"
+        };
+        modules.push((
+            leak(format!("postItem{idx}")),
+            leak(format!("fragment PostItem{idx} on Post {{ {fields} }}")),
+        ));
+    }
+    for idx in 0..operations {
+        modules.push((
+            leak(format!("userCard{idx}")),
+            leak(format!(
+                "fragment UserCard{idx} on User {{ id name posts {{ ...PostItem{} ...PostItem{} }} }}",
+                idx * 2,
+                idx * 2 + 1
+            )),
+        ));
+    }
+    let main = (0..operations)
+        .map(|idx| {
+            format!(
+                "query Q{idx} {{ me {{ id ...UserCard{idx} ...UserCard{} }} posts {{ id ...PostItem{idx} }} }}",
+                (idx + 1) % operations
+            )
+        })
+        .collect::<Vec<_>>()
+        .join("\n");
+    Box::leak(Box::new(Case {
+        name: "colocation",
+        main: leak(main),
         modules: modules.leak(),
         expect: Expect::Exact,
     }))

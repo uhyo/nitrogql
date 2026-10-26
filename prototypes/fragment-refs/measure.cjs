@@ -4,6 +4,12 @@ const path = require("node:path");
 const ts = require(process.env.TYPESCRIPT_API ?? "typescript6");
 
 const dir = path.join(__dirname, "generated", process.argv[2] ?? "stress");
+// Instantiations of an empty program, which are subtracted from the counts.
+const baseline = (() => {
+  const program = ts.createProgram([path.join(__dirname, "generated", "typed-document-node.ts")], { strict: true, noEmit: true, types: [] });
+  ts.getPreEmitDiagnostics(program);
+  return program.getTypeChecker().getInstantiationCount();
+})();
 for (const file of ["expanded.ts", "main.ts"]) {
   const start = performance.now();
   const program = ts.createProgram([path.join(dir, file)], { strict: true, noEmit: true, types: [] });
@@ -19,6 +25,6 @@ for (const file of ["expanded.ts", "main.ts"]) {
   const diagnostics = ts.getPreEmitDiagnostics(program).length;
   console.log(
     `${file.padEnd(12)} time=${(performance.now() - start).toFixed(0)}ms types=${checker.getTypeCount()} ` +
-      `instantiations=${checker.getInstantiationCount()} printed=${length} diagnostics=${diagnostics}`,
+      `instantiations=${checker.getInstantiationCount() - baseline} printed=${length} diagnostics=${diagnostics}`,
   );
 }

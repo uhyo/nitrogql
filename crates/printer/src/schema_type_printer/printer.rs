@@ -141,25 +141,28 @@ const FRAGMENT_MERGE_UTILITIES: &str = r#"export type __Branch<Name extends stri
   " $fields": Fields;
   " $aliased": Aliased;
 };
-export type __Empty = { " $empty": true };
 type __AnyBranch = __Branch<string, unknown, unknown, unknown>;
 type __IsAny<T> = 0 extends 1 & T ? true : false;
-type __MergeFields<A, B> = {
-  [K in keyof A | keyof B]: K extends keyof A
+// Fields omitted by `@skip` or `@include` are optional `never`, which read as `undefined` (or `never`).
+// Mapping over keys of both keeps a field optional only if it is omitted on both sides.
+// Values are erased before intersecting, as conflicting values would reduce it to `never`.
+type __Keys<T> = { [K in keyof T]: unknown };
+type __MergeFields<A, B> = [keyof A & keyof B] extends [never] ? A & B : __MergeOverlappingFields<A, B>;
+type __MergeOverlappingFields<A, B> = {
+  [K in keyof (__Keys<A> & __Keys<B>)]: K extends keyof A
     ? K extends keyof B ? __MergeValue<A[K], B[K]> : A[K]
     : K extends keyof B ? B[K] : never;
 };
 type __MergeValue<A, B> =
-  [A] extends [__Empty] ? B
-  : [B] extends [__Empty] | [never] ? A
+  [A] extends [undefined] ? B
+  : [B] extends [undefined] ? A
   : __MergeMember<A, B>;
 type __MergeMember<A, B> =
   A extends __AnyBranch ? __MergeBranch<A, B>
   : A extends readonly (infer E)[] ? __MergeValue<E, B extends readonly (infer F)[] ? F : never>[]
   : A;
-type __MergeBranch<A extends __AnyBranch, B> =
-  [Extract<B, { " $name": A[" $name"] }>] extends [never] ? A
-  : __MergeMatchingBranches<A, Extract<B, { " $name": A[" $name"] }>>;
+type __MergeBranch<A extends __AnyBranch, B, Matching = Extract<B, { " $name": A[" $name"] }>> =
+  [Matching] extends [never] ? A : __MergeMatchingBranches<A, Matching>;
 // Distributes over branches of the same object type, which differ in variable values.
 type __MergeMatchingBranches<A extends __AnyBranch, B> =
   B extends __AnyBranch
@@ -175,16 +178,13 @@ export type __CombineFragments<A, B> =
   : __MergeMember<A, B> | Exclude<B, { " $name": A extends __AnyBranch ? A[" $name"] : never }>;
 export type __SkipFragment<Fragment> =
   Fragment extends __AnyBranch
-    ? __Branch<Fragment[" $name"], Fragment[" $orig"], { [K in keyof Fragment[" $fields"]]: __Empty }, { [K in keyof Fragment[" $aliased"]]: __Empty }>
+    ? __Branch<Fragment[" $name"], Fragment[" $orig"], { [K in keyof Fragment[" $fields"]]?: never }, { [K in keyof Fragment[" $aliased"]]?: never }>
     : Fragment;
-type __RenderFields<Fields> = {
-  [K in keyof Fields as Fields[K] extends __Empty ? never : K]: __Render<Fields[K]>;
-} & {
-  [K in keyof Fields as Fields[K] extends __Empty ? K : never]?: never;
-};
+// Homomorphic, so that omitted fields stay optional.
+type __RenderFields<Fields> = { [K in keyof Fields]: __Render<Fields[K]> };
+// `any` needs no special handling, as it absorbs the union of both branches.
 export type __Render<T> =
-  __IsAny<T> extends true ? any
-  : T extends __AnyBranch ? __SelectionSet<T[" $orig"], __RenderFields<T[" $fields"]>, __RenderFields<T[" $aliased"]>>
+  T extends __AnyBranch ? __SelectionSet<T[" $orig"], __RenderFields<T[" $fields"]>, __RenderFields<T[" $aliased"]>>
   : T extends readonly (infer E)[] ? __Render<E>[]
   : T;
 

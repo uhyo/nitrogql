@@ -71,20 +71,22 @@ fn generate_unrendered_branch_type<'src, S: Text<'src>>(
             fields
                 .iter()
                 .map(|field| {
-                    let r#type = match field {
-                        SelectionTreeField::Empty(_) => schema_utility(context, "__Empty"),
+                    let (r#type, optional) = match field {
+                        // Omitted fields are printed the same as rendered ones.
+                        SelectionTreeField::Empty(_) => (TSType::Never, true),
                         SelectionTreeField::Leaf(leaf) => {
-                            leaf_type(context, leaf, &branch.type_name)
+                            (leaf_type(context, leaf, &branch.type_name), false)
                         }
-                        SelectionTreeField::Object(object) => {
-                            generate_unrendered_type(context, &object.selection, false)
-                        }
+                        SelectionTreeField::Object(object) => (
+                            generate_unrendered_type(context, &object.selection, false),
+                            false,
+                        ),
                     };
                     ObjectField {
                         key: field.name().to_string().into(),
                         r#type,
                         description: None,
-                        optional: false,
+                        optional,
                         readonly: false,
                     }
                 })
