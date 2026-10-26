@@ -867,6 +867,52 @@ mod fragment_merging {
         let printed = print_document_default(&doc);
         assert_snapshot!(printed);
     }
+
+    #[test]
+    fn variables_in_nested_merging() {
+        let doc = parse_operation_document(
+            "
+        query($x: Boolean!, $y: Boolean!) {
+            me {
+                name @include(if: $x)
+            }
+            ...F
+        }
+        fragment F on Query {
+            me {
+                age @include(if: $y)
+            }
+        }
+        ",
+            0,
+        )
+        .unwrap();
+        let printed = print_document_default(&doc);
+        assert_snapshot!(printed);
+    }
+
+    #[test]
+    fn same_variable_in_nested_merging() {
+        let doc = parse_operation_document(
+            "
+        query($x: Boolean!) {
+            me {
+                name @include(if: $x)
+            }
+            ...F
+        }
+        fragment F on Query {
+            me {
+                age @include(if: $x)
+            }
+        }
+        ",
+            0,
+        )
+        .unwrap();
+        let printed = print_document_default(&doc);
+        assert_snapshot!(printed);
+    }
 }
 
 mod import_fragments {

@@ -111,38 +111,23 @@ fn merge_selection_trees<'src, S: Text<'src>>(
         (SelectionTree::Object(left), SelectionTree::Object(right)) => {
             let mut new_selection = Vec::new();
             for left_branch in left {
-                let right_branch = right
+                // Branches of the same type differ in values of variables.
+                // Every combination of them is possible, except for ones that
+                // disagree on the value of the same variable.
+                let right_branches = right
                     .iter()
-                    .find(|b| b.type_name == left_branch.type_name)
-                    .cloned();
-                match right_branch {
-                    Some(right_branch) => {
-                        new_selection.push(SelectionTreeBranch {
-                            type_name: left_branch.type_name,
-                            unaliased_fields: deep_merge_selection_tree(
-                                left_branch
-                                    .unaliased_fields
-                                    .into_iter()
-                                    .chain(right_branch.unaliased_fields),
-                            )
-                            .map_err(|err| err.name)?,
-                            aliased_fields: deep_merge_selection_tree(
-                                left_branch
-                                    .aliased_fields
-                                    .into_iter()
-                                    .chain(right_branch.aliased_fields),
-                            )
-                            .map_err(|err| err.name)?,
-                            fragment_refs: left_branch
-                                .fragment_refs
-                                .into_iter()
-                                .chain(right_branch.fragment_refs)
-                                .collect(),
-                        });
-                    }
-                    None => {
-                        new_selection.push(left_branch);
-                    }
+                    .filter(|b| {
+                        b.type_name == left_branch.type_name
+                            && variables_agree(&left_branch.variables, &b.variables)
+                    })
+                    .cloned()
+                    .collect::<Vec<_>>();
+                if right_branches.is_empty() {
+                    new_selection.push(left_branch);
+                    continue;
+                }
+                for right_branch in right_branches {
+                    new_selection.push(merge_branches(left_branch.clone(), right_branch)?);
                 }
             }
             for right_branch in right {
@@ -157,4 +142,46 @@ fn merge_selection_trees<'src, S: Text<'src>>(
         }
         _ => return Ok(None),
     }))
+}
+
+/// Returns whether given values of variables agree on every variable they share.
+fn variables_agree(left: &[(String, bool)], right: &[(String, bool)]) -> bool {
+    left.iter().all(|(name, value)| {
+        right
+            .iter()
+            .all(|(other_name, other_value)| name != other_name || value == other_value)
+    })
+}
+
+/// Merges two branches of the same type into one.
+/// On error, returns the name of the nested field whose shapes differ.
+fn merge_branches<'src, S: Text<'src>>(
+    left: SelectionTreeBranch<S>,
+    right: SelectionTreeBranch<S>,
+) -> Result<SelectionTreeBranch<S>, S> {
+    let mut variables = left.variables;
+    for (name, value) in right.variables {
+        if !variables.iter().any(|(n, _)| *n == name) {
+            variables.push((name, value));
+        }
+    }
+    Ok(SelectionTreeBranch {
+        type_name: left.type_name,
+        variables,
+        unaliased_fields: deep_merge_selection_tree(
+            left.unaliased_fields
+                .into_iter()
+                .chain(right.unaliased_fields),
+        )
+        .map_err(|err| err.name)?,
+        aliased_fields: deep_merge_selection_tree(
+            left.aliased_fields.into_iter().chain(right.aliased_fields),
+        )
+        .map_err(|err| err.name)?,
+        fragment_refs: left
+            .fragment_refs
+            .into_iter()
+            .chain(right.fragment_refs)
+            .collect(),
+    })
 }

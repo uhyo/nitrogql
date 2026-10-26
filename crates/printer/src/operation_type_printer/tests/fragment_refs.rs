@@ -248,12 +248,10 @@ const CASES: &[Case] = &[
         expect: Expect::Wider,
     },
     Case {
-        // Expanded types pair each branch with only the first branch of the same type
-        // when merging nested selections, so they miss some combinations.
         name: "variables_in_nested_merging",
         main: "query Test($x: Boolean!, $y: Boolean!) { me { name @include(if: $x) } ...F }",
         modules: &[("f", "fragment F on Query { me { age @include(if: $y) } }")],
-        expect: Expect::Wider,
+        expect: Expect::Exact,
     },
 ];
 
