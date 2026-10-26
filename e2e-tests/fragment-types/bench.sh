@@ -4,7 +4,7 @@
 # Usage: ./bench.sh [number of operations, default 200]
 set -eu
 cd "$(dirname "$0")"
-NITROGQL_FRAGMENT_REF_PROTOTYPE_OUT="$PWD/generated" \
+NITROGQL_FRAGMENT_TYPES_OUT="$PWD/generated" \
 NITROGQL_FRAGMENT_REF_COLOCATION_OPERATIONS="${1:-200}" \
   cargo test --quiet -p nitrogql-printer write_fragment_ref_cases -- --ignored > /dev/null
 dir=generated/colocation

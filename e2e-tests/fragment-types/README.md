@@ -46,9 +46,11 @@ and rendering is a single homomorphic mapped type that keeps the modifiers.
 
 ## Running
 
+CI runs the check as part of the e2e tests. To run it locally (Rust and Node are needed):
+
 ```sh
-npm install
-./run.sh                               # generate the cases and type-check them with TypeScript 7.1
+npm install                            # in the repository root
+npm run e2e-test                       # generate the cases and type-check them with TypeScript 7.1
 TYPESCRIPT_API=typescript6 node dump-types.cjs <case>  # show the resolved types of a case
 node measure.cjs [case]                # compare costs of resolving the types (TypeScript 6 API)
 ./bench.sh [operations]                # compare type checking costs with TypeScript 7

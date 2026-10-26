@@ -5,7 +5,7 @@
 //! each other's selection trees (as the content mapper does).
 //! The generated `check.ts` of each case asserts that both give the same types.
 //!
-//! Run `prototypes/fragment-refs/run.sh` to generate the cases and type-check them.
+//! Run `e2e-tests/fragment-types/run.sh` to generate the cases and type-check them.
 
 use std::{fmt::Write as _, fs, path::Path};
 
@@ -258,10 +258,10 @@ const CASES: &[Case] = &[
 ];
 
 #[test]
-#[ignore = "run via prototypes/fragment-refs/run.sh"]
+#[ignore = "run via e2e-tests/fragment-types/run.sh"]
 fn write_fragment_ref_cases() {
-    let out_dir = std::env::var("NITROGQL_FRAGMENT_REF_PROTOTYPE_OUT")
-        .expect("NITROGQL_FRAGMENT_REF_PROTOTYPE_OUT must be set");
+    let out_dir = std::env::var("NITROGQL_FRAGMENT_TYPES_OUT")
+        .expect("NITROGQL_FRAGMENT_TYPES_OUT must be set");
     let out_dir = Path::new(&out_dir);
     let _ = fs::remove_dir_all(out_dir);
     fs::create_dir_all(out_dir).unwrap();
