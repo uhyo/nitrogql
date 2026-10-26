@@ -66,6 +66,25 @@ export default function ImportSyntax() {
           .
         </p>
         <p>
+          Imports are not transitive. If the imported document imports
+          fragments from yet another document, those fragments are not
+          available in the current document. To use them, import them
+          directly:
+        </p>
+        <Highlight language="graphql">{`
+#import UserName from "./userName.graphql"
+# userName.graphql imports UserAge from "./userAge.graphql",
+# but that does not make UserAge available here.
+#import UserAge from "./userAge.graphql"
+
+query {
+  me {
+    ...UserName
+    ...UserAge
+  }
+}
+`}</Highlight>
+        <p>
           The <code>#import</code> syntax can be used in the top level of an
           operation document. If the syntax is used elsewhere, it will be a
           syntax error.

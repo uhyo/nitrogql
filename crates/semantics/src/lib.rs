@@ -16,6 +16,8 @@ pub use operation_extension_resolver::{
     operation_extension::{Import, ImportTargets, OperationExtension},
     resolve_operation_extensions,
 };
-pub use operation_import_resolver::{OperationResolver, resolve_operation_imports};
+pub use operation_import_resolver::{
+    OperationResolver, directly_imported_fragments, resolve_operation_imports,
+};
 pub use schema_extension_resolver::resolve_schema_extensions;
 pub use type_system_to_ast::type_system_to_ast;

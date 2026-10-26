@@ -99,8 +99,8 @@ fn check_impl<'src>(input: CheckImplInput<'src, '_>) -> CheckImplOutput<'src> {
     };
     let schema = loaded_schema.map_into(|doc| Cow::Owned(ast_to_type_system(doc)), Cow::Borrowed);
 
-    let operations = match resolve_operations(operations) {
-        Ok(operations) => operations,
+    let (operations, visible_fragments) = match resolve_operations(operations) {
+        Ok(result) => result,
         Err(errors) => {
             return CheckImplOutput::Err {
                 errors: errors
@@ -111,24 +111,26 @@ fn check_impl<'src>(input: CheckImplInput<'src, '_>) -> CheckImplOutput<'src> {
         }
     };
 
-    let context = OperationCheckContext::new(&schema);
     // Fragments are checked in every document that imports them, so errors may be duplicated.
     let mut seen_errors = HashSet::new();
     let errors = operations
         .iter()
-        .flat_map(|(_, doc, _, file_by_index)| {
+        .zip(visible_fragments.iter())
+        .flat_map(|((_, doc, _, _), visible_fragments)| {
+            // Each file can only spread fragments it imports by itself,
+            // even though transitively imported fragments are appended to the document.
+            let is_visible = |name: &str| visible_fragments.contains(name);
+            let context = OperationCheckContext::new(&schema).with_visible_fragments(&is_visible);
             check_operation_document(doc, &context)
-                .into_iter()
-                .map(move |err| (err, file_by_index))
         })
-        .filter(|(err, _)| seen_errors.insert((err.position, err.message.to_string())))
+        .filter(|err| seen_errors.insert((err.position, err.message.to_string())))
         .collect::<Vec<_>>();
 
     if !errors.is_empty() {
         CheckImplOutput::Err {
             errors: errors
                 .into_iter()
-                .map(|(err, _)| (InputFileKind::Operation, err.into()))
+                .map(|err| (InputFileKind::Operation, err.into()))
                 .collect(),
         }
     } else {
@@ -182,13 +184,17 @@ pub(crate) fn resolve_schema<'src>(
     }
 }
 
+/// Resolved operations, along with names of fragments directly imported by each of them.
 type ResolveOperationsResult<'src> = std::result::Result<
-    Vec<(
-        PathBuf,
-        OperationDocument<'src>,
-        OperationExtension<'src>,
-        usize,
-    )>,
+    (
+        Vec<(
+            PathBuf,
+            OperationDocument<'src>,
+            OperationExtension<'src>,
+            usize,
+        )>,
+        Vec<HashSet<&'src str>>,
+    ),
     Vec<PositionedError>,
 >;
 
@@ -204,16 +210,22 @@ fn resolve_operations(mut operations: OperationSet<'_>) -> ResolveOperationsResu
             let doc = operations
                 .resolve_imports(file.path)
                 .expect("file should be loaded")?;
+            let visible_fragments = operations
+                .directly_imported_fragments(file.path)
+                .expect("file should be loaded");
             Ok((
-                file.path.to_owned(),
-                doc,
-                file.extension.clone(),
-                file.file_index,
+                (
+                    file.path.to_owned(),
+                    doc,
+                    file.extension.clone(),
+                    file.file_index,
+                ),
+                visible_fragments,
             ))
         })
         .partition_result();
     if !resolve_errors.is_empty() {
         return Err(resolve_errors);
     }
-    Ok(operations)
+    Ok(operations.into_iter().unzip())
 }
