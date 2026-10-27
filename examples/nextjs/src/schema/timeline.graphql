@@ -1,0 +1,78 @@
+"Something that happened to an issue."
+interface IssueEvent implements Node {
+  id: ID!
+  createdAt: DateTime!
+  "User who caused the event."
+  actor: User!
+  issue: Issue!
+}
+
+type IssueCreatedEvent implements IssueEvent & Node {
+  id: ID! @model
+  createdAt: DateTime! @model
+  actor: User!
+  issue: Issue!
+}
+
+type StateChangedEvent implements IssueEvent & Node {
+  id: ID! @model
+  createdAt: DateTime! @model
+  actor: User!
+  issue: Issue!
+  fromState: WorkflowState!
+  toState: WorkflowState!
+}
+
+type AssigneeChangedEvent implements IssueEvent & Node {
+  id: ID! @model
+  createdAt: DateTime! @model
+  actor: User!
+  issue: Issue!
+  fromAssignee: User
+  toAssignee: User
+}
+
+type PriorityChangedEvent implements IssueEvent & Node {
+  id: ID! @model
+  createdAt: DateTime! @model
+  actor: User!
+  issue: Issue!
+  fromPriority: IssuePriority! @model
+  toPriority: IssuePriority! @model
+}
+
+type LabelsChangedEvent implements IssueEvent & Node {
+  id: ID! @model
+  createdAt: DateTime! @model
+  actor: User!
+  issue: Issue!
+  addedLabels: [Label!]!
+  removedLabels: [Label!]!
+}
+
+type ProjectChangedEvent implements IssueEvent & Node {
+  id: ID! @model
+  createdAt: DateTime! @model
+  actor: User!
+  issue: Issue!
+  fromProject: Project
+  toProject: Project
+}
+
+type CommentedEvent implements IssueEvent & Node {
+  id: ID! @model
+  createdAt: DateTime! @model
+  actor: User!
+  issue: Issue!
+  comment: Comment!
+}
+
+"An item in the timeline of an issue."
+union TimelineItem =
+  | Comment
+  | IssueCreatedEvent
+  | StateChangedEvent
+  | AssigneeChangedEvent
+  | PriorityChangedEvent
+  | LabelsChangedEvent
+  | ProjectChangedEvent

@@ -1,0 +1,35 @@
+"A comment on an issue."
+type Comment implements Node {
+  id: ID! @model
+  "Body in Markdown."
+  body: String! @model
+  createdAt: DateTime! @model
+  editedAt: DateTime @model
+  author: User!
+  issue: Issue!
+  "The comment this is a reply to."
+  parent: Comment
+  replies: [Comment!]!
+  reactions: [ReactionGroup!]!
+  "Whether the viewer can edit or delete this comment."
+  viewerCanEdit: Boolean!
+}
+
+type CommentConnection
+  @model(
+    type: "import('@/server/data/connection').Connection<import('@/server/data/records').CommentRecord>"
+  ) {
+  nodes: [Comment!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+"Reactions with the same emoji."
+type ReactionGroup
+  @model(type: "import('@/server/data/records').ReactionGroupModel") {
+  emoji: String!
+  count: Int!
+  viewerHasReacted: Boolean!
+  "Some of the users who reacted."
+  users(first: Int = 5): [User!]!
+}

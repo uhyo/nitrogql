@@ -1,0 +1,57 @@
+"A notification for the viewer."
+interface Notification implements Node {
+  id: ID!
+  createdAt: DateTime!
+  readAt: DateTime
+  "User who caused the notification."
+  actor: User!
+}
+
+type IssueAssignedNotification implements Notification & Node {
+  id: ID! @model
+  createdAt: DateTime! @model
+  readAt: DateTime @model
+  actor: User!
+  issue: Issue!
+}
+
+type IssueStateChangedNotification implements Notification & Node {
+  id: ID! @model
+  createdAt: DateTime! @model
+  readAt: DateTime @model
+  actor: User!
+  issue: Issue!
+  state: WorkflowState!
+}
+
+type CommentMentionNotification implements Notification & Node {
+  id: ID! @model
+  createdAt: DateTime! @model
+  readAt: DateTime @model
+  actor: User!
+  comment: Comment!
+}
+
+type CommentReplyNotification implements Notification & Node {
+  id: ID! @model
+  createdAt: DateTime! @model
+  readAt: DateTime @model
+  actor: User!
+  comment: Comment!
+}
+
+type ProjectUpdateNotification implements Notification & Node {
+  id: ID! @model
+  createdAt: DateTime! @model
+  readAt: DateTime @model
+  actor: User!
+  projectUpdate: ProjectUpdate!
+}
+
+type NotificationConnection
+  @model(type: "import('@/server/data/connection').NotificationConnection") {
+  nodes: [Notification!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+  unreadCount: Int!
+}

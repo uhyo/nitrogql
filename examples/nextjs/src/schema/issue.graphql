@@ -1,0 +1,115 @@
+"An issue to be worked on."
+type Issue implements Node {
+  id: ID! @model
+  "Sequential number of the issue in its team."
+  number: Int! @model
+  "Human readable identifier, such as ENG-123."
+  identifier: String!
+  title: String! @model
+  "Description in Markdown."
+  description: String @model
+  priority: IssuePriority! @model
+  "Estimate in points."
+  estimate: Int @model
+  dueDate: Date @model
+  createdAt: DateTime! @model
+  updatedAt: DateTime! @model
+  completedAt: DateTime @model
+  canceledAt: DateTime @model
+  archivedAt: DateTime @model
+  team: Team!
+  state: WorkflowState!
+  assignee: User
+  creator: User!
+  labels: [Label!]!
+  project: Project
+  milestone: Milestone
+  cycle: Cycle
+  parent: Issue
+  "Sub-issues of this issue."
+  children: [Issue!]!
+  relations: [IssueRelation!]!
+  attachments: [Attachment!]!
+  subscribers: [User!]!
+  "Whether the viewer subscribes to this issue."
+  viewerIsSubscribed: Boolean!
+  comments(first: Int = 50, after: String): CommentConnection!
+  "Comments and events, oldest first."
+  timeline: [TimelineItem!]!
+  reactions: [ReactionGroup!]!
+}
+
+enum IssuePriority {
+  NO_PRIORITY
+  URGENT
+  HIGH
+  MEDIUM
+  LOW
+}
+
+type IssueConnection
+  @model(
+    type: "import('@/server/data/connection').Connection<import('@/server/data/records').IssueRecord>"
+  ) {
+  nodes: [Issue!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+"A relation between two issues."
+type IssueRelation implements Node {
+  id: ID! @model
+  type: IssueRelationType! @model
+  relatedIssue: Issue!
+}
+
+enum IssueRelationType {
+  BLOCKS
+  BLOCKED_BY
+  RELATED
+  DUPLICATE_OF
+}
+
+"A link or file attached to an issue."
+type Attachment implements Node {
+  id: ID! @model
+  title: String! @model
+  url: String! @model
+  kind: AttachmentKind! @model
+  createdAt: DateTime! @model
+  creator: User!
+}
+
+enum AttachmentKind {
+  LINK
+  PULL_REQUEST
+  DESIGN
+  DOCUMENT
+}
+
+input IssueFilter {
+  "Matches title and description."
+  search: String
+  stateTypes: [WorkflowStateType!]
+  assigneeIds: [ID!]
+  "When true, only issues without an assignee are returned."
+  unassigned: Boolean
+  labelIds: [ID!]
+  priorities: [IssuePriority!]
+  projectId: ID
+  cycleId: ID
+  includeArchived: Boolean = false
+}
+
+input IssueSort {
+  field: IssueSortField!
+  direction: SortDirection! = DESC
+}
+
+enum IssueSortField {
+  CREATED_AT
+  UPDATED_AT
+  PRIORITY
+  DUE_DATE
+  NUMBER
+}

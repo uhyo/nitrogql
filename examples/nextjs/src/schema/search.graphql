@@ -1,0 +1,9 @@
+"A result of global search."
+union SearchResult = Issue | Project | User | Team
+
+enum SearchKind {
+  ISSUE
+  PROJECT
+  USER
+  TEAM
+}

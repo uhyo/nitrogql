@@ -2,7 +2,6 @@
   "compilerOptions": {
     "target": "es2020",
     "lib": ["dom", "dom.iterable", "esnext"],
-    "allowArbitraryExtensions": true,
     "skipLibCheck": true,
     "strict": true,
     "forceConsistentCasingInFileNames": true,
@@ -25,5 +24,11 @@
     "allowJs": false
   },
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
-  "exclude": ["node_modules"]
+  "exclude": ["node_modules"],
+  "contentMappers": [
+    {
+      "package": "@nitrogql/cli",
+      "extensions": [".graphql"]
+    }
+  ]
 }

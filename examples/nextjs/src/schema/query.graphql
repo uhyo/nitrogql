@@ -1,8 +1,25 @@
 type Query {
-  todos(filter: TodoFilter): [Todo!]!
-}
-
-input TodoFilter {
-  "Whether to return only unfinished TODOs."
-  unfinishedOnly: Boolean
+  "The signed-in user."
+  viewer: User!
+  "Looks up any object by ID."
+  node(id: ID!): Node
+  user(handle: String!): User
+  users(includeDeactivated: Boolean = false): [User!]!
+  team(key: String!): Team
+  teams: [Team!]!
+  "Looks up an issue by its identifier, such as ENG-123."
+  issue(identifier: String!): Issue
+  project(slug: String!): Project
+  projects(status: [ProjectStatus!], teamKey: String): [Project!]!
+  cycle(teamKey: String!, number: Int!): Cycle
+  notifications(
+    unreadOnly: Boolean = false
+    first: Int = 50
+    after: String
+  ): NotificationConnection!
+  search(
+    query: String!
+    kinds: [SearchKind!]
+    first: Int = 20
+  ): [SearchResult!]!
 }

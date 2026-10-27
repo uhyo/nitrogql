@@ -1,0 +1,21 @@
+#import UserChipFragment from "../UserChip/UserChipFragment.graphql"
+
+query Sidebar {
+  viewer {
+    id
+    ...UserChipFragment
+    teams {
+      id
+      key
+      name
+      icon
+      activeCycle {
+        id
+        number
+      }
+    }
+  }
+  notifications(unreadOnly: true, first: 0) {
+    unreadCount
+  }
+}

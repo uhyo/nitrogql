@@ -1,0 +1,29 @@
+.filters {
+  display: flex;
+  align-items: center;
+  gap: 1em;
+  margin-bottom: 1rem;
+}
+
+.tabs {
+  display: flex;
+  gap: 2px;
+  margin-right: auto;
+}
+
+.tab {
+  padding: 0.25em 0.75em;
+  border: 1px solid transparent;
+  border-radius: var(--radius);
+  background: none;
+}
+
+.tab:hover {
+  background: var(--color-bg-hover);
+}
+
+.tab[aria-selected="true"] {
+  border-color: var(--color-border);
+  background: var(--color-bg-subtle);
+  font-weight: 600;
+}

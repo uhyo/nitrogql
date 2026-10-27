@@ -1,0 +1,47 @@
+"A person using the issue tracker."
+type User implements Node {
+  id: ID! @model
+  "Unique handle used in URLs and mentions, without the leading `@`."
+  handle: String! @model
+  "Display name."
+  name: String! @model
+  email: String! @model
+  avatarUrl: String @model
+  bio: String @model
+  "IANA time zone name, such as Asia/Tokyo."
+  timezone: String! @model
+  "Whether the user has been deactivated."
+  deactivated: Boolean! @model
+  "Current status message, if set and not expired."
+  status: UserStatus
+  "Teams the user is a member of."
+  teams: [Team!]!
+  "Issues assigned to the user."
+  assignedIssues(
+    filter: IssueFilter
+    first: Int = 50
+    after: String
+  ): IssueConnection!
+  "Issues created by the user."
+  createdIssues(
+    filter: IssueFilter
+    first: Int = 50
+    after: String
+  ): IssueConnection!
+  "Issues the user subscribes to."
+  subscribedIssues(
+    filter: IssueFilter
+    first: Int = 50
+    after: String
+  ): IssueConnection!
+  "Recent activity by the user, newest first."
+  recentActivity(first: Int = 20): [IssueEvent!]!
+}
+
+"Short status message shown next to the user's name."
+type UserStatus {
+  emoji: String! @model
+  message: String! @model
+  "When the status is cleared automatically."
+  expiresAt: DateTime @model
+}

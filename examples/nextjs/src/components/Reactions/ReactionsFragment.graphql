@@ -1,0 +1,9 @@
+fragment ReactionsFragment on ReactionGroup {
+  emoji
+  count
+  viewerHasReacted
+  users(first: 5) {
+    id
+    name
+  }
+}

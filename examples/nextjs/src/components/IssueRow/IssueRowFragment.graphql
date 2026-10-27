@@ -1,0 +1,31 @@
+#import AvatarFragment from "../Avatar/AvatarFragment.graphql"
+#import LabelBadgeFragment from "../LabelBadge/LabelBadgeFragment.graphql"
+#import ProjectChipFragment from "../ProjectChip/ProjectChipFragment.graphql"
+#import StateIconFragment from "../StateIcon/StateIconFragment.graphql"
+
+fragment IssueRowFragment on Issue {
+  id
+  identifier
+  title
+  priority
+  estimate
+  dueDate
+  updatedAt
+  state {
+    id
+    ...StateIconFragment
+  }
+  assignee {
+    id
+    ...AvatarFragment
+  }
+  labels {
+    ...LabelBadgeFragment
+  }
+  project {
+    ...ProjectChipFragment
+  }
+  children {
+    id
+  }
+}

@@ -1,0 +1,21 @@
+.markdown {
+  display: flex;
+  flex-flow: column nowrap;
+  gap: 0.6em;
+}
+
+.markdown ul,
+.markdown ol {
+  padding-left: 1.5em;
+}
+
+.markdown h3,
+.markdown h4,
+.markdown h5 {
+  font-size: 1em;
+  font-weight: 600;
+}
+
+.mention {
+  color: var(--color-accent);
+}

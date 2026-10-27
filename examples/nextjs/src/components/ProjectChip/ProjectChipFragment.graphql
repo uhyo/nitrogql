@@ -1,0 +1,7 @@
+fragment ProjectChipFragment on Project {
+  id
+  slug
+  name
+  icon
+  color
+}

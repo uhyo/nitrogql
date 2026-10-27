@@ -1,0 +1,6 @@
+.state {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4em;
+  flex: none;
+}
