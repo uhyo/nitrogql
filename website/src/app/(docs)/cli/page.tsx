@@ -76,7 +76,8 @@ export default function CLIUsage() {
             stderr.
           </li>
           <li>
-            <code>rdjson</code>: prints &apos;check&apos; results in{" "}
+            <code>rdjson</code>: prints &apos;check&apos; results and syntax
+            errors in input files in{" "}
             <a
               href="https://github.com/reviewdog/reviewdog/tree/master/proto/rdf"
               target="_blank"
@@ -108,11 +109,12 @@ export default function CLIUsage() {
     message: string;
   }
   /**
-   * Exists when the 'check' command is run.
+   * Exists when the 'check' command is run
+   * or when input files have syntax errors.
    */
   check?: {
     /**
-     * List of errors.
+     * List of errors, including syntax errors in input files.
      * Empty when the check is successful.
      */
     errors: {

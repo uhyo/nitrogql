@@ -1,0 +1,5 @@
+---
+source: crates/cli/src/tests.rs
+expression: output
+---
+{"source":{"name":"nitrogql","url":"https:\/\/nitrogql.vercel.app\/"},"severity":"ERROR","diagnostics":[{"code":{"value":"nitrogql1001","url":"https:\/\/nitrogql.vercel.app\/references\/error-codes#nitrogql1001"},"message":"Parse error: expected Directive or FieldDefinition","location":{"path":"<root>\/.\/schema\/schema.graphql","range":{"start":{"line":5,"column":11}}}},{"code":{"value":"nitrogql1001","url":"https:\/\/nitrogql.vercel.app\/references\/error-codes#nitrogql1001"},"message":"Parse error: expected Selection","location":{"path":"<root>\/.\/app\/me.graphql","range":{"start":{"line":2,"column":8}}}}]}

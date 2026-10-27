@@ -29,6 +29,7 @@ use crate::{
     error::CliError,
     file_store::FileKind,
     load_plugins::load_plugins,
+    output::InputFileKind,
     schema_loader::{LoadSchemaJsResult, SchemaFileKind, load_schema_js, schema_kind_by_path},
 };
 use nitrogql_config_file::load_config;
@@ -53,6 +54,8 @@ mod load_plugins;
 mod output;
 mod plugin_host;
 mod schema_loader;
+#[cfg(test)]
+mod tests;
 
 #[derive(Parser, Debug)]
 struct Args {
@@ -97,18 +100,7 @@ pub async fn run_cli(args: impl IntoIterator<Item = String>) {
     let args = Args::parse_from(args);
     let output_format = args.output_format;
     let res = run_cli_impl(args, &mut file_store, &mut output).await;
-    let code = match res {
-        Ok(()) => 0,
-        Err(err) => {
-            let message = err
-                .inner
-                .into_iter()
-                .map(|e| print_positioned_error(&e, &file_store))
-                .join("\n");
-            output.command_error(err.command, message);
-            1
-        }
-    };
+    let code = report_result(res, &file_store, &mut output);
 
     match output_format {
         OutputFormat::Human => {
@@ -123,6 +115,32 @@ pub async fn run_cli(args: impl IntoIterator<Item = String>) {
     }
 
     process::exit(code);
+}
+
+/// Adds the result of running CLI to the output.
+/// Returns the exit code.
+fn report_result(
+    res: Result<(), CommandError>,
+    file_store: &FileStore,
+    output: &mut CliOutput,
+) -> i32 {
+    match res {
+        Ok(()) => 0,
+        Err(err) => {
+            let message = if err.inner.is_empty() {
+                // Syntax errors are reported as diagnostics on input files.
+                CliError::SyntaxErrors.to_string()
+            } else {
+                err.inner
+                    .into_iter()
+                    .map(|e| print_positioned_error(&e, file_store))
+                    .join("\n")
+            };
+            output.extend(err.syntax_errors);
+            output.command_error(err.command, message);
+            1
+        }
+    }
 }
 
 async fn run_cli_impl(
@@ -163,16 +181,16 @@ async fn run_cli_impl(
         return Err(CliError::NoSchemaSpecified.into());
     }
 
-    let merged_schema_doc =
-        load_schema(&root_dir, &config.schema, file_store, &mut plugins).await?;
+    let schema_result = load_schema(&root_dir, &config.schema, file_store, &mut plugins).await;
 
-    let config = CliConfig {
-        root_dir,
-        config,
-        plugins,
+    let operation_files = match load_glob_files(&root_dir, &config.operations) {
+        Ok(files) => files,
+        Err(err) => {
+            return Err(CommandError::merge(
+                schema_result.err().into_iter().chain([err.into()]),
+            ));
+        }
     };
-
-    let operation_files = load_glob_files(&config.root_dir, &config.config.operations)?;
 
     let mut operations = OperationSet::new();
     for (path, buf) in operation_files {
@@ -182,13 +200,24 @@ async fn run_cli_impl(
         operations.add_file(&path, buf, file_idx);
     }
     // Other errors are reported by the check command.
-    let syntax_errors = operations.take_syntax_errors();
-    if !syntax_errors.is_empty() {
-        return Err(CommandError {
-            inner: syntax_errors,
-            command: None,
-        });
-    }
+    let operation_syntax_errors = operations.take_syntax_errors();
+    // Syntax errors in schema and operations are reported together.
+    let merged_schema_doc = match schema_result {
+        Ok(doc) if operation_syntax_errors.is_empty() => doc,
+        schema_result => {
+            let operation_errors =
+                CommandError::syntax(InputFileKind::Operation, operation_syntax_errors);
+            return Err(CommandError::merge(
+                schema_result.err().into_iter().chain([operation_errors]),
+            ));
+        }
+    };
+
+    let config = CliConfig {
+        root_dir,
+        config,
+        plugins,
+    };
 
     let mut context = CliContext::SchemaUnresolved {
         config,
@@ -208,6 +237,8 @@ async fn run_cli_impl(
 
 struct CommandError {
     pub inner: Vec<PositionedError>,
+    /// Syntax errors in input files, which are reported like check errors.
+    pub syntax_errors: Vec<(InputFileKind, PositionedError)>,
     pub command: Option<String>,
 }
 
@@ -215,18 +246,40 @@ impl CommandError {
     pub fn new(inner: Vec<PositionedError>, command: String) -> Self {
         CommandError {
             inner,
+            syntax_errors: vec![],
             command: Some(command),
         }
     }
+    /// Creates an error from syntax errors in input files of given kind.
+    pub fn syntax(kind: InputFileKind, errors: Vec<PositionedError>) -> Self {
+        CommandError {
+            inner: vec![],
+            syntax_errors: errors.into_iter().map(|err| (kind, err)).collect(),
+            command: None,
+        }
+    }
     pub fn merge(errors: impl IntoIterator<Item = Self>) -> Self {
-        let (inner, command) =
-            errors
-                .into_iter()
-                .fold((vec![], None), |(mut inner, command), err| {
-                    inner.extend(err.inner);
-                    (inner, command.or(err.command))
-                });
-        CommandError { inner, command }
+        errors.into_iter().fold(
+            CommandError {
+                inner: vec![],
+                syntax_errors: vec![],
+                command: None,
+            },
+            |mut merged, err| {
+                merged.inner.extend(err.inner);
+                merged.syntax_errors.extend(err.syntax_errors);
+                merged.command = merged.command.or(err.command);
+                merged
+            },
+        )
+    }
+    /// Returns all errors, including syntax errors.
+    pub fn into_errors(self) -> Vec<PositionedError> {
+        self.syntax_errors
+            .into_iter()
+            .map(|(_, err)| err)
+            .chain(self.inner)
+            .collect()
     }
 }
 
@@ -234,6 +287,7 @@ impl<E: Into<PositionedError>> From<E> for CommandError {
     fn from(err: E) -> Self {
         CommandError {
             inner: vec![err.into()],
+            syntax_errors: vec![],
             command: None,
         }
     }
@@ -355,7 +409,7 @@ pub(crate) fn parse_schema_files<'src>(
     let mut schema_docs = vec![];
     let mut schema_errors = vec![];
     for source in sources {
-        let res = source.and_then(|source| {
+        let res = source.map_err(CommandError::from).and_then(|source| {
             let file_idx = file_store.add_file(source.path, source.content, FileKind::Schema);
             let (path, buf, _) = file_store.get_file(file_idx).unwrap();
             if source.is_introspection {
@@ -364,13 +418,14 @@ pub(crate) fn parse_schema_files<'src>(
                 Ok(LoadedSchema::Introspection(doc))
             } else {
                 info!("parsing(schema) {} {}", path.to_string_lossy(), file_idx);
-                let doc = parse_type_system_document(buf, file_idx)?;
+                let doc = parse_type_system_document(buf, file_idx)
+                    .map_err(|err| CommandError::syntax(InputFileKind::Schema, vec![err.into()]))?;
                 Ok(LoadedSchema::GraphQL(doc))
             }
         });
         match res {
             Ok(doc) => schema_docs.push(doc),
-            Err(err) => schema_errors.push(CommandError::from(err)),
+            Err(err) => schema_errors.push(err),
         }
     }
     if !schema_errors.is_empty() {

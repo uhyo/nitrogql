@@ -126,6 +126,21 @@ fn message_for_line(
     error: &impl Display,
     is_additional: bool,
 ) -> String {
+    // VSCode uses 1-based indices, so we follow here
+    let src_string = format!(
+        "{}:{}:{}\n",
+        file_path.display(),
+        pos.line + 1,
+        pos.column + 1
+    )
+    .bold();
+
+    let mut result = if is_additional {
+        format!("{INDENT}{src_string}")
+    } else {
+        src_string.to_string()
+    };
+
     // print -2 ~ +2 lines
     let relevant_lines = source
         .lines()
@@ -137,8 +152,9 @@ fn message_for_line(
         .iter()
         .all(|(line_no, _)| *line_no != pos.line)
     {
-        // No targeted line (?)
-        return format!("{error}");
+        // No targeted line (e.g. error at the end of file)
+        write!(result, "{error}").unwrap();
+        return result;
     }
 
     let minimum_indent = relevant_lines
@@ -146,25 +162,11 @@ fn message_for_line(
         .filter_map(|(_, line)| first_non_space_byte_index(line).map(|(char_idx, _)| char_idx))
         .min();
     let Some(minimum_indent) = minimum_indent else {
-        return format!("{error}");
+        write!(result, "{error}").unwrap();
+        return result;
     };
-
-    // VSCode uses 1-based indices, so we follow here
-    let src_string = format!(
-        "{}:{}:{}\n",
-        file_path.display(),
-        pos.line + 1,
-        pos.column + 1
-    )
-    .bold();
 
     let trimmed_column = pos.column.saturating_sub(minimum_indent);
-
-    let mut result = if is_additional {
-        format!("{INDENT}{src_string}")
-    } else {
-        src_string.to_string()
-    };
 
     for (line_no, source_line) in relevant_lines {
         let trimmed_line = skip_chars(source_line, minimum_indent);
@@ -223,6 +225,22 @@ mod tests {
         assert_eq!(
             print_positioned_error(&error, &files),
             "Config file not found"
+        );
+    }
+
+    #[test]
+    fn print_error_at_end_of_file() {
+        colored::control::set_override(false);
+        let files = vec![(PathBuf::from("a.graphql"), "query {\n", ())];
+        let error = PositionedError::new(
+            anyhow::anyhow!("Parse error: expected Selection"),
+            Some(Pos::new(1, 0, 8..8, 0)),
+            vec![],
+        )
+        .with_code(ErrorCode::SyntaxError);
+        assert_eq!(
+            print_positioned_error(&error, &files),
+            "a.graphql:2:1\nnitrogql1001: Parse error: expected Selection"
         );
     }
 }

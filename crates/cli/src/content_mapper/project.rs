@@ -20,7 +20,7 @@ use thiserror::Error;
 use typed_arena::Arena;
 
 use crate::{
-    SchemaSource,
+    CommandError, SchemaSource,
     check::resolve_schema,
     error::CliError,
     file_store::FileStore,
@@ -222,7 +222,7 @@ impl Project {
         let mut plugins = load_plugins(&self.config.plugins).map_err(|err| vec![err.into()])?;
         let schema_sources = read_schema_files(&self.root_dir, &self.config.schema, &mut plugins)
             .await
-            .map_err(|err| err.inner)?;
+            .map_err(CommandError::into_errors)?;
         Ok((plugins, schema_sources))
     }
 
@@ -293,8 +293,8 @@ fn parse_schema<'src>(
     file_store: &mut FileStore<'src>,
     plugins: &[Plugin],
 ) -> Result<LoadedProjectSchema<'src>, Vec<PositionedError>> {
-    let schema =
-        parse_schema_files(schema_sources, file_store, plugins).map_err(|err| err.inner)?;
+    let schema = parse_schema_files(schema_sources, file_store, plugins)
+        .map_err(CommandError::into_errors)?;
     let schema = resolve_schema(schema, plugins)?;
     let type_system = match schema {
         LoadedSchema::GraphQL(ref doc) => ast_to_type_system(doc),
