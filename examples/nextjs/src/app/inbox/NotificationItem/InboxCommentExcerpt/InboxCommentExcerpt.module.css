@@ -1,0 +1,12 @@
+.excerpt {
+  display: block;
+  padding-left: 0.75em;
+  margin: 0.2em 0;
+  line-height: 1.5;
+  border-left: 3px solid var(--color-border);
+  color: var(--color-text-muted);
+}
+
+.excerpt:hover {
+  color: var(--color-text);
+}

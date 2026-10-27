@@ -1,0 +1,34 @@
+#import IssueCreatedActivityFragment from "./IssueCreatedActivity/IssueCreatedActivityFragment.graphql"
+#import StateChangedActivityFragment from "./StateChangedActivity/StateChangedActivityFragment.graphql"
+#import AssigneeChangedActivityFragment from "./AssigneeChangedActivity/AssigneeChangedActivityFragment.graphql"
+#import PriorityChangedActivityFragment from "./PriorityChangedActivity/PriorityChangedActivityFragment.graphql"
+#import LabelsChangedActivityFragment from "./LabelsChangedActivity/LabelsChangedActivityFragment.graphql"
+#import ProjectChangedActivityFragment from "./ProjectChangedActivity/ProjectChangedActivityFragment.graphql"
+#import CommentedActivityFragment from "./CommentedActivity/CommentedActivityFragment.graphql"
+
+fragment RecentActivityFragment on IssueEvent {
+  __typename
+  id
+  createdAt
+  ... on IssueCreatedEvent {
+    ...IssueCreatedActivityFragment
+  }
+  ... on StateChangedEvent {
+    ...StateChangedActivityFragment
+  }
+  ... on AssigneeChangedEvent {
+    ...AssigneeChangedActivityFragment
+  }
+  ... on PriorityChangedEvent {
+    ...PriorityChangedActivityFragment
+  }
+  ... on LabelsChangedEvent {
+    ...LabelsChangedActivityFragment
+  }
+  ... on ProjectChangedEvent {
+    ...ProjectChangedActivityFragment
+  }
+  ... on CommentedEvent {
+    ...CommentedActivityFragment
+  }
+}

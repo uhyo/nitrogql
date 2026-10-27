@@ -1,0 +1,20 @@
+#import UserChipFragment from "../../../../../components/UserChip/UserChipFragment.graphql"
+#import ActivityIssueLinkFragment from "../ActivityIssueLink/ActivityIssueLinkFragment.graphql"
+#import StateIconFragment from "../../../../../components/StateIcon/StateIconFragment.graphql"
+
+fragment StateChangedActivityFragment on StateChangedEvent {
+  actor {
+    ...UserChipFragment
+  }
+  issue {
+    ...ActivityIssueLinkFragment
+  }
+  fromState {
+    id
+    ...StateIconFragment
+  }
+  toState {
+    id
+    ...StateIconFragment
+  }
+}

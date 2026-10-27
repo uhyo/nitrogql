@@ -1,0 +1,8 @@
+fragment UserStatusEditorFragment on User {
+  id
+  status {
+    emoji
+    message
+    expiresAt
+  }
+}

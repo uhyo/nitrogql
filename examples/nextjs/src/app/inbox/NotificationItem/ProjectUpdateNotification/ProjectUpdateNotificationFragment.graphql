@@ -1,0 +1,12 @@
+#import ProjectChipFragment from "../../../../components/ProjectChip/ProjectChipFragment.graphql"
+
+fragment ProjectUpdateNotificationFragment on ProjectUpdateNotification {
+  projectUpdate {
+    id
+    body
+    health
+    project {
+      ...ProjectChipFragment
+    }
+  }
+}

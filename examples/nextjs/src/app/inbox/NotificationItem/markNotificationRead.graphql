@@ -1,0 +1,8 @@
+#import NotificationItemFragment from "./NotificationItemFragment.graphql"
+
+mutation NotificationItemMarkRead($id: ID!, $read: Boolean!) {
+  markNotificationRead(id: $id, read: $read) {
+    id
+    ...NotificationItemFragment
+  }
+}

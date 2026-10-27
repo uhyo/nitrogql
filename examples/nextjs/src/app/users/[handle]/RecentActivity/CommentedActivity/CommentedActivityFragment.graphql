@@ -1,0 +1,15 @@
+#import UserChipFragment from "../../../../../components/UserChip/UserChipFragment.graphql"
+#import ActivityIssueLinkFragment from "../ActivityIssueLink/ActivityIssueLinkFragment.graphql"
+
+fragment CommentedActivityFragment on CommentedEvent {
+  actor {
+    ...UserChipFragment
+  }
+  issue {
+    ...ActivityIssueLinkFragment
+  }
+  comment {
+    id
+    body
+  }
+}

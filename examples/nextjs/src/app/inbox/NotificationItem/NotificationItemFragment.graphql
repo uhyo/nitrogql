@@ -1,0 +1,31 @@
+#import UserChipFragment from "../../../components/UserChip/UserChipFragment.graphql"
+#import IssueAssignedNotificationFragment from "./IssueAssignedNotification/IssueAssignedNotificationFragment.graphql"
+#import IssueStateChangedNotificationFragment from "./IssueStateChangedNotification/IssueStateChangedNotificationFragment.graphql"
+#import CommentMentionNotificationFragment from "./CommentMentionNotification/CommentMentionNotificationFragment.graphql"
+#import CommentReplyNotificationFragment from "./CommentReplyNotification/CommentReplyNotificationFragment.graphql"
+#import ProjectUpdateNotificationFragment from "./ProjectUpdateNotification/ProjectUpdateNotificationFragment.graphql"
+
+fragment NotificationItemFragment on Notification {
+  __typename
+  id
+  createdAt
+  readAt
+  actor {
+    ...UserChipFragment
+  }
+  ... on IssueAssignedNotification {
+    ...IssueAssignedNotificationFragment
+  }
+  ... on IssueStateChangedNotification {
+    ...IssueStateChangedNotificationFragment
+  }
+  ... on CommentMentionNotification {
+    ...CommentMentionNotificationFragment
+  }
+  ... on CommentReplyNotification {
+    ...CommentReplyNotificationFragment
+  }
+  ... on ProjectUpdateNotification {
+    ...ProjectUpdateNotificationFragment
+  }
+}

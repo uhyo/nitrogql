@@ -1,0 +1,22 @@
+#import UserProfileHeaderFragment from "./UserProfileHeader/UserProfileHeaderFragment.graphql"
+#import UserStatusEditorFragment from "./UserStatusEditor/UserStatusEditorFragment.graphql"
+#import RecentActivityFragment from "./RecentActivity/RecentActivityFragment.graphql"
+#import IssueListFragment from "../../../components/IssueList/IssueListFragment.graphql"
+
+query UserProfile($handle: String!, $filter: IssueFilter, $first: Int!) {
+  viewer {
+    id
+  }
+  user(handle: $handle) {
+    id
+    ...UserProfileHeaderFragment
+    ...UserStatusEditorFragment
+    assignedIssues(filter: $filter, first: $first) {
+      ...IssueListFragment
+    }
+    recentActivity(first: 30) {
+      id
+      ...RecentActivityFragment
+    }
+  }
+}

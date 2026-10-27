@@ -1,0 +1,12 @@
+#import UserStatusEditorFragment from "./UserStatusEditorFragment.graphql"
+#import UserProfileHeaderFragment from "../UserProfileHeader/UserProfileHeaderFragment.graphql"
+#import UserChipFragment from "../../../../components/UserChip/UserChipFragment.graphql"
+
+mutation UserStatusEditorUpdate($input: UserStatusInput) {
+  updateViewerStatus(input: $input) {
+    id
+    ...UserStatusEditorFragment
+    ...UserProfileHeaderFragment
+    ...UserChipFragment
+  }
+}

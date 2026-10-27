@@ -1,0 +1,13 @@
+#import UserChipFragment from "../../../../../components/UserChip/UserChipFragment.graphql"
+#import ActivityIssueLinkFragment from "../ActivityIssueLink/ActivityIssueLinkFragment.graphql"
+
+fragment PriorityChangedActivityFragment on PriorityChangedEvent {
+  actor {
+    ...UserChipFragment
+  }
+  issue {
+    ...ActivityIssueLinkFragment
+  }
+  fromPriority
+  toPriority
+}

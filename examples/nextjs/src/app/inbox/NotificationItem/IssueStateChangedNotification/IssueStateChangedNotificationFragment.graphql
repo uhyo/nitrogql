@@ -1,0 +1,12 @@
+#import InboxIssueLinkFragment from "../InboxIssueLink/InboxIssueLinkFragment.graphql"
+#import StateIconFragment from "../../../../components/StateIcon/StateIconFragment.graphql"
+
+fragment IssueStateChangedNotificationFragment on IssueStateChangedNotification {
+  issue {
+    ...InboxIssueLinkFragment
+  }
+  state {
+    id
+    ...StateIconFragment
+  }
+}

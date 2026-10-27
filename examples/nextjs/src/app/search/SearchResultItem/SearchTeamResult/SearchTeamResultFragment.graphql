@@ -1,0 +1,13 @@
+fragment SearchTeamResultFragment on Team {
+  id
+  key
+  name
+  icon
+  color
+  description
+  members {
+    user {
+      id
+    }
+  }
+}

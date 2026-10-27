@@ -1,0 +1,24 @@
+.health {
+  padding: 0 0.5em;
+  border-radius: 999px;
+  font-size: 0.85em;
+  color: white;
+  background: #4cb782;
+}
+
+.health[data-health="AT_RISK"] {
+  background: #f2994a;
+}
+
+.health[data-health="OFF_TRACK"] {
+  background: var(--color-danger);
+}
+
+.body {
+  display: block;
+  padding-left: 0.75em;
+  margin: 0.2em 0;
+  line-height: 1.5;
+  border-left: 3px solid var(--color-border);
+  color: var(--color-text-muted);
+}

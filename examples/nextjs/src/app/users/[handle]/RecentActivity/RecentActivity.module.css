@@ -1,0 +1,61 @@
+.list {
+  list-style: none;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+.item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75em;
+  padding: 0.5em 1em;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.item:last-child {
+  border-bottom: none;
+}
+
+.icon {
+  flex: none;
+  width: 1.5em;
+  text-align: center;
+  color: var(--color-text-muted);
+  line-height: 1.8;
+}
+
+.body {
+  flex: 1 1 auto;
+  min-width: 0;
+  line-height: 1.8;
+}
+
+.body > a,
+.body > span {
+  vertical-align: middle;
+}
+
+.issue {
+  font-weight: 500;
+}
+
+.issue:hover {
+  text-decoration: underline;
+}
+
+.quote {
+  display: block;
+  margin: 0.2em 0;
+  padding-left: 0.75em;
+  border-left: 3px solid var(--color-border);
+  color: var(--color-text-muted);
+  line-height: 1.5;
+}
+
+.empty {
+  padding: 2em;
+  text-align: center;
+  border: 1px dashed var(--color-border);
+  border-radius: var(--radius);
+}

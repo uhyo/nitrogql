@@ -1,0 +1,37 @@
+.row {
+  display: flex;
+  align-items: center;
+  gap: 0.75em;
+  padding: 0.45em 1em;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.row:hover {
+  background: var(--color-bg-hover);
+}
+
+.title {
+  flex: none;
+  font-weight: 500;
+}
+
+.title:hover {
+  text-decoration: underline;
+}
+
+.description {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.meta {
+  display: flex;
+  align-items: center;
+  gap: 0.6em;
+  flex: none;
+  margin-left: auto;
+  font-size: 0.9em;
+}

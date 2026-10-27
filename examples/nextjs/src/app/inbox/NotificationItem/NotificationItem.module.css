@@ -1,0 +1,49 @@
+.item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75em;
+  padding: 0.6em 1em;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.item:last-child {
+  border-bottom: none;
+}
+
+.item[data-unread] {
+  background: color-mix(in srgb, var(--color-accent) 6%, transparent);
+}
+
+.dot {
+  flex: none;
+  width: 8px;
+  height: 8px;
+  margin-top: 0.55em;
+  border-radius: 50%;
+}
+
+.item[data-unread] .dot {
+  background: var(--color-accent);
+}
+
+.body {
+  flex: 1 1 auto;
+  min-width: 0;
+  line-height: 1.8;
+}
+
+.body > a,
+.body > span {
+  vertical-align: middle;
+}
+
+.action {
+  flex: none;
+  white-space: nowrap;
+}
+
+.time {
+  flex: none;
+  margin-top: 0.15em;
+  font-size: 0.9em;
+}

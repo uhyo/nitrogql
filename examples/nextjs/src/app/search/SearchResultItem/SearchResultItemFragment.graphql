@@ -1,0 +1,24 @@
+#import SearchIssueResultFragment from "./SearchIssueResult/SearchIssueResultFragment.graphql"
+#import SearchProjectResultFragment from "./SearchProjectResult/SearchProjectResultFragment.graphql"
+#import SearchUserResultFragment from "./SearchUserResult/SearchUserResultFragment.graphql"
+#import SearchTeamResultFragment from "./SearchTeamResult/SearchTeamResultFragment.graphql"
+
+fragment SearchResultItemFragment on SearchResult {
+  __typename
+  ... on Issue {
+    id
+    ...SearchIssueResultFragment
+  }
+  ... on Project {
+    id
+    ...SearchProjectResultFragment
+  }
+  ... on User {
+    id
+    ...SearchUserResultFragment
+  }
+  ... on Team {
+    id
+    ...SearchTeamResultFragment
+  }
+}

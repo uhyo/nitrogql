@@ -1,0 +1,17 @@
+#import UserChipFragment from "../../../../../components/UserChip/UserChipFragment.graphql"
+#import ActivityIssueLinkFragment from "../ActivityIssueLink/ActivityIssueLinkFragment.graphql"
+
+fragment AssigneeChangedActivityFragment on AssigneeChangedEvent {
+  actor {
+    ...UserChipFragment
+  }
+  issue {
+    ...ActivityIssueLinkFragment
+  }
+  fromAssignee {
+    ...UserChipFragment
+  }
+  toAssignee {
+    ...UserChipFragment
+  }
+}
