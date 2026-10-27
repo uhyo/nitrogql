@@ -9,7 +9,8 @@
     "lint": "next lint",
     "lint-graphql": "nitrogql check",
     "generate": "nitrogql generate --config-file graphql.server.config.yaml",
-    "typecheck": "node scripts/tsc.mjs --runExternalCode"
+    "typecheck": "node scripts/tsc.mjs --runExternalCode",
+    "bench-fragments": "node scripts/bench-fragments.mjs"
   },
   "dependencies": {
     "@apollo/server": "^4.9.1",

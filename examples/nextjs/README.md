@@ -47,3 +47,14 @@ Run `npm run generate` again after changing the schema.
 ### TypeScript versions
 
 Next.js uses the JavaScript API of the `typescript` package, which TypeScript 7 no longer provides. Therefore, `typescript` is kept at 6.x for Next.js, and TypeScript 7.1 is installed as `typescript7` for type checking (`scripts/tsc.mjs`). Type checking during `next build` is disabled in `next.config.js`.
+
+## Measuring the cost of imported fragments
+
+The content mapper does not expand `#import`ed fragments; TypeScript merges their types instead. To compare the cost of this with inlined fragments, run:
+
+```sh
+npm run generate
+npm run bench-fragments
+```
+
+This copies the project twice to a temporary directory, inlines imported fragments into the files that use them in one copy, and type-checks both copies with `--extendedDiagnostics`.
