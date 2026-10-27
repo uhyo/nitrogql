@@ -18,7 +18,7 @@
 
 .title {
   flex: 1 1 auto;
-  min-width: 0;
+  min-width: 8em;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -36,8 +36,11 @@
   z-index: 1;
   display: flex;
   align-items: center;
+  justify-content: flex-end;
   gap: 0.6em;
-  flex: none;
+  flex: 0 1 auto;
+  min-width: 0;
+  overflow: hidden;
   font-size: 0.9em;
 }
 
