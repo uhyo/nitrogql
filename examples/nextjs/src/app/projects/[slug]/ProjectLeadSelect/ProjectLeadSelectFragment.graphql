@@ -1,0 +1,18 @@
+fragment ProjectLeadSelectFragment on Project {
+  id
+  lead {
+    id
+  }
+  team {
+    id
+    members {
+      role
+      user {
+        id
+        name
+        handle
+        deactivated
+      }
+    }
+  }
+}

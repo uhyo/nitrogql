@@ -1,0 +1,26 @@
+#import UserChipFragment from "../../../../components/UserChip/UserChipFragment.graphql"
+#import ProjectHealthBadgeFragment from "../../ProjectHealthBadge/ProjectHealthBadgeFragment.graphql"
+#import ProjectLeadSelectFragment from "../ProjectLeadSelect/ProjectLeadSelectFragment.graphql"
+
+fragment ProjectHeaderFragment on Project {
+  id
+  name
+  icon
+  color
+  status
+  startDate
+  targetDate
+  progress
+  team {
+    id
+    key
+    name
+    icon
+  }
+  lead {
+    id
+    ...UserChipFragment
+  }
+  ...ProjectHealthBadgeFragment
+  ...ProjectLeadSelectFragment
+}

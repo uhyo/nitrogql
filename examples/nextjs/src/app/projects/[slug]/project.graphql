@@ -1,0 +1,28 @@
+#import MilestoneItemFragment from "./MilestoneItem/MilestoneItemFragment.graphql"
+#import ProjectHeaderFragment from "./ProjectHeader/ProjectHeaderFragment.graphql"
+#import ProjectIssues_issues, ProjectIssues_milestones from "./ProjectIssues/ProjectIssuesFragment.graphql"
+#import ProjectMembersFragment from "./ProjectMembers/ProjectMembersFragment.graphql"
+#import ProjectUpdateCardFragment from "./ProjectUpdateCard/ProjectUpdateCardFragment.graphql"
+
+query ProjectDetail($slug: String!, $filter: IssueFilter, $first: Int!) {
+  project(slug: $slug) {
+    id
+    color
+    description
+    health
+    ...ProjectHeaderFragment
+    ...ProjectMembersFragment
+    milestones {
+      id
+      ...MilestoneItemFragment
+      ...ProjectIssues_milestones
+    }
+    updates(first: 20) {
+      id
+      ...ProjectUpdateCardFragment
+    }
+    issues(filter: $filter, first: $first) {
+      ...ProjectIssues_issues
+    }
+  }
+}

@@ -1,0 +1,17 @@
+.layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 220px;
+  gap: 2rem;
+}
+
+.milestones {
+  list-style: none;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+}
+
+.updates {
+  display: flex;
+  flex-flow: column nowrap;
+  gap: 0.75rem;
+}

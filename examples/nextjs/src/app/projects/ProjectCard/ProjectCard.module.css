@@ -1,0 +1,55 @@
+.card {
+  position: relative;
+  display: flex;
+  flex-flow: column nowrap;
+  gap: 0.5em;
+  padding: 0.9em 1em;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  border-top: 3px solid var(--project-color);
+  background: var(--color-bg);
+}
+
+.card:hover {
+  background: var(--color-bg-subtle);
+}
+
+.title {
+  display: flex;
+  align-items: center;
+  gap: 0.4em;
+  font-weight: 600;
+}
+
+/* The whole card is clickable, while links in the card stay clickable */
+.title > a::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+}
+
+.description {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  font-size: 0.9em;
+}
+
+.meta {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-flow: row wrap;
+  align-items: center;
+  gap: 0.4em 0.8em;
+  font-size: 0.9em;
+}
+
+.members {
+  display: inline-flex;
+}
+
+.members > * + * {
+  margin-left: -4px;
+}

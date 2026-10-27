@@ -1,0 +1,15 @@
+#import ProjectCardFragment from "./ProjectCard/ProjectCardFragment.graphql"
+
+query ProjectsPage($status: [ProjectStatus!], $teamKey: String) {
+  teams {
+    id
+    key
+    name
+    icon
+  }
+  projects(status: $status, teamKey: $teamKey) {
+    id
+    status
+    ...ProjectCardFragment
+  }
+}

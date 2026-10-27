@@ -1,0 +1,28 @@
+.milestone {
+  display: flex;
+  align-items: center;
+  gap: 1em;
+  padding: 0.5em 1em;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.milestone:last-child {
+  border-bottom: none;
+}
+
+.name {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.name > p {
+  font-size: 0.9em;
+}
+
+.meta {
+  display: flex;
+  align-items: center;
+  gap: 1em;
+  flex: none;
+  font-size: 0.9em;
+}

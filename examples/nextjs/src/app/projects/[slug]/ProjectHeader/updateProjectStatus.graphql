@@ -1,0 +1,6 @@
+mutation ProjectHeaderUpdateStatus($id: ID!, $status: ProjectStatus!) {
+  updateProject(id: $id, input: { status: $status }) {
+    id
+    status
+  }
+}

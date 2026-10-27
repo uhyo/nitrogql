@@ -1,0 +1,16 @@
+#import IssueListFragment from "../../../../components/IssueList/IssueListFragment.graphql"
+
+fragment ProjectIssues_issues on IssueConnection {
+  ...IssueListFragment
+  nodes {
+    id
+    milestone {
+      id
+    }
+  }
+}
+
+fragment ProjectIssues_milestones on Milestone {
+  id
+  name
+}
