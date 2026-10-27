@@ -15,6 +15,7 @@ use nitrogql_ast::{
 
 use self::{
     count_selection_set_fields::selection_set_has_more_than_one_fields,
+    field_merging::FieldMergeChecker,
     fragment_map::{FragmentMap, generate_fragment_map},
 };
 
@@ -27,6 +28,7 @@ use nitrogql_semantics::direct_fields_of_output_type;
 
 mod context;
 mod count_selection_set_fields;
+mod field_merging;
 mod fragment_map;
 #[cfg(test)]
 mod tests;
@@ -42,6 +44,8 @@ pub fn check_operation_document<'src, S: Text<'src>>(
     let fragment_map = generate_fragment_map(document);
 
     check_fragment_visibility(document, &fragment_map, context, &mut result);
+
+    let mut field_merge_checker = FieldMergeChecker::new(&fragment_map, context);
 
     let operation_num = document
         .definitions
@@ -91,7 +95,13 @@ pub fn check_operation_document<'src, S: Text<'src>>(
                     }
                 }
 
-                check_operation(&fragment_map, op, context, &mut result);
+                check_operation(
+                    &fragment_map,
+                    &mut field_merge_checker,
+                    op,
+                    context,
+                    &mut result,
+                );
             }
             ExecutableDefinition::FragmentDefinition(def) => {
                 // Find other one with same name
@@ -115,6 +125,18 @@ pub fn check_operation_document<'src, S: Text<'src>>(
                 }
 
                 check_fragment_definition(def, context, &mut result);
+
+                // Fragments from other files are checked in their own files.
+                if def.position.file == document.position.file
+                    && let Some(target) = context.definitions.get_type(def.type_condition.name)
+                    && direct_fields_of_output_type(&**target).is_some()
+                {
+                    field_merge_checker.check_selection_set(
+                        target,
+                        &def.selection_set,
+                        &mut result,
+                    );
+                }
             }
         }
     }
@@ -274,10 +296,11 @@ fn spread_fragments<'a>(
     result
 }
 
-fn check_operation<'src, S: Text<'src>>(
+fn check_operation<'a, 'src, S: Text<'src>>(
     fragment_map: &FragmentMap<'_, 'src>,
-    op: &OperationDefinition<'src>,
-    context: &OperationCheckContext<'_, 'src, S>,
+    field_merge_checker: &mut FieldMergeChecker<'a, 'src, S>,
+    op: &'a OperationDefinition<'src>,
+    context: &OperationCheckContext<'a, 'src, S>,
     result: &mut Vec<CheckError>,
 ) {
     let root_type = {
@@ -346,6 +369,7 @@ fn check_operation<'src, S: Text<'src>>(
         context,
         result,
     );
+    field_merge_checker.check_selection_set(root_type, &op.selection_set, result);
 }
 
 fn operation_type_from_root_types<T>(root_types: &RootTypes<T>, op: OperationType) -> &T {

@@ -1,0 +1,7 @@
+---
+source: crates/checker/src/operation_checker/tests/mod.rs
+expression: "check(\"\n            fragment F on Node {\n                ... on User { name }\n                ... on Bot { name }\n            }\n            \")"
+---
+[
+    "3:29 Fields 'name' conflict because they return conflicting types 'String!' and 'Int'\n  2:30 Conflicting selection of 'name'",
+]

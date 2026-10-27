@@ -1,0 +1,8 @@
+---
+source: crates/checker/src/operation_checker/tests/mod.rs
+expression: "check_with_imports(\"#import UserName from \\\"./userName.graphql\\\"\n            query Q1 { user { ...UserName name: id } }\n            query Q2 { user { name: id ...UserName } }\")"
+---
+[
+    "0:1 Fields 'name' conflict because 'name' and 'id' are different fields",
+    "0:2 Fields 'name' conflict because 'id' and 'name' are different fields",
+]

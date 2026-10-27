@@ -270,6 +270,12 @@ const operationErrors: readonly ErrorCodeEntry[] = [
     description: "Subscription operation does not have exactly one root field.",
     example: "Subscription operation must have exactly one root field",
   },
+  {
+    code: "nitrogql4014",
+    description: "Fields with the same response name cannot be merged.",
+    example:
+      "Fields 'name' conflict because 'name' and 'nickname' are different fields",
+  },
 ];
 
 const importErrors: readonly ErrorCodeEntry[] = [

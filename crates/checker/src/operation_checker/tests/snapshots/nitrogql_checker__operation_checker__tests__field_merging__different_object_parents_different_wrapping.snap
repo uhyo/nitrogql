@@ -1,0 +1,7 @@
+---
+source: crates/checker/src/operation_checker/tests/mod.rs
+expression: "check(\"\n            query {\n                node {\n                    ... on User { f: friends { id } }\n                    ... on Bot { f: owners { id } }\n                }\n            }\n            \")"
+---
+[
+    "4:33 Fields 'f' conflict because they return conflicting types '[User!]!' and '[User!]'\n  3:34 Conflicting selection of 'f'",
+]

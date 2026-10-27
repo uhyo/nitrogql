@@ -3,7 +3,6 @@ source: crates/cli/src/content_mapper/tests.rs
 expression: "print_result(&result, operation, &root)"
 ---
 import type { TypedDocumentNode } from "@graphql-typed-document-node/core";
-import type * as Schema from "../schema/a.graphql";
 
 import type * as __Nitrogql from "@nitrogql/cli/fragment-types";
 
@@ -19,4 +18,4 @@ export type __NitrogqlFragments = {};
 // mapping: "GetMeResult" -> "GetMe" (Atom)
 // mapping: "GetMeVariables" -> "GetMe" (Atom)
 // mapping: "GetMeQuery" -> "GetMe" (Atom)
-// diagnostic 9999: "Cannot merge selections of field 'a' that have different shapes" at "a"
+// diagnostic 4014: "Fields 'a' conflict because '__typename' and 'me' are different fields\n<root>/app/operation.graphql:2:3: Conflicting selection of 'a'" at "a"

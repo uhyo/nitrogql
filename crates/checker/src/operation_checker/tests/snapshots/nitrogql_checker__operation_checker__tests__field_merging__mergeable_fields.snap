@@ -1,0 +1,5 @@
+---
+source: crates/checker/src/operation_checker/tests/mod.rs
+expression: "check(\"\n            query($n: Int) {\n                __typename\n                __typename\n                me { id }\n                me { name }\n                a: me { id }\n                a: me { name }\n                user(id: \\\"1\\\") { id }\n                user(id: \\\"1\\\") { name }\n                b: users(first: $n) { id }\n                b: users(first: $n) { name }\n                c: users(first: 1, filter: { name: \\\"uhyo\\\", age: 20 }) { id }\n                c: users(filter: { age: 20, name: \\\"uhyo\\\" }, first: 1) { id }\n                node {\n                    id\n                    ... on User { id }\n                    ... on Node { id }\n                }\n            }\n            \")"
+---
+[]

@@ -1,5 +1,38 @@
 ---
-source: checker/src/operation_checker/tests/mod.rs
-expression: "check_operation_document(&schema, &doc)"
+source: crates/checker/src/operation_checker/tests/mod.rs
+expression: "test_check(schema, doc)"
 ---
-[]
+[
+    CheckError {
+        position: Pos {
+            line: 4,
+            column: 16,
+            start: 77,
+            end: 81,
+            file: 0,
+            builtin: false,
+        },
+        message: FieldsConflict {
+            name: "user",
+            reason: DifferentFields {
+                first: "user",
+                second: "foo",
+            },
+        },
+        additional_info: [
+            (
+                Pos {
+                    line: 3,
+                    column: 16,
+                    start: 49,
+                    end: 53,
+                    file: 0,
+                    builtin: false,
+                },
+                ConflictingField {
+                    name: "user",
+                },
+            ),
+        ],
+    },
+]

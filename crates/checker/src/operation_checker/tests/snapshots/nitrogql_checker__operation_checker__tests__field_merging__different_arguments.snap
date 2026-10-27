@@ -1,0 +1,11 @@
+---
+source: crates/checker/src/operation_checker/tests/mod.rs
+expression: "check(\"\n            query($n: Int, $m: Int) {\n                a: user(id: \\\"1\\\") { name }\n                a: user(id: \\\"2\\\") { name }\n                b: users(first: $n) { id }\n                b: users(first: $m) { id }\n                c: users { id }\n                c: users(first: 1) { id }\n                d: users(first: 1) { id }\n                d: users(first: 1, filter: { name: \\\"uhyo\\\" }) { id }\n                e: users(filter: { name: \\\"uhyo\\\" }) { id }\n                e: users(filter: { name: \\\"uhyo\\\", age: null }) { id }\n            }\n            \")"
+---
+[
+    "3:16 Fields 'a' conflict because they have different arguments\n  2:16 Conflicting selection of 'a'",
+    "5:16 Fields 'b' conflict because they have different arguments\n  4:16 Conflicting selection of 'b'",
+    "7:16 Fields 'c' conflict because they have different arguments\n  6:16 Conflicting selection of 'c'",
+    "9:16 Fields 'd' conflict because they have different arguments\n  8:16 Conflicting selection of 'd'",
+    "11:16 Fields 'e' conflict because they have different arguments\n  10:16 Conflicting selection of 'e'",
+]

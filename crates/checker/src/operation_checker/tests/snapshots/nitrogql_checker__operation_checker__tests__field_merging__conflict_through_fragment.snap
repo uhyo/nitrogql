@@ -1,0 +1,9 @@
+---
+source: crates/checker/src/operation_checker/tests/mod.rs
+expression: "check(\"\n            query Q1 {\n                me { ...F }\n                me { f: friends { id } }\n            }\n            query Q2 {\n                me { f: friends { id } }\n                me { ...F }\n            }\n            query Q3 {\n                me { ...F ...G }\n            }\n            fragment F on User { f: name }\n            fragment G on User { f: age }\n            \")"
+---
+[
+    "3:16 Fields 'me' conflict because subfields 'f' conflict because 'name' and 'friends' are different fields\n  12:33 Conflicting selection of 'f'\n  3:21 Conflicting selection of 'f'",
+    "7:16 Fields 'me' conflict because subfields 'f' conflict because 'friends' and 'name' are different fields\n  6:21 Conflicting selection of 'f'\n  12:33 Conflicting selection of 'f'",
+    "10:26 Fields 'f' conflict because 'name' and 'age' are different fields\n  12:33 Conflicting selection of 'f'\n  13:33 Conflicting selection of 'f'",
+]
