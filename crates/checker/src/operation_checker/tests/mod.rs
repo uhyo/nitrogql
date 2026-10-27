@@ -1122,6 +1122,15 @@ mod imports {
     }
 
     #[test]
+    fn conflict_with_imported_fragment() {
+        assert_debug_snapshot!(check_with_imports(
+            "#import UserName from \"./userName.graphql\"
+            query Q1 { user { ...UserName name: id } }
+            query Q2 { user { name: id ...UserName } }"
+        ));
+    }
+
+    #[test]
     fn transitively_imported_fragment() {
         let errors = check_with_imports(
             "#import UserName from \"./userName.graphql\"
@@ -1362,6 +1371,314 @@ mod one_of {
         .unwrap();
 
         assert_debug_snapshot!(test_check(schema, doc));
+    }
+}
+
+mod field_merging {
+    use std::borrow::Cow;
+
+    use graphql_type_system::Schema;
+    use insta::assert_debug_snapshot;
+    use nitrogql_semantics::ast_to_type_system;
+
+    use nitrogql_ast::base::Pos;
+    use nitrogql_parser::parse_operation_document;
+
+    use super::{parse_to_type_system_document, test_check};
+
+    fn type_system() -> Schema<Cow<'static, str>, Pos> {
+        let doc = parse_to_type_system_document(
+            "
+            type Query {
+                me: User!
+                user(id: ID!): User
+                node: Node
+                users(first: Int, filter: UserFilter): [User!]!
+            }
+            input UserFilter {
+                name: String
+                age: Int
+            }
+            interface Node {
+                id: ID!
+            }
+            type User implements Node {
+                id: ID!
+                name: String!
+                nickname: String!
+                age: Int
+                friends: [User!]!
+            }
+            type Bot implements Node {
+                id: ID!
+                name: Int
+                nick: String!
+                friends: [User!]!
+                owners: [User!]
+            }
+        ",
+        );
+        ast_to_type_system(&doc)
+    }
+
+    /// Returns check errors as strings of the form `line:column message`, with additional info indented.
+    fn check(source: &str) -> Vec<String> {
+        let doc = parse_operation_document(source, 0).unwrap();
+        test_check(type_system(), doc)
+            .into_iter()
+            .map(|err| {
+                let mut result = format!(
+                    "{}:{} {}",
+                    err.position.line, err.position.column, err.message
+                );
+                for (pos, info) in err.additional_info {
+                    result.push_str(&format!("\n  {}:{} {}", pos.line, pos.column, info));
+                }
+                result
+            })
+            .collect()
+    }
+
+    #[test]
+    fn mergeable_fields() {
+        assert_debug_snapshot!(check(
+            "
+            query($n: Int) {
+                __typename
+                __typename
+                me { id }
+                me { name }
+                a: me { id }
+                a: me { name }
+                user(id: \"1\") { id }
+                user(id: \"1\") { name }
+                b: users(first: $n) { id }
+                b: users(first: $n) { name }
+                c: users(first: 1, filter: { name: \"uhyo\", age: 20 }) { id }
+                c: users(filter: { age: 20, name: \"uhyo\" }, first: 1) { id }
+                node {
+                    id
+                    ... on User { id }
+                    ... on Node { id }
+                }
+            }
+            "
+        ));
+    }
+
+    #[test]
+    fn leaf_and_object() {
+        assert_debug_snapshot!(check(
+            "
+            query {
+                a: __typename
+                a: me { id }
+            }
+            "
+        ));
+    }
+
+    #[test]
+    fn different_fields() {
+        assert_debug_snapshot!(check(
+            "
+            query {
+                me {
+                    a: id
+                    a: name
+                }
+            }
+            "
+        ));
+    }
+
+    #[test]
+    fn different_fields_without_alias() {
+        assert_debug_snapshot!(check(
+            "
+            query {
+                me { name }
+                me: user(id: \"1\") { name }
+            }
+            "
+        ));
+    }
+
+    #[test]
+    fn different_arguments() {
+        assert_debug_snapshot!(check(
+            "
+            query($n: Int, $m: Int) {
+                a: user(id: \"1\") { name }
+                a: user(id: \"2\") { name }
+                b: users(first: $n) { id }
+                b: users(first: $m) { id }
+                c: users { id }
+                c: users(first: 1) { id }
+                d: users(first: 1) { id }
+                d: users(first: 1, filter: { name: \"uhyo\" }) { id }
+                e: users(filter: { name: \"uhyo\" }) { id }
+                e: users(filter: { name: \"uhyo\", age: null }) { id }
+            }
+            "
+        ));
+    }
+
+    #[test]
+    fn conflict_in_subfields() {
+        assert_debug_snapshot!(check(
+            "
+            query {
+                me { friends { a: id } }
+                me { friends { a: name } }
+            }
+            "
+        ));
+    }
+
+    #[test]
+    fn conflict_through_fragment() {
+        assert_debug_snapshot!(check(
+            "
+            query Q1 {
+                me { ...F }
+                me { f: friends { id } }
+            }
+            query Q2 {
+                me { f: friends { id } }
+                me { ...F }
+            }
+            query Q3 {
+                me { ...F ...G }
+            }
+            fragment F on User { f: name }
+            fragment G on User { f: age }
+            "
+        ));
+    }
+
+    #[test]
+    fn conflict_through_inline_fragment() {
+        assert_debug_snapshot!(check(
+            "
+            query {
+                me {
+                    a: id
+                    ... { a: name }
+                    ... on User { a: age }
+                }
+            }
+            "
+        ));
+    }
+
+    #[test]
+    fn conflict_inside_fragment_is_reported_once() {
+        assert_debug_snapshot!(check(
+            "
+            query Q1 {
+                me { ...F }
+            }
+            query Q2 {
+                me { ...F ...F }
+            }
+            fragment F on User {
+                a: id
+                a: name
+            }
+            "
+        ));
+    }
+
+    #[test]
+    fn interface_and_object_parents() {
+        // Node is not an object type, so fields must be the same.
+        assert_debug_snapshot!(check(
+            "
+            query {
+                node {
+                    a: id
+                    ... on User { a: name }
+                }
+            }
+            "
+        ));
+    }
+
+    #[test]
+    fn different_object_parents() {
+        // Fields in different object types may be different fields with different arguments,
+        // as long as their response shapes are the same.
+        assert_debug_snapshot!(check(
+            "
+            query {
+                node {
+                    ... on User {
+                        a: name
+                        b: friends { x: name }
+                    }
+                    ... on Bot {
+                        a: nick
+                        b: friends { x: nickname }
+                    }
+                }
+            }
+            "
+        ));
+    }
+
+    #[test]
+    fn different_object_parents_different_types() {
+        assert_debug_snapshot!(check(
+            "
+            query {
+                node {
+                    ... on User { name }
+                    ... on Bot { name }
+                }
+            }
+            "
+        ));
+    }
+
+    #[test]
+    fn different_object_parents_different_wrapping() {
+        assert_debug_snapshot!(check(
+            "
+            query {
+                node {
+                    ... on User { f: friends { id } }
+                    ... on Bot { f: owners { id } }
+                }
+            }
+            "
+        ));
+    }
+
+    #[test]
+    fn different_object_parents_conflict_in_subfields() {
+        assert_debug_snapshot!(check(
+            "
+            query {
+                node {
+                    ... on User { friends { a: age } }
+                    ... on Bot { friends { a: name } }
+                }
+            }
+            "
+        ));
+    }
+
+    #[test]
+    fn conflict_in_fragment_definition() {
+        assert_debug_snapshot!(check(
+            "
+            fragment F on Node {
+                ... on User { name }
+                ... on Bot { name }
+            }
+            "
+        ));
     }
 }
 

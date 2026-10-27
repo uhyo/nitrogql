@@ -195,13 +195,13 @@ fn diagnostic_spans() {
 }
 
 #[test]
-fn printer_error() {
-    // The checker does not check that fields of the same response name can be merged,
-    // but the type printer cannot print such a selection.
+fn fields_conflict() {
+    // Fields of the same response name that cannot be merged are reported by the checker
+    // before the type printer tries to merge them.
     let mut files = default_files();
     let operation = "query GetMe {\n  a: __typename\n  a: me {\n    id\n  }\n}\n";
     files[5] = ("app/operation.graphql", operation);
-    let root = setup("printer_error", &files);
+    let root = setup("fields_conflict", &files);
     let project = open(&root);
     let result = transform_file(&project, &root, "app/operation.graphql");
     assert_snapshot!(print_result(&result, operation, &root));

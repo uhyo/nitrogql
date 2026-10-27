@@ -1,6 +1,6 @@
 ---
 source: crates/checker/src/operation_checker/tests/mod.rs
-expression: "check_operation_document(&schema, &doc)"
+expression: "test_check(schema, doc)"
 ---
 [
     CheckError {
@@ -30,5 +30,34 @@ expression: "check_operation_document(&schema, &doc)"
             type: "String",
         },
         additional_info: [],
+    },
+    CheckError {
+        position: Pos {
+            line: 4,
+            column: 16,
+            start: 178,
+            end: 184,
+            file: 0,
+            builtin: false,
+        },
+        message: FieldsConflict {
+            name: "users2",
+            reason: DifferentArguments,
+        },
+        additional_info: [
+            (
+                Pos {
+                    line: 3,
+                    column: 16,
+                    start: 129,
+                    end: 135,
+                    file: 0,
+                    builtin: false,
+                },
+                ConflictingField {
+                    name: "users2",
+                },
+            ),
+        ],
     },
 ]

@@ -128,6 +128,11 @@ pub enum CheckErrorMessage {
     OneOfInputNullValue { field: String },
     #[error("Variable '${name}' used for a field of @oneOf input object must be of non-null type")]
     OneOfInputNullableVariable { name: String },
+    #[error("Fields '{name}' conflict because {reason}")]
+    FieldsConflict {
+        name: String,
+        reason: FieldConflictReason,
+    },
     // Error that should be checked in type system check phase
     #[error("Type system error. This is a bug of checker")]
     TypeSystemError,
@@ -138,6 +143,8 @@ pub enum CheckErrorMessage {
     DefinitionPos { name: String },
     #[error("Root types are defined here")]
     RootTypesAreDefinedHere,
+    #[error("Conflicting selection of '{name}'")]
+    ConflictingField { name: String },
     // Error from plugin
     #[error("{message}")]
     Plugin { message: String },
@@ -205,8 +212,12 @@ impl CheckErrorMessage {
             OneOfInputNotExactlyOneField { .. } => ErrorCode::OneOfInputNotExactlyOneField,
             OneOfInputNullValue { .. } => ErrorCode::OneOfInputNullValue,
             OneOfInputNullableVariable { .. } => ErrorCode::OneOfInputNullableVariable,
+            FieldsConflict { .. } => ErrorCode::FieldsConflict,
             TypeSystemError => ErrorCode::InternalError,
-            AnotherDefinitionPos { .. } | DefinitionPos { .. } | RootTypesAreDefinedHere => {
+            AnotherDefinitionPos { .. }
+            | DefinitionPos { .. }
+            | RootTypesAreDefinedHere
+            | ConflictingField { .. } => {
                 return None;
             }
             Plugin { .. } => ErrorCode::PluginError,
@@ -228,6 +239,41 @@ impl From<CheckError> for PositionedError {
                 .collect(),
         )
         .with_code(code)
+    }
+}
+
+/// Reason why two fields with the same response name cannot be merged.
+#[derive(Clone, Debug)]
+pub enum FieldConflictReason {
+    DifferentFields {
+        first: String,
+        second: String,
+    },
+    DifferentArguments,
+    DifferentTypes {
+        first: String,
+        second: String,
+    },
+    Subfields {
+        name: String,
+        reason: Box<FieldConflictReason>,
+    },
+}
+
+impl Display for FieldConflictReason {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            FieldConflictReason::DifferentFields { first, second } => {
+                write!(f, "'{first}' and '{second}' are different fields")
+            }
+            FieldConflictReason::DifferentArguments => write!(f, "they have different arguments"),
+            FieldConflictReason::DifferentTypes { first, second } => {
+                write!(f, "they return conflicting types '{first}' and '{second}'")
+            }
+            FieldConflictReason::Subfields { name, reason } => {
+                write!(f, "subfields '{name}' conflict because {reason}")
+            }
+        }
     }
 }
 

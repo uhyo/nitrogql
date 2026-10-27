@@ -1,0 +1,7 @@
+---
+source: crates/checker/src/operation_checker/tests/mod.rs
+expression: "check(\"\n            query {\n                me {\n                    a: id\n                    a: name\n                }\n            }\n            \")"
+---
+[
+    "4:20 Fields 'a' conflict because 'id' and 'name' are different fields\n  3:20 Conflicting selection of 'a'",
+]

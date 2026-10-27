@@ -1,0 +1,5 @@
+---
+source: crates/checker/src/operation_checker/tests/mod.rs
+expression: "check(\"\n            query {\n                node {\n                    ... on User {\n                        a: name\n                        b: friends { x: name }\n                    }\n                    ... on Bot {\n                        a: nick\n                        b: friends { x: nickname }\n                    }\n                }\n            }\n            \")"
+---
+[]

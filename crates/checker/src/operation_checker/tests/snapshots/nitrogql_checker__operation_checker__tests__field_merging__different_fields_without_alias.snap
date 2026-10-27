@@ -1,0 +1,7 @@
+---
+source: crates/checker/src/operation_checker/tests/mod.rs
+expression: "check(\"\n            query {\n                me { name }\n                me: user(id: \\\"1\\\") { name }\n            }\n            \")"
+---
+[
+    "3:16 Fields 'me' conflict because 'me' and 'user' are different fields\n  2:16 Conflicting selection of 'me'",
+]

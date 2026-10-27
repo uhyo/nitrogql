@@ -1,0 +1,7 @@
+---
+source: crates/checker/src/operation_checker/tests/mod.rs
+expression: "check(\"\n            query {\n                node {\n                    ... on User { name }\n                    ... on Bot { name }\n                }\n            }\n            \")"
+---
+[
+    "4:33 Fields 'name' conflict because they return conflicting types 'String!' and 'Int'\n  3:34 Conflicting selection of 'name'",
+]

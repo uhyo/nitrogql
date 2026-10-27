@@ -128,6 +128,8 @@ error_codes! {
     RecursingFragmentSpread = 4012,
     /// Subscription operation does not have exactly one root field.
     SubscriptionNotSingleRootField = 4013,
+    /// Fields with the same response name cannot be merged.
+    FieldsConflict = 4014,
 
     /// Wildcard import is specified more than once.
     ImportWildcardMoreThanOnce = 5001,
