@@ -1,0 +1,19 @@
+.dates {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6em;
+}
+
+.status {
+  padding: 0 0.5em;
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  font-size: 0.85em;
+  color: var(--color-text-muted);
+}
+
+.status[data-status="active"] {
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+  font-weight: 600;
+}

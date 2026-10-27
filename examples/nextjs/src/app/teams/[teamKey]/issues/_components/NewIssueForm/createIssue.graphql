@@ -1,0 +1,13 @@
+#import IssueRowFragment from "../../../../../../components/IssueRow/IssueRowFragment.graphql"
+#import TeamIssueCountsFragment from "../../../_components/TeamIssueCounts/TeamIssueCountsFragment.graphql"
+
+mutation NewIssueFormCreateIssue($input: CreateIssueInput!) {
+  createIssue(input: $input) {
+    id
+    ...IssueRowFragment
+    team {
+      id
+      ...TeamIssueCountsFragment
+    }
+  }
+}

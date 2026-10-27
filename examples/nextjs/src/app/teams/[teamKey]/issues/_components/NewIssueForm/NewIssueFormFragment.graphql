@@ -1,0 +1,32 @@
+#import LabelBadgeFragment from "../../../../../../components/LabelBadge/LabelBadgeFragment.graphql"
+
+fragment NewIssueFormFragment on Team {
+  id
+  key
+  workflowStates {
+    id
+    name
+    type
+  }
+  labels {
+    id
+    ...LabelBadgeFragment
+  }
+  members {
+    user {
+      id
+      name
+      deactivated
+    }
+  }
+  projects(status: [PLANNED, IN_PROGRESS]) {
+    id
+    name
+    icon
+  }
+  cycles {
+    id
+    number
+    name
+  }
+}

@@ -1,0 +1,13 @@
+#import CycleDatesFragment from "../CycleDates/CycleDatesFragment.graphql"
+#import CycleProgressFragment from "../CycleProgress/CycleProgressFragment.graphql"
+
+fragment CycleListItemFragment on Cycle {
+  id
+  number
+  name
+  issues(first: 0) {
+    totalCount
+  }
+  ...CycleDatesFragment
+  ...CycleProgressFragment
+}

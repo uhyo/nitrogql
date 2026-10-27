@@ -1,0 +1,6 @@
+#import StateIconFragment from "../../../../../../components/StateIcon/StateIconFragment.graphql"
+
+fragment BoardColumnFragment on WorkflowState {
+  id
+  ...StateIconFragment
+}

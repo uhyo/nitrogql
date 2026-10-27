@@ -1,0 +1,18 @@
+#import TeamMemberRowFragment from "./_components/TeamMemberRow/TeamMemberRowFragment.graphql"
+#import TeamLabelRowFragment from "./_components/TeamLabelRow/TeamLabelRowFragment.graphql"
+
+query TeamMembers($teamKey: String!) {
+  team(key: $teamKey) {
+    id
+    members {
+      user {
+        id
+      }
+      ...TeamMemberRowFragment
+    }
+    labels {
+      id
+      ...TeamLabelRowFragment
+    }
+  }
+}

@@ -1,0 +1,19 @@
+#import AvatarFragment from "../../../../../components/Avatar/AvatarFragment.graphql"
+#import TeamIssueCountsFragment from "../TeamIssueCounts/TeamIssueCountsFragment.graphql"
+
+fragment TeamHeaderFragment on Team {
+  id
+  key
+  name
+  icon
+  color
+  description
+  members {
+    user {
+      id
+      deactivated
+      ...AvatarFragment
+    }
+  }
+  ...TeamIssueCountsFragment
+}

@@ -1,0 +1,47 @@
+.header {
+  display: flex;
+  flex-flow: column nowrap;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.title {
+  display: flex;
+  align-items: center;
+  gap: 0.75em;
+}
+
+.title h1 {
+  font-size: 1.3rem;
+  font-weight: 600;
+}
+
+.icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius);
+  font-size: 1.3rem;
+}
+
+.members {
+  display: flex;
+  align-items: center;
+  margin-left: auto;
+}
+
+.members > * + * {
+  margin-left: -4px;
+}
+
+.members > img,
+.members > span:not(:global(.muted)) {
+  box-shadow: 0 0 0 2px var(--color-bg);
+}
+
+.members > :global(.muted) {
+  margin-left: 0.4em;
+  font-size: 0.9em;
+}

@@ -1,0 +1,12 @@
+#import UserChipFragment from "../../../../../../components/UserChip/UserChipFragment.graphql"
+
+fragment TeamMemberRowFragment on TeamMembership {
+  role
+  joinedAt
+  user {
+    id
+    email
+    timezone
+    ...UserChipFragment
+  }
+}

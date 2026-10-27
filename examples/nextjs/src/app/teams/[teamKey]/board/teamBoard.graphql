@@ -1,0 +1,24 @@
+#import BoardColumnFragment from "./_components/BoardColumn/BoardColumnFragment.graphql"
+#import BoardCard_issue, BoardCard_state from "./_components/BoardCard/BoardCardFragment.graphql"
+
+query TeamBoard($teamKey: String!, $filter: IssueFilter!) {
+  team(key: $teamKey) {
+    id
+    workflowStates {
+      id
+      type
+      ...BoardColumnFragment
+      ...BoardCard_state
+    }
+    issues(filter: $filter, sort: { field: PRIORITY }, first: 500) {
+      totalCount
+      nodes {
+        id
+        state {
+          id
+        }
+        ...BoardCard_issue
+      }
+    }
+  }
+}

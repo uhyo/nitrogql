@@ -1,0 +1,31 @@
+#import AvatarFragment from "../../../../../../components/Avatar/AvatarFragment.graphql"
+#import LabelBadgeFragment from "../../../../../../components/LabelBadge/LabelBadgeFragment.graphql"
+#import ProjectChipFragment from "../../../../../../components/ProjectChip/ProjectChipFragment.graphql"
+
+fragment BoardCard_issue on Issue {
+  id
+  identifier
+  title
+  priority
+  estimate
+  dueDate
+  state {
+    id
+  }
+  assignee {
+    id
+    ...AvatarFragment
+  }
+  labels {
+    ...LabelBadgeFragment
+  }
+  project {
+    ...ProjectChipFragment
+  }
+}
+
+# States the card can be moved to
+fragment BoardCard_state on WorkflowState {
+  id
+  name
+}

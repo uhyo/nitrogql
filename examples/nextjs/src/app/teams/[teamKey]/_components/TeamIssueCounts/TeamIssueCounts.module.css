@@ -1,0 +1,23 @@
+.counts {
+  display: flex;
+  flex-flow: row wrap;
+  gap: 0.5em;
+}
+
+.count {
+  display: flex;
+  align-items: baseline;
+  gap: 0.4em;
+  padding: 0.1em 0.6em;
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  font-size: 0.85em;
+}
+
+.count > dd {
+  font-weight: 600;
+}
+
+.count[data-type="CANCELED"] > dd {
+  color: var(--color-text-muted);
+}

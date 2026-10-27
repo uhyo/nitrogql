@@ -1,0 +1,26 @@
+.column {
+  display: flex;
+  flex-flow: column nowrap;
+  flex: none;
+  width: 260px;
+  max-height: calc(100vh - 14rem);
+  border-radius: var(--radius);
+  background: var(--color-bg-subtle);
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: 0.5em;
+  padding: 0.5em 0.75em;
+  font-size: 0.9em;
+  font-weight: 600;
+}
+
+.cards {
+  display: flex;
+  flex-flow: column nowrap;
+  gap: 0.5em;
+  padding: 0 0.5em 0.5em;
+  overflow-y: auto;
+}
