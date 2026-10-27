@@ -86,6 +86,11 @@ impl CliOutput {
 
     /// Output with JSON format.
     pub fn json_output(self, file_store: &FileStore) {
+        println!("{}", self.json_string(file_store));
+    }
+
+    /// Returns output in json format.
+    pub fn json_string(self, file_store: &FileStore) -> String {
         let mut buffer = String::new();
         let mut writer = JSONObjectWriter::new(&mut buffer);
         if let Some((command, message)) = self.command_error {
@@ -93,7 +98,8 @@ impl CliOutput {
             obj.value("command", command.as_ref());
             obj.value("message", &message);
         }
-        if self.commands_run.iter().any(|c| c == "check") {
+        // Syntax errors are reported as check errors even if the check command is not run.
+        if self.commands_run.iter().any(|c| c == "check") || !self.check_errors.is_empty() {
             let mut obj = writer.object("check");
             let mut errors = obj.array("errors");
             for (kind, error) in self.check_errors {
@@ -127,11 +133,16 @@ impl CliOutput {
             }
         }
         writer.end();
-        println!("{buffer}");
+        buffer
     }
 
     /// Output in rdjson format.
     pub fn rdjson_output(self, file_store: &FileStore) {
+        println!("{}", self.rdjson_string(file_store));
+    }
+
+    /// Returns output in rdjson format.
+    pub fn rdjson_string(self, file_store: &FileStore) -> String {
         let mut buffer = String::new();
         let mut writer = JSONObjectWriter::new(&mut buffer);
         {
@@ -167,7 +178,7 @@ impl CliOutput {
             }
         }
         writer.end();
-        println!("{buffer}");
+        buffer
     }
 }
 

@@ -1,0 +1,5 @@
+---
+source: crates/cli/src/tests.rs
+expression: output
+---
+{"error":{"command":null,"message":"Input files have syntax errors"},"check":{"errors":[{"fileType":"operation","file":{"path":"<root>\/.\/app\/me.graphql","line":1,"column":7},"code":"nitrogql1001","message":"Parse error: expected Selection"}]}}

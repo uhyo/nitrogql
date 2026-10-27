@@ -28,4 +28,6 @@ pub enum CliError {
     GlobError(String),
     #[error("Command not successful: {0}")]
     CommandNotSuccessful(String),
+    #[error("Input files have syntax errors")]
+    SyntaxErrors,
 }
