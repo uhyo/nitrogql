@@ -1,0 +1,9 @@
+#import IssueLabelsEditorFragment from "./IssueLabelsEditorFragment.graphql"
+
+mutation IssueLabelsEditorAdd($issueId: ID!, $labelId: ID!) {
+  addIssueLabel(issueId: $issueId, labelId: $labelId) {
+    id
+    updatedAt
+    ...IssueLabelsEditorFragment
+  }
+}

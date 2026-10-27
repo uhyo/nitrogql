@@ -1,0 +1,8 @@
+#import IssueTimelineEventFragment from "../IssueTimelineEvent/IssueTimelineEventFragment.graphql"
+
+fragment IssueTimelinePriorityChangedFragment on PriorityChangedEvent {
+  id
+  ...IssueTimelineEventFragment
+  fromPriority
+  toPriority
+}

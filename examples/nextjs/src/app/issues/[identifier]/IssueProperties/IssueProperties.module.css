@@ -1,0 +1,38 @@
+.properties {
+  display: grid;
+  grid-template-columns: 6.5em minmax(0, 1fr);
+  gap: 0.6em 0.75em;
+  align-items: center;
+  padding: 1em;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  background: var(--color-bg-subtle);
+}
+
+.properties > dt {
+  font-size: 0.9em;
+  color: var(--color-text-muted);
+}
+
+.properties > dd {
+  display: flex;
+  align-items: center;
+  gap: 0.4em;
+  min-width: 0;
+}
+
+.properties select,
+.properties input {
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.separator {
+  grid-column: 1 / -1;
+  border: none;
+  border-top: 1px solid var(--color-border);
+}
+
+.error {
+  grid-column: 1 / -1;
+}

@@ -1,0 +1,21 @@
+#import IssueRowFragment from "../../../../components/IssueRow/IssueRowFragment.graphql"
+
+fragment IssueRelationsFragment on Issue {
+  id
+  parent {
+    id
+    ...IssueRowFragment
+  }
+  children {
+    id
+    ...IssueRowFragment
+  }
+  relations {
+    id
+    type
+    relatedIssue {
+      id
+      ...IssueRowFragment
+    }
+  }
+}

@@ -1,0 +1,15 @@
+.thread {
+  display: flex;
+  flex-flow: column nowrap;
+  gap: 0.5rem;
+}
+
+.replies {
+  display: flex;
+  flex-flow: column nowrap;
+  gap: 0.5rem;
+  margin-left: 2rem;
+  padding-left: 1rem;
+  border-left: 2px solid var(--color-border);
+  list-style: none;
+}

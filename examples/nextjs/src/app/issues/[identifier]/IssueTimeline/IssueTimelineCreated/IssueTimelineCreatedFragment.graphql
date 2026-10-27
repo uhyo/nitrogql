@@ -1,0 +1,6 @@
+#import IssueTimelineEventFragment from "../IssueTimelineEvent/IssueTimelineEventFragment.graphql"
+
+fragment IssueTimelineCreatedFragment on IssueCreatedEvent {
+  id
+  ...IssueTimelineEventFragment
+}

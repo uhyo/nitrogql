@@ -1,0 +1,6 @@
+mutation IssueHeaderArchive($id: ID!) {
+  archiveIssue(id: $id) {
+    id
+    archivedAt
+  }
+}

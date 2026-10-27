@@ -1,0 +1,56 @@
+.header {
+  display: flex;
+  flex-flow: column nowrap;
+  gap: 0.5rem;
+}
+
+.breadcrumbs {
+  display: flex;
+  align-items: center;
+  gap: 0.4em;
+  font-size: 0.9em;
+}
+
+.breadcrumbs a:hover {
+  text-decoration: underline;
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5em;
+  margin-left: auto;
+}
+
+.titleRow {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5em;
+}
+
+.title {
+  flex: 1 1 auto;
+  font-size: 1.5rem;
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.title > button {
+  border: none;
+  background: none;
+  text-align: left;
+  font-weight: inherit;
+}
+
+.titleInput {
+  width: 100%;
+  font-size: 1.5rem;
+  font-weight: 600;
+}
+
+.archived {
+  padding: 0.4em 0.8em;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  background: var(--color-bg-subtle);
+}

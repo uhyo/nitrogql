@@ -1,0 +1,22 @@
+#import ReactionsFragment from "../../../components/Reactions/ReactionsFragment.graphql"
+#import IssueHeaderFragment from "./IssueHeader/IssueHeaderFragment.graphql"
+#import IssueDescriptionFragment from "./IssueDescription/IssueDescriptionFragment.graphql"
+#import IssuePropertiesFragment from "./IssueProperties/IssuePropertiesFragment.graphql"
+#import IssueRelationsFragment from "./IssueRelations/IssueRelationsFragment.graphql"
+#import IssueAttachmentsFragment from "./IssueAttachments/IssueAttachmentsFragment.graphql"
+#import IssueTimelineFragment from "./IssueTimeline/IssueTimelineFragment.graphql"
+
+query IssueDetailQuery($identifier: String!) {
+  issue(identifier: $identifier) {
+    id
+    ...IssueHeaderFragment
+    ...IssueDescriptionFragment
+    reactions {
+      ...ReactionsFragment
+    }
+    ...IssuePropertiesFragment
+    ...IssueRelationsFragment
+    ...IssueAttachmentsFragment
+    ...IssueTimelineFragment
+  }
+}

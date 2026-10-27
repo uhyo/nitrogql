@@ -1,0 +1,40 @@
+.description {
+  position: relative;
+  padding: 0.75em 1em;
+  border: 1px solid transparent;
+  border-radius: var(--radius);
+}
+
+.description:hover {
+  border-color: var(--color-border);
+}
+
+.edit {
+  position: absolute;
+  top: 0.5em;
+  right: 0.5em;
+  opacity: 0.4;
+}
+
+.description:hover .edit,
+.edit:focus-visible {
+  opacity: 1;
+}
+
+.editor {
+  display: flex;
+  flex-flow: column nowrap;
+  gap: 0.5em;
+}
+
+.editor > textarea {
+  min-height: 10em;
+  resize: vertical;
+  font-family: var(--font-mono);
+}
+
+.buttons {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5em;
+}

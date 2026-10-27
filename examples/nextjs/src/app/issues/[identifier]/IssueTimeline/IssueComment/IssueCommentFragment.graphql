@@ -1,0 +1,17 @@
+#import UserChipFragment from "../../../../../components/UserChip/UserChipFragment.graphql"
+#import ReactionsFragment from "../../../../../components/Reactions/ReactionsFragment.graphql"
+
+fragment IssueCommentFragment on Comment {
+  id
+  body
+  createdAt
+  editedAt
+  viewerCanEdit
+  author {
+    id
+    ...UserChipFragment
+  }
+  reactions {
+    ...ReactionsFragment
+  }
+}

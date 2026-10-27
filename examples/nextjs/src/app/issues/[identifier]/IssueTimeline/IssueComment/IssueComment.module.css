@@ -1,0 +1,52 @@
+.comment {
+  display: flex;
+  flex-flow: column nowrap;
+  gap: 0.5em;
+  padding: 0.75em 1em;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  background: var(--color-bg);
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: 0.5em;
+  font-size: 0.9em;
+}
+
+.actions {
+  display: flex;
+  gap: 0.25em;
+  margin-left: auto;
+}
+
+.actions > button {
+  padding: 0 0.4em;
+  border: none;
+  border-radius: var(--radius);
+  background: none;
+  color: var(--color-text-muted);
+}
+
+.actions > button:hover {
+  background: var(--color-bg-hover);
+  color: var(--color-text);
+}
+
+.editor {
+  display: flex;
+  flex-flow: column nowrap;
+  gap: 0.5em;
+}
+
+.editor > textarea {
+  min-height: 6em;
+  resize: vertical;
+}
+
+.buttons {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5em;
+}

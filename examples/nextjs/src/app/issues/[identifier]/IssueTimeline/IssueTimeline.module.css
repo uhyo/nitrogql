@@ -1,0 +1,6 @@
+.timeline {
+  display: flex;
+  flex-flow: column nowrap;
+  gap: 0.75rem;
+  list-style: none;
+}

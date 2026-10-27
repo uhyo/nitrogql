@@ -1,0 +1,4 @@
+fragment IssueDescriptionFragment on Issue {
+  id
+  description
+}

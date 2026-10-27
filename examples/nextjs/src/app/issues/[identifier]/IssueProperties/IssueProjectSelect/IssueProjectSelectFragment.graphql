@@ -1,0 +1,26 @@
+#import ProjectChipFragment from "../../../../../components/ProjectChip/ProjectChipFragment.graphql"
+
+fragment IssueProjectSelectFragment on Issue {
+  id
+  project {
+    id
+    ...ProjectChipFragment
+    milestones {
+      id
+      name
+      targetDate
+    }
+  }
+  milestone {
+    id
+    name
+  }
+  team {
+    id
+    projects(status: [PLANNED, IN_PROGRESS, PAUSED]) {
+      id
+      name
+      icon
+    }
+  }
+}

@@ -1,0 +1,15 @@
+#import ProjectChipFragment from "../../../../../components/ProjectChip/ProjectChipFragment.graphql"
+#import IssueTimelineEventFragment from "../IssueTimelineEvent/IssueTimelineEventFragment.graphql"
+
+fragment IssueTimelineProjectChangedFragment on ProjectChangedEvent {
+  id
+  ...IssueTimelineEventFragment
+  fromProject {
+    id
+    ...ProjectChipFragment
+  }
+  toProject {
+    id
+    ...ProjectChipFragment
+  }
+}

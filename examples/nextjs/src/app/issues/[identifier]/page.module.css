@@ -1,0 +1,21 @@
+.page {
+  /* Wider than the usual .page to make room for the properties panel */
+  max-width: 1400px;
+  padding: 1.5rem 2rem;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 300px;
+  gap: 2rem;
+  align-items: start;
+}
+
+.main {
+  display: flex;
+  flex-flow: column nowrap;
+  gap: 1rem;
+  min-width: 0;
+}
+
+.aside {
+  position: sticky;
+  top: 1.5rem;
+}

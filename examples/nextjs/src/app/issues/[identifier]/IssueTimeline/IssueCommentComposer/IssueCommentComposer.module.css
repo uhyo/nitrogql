@@ -1,0 +1,17 @@
+.composer {
+  display: flex;
+  flex-flow: column nowrap;
+  gap: 0.5em;
+  margin-top: 1rem;
+}
+
+.composer > textarea {
+  min-height: 5em;
+  resize: vertical;
+}
+
+.buttons {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5em;
+}

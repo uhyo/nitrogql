@@ -1,0 +1,19 @@
+fragment IssueCycleSelectFragment on Issue {
+  id
+  cycle {
+    id
+    number
+    name
+  }
+  team {
+    id
+    key
+    cycles {
+      id
+      number
+      name
+      startsAt
+      endsAt
+    }
+  }
+}

@@ -1,0 +1,16 @@
+#import UserChipFragment from "../../../../components/UserChip/UserChipFragment.graphql"
+
+fragment IssueAttachmentsFragment on Issue {
+  id
+  attachments {
+    id
+    title
+    url
+    kind
+    createdAt
+    creator {
+      id
+      ...UserChipFragment
+    }
+  }
+}

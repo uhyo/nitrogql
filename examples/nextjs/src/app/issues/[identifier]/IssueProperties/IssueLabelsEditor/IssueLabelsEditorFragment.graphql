@@ -1,0 +1,16 @@
+#import LabelBadgeFragment from "../../../../../components/LabelBadge/LabelBadgeFragment.graphql"
+
+fragment IssueLabelsEditorFragment on Issue {
+  id
+  labels {
+    id
+    ...LabelBadgeFragment
+  }
+  team {
+    id
+    labels {
+      id
+      name
+    }
+  }
+}
