@@ -94,19 +94,33 @@ fn generate_unrendered_branch_type<'src, S: Text<'src>>(
                 .collect(),
         )
     };
-    let branch_type = TSType::TypeFunc(
-        Box::new(utility("Branch")),
-        vec![
-            TSType::StringLiteral(branch.type_name.clone()),
-            TSType::NamespaceMember3(
-                context.schema_root_namespace.into(),
-                TypeTarget::OperationOutput.to_string(),
-                branch.type_name.clone(),
-            ),
-            fields(&branch.unaliased_fields),
-            fields(&branch.aliased_fields),
-        ],
-    );
+    let mut branch_args = vec![
+        TSType::StringLiteral(branch.type_name.clone()),
+        TSType::NamespaceMember3(
+            context.schema_root_namespace.into(),
+            TypeTarget::OperationOutput.to_string(),
+            branch.type_name.clone(),
+        ),
+        fields(&branch.unaliased_fields),
+        fields(&branch.aliased_fields),
+    ];
+    // Values of variables, so that merging skips branches computed with other values.
+    if !branch.variables.is_empty() {
+        branch_args.push(TSType::Object(
+            branch
+                .variables
+                .iter()
+                .map(|(name, value)| ObjectField {
+                    key: name.clone().into(),
+                    r#type: TSType::Raw(value.to_string()),
+                    description: None,
+                    optional: false,
+                    readonly: false,
+                })
+                .collect(),
+        ));
+    }
+    let branch_type = TSType::TypeFunc(Box::new(utility("Branch")), branch_args);
     let trees = branch
         .fragment_refs
         .iter()

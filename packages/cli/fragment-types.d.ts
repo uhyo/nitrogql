@@ -5,13 +5,19 @@
 // the same object type, and `Render` converts the result into the same types as the ones printed
 // for fully expanded selections.
 
-export type Branch<Name extends string, Orig, Fields, Aliased> = {
+/**
+ * Selection of one concrete object type.
+ * `Vars` has the values of boolean variables (used in `@skip` or `@include`) that the branch
+ * is selected with, such as `{ flag: true }`.
+ */
+export type Branch<Name extends string, Orig, Fields, Aliased, Vars = {}> = {
   " $name": Name;
   " $orig": Orig;
   " $fields": Fields;
   " $aliased": Aliased;
+  " $vars": Vars;
 };
-type AnyBranch = Branch<string, unknown, unknown, unknown>;
+type AnyBranch = Branch<string, unknown, unknown, unknown, unknown>;
 type IsAny<T> = 0 extends 1 & T ? true : false;
 
 /**
@@ -52,15 +58,26 @@ type MergeMember<A, B> = A extends AnyBranch
 type MergeBranch<
   A extends AnyBranch,
   B,
-  Matching = Extract<B, { " $name": A[" $name"] }>,
+  Matching = Extract<B, MatchingBranch<A>>,
 > = [Matching] extends [never] ? A : MergeMatchingBranches<A, Matching>;
+// Branches of the same object type that agree on the values of the variables they share.
+// Variables that one side does not have may have any value on the other.
+// The index signature keeps the pattern from being a weak type, which would reject
+// branches that share no variables.
+type MatchingBranch<A extends AnyBranch> = {} extends A[" $vars"]
+  ? { " $name": A[" $name"] }
+  : {
+      " $name": A[" $name"];
+      " $vars": Partial<A[" $vars"]> & { [name: string]: boolean };
+    };
 // Distributes over branches of the same object type, which differ in variable values.
 type MergeMatchingBranches<A extends AnyBranch, B> = B extends AnyBranch
   ? Branch<
       A[" $name"],
       A[" $orig"],
       MergeFields<A[" $fields"], B[" $fields"]>,
-      MergeFields<A[" $aliased"], B[" $aliased"]>
+      MergeFields<A[" $aliased"], B[" $aliased"]>,
+      A[" $vars"] & B[" $vars"]
     >
   : never;
 
@@ -89,7 +106,8 @@ export type SkipFragment<Fragment> = Fragment extends AnyBranch
       Fragment[" $name"],
       Fragment[" $orig"],
       { [K in keyof Fragment[" $fields"]]?: never },
-      { [K in keyof Fragment[" $aliased"]]?: never }
+      { [K in keyof Fragment[" $aliased"]]?: never },
+      Fragment[" $vars"]
     >
   : Fragment;
 
