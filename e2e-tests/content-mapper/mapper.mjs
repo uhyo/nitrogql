@@ -17,9 +17,10 @@ const mapperScript = fileURLToPath(
 
 /**
  * Starts the content mapper in given directory and returns a client for it.
+ * `execArgv` is passed to Node.js.
  */
-export function startMapper(cwd) {
-  const child = spawn(process.execPath, [mapperScript], {
+export function startMapper(cwd, execArgv = []) {
+  const child = spawn(process.execPath, [...execArgv, mapperScript], {
     cwd,
     stdio: ["pipe", "pipe", "inherit"],
   });
