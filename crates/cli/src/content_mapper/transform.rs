@@ -102,7 +102,7 @@ fn transform_schema_file(
     };
 
     // Schema types do not change during the project's lifetime.
-    let module = project.schema_module().get_or_init(|| {
+    let module = schema.schema_module.get_or_init(|| {
         let mut options = SchemaTypePrinterOptions::from_config(&project.config);
         // Content-mapped files only provide types.
         options.emit_schema_runtime = false;
@@ -280,7 +280,7 @@ fn schema_module_file<'a>(
         return None;
     }
     project
-        .schema_files
+        .schema_files()
         .iter()
         .find(|(path, _)| matches!(schema_kind_by_path(path), SchemaFileKind::GraphQL))
 }

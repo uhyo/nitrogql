@@ -511,7 +511,9 @@ fn reopen(root: &Path, previous: Project) -> Project {
 /// Whether the schema module is already printed,
 /// which tells that the schema was reused from the previous project.
 fn has_schema_module(project: &Project) -> bool {
-    project.schema_module().get().is_some()
+    project
+        .schema()
+        .is_ok_and(|schema| schema.schema_module.get().is_some())
 }
 
 #[test]
@@ -565,7 +567,7 @@ fn plugin_files() {
     // Schema additions of plugins are loaded, but are not schema files.
     assert_eq!(project.file_store().schema_len(), 3);
     let schema_files = project
-        .schema_files
+        .schema_files()
         .iter()
         .map(|(path, idx)| (path.strip_prefix(&root).unwrap().to_owned(), *idx))
         .collect::<Vec<_>>();
