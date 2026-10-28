@@ -114,48 +114,64 @@ impl Project {
         options: &MapperOptions,
         previous: Option<Project>,
     ) -> Project {
-        let mut project = Project {
-            ts_config_file: ts_config_file.to_owned(),
-            root_dir: ts_config_file
-                .parent()
-                .map(normalize_path)
-                .unwrap_or_default(),
-            config: Config::default(),
-            config_identity: String::new(),
-            watched_files: vec![],
-            schema_files: vec![],
-            files: LoadedFiles::from_errors(vec![]),
-            schema_module: OnceCell::new(),
-        };
-        project.files = match project.load(ts_config_file, options).await {
+        let ts_config_dir = ts_config_file
+            .parent()
+            .map(normalize_path)
+            .unwrap_or_default();
+        // The project is rooted at the directory of the config file if it is found.
+        let (config_path, root_dir, config, sources) =
+            match find_config(ts_config_file, &ts_config_dir, options).await {
+                Ok((config_path, config)) => {
+                    let root_dir = normalize_path(config_path.parent().unwrap_or(Path::new("")));
+                    let sources = load_sources(&root_dir, &config).await;
+                    (Some(config_path), root_dir, config, sources)
+                }
+                Err(errors) => (None, ts_config_dir, Config::default(), Err(errors)),
+            };
+
+        let (files, schema_module) = match sources {
             Ok((plugins, schema_sources)) => {
-                match previous
-                    .filter(|previous| previous.has_same_schema(&project.config, &schema_sources))
+                match previous.filter(|previous| previous.has_same_schema(&config, &schema_sources))
                 {
                     Some(previous) => {
                         debug!("Reusing the schema of the previous project");
-                        project.schema_module = previous.schema_module;
-                        previous.files
+                        (previous.files, previous.schema_module)
                     }
-                    None => LoadedFiles::new(Arena::new(), |sources| {
-                        let mut file_store = FileStore::new(sources);
-                        let state = match parse_schema(schema_sources, &mut file_store, &plugins) {
-                            Ok(schema) => ProjectState::Loaded(Box::new(schema)),
-                            Err(errors) => ProjectState::Error(errors),
-                        };
-                        ProjectFiles { file_store, state }
-                    }),
+                    None => (
+                        LoadedFiles::new(Arena::new(), |sources| {
+                            let mut file_store = FileStore::new(sources);
+                            let state =
+                                match parse_schema(schema_sources, &mut file_store, &plugins) {
+                                    Ok(schema) => ProjectState::Loaded(Box::new(schema)),
+                                    Err(errors) => ProjectState::Error(errors),
+                                };
+                            ProjectFiles { file_store, state }
+                        }),
+                        OnceCell::new(),
+                    ),
                 }
             }
-            Err(errors) => LoadedFiles::from_errors(errors),
+            Err(errors) => (LoadedFiles::from_errors(errors), OnceCell::new()),
         };
-        project.schema_files = project
-            .file_store()
+
+        let file_store = &files.borrow_dependent().file_store;
+        let schema_files = file_store
             .iter_kind(FileKind::Schema)
             .map(|(idx, (path, _, _))| (normalize_path(path), idx))
             .collect();
-        project.compute_watched_files();
-        project
+        let (watched_files, config_identity) =
+            watched_files_and_identity(&config, config_path.as_deref(), file_store);
+
+        Project {
+            ts_config_file: ts_config_file.to_owned(),
+            root_dir,
+            config,
+            config_identity,
+            watched_files,
+            schema_files,
+            files,
+            schema_module,
+        }
     }
 
     /// Returns whether this project loaded the same schema as given config and sources would load.
@@ -191,75 +207,6 @@ impl Project {
         !loaded.is_empty() && loaded == sources
     }
 
-    /// Loads the config and reads schema files.
-    async fn load(
-        &mut self,
-        ts_config_file: &Path,
-        options: &MapperOptions,
-    ) -> Result<(Vec<Plugin>, Vec<Result<SchemaSource, PositionedError>>), Vec<PositionedError>>
-    {
-        if ts_config_file.as_os_str().is_empty() {
-            return Err(vec![ProjectError::NoTsConfig.into()]);
-        }
-        let ts_config_dir = self.root_dir.clone();
-        let (config_path, config) = load_config(&ts_config_dir, options.config_file.as_deref())
-            .await
-            .map_err(|err| vec![err.into()])?
-            .ok_or_else(|| vec![ProjectError::ConfigNotFound(ts_config_dir).into()])?;
-        info!("Loaded config file from {}", config_path.display());
-        self.root_dir = normalize_path(config_path.parent().unwrap_or(Path::new("")));
-        self.watched_files.push(normalize_path(&config_path));
-        self.config = config;
-
-        if self.config.schema.is_empty() {
-            return Err(vec![CliError::NoSchemaSpecified.into()]);
-        }
-        let mut plugins = load_plugins(&self.config.plugins).map_err(|err| vec![err.into()])?;
-        let schema_sources = read_schema_files(&self.root_dir, &self.config.schema, &mut plugins)
-            .await
-            .map_err(CommandError::into_errors)?;
-        Ok((plugins, schema_sources))
-    }
-
-    /// Computes files to watch and identity of this project.
-    ///
-    /// Watched files are the config file and schema files. Operation files are not watched:
-    /// the output of an operation file only depends on its own contents and the project,
-    /// and TypeScript tracks the files it imports fragments from.
-    ///
-    /// The identity is computed from what affects the output of other files: the config,
-    /// contents of the config file and schema files, and schema additions of plugins.
-    /// Additions are included because they can depend on type extensions of JavaScript schemas,
-    /// which are not part of the printed schema.
-    fn compute_watched_files(&mut self) {
-        let mut watched: BTreeMap<PathBuf, Option<String>> = BTreeMap::new();
-        for path in self.watched_files.drain(..) {
-            let content = fs::read_to_string(&path).ok();
-            watched.insert(path, content);
-        }
-        for (path, idx) in self.schema_files.iter() {
-            let (_, content, _) = &self.file_store()[*idx];
-            watched.insert(path.clone(), Some(content.to_string()));
-        }
-
-        let mut hasher = Fnv1a::new();
-        hasher.write(format!("{:?}", self.config).as_bytes());
-        for (path, content) in watched.iter() {
-            hasher.write(path.to_string_lossy().as_bytes());
-            hasher.write(&[0]);
-            if let Some(content) = content {
-                hasher.write(content.as_bytes());
-            }
-            hasher.write(&[0]);
-        }
-        for (_, (_, content, _)) in self.file_store().iter_kind(FileKind::Plugin) {
-            hasher.write(content.as_bytes());
-            hasher.write(&[0]);
-        }
-        self.config_identity = format!("{:016x}", hasher.finish());
-        self.watched_files = watched.into_keys().collect();
-    }
-
     /// Returns the store of loaded schema files.
     pub fn file_store(&self) -> &FileStore<'_> {
         &self.files.borrow_dependent().file_store
@@ -286,6 +233,83 @@ impl Project {
             .find(|(schema_path, _)| schema_path == path)
             .map(|(_, idx)| *idx)
     }
+}
+
+/// Finds and loads the nitrogql config file for given tsconfig.json.
+/// Returns the normalized path of the config file and its contents.
+async fn find_config(
+    ts_config_file: &Path,
+    ts_config_dir: &Path,
+    options: &MapperOptions,
+) -> Result<(PathBuf, Config), Vec<PositionedError>> {
+    if ts_config_file.as_os_str().is_empty() {
+        return Err(vec![ProjectError::NoTsConfig.into()]);
+    }
+    let (config_path, config) = load_config(ts_config_dir, options.config_file.as_deref())
+        .await
+        .map_err(|err| vec![err.into()])?
+        .ok_or_else(|| vec![ProjectError::ConfigNotFound(ts_config_dir.to_owned()).into()])?;
+    info!("Loaded config file from {}", config_path.display());
+    Ok((normalize_path(&config_path), config))
+}
+
+/// Loads plugins and reads schema files specified in the config.
+async fn load_sources(
+    root_dir: &Path,
+    config: &Config,
+) -> Result<(Vec<Plugin>, Vec<Result<SchemaSource, PositionedError>>), Vec<PositionedError>> {
+    if config.schema.is_empty() {
+        return Err(vec![CliError::NoSchemaSpecified.into()]);
+    }
+    let mut plugins = load_plugins(&config.plugins).map_err(|err| vec![err.into()])?;
+    let schema_sources = read_schema_files(root_dir, &config.schema, &mut plugins)
+        .await
+        .map_err(CommandError::into_errors)?;
+    Ok((plugins, schema_sources))
+}
+
+/// Computes files to watch and identity of a project.
+///
+/// Watched files are the config file and schema files. Operation files are not watched:
+/// the output of an operation file only depends on its own contents and the project,
+/// and TypeScript tracks the files it imports fragments from.
+///
+/// The identity is computed from what affects the output of other files: the config,
+/// contents of the config file and schema files, and schema additions of plugins.
+/// Additions are included because they can depend on type extensions of JavaScript schemas,
+/// which are not part of the printed schema.
+fn watched_files_and_identity(
+    config: &Config,
+    config_path: Option<&Path>,
+    files: &FileStore,
+) -> (Vec<PathBuf>, String) {
+    let mut watched: BTreeMap<PathBuf, Option<Cow<str>>> = BTreeMap::new();
+    if let Some(config_path) = config_path {
+        let content = fs::read_to_string(config_path).ok().map(Cow::Owned);
+        watched.insert(config_path.to_owned(), content);
+    }
+    for (_, (path, content, _)) in files.iter_kind(FileKind::Schema) {
+        watched.insert(normalize_path(path), Some(Cow::Borrowed(content)));
+    }
+
+    let mut hasher = Fnv1a::new();
+    hasher.write(format!("{config:?}").as_bytes());
+    for (path, content) in watched.iter() {
+        hasher.write(path.to_string_lossy().as_bytes());
+        hasher.write(&[0]);
+        if let Some(content) = content {
+            hasher.write(content.as_bytes());
+        }
+        hasher.write(&[0]);
+    }
+    for (_, (_, content, _)) in files.iter_kind(FileKind::Plugin) {
+        hasher.write(content.as_bytes());
+        hasher.write(&[0]);
+    }
+    (
+        watched.into_keys().collect(),
+        format!("{:016x}", hasher.finish()),
+    )
 }
 
 /// Parses schema files and resolves the schema.
