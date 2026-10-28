@@ -9,20 +9,18 @@ import {
   getCommandClient,
   type CommandClientOptions,
 } from "./command/commandClient.js";
+import { typeScriptExecArgv } from "./typeStripping.js";
 
 /**
  * Executes given code with Node.js.
- * Requires @nitrogql/esbuild-register to be installed.
+ * Requires @nitrogql/esbuild-register to be installed
+ * unless Node.js' type stripping is used.
  * @returns stdout
  */
 export function executeNodeSync(code: string): string {
   return execFileSync(
     process.execPath,
-    [
-      "--no-warnings",
-      "--import=@nitrogql/esbuild-register",
-      "--input-type=module",
-    ],
+    ["--no-warnings", ...typeScriptExecArgv(), "--input-type=module"],
     {
       encoding: "utf-8",
       input: code,

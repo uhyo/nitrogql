@@ -1,4 +1,4 @@
-import { NitrogqlConfig, NitrogqlExtension } from "@nitrogql/cli";
+import type { NitrogqlConfig, NitrogqlExtension } from "@nitrogql/cli";
 
 const nitrogql: NitrogqlExtension = {
   generate: {
