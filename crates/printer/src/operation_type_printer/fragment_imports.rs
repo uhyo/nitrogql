@@ -5,6 +5,7 @@
 //! This way, printed types do not depend on contents of other modules.
 
 use nitrogql_ast::base::{HasPos, Pos};
+use nitrogql_semantics::{ImportTargets, OperationExtension};
 
 /// Name of the type exported from each module, which maps names of fragments to their selection trees.
 pub const FRAGMENTS_EXPORT_NAME: &str = "__NitrogqlFragments";
@@ -21,6 +22,39 @@ pub struct FragmentImport {
     /// The import path as written in the source and its position,
     /// to which the module specifier is mapped.
     pub source: Option<(Pos, String)>,
+}
+
+/// Converts `#import`s of an operation document into imports of the corresponding modules.
+/// `source` is the text of the document, from which import paths are taken for mappings.
+pub fn fragment_imports_of(extension: &OperationExtension, source: &str) -> Vec<FragmentImport> {
+    extension
+        .imports
+        .iter()
+        .map(|import| FragmentImport {
+            module: module_specifier(&import.path.value),
+            fragments: match import.targets {
+                ImportTargets::Wildcard => None,
+                ImportTargets::Specific(ref names) => {
+                    Some(names.iter().map(|name| name.name.to_owned()).collect())
+                }
+            },
+            source: source
+                .get(import.path.position.span())
+                .map(|text| (import.path.position, text.to_owned())),
+        })
+        .collect()
+}
+
+/// Converts an `#import` path into a module specifier.
+fn module_specifier(path: &str) -> String {
+    // Module specifiers always use forward slashes.
+    let path = path.replace('\\', "/");
+    // `#import` paths are relative to the file even without `./`.
+    if path.starts_with("./") || path.starts_with("../") || path.starts_with('/') {
+        path
+    } else {
+        format!("./{path}")
+    }
 }
 
 /// Name of the namespace that given import is imported as.
@@ -73,5 +107,51 @@ impl HasPos for SourceNode<'_> {
     }
     fn name(&self) -> Option<&str> {
         Some(self.text)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use nitrogql_parser::parse_operation_document;
+    use nitrogql_semantics::resolve_operation_extensions;
+
+    use super::{fragment_imports_of, module_specifier};
+
+    #[test]
+    fn module_specifiers() {
+        assert_eq!(module_specifier("a.graphql"), "./a.graphql");
+        assert_eq!(module_specifier("dir/a.graphql"), "./dir/a.graphql");
+        assert_eq!(module_specifier("./a.graphql"), "./a.graphql");
+        assert_eq!(module_specifier("../a.graphql"), "../a.graphql");
+        assert_eq!(module_specifier("/a.graphql"), "/a.graphql");
+        assert_eq!(module_specifier("dir\\a.graphql"), "./dir/a.graphql");
+        assert_eq!(module_specifier(".\\a.graphql"), "./a.graphql");
+        assert_eq!(module_specifier("..\\a.graphql"), "../a.graphql");
+    }
+
+    #[test]
+    fn imports_of_document() {
+        let source = r#"#import Foo, Bar from "a.graphql"
+#import * from "../b.graphql"
+query Q { __typename }
+"#;
+        let document = parse_operation_document(source, 0).unwrap();
+        let (_, extension) = resolve_operation_extensions(document).unwrap();
+        let imports = fragment_imports_of(&extension, source);
+        assert_eq!(imports.len(), 2);
+
+        assert_eq!(imports[0].module, "./a.graphql");
+        assert_eq!(
+            imports[0].fragments,
+            Some(vec!["Foo".to_owned(), "Bar".to_owned()])
+        );
+        let (pos, text) = imports[0].source.as_ref().unwrap();
+        assert_eq!(text, "\"a.graphql\"");
+        assert_eq!(&source[pos.span()], text);
+
+        assert_eq!(imports[1].module, "../b.graphql");
+        assert_eq!(imports[1].fragments, None);
+        let (_, text) = imports[1].source.as_ref().unwrap();
+        assert_eq!(text, "\"../b.graphql\"");
     }
 }
