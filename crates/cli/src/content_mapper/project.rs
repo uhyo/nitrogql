@@ -57,11 +57,9 @@ pub struct Project {
     pub config_identity: String,
     /// Files whose changes should cause the project to be reloaded.
     pub watched_files: Vec<PathBuf>,
-    /// Absolute paths of loaded schema files, along with their indices in the file store.
-    pub schema_files: Vec<(PathBuf, usize)>,
+    /// Loaded schema and everything derived from it.
+    /// A reopened project reuses it as a whole.
     files: LoadedFiles,
-    /// Schema types printed for the schema module, computed on first request.
-    schema_module: OnceCell<Result<SchemaModule, PositionedError>>,
 }
 
 /// Schema types printed for the file that provides them.
@@ -81,15 +79,45 @@ self_cell!(
 
 struct ProjectFiles<'src> {
     file_store: FileStore<'src>,
+    /// Absolute paths of loaded schema files, along with their indices in the file store.
+    schema_files: Vec<(PathBuf, usize)>,
     state: ProjectState<'src>,
 }
 
+impl<'src> ProjectFiles<'src> {
+    fn new(file_store: FileStore<'src>, state: ProjectState<'src>) -> Self {
+        let schema_files = file_store
+            .iter_kind(FileKind::Schema)
+            .map(|(idx, (path, _, _))| (normalize_path(path), idx))
+            .collect();
+        ProjectFiles {
+            file_store,
+            schema_files,
+            state,
+        }
+    }
+}
+
 impl LoadedFiles {
+    /// Parses given schema sources.
+    fn load(
+        schema_sources: Vec<Result<SchemaSource, PositionedError>>,
+        plugins: &[Plugin],
+    ) -> Self {
+        LoadedFiles::new(Arena::new(), |sources| {
+            let mut file_store = FileStore::new(sources);
+            let state = match parse_schema(schema_sources, &mut file_store, plugins) {
+                Ok(schema) => ProjectState::Loaded(Box::new(schema)),
+                Err(errors) => ProjectState::Error(errors),
+            };
+            ProjectFiles::new(file_store, state)
+        })
+    }
+
     /// Creates a project that could not be loaded.
     fn from_errors(errors: Vec<PositionedError>) -> Self {
-        LoadedFiles::new(Arena::new(), |sources| ProjectFiles {
-            file_store: FileStore::new(sources),
-            state: ProjectState::Error(errors),
+        LoadedFiles::new(Arena::new(), |sources| {
+            ProjectFiles::new(FileStore::new(sources), ProjectState::Error(errors))
         })
     }
 }
@@ -103,6 +131,9 @@ enum ProjectState<'src> {
 pub struct LoadedProjectSchema<'src> {
     pub schema: LoadedSchema<'src, TypeSystemDocument<'src>>,
     pub type_system: Schema<Cow<'src, str>, Pos>,
+    /// Schema types printed for the schema module, computed on first request.
+    /// They also depend on the config, but a schema is only reused with the same config.
+    pub schema_module: OnceCell<Result<SchemaModule, PositionedError>>,
 }
 
 impl Project {
@@ -130,38 +161,25 @@ impl Project {
                 Err(errors) => (None, ts_config_dir, Config::default(), Err(errors)),
             };
 
-        let (files, schema_module) = match sources {
+        let files = match sources {
             Ok((plugins, schema_sources)) => {
                 match previous.filter(|previous| previous.has_same_schema(&config, &schema_sources))
                 {
                     Some(previous) => {
                         debug!("Reusing the schema of the previous project");
-                        (previous.files, previous.schema_module)
+                        previous.files
                     }
-                    None => (
-                        LoadedFiles::new(Arena::new(), |sources| {
-                            let mut file_store = FileStore::new(sources);
-                            let state =
-                                match parse_schema(schema_sources, &mut file_store, &plugins) {
-                                    Ok(schema) => ProjectState::Loaded(Box::new(schema)),
-                                    Err(errors) => ProjectState::Error(errors),
-                                };
-                            ProjectFiles { file_store, state }
-                        }),
-                        OnceCell::new(),
-                    ),
+                    None => LoadedFiles::load(schema_sources, &plugins),
                 }
             }
-            Err(errors) => (LoadedFiles::from_errors(errors), OnceCell::new()),
+            Err(errors) => LoadedFiles::from_errors(errors),
         };
 
-        let file_store = &files.borrow_dependent().file_store;
-        let schema_files = file_store
-            .iter_kind(FileKind::Schema)
-            .map(|(idx, (path, _, _))| (normalize_path(path), idx))
-            .collect();
-        let (watched_files, config_identity) =
-            watched_files_and_identity(&config, config_path.as_deref(), file_store);
+        let (watched_files, config_identity) = watched_files_and_identity(
+            &config,
+            config_path.as_deref(),
+            &files.borrow_dependent().file_store,
+        );
 
         Project {
             ts_config_file: ts_config_file.to_owned(),
@@ -169,9 +187,7 @@ impl Project {
             config,
             config_identity,
             watched_files,
-            schema_files,
             files,
-            schema_module,
         }
     }
 
@@ -212,9 +228,9 @@ impl Project {
         &self.files.borrow_dependent().file_store
     }
 
-    /// Returns the printed schema module, which is computed on first use.
-    pub fn schema_module(&self) -> &OnceCell<Result<SchemaModule, PositionedError>> {
-        &self.schema_module
+    /// Returns absolute paths of loaded schema files, along with their indices in the file store.
+    pub fn schema_files(&self) -> &[(PathBuf, usize)] {
+        &self.files.borrow_dependent().schema_files
     }
 
     /// Returns the loaded schema, or errors if the project could not be loaded.
@@ -228,7 +244,7 @@ impl Project {
     /// Looks up the given file among loaded schema files.
     /// Returns the index of the file in the file store.
     pub fn schema_file_index(&self, path: &Path) -> Option<usize> {
-        self.schema_files
+        self.schema_files()
             .iter()
             .find(|(schema_path, _)| schema_path == path)
             .map(|(_, idx)| *idx)
@@ -328,6 +344,7 @@ fn parse_schema<'src>(
     Ok(LoadedProjectSchema {
         schema,
         type_system,
+        schema_module: OnceCell::new(),
     })
 }
 
