@@ -309,8 +309,17 @@ describe("initialize", () => {
     namespace.write_message(ptr, len);
   }
 
+  /**
+   * Returns everything written to the output since the last call.
+   */
   function sent(): string {
-    return output.read()?.toString("utf8") ?? "";
+    // Depending on the Node.js version, one read may return only one chunk.
+    let result = "";
+    let chunk: Buffer | null;
+    while ((chunk = output.read()) !== null) {
+      result += chunk.toString("utf8");
+    }
+    return result;
   }
 
   it("answers before the wasm module is ready", async () => {
