@@ -117,7 +117,7 @@ export function issueConnection(
     filter?: IssueFilter | null;
     sort?: IssueSort | null;
     first: number | null;
-    after: string | null;
+    after?: string | null;
   },
 ) {
   return paginate(

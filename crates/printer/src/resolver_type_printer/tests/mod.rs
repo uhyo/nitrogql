@@ -90,6 +90,46 @@ fn resolver_printing() {
     assert_snapshot!(printed);
 }
 
+#[test]
+fn resolver_arguments() {
+    let doc = parse_type_system_document(
+        "
+            input IssueFilter {
+                title: String
+            }
+
+            type Issue {
+                id: ID!
+            }
+
+            type Query {
+                issues(
+                    \"Filter for issues.\"
+                    filter: IssueFilter
+                    limit: Int = 10
+                    cursor: String = null
+                    projectId: ID!
+                    offset: Int! = 0
+                ): [Issue!]!
+                issue(id: ID!): Issue
+            }
+            ",
+        0,
+    )
+    .unwrap();
+    let doc = resolve_schema_extensions(doc).unwrap();
+    let printed = print_document(
+        &doc,
+        ResolverTypePrinterOptions {
+            schema_source: "schema".into(),
+            ..Default::default()
+        },
+        EMPTY_PLUGINS,
+    )
+    .unwrap();
+    assert_snapshot!(printed);
+}
+
 fn print_document(
     document: &TypeSystemDocument,
     options: ResolverTypePrinterOptions,

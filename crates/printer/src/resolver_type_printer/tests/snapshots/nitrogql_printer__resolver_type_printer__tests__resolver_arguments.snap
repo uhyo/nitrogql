@@ -1,0 +1,35 @@
+---
+source: crates/printer/src/resolver_type_printer/tests/mod.rs
+expression: printed
+---
+import type { GraphQLResolveInfo } from "graphql";
+import type * as Schema from "schema";
+type __Resolver<Parent, Args, Context, Result> = (parent: Parent, args: Args, context: Context, info: GraphQLResolveInfo) => Result | Promise<Result>;
+type __TypeResolver<Obj, Context, Result> = (object: Obj, context: Context, info: GraphQLResolveInfo) => Result | Promise<Result>;
+type Issue = Omit<Schema.__ResolverOutput.Issue, "__typename">;
+type Query = Omit<Schema.__ResolverOutput.Query, "__typename">;
+export type Resolvers<Context> = {
+  Issue: {
+    id: __Resolver<Issue, {}, Context, ID>;
+  };
+  Query: {
+    issues: __Resolver<Query, {
+      /**
+       * Filter for issues.
+       */
+      readonly filter?: Schema.__ResolverInput.IssueFilter | null;
+      readonly limit: Schema.__ResolverInput.Int | null;
+      readonly cursor: Schema.__ResolverInput.String | null;
+      readonly projectId: Schema.__ResolverInput.ID;
+      readonly offset: Schema.__ResolverInput.Int;
+    }, Context, (Issue)[]>;
+    issue: __Resolver<Query, {
+      readonly id: Schema.__ResolverInput.ID;
+    }, Context, Issue | null>;
+  };
+};
+export type ResolverOutput<T extends "Issue" | "Query"> = 
+{
+  Issue: Issue;
+  Query: Query;
+}[T];
