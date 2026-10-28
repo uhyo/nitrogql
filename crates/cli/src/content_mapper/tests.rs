@@ -264,6 +264,25 @@ fn config_file_option() {
 }
 
 #[test]
+fn schema_not_specified() {
+    let mut files = default_files();
+    files[1] = ("config/nitrogql.yaml", "documents: ../app/**/*.graphql\n");
+    let root = setup("schema_not_specified", &files);
+    let project = block_on(Project::open(
+        &root.join("tsconfig.json"),
+        &MapperOptions {
+            config_file: Some("./config/nitrogql.yaml".into()),
+        },
+        None,
+    ));
+    assert!(project.schema().is_err());
+    // The config file was loaded, so it is the root and is watched.
+    assert_eq!(project.root_dir, root.join("config"));
+    assert_eq!(project.config.operations, vec!["../app/**/*.graphql"]);
+    assert_eq!(watched_files(&project, &root), vec!["config/nitrogql.yaml"]);
+}
+
+#[test]
 fn utf16_positions() {
     let root = setup("utf16_positions", &default_files());
     let project = open(&root);
