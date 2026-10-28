@@ -68,7 +68,7 @@ pub fn run_generate(mut context: CliContext) -> Result<CliContext> {
                     file_indices: file_store
                         .iter()
                         .map(|(idx, (_, _, kind))| {
-                            if kind == FileKind::Schema {
+                            if kind != FileKind::Operation {
                                 idx
                             } else {
                                 usize::MAX
@@ -166,7 +166,7 @@ pub fn run_generate(mut context: CliContext) -> Result<CliContext> {
                     file_indices: file_store
                         .iter()
                         .map(|(idx, (_, _, kind))| {
-                            if kind == FileKind::Schema {
+                            if kind != FileKind::Operation {
                                 idx
                             } else {
                                 usize::MAX
@@ -225,7 +225,7 @@ pub fn run_generate(mut context: CliContext) -> Result<CliContext> {
                     file_indices: file_store
                         .iter()
                         .map(|(idx, (_, _, kind))| {
-                            if kind == FileKind::Schema {
+                            if kind != FileKind::Operation {
                                 idx
                             } else if idx == *file_index {
                                 file_store.schema_len()

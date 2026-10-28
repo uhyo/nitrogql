@@ -23,10 +23,8 @@ use crate::{
     CommandError, SchemaSource,
     check::resolve_schema,
     error::CliError,
-    file_store::FileStore,
-    load_plugins, parse_schema_files,
-    plugin_host::PLUGIN_FILE_NAME,
-    read_schema_files,
+    file_store::{FileKind, FileStore},
+    load_plugins, parse_schema_files, read_schema_files,
     schema_loader::{LoadedSchema, SchemaFileKind, schema_kind_by_path},
 };
 
@@ -153,9 +151,7 @@ impl Project {
         };
         project.schema_files = project
             .file_store()
-            .iter()
-            // exclude virtual files added by plugins
-            .filter(|(_, (path, _, _))| *path != Path::new(PLUGIN_FILE_NAME))
+            .iter_kind(FileKind::Schema)
             .map(|(idx, (path, _, _))| (normalize_path(path), idx))
             .collect();
         project.compute_watched_files();
@@ -188,8 +184,7 @@ impl Project {
         }
         let loaded = self
             .file_store()
-            .iter()
-            .filter(|(_, (path, _, _))| *path != Path::new(PLUGIN_FILE_NAME))
+            .iter_kind(FileKind::Schema)
             .map(|(_, (path, content, _))| (path, content))
             .collect::<Vec<_>>();
         // A project that failed to load has no files, and is never reused.
@@ -257,11 +252,9 @@ impl Project {
             }
             hasher.write(&[0]);
         }
-        for (_, (path, content, _)) in self.file_store().iter() {
-            if path == Path::new(PLUGIN_FILE_NAME) {
-                hasher.write(content.as_bytes());
-                hasher.write(&[0]);
-            }
+        for (_, (_, content, _)) in self.file_store().iter_kind(FileKind::Plugin) {
+            hasher.write(content.as_bytes());
+            hasher.write(&[0]);
         }
         self.config_identity = format!("{:016x}", hasher.finish());
         self.watched_files = watched.into_keys().collect();
