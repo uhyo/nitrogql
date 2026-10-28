@@ -1,6 +1,8 @@
 # Used by the TypeScript content mapper (types of .graphql files),
 # the webpack loader and `nitrogql check`.
-schema: ./src/schema/*.graphql
+schema:
+  - ./src/schema/*.graphql
+  - ./src/schema/scalar.ts
 documents:
   - ./src/app/**/*.graphql
   - ./src/components/**/*.graphql
@@ -8,9 +10,8 @@ extensions:
   nitrogql:
     plugins:
       - "nitrogql:model-plugin"
+      - "nitrogql:graphql-scalars-plugin"
     generate:
       type:
         scalarTypes:
           ID: string
-          DateTime: string
-          Date: string

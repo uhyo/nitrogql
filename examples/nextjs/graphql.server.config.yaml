@@ -1,11 +1,14 @@
 # Used by `nitrogql generate` to generate types and schema for the GraphQL server.
 # Operation types are provided by the TypeScript content mapper (see graphql.config.yaml),
 # so this config has no documents.
-schema: ./src/schema/*.graphql
+schema:
+  - ./src/schema/*.graphql
+  - ./src/schema/scalar.ts
 extensions:
   nitrogql:
     plugins:
       - "nitrogql:model-plugin"
+      - "nitrogql:graphql-scalars-plugin"
     generate:
       schemaOutput: ./src/generated/schema.d.ts
       serverGraphqlOutput: ./src/generated/graphql.ts
@@ -14,5 +17,3 @@ extensions:
       type:
         scalarTypes:
           ID: string
-          DateTime: string
-          Date: string
