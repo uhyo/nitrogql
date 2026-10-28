@@ -1,10 +1,15 @@
-use std::{collections::HashMap, path::PathBuf, str::FromStr};
+use std::{
+    collections::HashMap,
+    hash::{Hash, Hasher},
+    path::PathBuf,
+    str::FromStr,
+};
 
 use serde::Deserialize;
 
 use crate::{parsing_utils::deserialize_fromstr, scalar_type::ScalarTypeConfig};
 
-#[derive(Debug, Default)]
+#[derive(Debug, Default, PartialEq, Eq, Hash)]
 pub struct Config {
     /// Path(s) to schema definition files.
     pub schema: Vec<String>,
@@ -17,7 +22,7 @@ pub struct Config {
 }
 
 /// Config related to the 'generate' command.
-#[derive(Debug, Default, Deserialize)]
+#[derive(Debug, Default, PartialEq, Eq, Hash, Deserialize)]
 #[serde(default, rename_all = "camelCase")]
 pub struct GenerateConfig {
     /// Mode of generation.
@@ -43,7 +48,7 @@ pub struct GenerateConfig {
 }
 
 /// Mode of code generation.
-#[derive(Debug, Copy, Clone, PartialEq, Eq, Default)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, Default)]
 pub enum GenerateMode {
     /// To be used with a webpack loader for .graphql files, emits .d.graphql.ts files that are supported by TS 5.0 and later
     #[default]
@@ -69,7 +74,7 @@ impl FromStr for GenerateMode {
 }
 
 /// Config related to generated types.
-#[derive(Debug, Deserialize)]
+#[derive(Debug, PartialEq, Eq, Deserialize)]
 #[serde(default, rename_all = "camelCase")]
 pub struct GenerateTypeConfig {
     /// Type of scalars.
@@ -88,8 +93,18 @@ impl Default for GenerateTypeConfig {
     }
 }
 
+/// `HashMap` does not implement `Hash`, so scalar types are hashed in the order of their names.
+impl Hash for GenerateTypeConfig {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        let mut scalar_types = self.scalar_types.iter().collect::<Vec<_>>();
+        scalar_types.sort_unstable_by_key(|(name, _)| *name);
+        scalar_types.hash(state);
+        self.allow_undefined_as_optional_input.hash(state);
+    }
+}
+
 /// Config related to names of generated variables and types.
-#[derive(Debug, Default, Deserialize)]
+#[derive(Debug, Default, PartialEq, Eq, Hash, Deserialize)]
 #[serde(default, rename_all = "camelCase")]
 pub struct GenerateNameConfig {
     /// Suffix for type of operation result.
@@ -111,7 +126,7 @@ pub struct GenerateNameConfig {
 }
 
 /// Config related to exported names.
-#[derive(Debug, Deserialize)]
+#[derive(Debug, PartialEq, Eq, Hash, Deserialize)]
 #[serde(default, rename_all = "camelCase")]
 pub struct GenerateExportConfig {
     /// Whether operation is exported as a default export.
