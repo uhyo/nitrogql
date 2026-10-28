@@ -117,3 +117,62 @@ fn syntax_errors_json_without_check() {
     assert_eq!(code, 1);
     assert_snapshot!(output);
 }
+
+#[test]
+fn import_errors_do_not_hide_other_errors() {
+    let root = setup(
+        "import-errors-do-not-hide-other-errors",
+        &[
+            ("graphql.config.yaml", CONFIG),
+            ("schema/schema.graphql", SCHEMA),
+            // imports a file that does not exist
+            (
+                "app/frag.graphql",
+                "#import Moved from \"./moved.graphql\"
+fragment Frag on Query {
+  ...Moved
+}
+",
+            ),
+            // depends on the missing file through frag.graphql
+            (
+                "app/user.graphql",
+                "#import Frag from \"./frag.graphql\"
+query User {
+  ...Frag
+}
+",
+            ),
+            // has invalid imports, so it cannot be loaded
+            (
+                "app/invalid.graphql",
+                "#import * from \"./frag.graphql\"
+#import * from \"./frag.graphql\"
+fragment Invalid on Query {
+  me
+}
+",
+            ),
+            // the error is reported in invalid.graphql, not here
+            (
+                "app/uses-invalid.graphql",
+                "#import Invalid from \"./invalid.graphql\"
+query UsesInvalid {
+  ...Invalid
+}
+",
+            ),
+            // unrelated to the broken imports
+            (
+                "app/other.graphql",
+                "query Other {
+  unknown
+}
+",
+            ),
+        ],
+    );
+    let (code, output) = run(&root, &["check"], OutputFormat::Json);
+    assert_eq!(code, 1);
+    assert_snapshot!(output);
+}

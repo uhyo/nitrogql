@@ -1,0 +1,5 @@
+---
+source: crates/cli/src/tests.rs
+expression: output
+---
+{"error":{"command":"check","message":"Command not successful: check"},"check":{"errors":[{"fileType":"operation","file":{"path":"<root>\/.\/app\/invalid.graphql","line":1,"column":0},"code":"nitrogql5001","message":"Wildcard import should be specified only once"},{"fileType":"operation","file":{"path":"<root>\/.\/app\/frag.graphql","line":0,"column":19},"code":"nitrogql5003","message":"File '.\/moved.graphql' not found."},{"fileType":"operation","file":{"path":"<root>\/.\/app\/other.graphql","line":1,"column":2},"code":"nitrogql4007","message":"Field 'unknown' is not found on type 'Query'"}]}}
