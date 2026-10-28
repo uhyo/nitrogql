@@ -5,10 +5,9 @@ use nitrogql_ast::{
     type_system::{FieldDefinition, ObjectTypeDefinition, TypeDefinition, TypeSystemDefinition},
     value::Value,
 };
-use nitrogql_config_file::TypeTarget;
 use nitrogql_printer::{
     ResolverTypePrinterOptions,
-    ts_types::{TSType, ts_types_util::ts_union},
+    ts_types::{TSType, type_to_ts_type::get_ts_type_of_type},
 };
 
 use crate::{
@@ -130,7 +129,7 @@ directive @model(
     fn transform_resolver_output_types<'src>(
         &self,
         document: &TypeSystemDocument<'src>,
-        options: &ResolverTypePrinterOptions,
+        _options: &ResolverTypePrinterOptions,
         mut base: HashMap<&'src str, TSType>,
     ) -> HashMap<&'src str, TSType> {
         for def in document.definitions.iter() {
@@ -158,24 +157,25 @@ directive @model(
                     continue;
                 }
 
-                let model_field_names = def.fields.iter().filter_map(|field| {
+                // Each model field refers to the local type alias of its type,
+                // so that a field of object type holds that object's model
+                // (what resolvers of that type receive as parent)
+                // rather than its full resolver output type.
+                let model_fields = def.fields.iter().filter(|field| {
                     field
                         .directives
                         .iter()
                         .any(|directive| directive.name.name == "model")
-                        .then_some(field.name.name)
                 });
-                let obj_type = TSType::TypeFunc(
-                    Box::new(TSType::TypeVariable("Pick".into())),
-                    vec![
-                        TSType::NamespaceMember3(
-                            options.schema_root_namespace.clone(),
-                            TypeTarget::ResolverOutput.to_string(),
-                            def.name.name.into(),
-                        ),
-                        ts_union(model_field_names.map(|n| TSType::StringLiteral(n.into()))),
-                    ],
-                );
+                let obj_type = TSType::object(model_fields.map(|field| {
+                    (
+                        &field.name,
+                        get_ts_type_of_type(&field.r#type, |name| {
+                            TSType::TypeVariable((&name.name).into())
+                        }),
+                        field.description.as_ref().map(|d| d.value.clone()),
+                    )
+                }));
                 base.insert(def.name.name, obj_type);
             }
         }

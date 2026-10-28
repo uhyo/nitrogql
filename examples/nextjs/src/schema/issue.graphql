@@ -47,13 +47,10 @@ enum IssuePriority {
   LOW
 }
 
-type IssueConnection
-  @model(
-    type: "import('@/server/data/connection').Connection<import('@/server/data/records').IssueRecord>"
-  ) {
-  nodes: [Issue!]!
-  pageInfo: PageInfo!
-  totalCount: Int!
+type IssueConnection {
+  nodes: [Issue!]! @model
+  pageInfo: PageInfo! @model
+  totalCount: Int! @model
 }
 
 "A relation between two issues."

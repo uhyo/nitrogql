@@ -99,6 +99,14 @@ type User {
           from the model object.
         </p>
         <p>
+          When a model field has an object type (or an interface or union type),
+          its value is the model of that type, not a full object. For example,
+          if <code>User</code> had <code>posts: [Post!]! @model</code>,
+          resolvers would return <code>posts</code> as an array of{" "}
+          <code>Post</code> models, which is what resolvers for{" "}
+          <code>Post</code>&apos;s fields receive as the first argument.
+        </p>
+        <p>
           With the above setting, the following resolvers implementation is
           considered valid in terms of type safety.
         </p>

@@ -378,22 +378,3 @@ export const ReactionGroup: R["ReactionGroup"] = {
       .map((id) => db.get("users", id));
   },
 };
-
-export const IssueConnection: R["IssueConnection"] = {
-  nodes: (connection) => connection.nodes,
-  pageInfo: (connection) => connection.pageInfo,
-  totalCount: (connection) => connection.totalCount,
-};
-
-export const CommentConnection: R["CommentConnection"] = {
-  nodes: (connection) => connection.nodes,
-  pageInfo: (connection) => connection.pageInfo,
-  totalCount: (connection) => connection.totalCount,
-};
-
-export const NotificationConnection: R["NotificationConnection"] = {
-  nodes: (connection) => connection.nodes,
-  pageInfo: (connection) => connection.pageInfo,
-  totalCount: (connection) => connection.totalCount,
-  unreadCount: (connection) => connection.unreadCount,
-};

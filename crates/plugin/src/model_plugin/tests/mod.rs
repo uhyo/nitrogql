@@ -168,6 +168,40 @@ type Post {
         assert_snapshot!(doc);
     }
 
+    #[test]
+    fn model_fields_of_object_type() {
+        let doc = parse_to_type_system_document(
+            r#"
+type Comment {
+    id: ID! @model
+    "The body of the comment."
+    body: String! @model
+    author: User!
+}
+
+type User @model(type: "import('somewhere').User") {
+    id: ID!
+}
+
+type PageInfo {
+    hasNextPage: Boolean! @model
+    endCursor: String @model
+}
+
+union SearchResult = Comment | User
+
+type CommentConnection {
+    nodes: [Comment!]! @model
+    pageInfo: PageInfo! @model
+    results: [SearchResult] @model
+    totalCount: Int!
+}
+        "#,
+        );
+        let doc = print_document(&doc, ResolverTypePrinterOptions::default());
+        assert_snapshot!(doc);
+    }
+
     fn print_document(
         document: &TypeSystemDocument,
         options: ResolverTypePrinterOptions,
