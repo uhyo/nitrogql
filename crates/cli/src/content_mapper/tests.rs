@@ -536,6 +536,43 @@ fn reopen_schema_changed() {
 }
 
 #[test]
+fn plugin_files() {
+    let mut files = default_files();
+    let config =
+        format!("{CONFIG}extensions:\n  nitrogql:\n    plugins:\n      - nitrogql:model-plugin\n");
+    files[1] = ("graphql.config.yaml", &config);
+    let root = setup("plugin_files", &files);
+    let project = open(&root);
+    // Schema additions of plugins are loaded, but are not schema files.
+    assert_eq!(project.file_store().schema_len(), 3);
+    let schema_files = project
+        .schema_files
+        .iter()
+        .map(|(path, idx)| (path.strip_prefix(&root).unwrap().to_owned(), *idx))
+        .collect::<Vec<_>>();
+    assert_eq!(
+        schema_files,
+        vec![
+            (PathBuf::from("schema/a.graphql"), 0),
+            (PathBuf::from("schema/b.graphql"), 1)
+        ]
+    );
+    assert_eq!(
+        watched_files(&project, &root),
+        vec![
+            "graphql.config.yaml",
+            "schema/a.graphql",
+            "schema/b.graphql"
+        ]
+    );
+    let result = transform_file(&project, &root, "schema/a.graphql");
+    assert!(result.diagnostics.is_empty(), "{:?}", result.diagnostics);
+    // The schema is reused, as plugin files are not compared with schema sources.
+    let project = reopen(&root, project);
+    assert!(has_schema_module(&project));
+}
+
+#[test]
 fn reopen_config_changed() {
     let root = setup("reopen_config_changed", &default_files());
     let project = open(&root);
