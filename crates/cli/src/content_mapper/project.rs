@@ -233,7 +233,9 @@ impl Project {
     /// and TypeScript tracks the files it imports fragments from.
     ///
     /// The identity is computed from what affects the output of other files: the config,
-    /// and contents of the config file and schema files.
+    /// contents of the config file and schema files, and schema additions of plugins.
+    /// Additions are included because they can depend on type extensions of JavaScript schemas,
+    /// which are not part of the printed schema.
     fn compute_watched_files(&mut self) {
         let mut watched: BTreeMap<PathBuf, Option<String>> = BTreeMap::new();
         for path in self.watched_files.drain(..) {
@@ -254,6 +256,12 @@ impl Project {
                 hasher.write(content.as_bytes());
             }
             hasher.write(&[0]);
+        }
+        for (_, (path, content, _)) in self.file_store().iter() {
+            if path == Path::new(PLUGIN_FILE_NAME) {
+                hasher.write(content.as_bytes());
+                hasher.write(&[0]);
+            }
         }
         self.config_identity = format!("{:016x}", hasher.finish());
         self.watched_files = watched.into_keys().collect();
