@@ -37,13 +37,10 @@ pub fn fallback_definitions(
     let mut result = HashSet::new();
     for err in errors {
         let pos = err.position().filter(|pos| !pos.builtin)?;
-        // Definitions do not overlap, so the error belongs to the last definition starting before it.
-        let (definition_pos, _, _) = definitions
-            .iter()
-            .filter(|(def_pos, _, _)| {
-                def_pos.file == pos.file && (def_pos.line, def_pos.column) <= (pos.line, pos.column)
-            })
-            .max_by_key(|(def_pos, _, _)| (def_pos.line, def_pos.column))?;
+        // The error belongs to the definition whose span contains it.
+        let (definition_pos, _, _) = definitions.iter().find(|(def_pos, _, _)| {
+            def_pos.file == pos.file && def_pos.start <= pos.start && pos.start < def_pos.end
+        })?;
         result.insert(*definition_pos);
     }
 
@@ -98,5 +95,94 @@ fn collect_fragment_spreads<'src>(selection_set: &SelectionSet<'src>, result: &m
                 collect_fragment_spreads(&fragment.selection_set, result);
             }
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use std::collections::HashSet;
+
+    use nitrogql_ast::{OperationDocument, base::Pos, operation::ExecutableDefinition};
+    use nitrogql_error::PositionedError;
+    use nitrogql_parser::parse_operation_document;
+    use nitrogql_semantics::resolve_operation_extensions;
+
+    use super::fallback_definitions;
+
+    const DOCUMENT: &str = "query A { ...F }
+query B { b }
+# between definitions
+fragment F on T { f }
+# after definitions
+";
+
+    fn parse(source: &str) -> OperationDocument<'_> {
+        let document = parse_operation_document(source, 0).unwrap();
+        resolve_operation_extensions(document).unwrap().0
+    }
+
+    /// Creates an error positioned at the first occurrence of `needle` in `source`.
+    fn error_at(source: &str, needle: &str, file: usize) -> PositionedError {
+        let start = source.find(needle).unwrap();
+        let line = source[..start].matches('\n').count();
+        let column = source[..start]
+            .rsplit('\n')
+            .next()
+            .unwrap_or_default()
+            .chars()
+            .count();
+        let pos = Pos::new(line, column, start..start + needle.len(), file);
+        PositionedError::new(anyhow::anyhow!("error"), Some(pos), vec![])
+    }
+
+    /// Returns the names of definitions that fall back, in document order.
+    fn fallback_names(document: &OperationDocument, fallback: &HashSet<Pos>) -> Vec<String> {
+        document
+            .definitions
+            .iter()
+            .filter_map(|def| match def {
+                ExecutableDefinition::OperationDefinition(op) => fallback
+                    .contains(&op.position)
+                    .then(|| op.name.as_ref().unwrap().name.to_owned()),
+                ExecutableDefinition::FragmentDefinition(fragment) => fallback
+                    .contains(&fragment.position)
+                    .then(|| fragment.name.name.to_owned()),
+            })
+            .collect()
+    }
+
+    #[test]
+    fn error_in_definition() {
+        let document = parse(DOCUMENT);
+        let fallback = fallback_definitions(&document, &[error_at(DOCUMENT, "b }", 0)]).unwrap();
+        assert_eq!(fallback_names(&document, &fallback), vec!["B"]);
+    }
+
+    #[test]
+    fn error_in_spread_fragment() {
+        let document = parse(DOCUMENT);
+        let fallback = fallback_definitions(&document, &[error_at(DOCUMENT, "f }", 0)]).unwrap();
+        assert_eq!(fallback_names(&document, &fallback), vec!["A", "F"]);
+    }
+
+    #[test]
+    fn error_between_definitions() {
+        let document = parse(DOCUMENT);
+        let errors = [error_at(DOCUMENT, "# between", 0)];
+        assert_eq!(fallback_definitions(&document, &errors), None);
+    }
+
+    #[test]
+    fn error_after_definitions() {
+        let document = parse(DOCUMENT);
+        let errors = [error_at(DOCUMENT, "# after", 0)];
+        assert_eq!(fallback_definitions(&document, &errors), None);
+    }
+
+    #[test]
+    fn error_in_other_file() {
+        let document = parse(DOCUMENT);
+        let errors = [error_at(DOCUMENT, "b }", 1)];
+        assert_eq!(fallback_definitions(&document, &errors), None);
     }
 }
