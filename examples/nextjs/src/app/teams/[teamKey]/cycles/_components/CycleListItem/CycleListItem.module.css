@@ -1,0 +1,24 @@
+.item {
+  display: grid;
+  grid-template-columns: 1fr auto 6em 14em;
+  align-items: center;
+  gap: 1em;
+  padding: 0.6em 1em;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.item:last-child {
+  border-bottom: none;
+}
+
+.name {
+  font-weight: 500;
+}
+
+.name:hover {
+  text-decoration: underline;
+}
+
+.count {
+  text-align: right;
+}

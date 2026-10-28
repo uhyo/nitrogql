@@ -1,0 +1,8 @@
+fragment InboxCommentExcerptFragment on Comment {
+  id
+  body
+  issue {
+    id
+    identifier
+  }
+}

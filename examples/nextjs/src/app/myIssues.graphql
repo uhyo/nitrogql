@@ -1,0 +1,22 @@
+#import IssueListFragment from "../components/IssueList/IssueListFragment.graphql"
+
+query MyIssues(
+  $assigned: Boolean!
+  $created: Boolean!
+  $subscribed: Boolean!
+  $filter: IssueFilter
+  $first: Int!
+) {
+  viewer {
+    id
+    assignedIssues(filter: $filter, first: $first) @include(if: $assigned) {
+      ...IssueListFragment
+    }
+    createdIssues(filter: $filter, first: $first) @include(if: $created) {
+      ...IssueListFragment
+    }
+    subscribedIssues(filter: $filter, first: $first) @include(if: $subscribed) {
+      ...IssueListFragment
+    }
+  }
+}

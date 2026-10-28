@@ -1,0 +1,77 @@
+"A group of users that owns issues, projects and cycles."
+type Team implements Node {
+  id: ID! @model
+  "Short key used as a prefix of issue identifiers, such as ENG."
+  key: String! @model
+  name: String! @model
+  description: String @model
+  color: String! @model
+  icon: String! @model
+  createdAt: DateTime! @model
+  members: [TeamMembership!]!
+  "Workflow states of issues in this team, in display order."
+  workflowStates: [WorkflowState!]!
+  labels: [Label!]!
+  projects(status: [ProjectStatus!]): [Project!]!
+  cycles(includeCompleted: Boolean = false): [Cycle!]!
+  "The cycle in progress, if any."
+  activeCycle: Cycle
+  issues(
+    filter: IssueFilter
+    sort: IssueSort
+    first: Int = 50
+    after: String
+  ): IssueConnection!
+  "Number of issues per workflow state type."
+  issueCounts: [IssueCount!]!
+}
+
+type TeamMembership
+  @model(type: "import('@/server/data/records').TeamMembershipRecord") {
+  user: User!
+  role: TeamRole!
+  joinedAt: DateTime!
+}
+
+enum TeamRole {
+  OWNER
+  ADMIN
+  MEMBER
+  GUEST
+}
+
+type IssueCount {
+  stateType: WorkflowStateType! @model
+  count: Int! @model
+}
+
+"A state in the workflow of a team."
+type WorkflowState implements Node {
+  id: ID! @model
+  name: String! @model
+  type: WorkflowStateType! @model
+  color: String! @model
+  "Position used for sorting states of the same team."
+  position: Int! @model
+  team: Team!
+}
+
+enum WorkflowStateType {
+  TRIAGE
+  BACKLOG
+  UNSTARTED
+  STARTED
+  COMPLETED
+  CANCELED
+}
+
+"A label that can be attached to issues."
+type Label implements Node {
+  id: ID! @model
+  name: String! @model
+  color: String! @model
+  description: String @model
+  team: Team!
+  "Number of open issues with this label."
+  openIssueCount: Int!
+}

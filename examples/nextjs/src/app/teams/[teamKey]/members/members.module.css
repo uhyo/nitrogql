@@ -1,0 +1,11 @@
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+}
+
+.table td {
+  padding: 0.45em 1em;
+  border-bottom: 1px solid var(--color-border);
+}

@@ -1,0 +1,11 @@
+#import UserChipFragment from "../../../../components/UserChip/UserChipFragment.graphql"
+
+mutation ProjectLeadSelectUpdateLead($id: ID!, $leadId: ID) {
+  updateProject(id: $id, input: { leadId: $leadId }) {
+    id
+    lead {
+      id
+      ...UserChipFragment
+    }
+  }
+}

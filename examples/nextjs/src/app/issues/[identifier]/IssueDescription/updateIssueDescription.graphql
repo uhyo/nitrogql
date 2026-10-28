@@ -1,0 +1,9 @@
+#import IssueDescriptionFragment from "./IssueDescriptionFragment.graphql"
+
+mutation IssueDescriptionUpdate($id: ID!, $description: String) {
+  updateIssue(id: $id, input: { description: $description }) {
+    id
+    updatedAt
+    ...IssueDescriptionFragment
+  }
+}

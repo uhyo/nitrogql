@@ -1,0 +1,54 @@
+.card {
+  display: flex;
+  flex-flow: column nowrap;
+  gap: 0.4em;
+  padding: 0.6em 0.75em;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  background: var(--color-bg);
+}
+
+.card[aria-busy="true"] {
+  opacity: 0.6;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: 0.5em;
+}
+
+.assignee {
+  margin-left: auto;
+}
+
+.title {
+  font-weight: 500;
+}
+
+.title:hover {
+  text-decoration: underline;
+}
+
+.meta {
+  display: flex;
+  flex-flow: row wrap;
+  gap: 0.4em;
+  font-size: 0.9em;
+}
+
+.footer {
+  display: flex;
+  align-items: center;
+  gap: 0.5em;
+  font-size: 0.85em;
+}
+
+.footer > select {
+  padding: 0.1em 0.3em;
+}
+
+.error {
+  color: var(--color-danger);
+  font-size: 0.85em;
+}

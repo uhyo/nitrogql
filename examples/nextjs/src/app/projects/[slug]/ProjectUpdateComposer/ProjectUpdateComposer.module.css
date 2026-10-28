@@ -1,0 +1,26 @@
+.composer {
+  display: flex;
+  flex-flow: column nowrap;
+  gap: 0.5em;
+  padding: 0.8em 1em;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  background: var(--color-bg-subtle);
+}
+
+.composer > textarea {
+  min-height: 5em;
+  resize: vertical;
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.75em;
+}
+
+.error {
+  margin-right: auto;
+  color: var(--color-danger);
+}

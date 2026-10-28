@@ -1,0 +1,8 @@
+mutation IssueCommentDelete($id: ID!) {
+  deleteComment(id: $id) {
+    id
+    comments(first: 0) {
+      totalCount
+    }
+  }
+}

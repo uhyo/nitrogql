@@ -1,8 +1,10 @@
+import { Sidebar } from "@/components/Sidebar";
 import { UrqlProvider } from "@/components/UrqlProvider";
 import "./globals.css";
+import classes from "./layout.module.css";
 
 export const metadata = {
-  title: "nitrogql + Next.js example",
+  title: "nitrogql + Next.js example: issue tracker",
 };
 
 export default function RootLayout({
@@ -13,7 +15,12 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
-        <UrqlProvider>{children}</UrqlProvider>
+        <UrqlProvider>
+          <div className={classes.shell}>
+            <Sidebar />
+            <main className={classes.main}>{children}</main>
+          </div>
+        </UrqlProvider>
       </body>
     </html>
   );

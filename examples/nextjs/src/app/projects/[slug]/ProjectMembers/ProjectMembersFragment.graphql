@@ -1,0 +1,11 @@
+#import UserChipFragment from "../../../../components/UserChip/UserChipFragment.graphql"
+
+fragment ProjectMembersFragment on Project {
+  lead {
+    id
+  }
+  members {
+    id
+    ...UserChipFragment
+  }
+}

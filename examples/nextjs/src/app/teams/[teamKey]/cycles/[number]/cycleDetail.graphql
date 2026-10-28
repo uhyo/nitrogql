@@ -1,0 +1,22 @@
+#import IssueListFragment from "../../../../../components/IssueList/IssueListFragment.graphql"
+#import CycleSummaryFragment from "./_components/CycleSummary/CycleSummaryFragment.graphql"
+#import CycleAssigneeBreakdownFragment from "./_components/CycleAssigneeBreakdown/CycleAssigneeBreakdownFragment.graphql"
+
+query CycleDetail(
+  $teamKey: String!
+  $number: Int!
+  $filter: IssueFilter
+  $first: Int!
+) {
+  cycle(teamKey: $teamKey, number: $number) {
+    id
+    ...CycleSummaryFragment
+    issues(filter: $filter, first: $first) {
+      ...IssueListFragment
+    }
+    # The breakdown is about the whole cycle regardless of the filters
+    allIssues: issues(first: 500) {
+      ...CycleAssigneeBreakdownFragment
+    }
+  }
+}

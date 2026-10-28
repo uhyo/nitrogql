@@ -1,0 +1,10 @@
+#import AvatarFragment from "../../../../components/Avatar/AvatarFragment.graphql"
+
+fragment IssueSubscriptionFragment on Issue {
+  id
+  viewerIsSubscribed
+  subscribers {
+    id
+    ...AvatarFragment
+  }
+}

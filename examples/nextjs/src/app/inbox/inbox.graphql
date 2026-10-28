@@ -1,0 +1,15 @@
+#import NotificationItemFragment from "./NotificationItem/NotificationItemFragment.graphql"
+
+query Inbox($unreadOnly: Boolean!, $first: Int!) {
+  notifications(unreadOnly: $unreadOnly, first: $first) {
+    totalCount
+    unreadCount
+    nodes {
+      id
+      ...NotificationItemFragment
+    }
+    pageInfo {
+      hasNextPage
+    }
+  }
+}

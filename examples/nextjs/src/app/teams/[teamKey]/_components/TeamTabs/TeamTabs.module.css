@@ -1,0 +1,23 @@
+.tabs {
+  display: flex;
+  gap: 0.25em;
+  margin-bottom: 1rem;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.tab {
+  margin-bottom: -1px;
+  padding: 0.4em 0.8em;
+  border-bottom: 2px solid transparent;
+  color: var(--color-text-muted);
+}
+
+.tab:hover {
+  color: var(--color-text);
+}
+
+.tab[aria-current="page"] {
+  border-bottom-color: var(--color-accent);
+  color: var(--color-text);
+  font-weight: 600;
+}

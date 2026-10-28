@@ -1,0 +1,16 @@
+.list {
+  border: 1px solid var(--color-border);
+  border-bottom: none;
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+.group + .group {
+  margin-top: 0.75rem;
+}
+
+.groupTitle {
+  margin-bottom: 0.25rem;
+  font-size: 0.9em;
+  font-weight: 500;
+}

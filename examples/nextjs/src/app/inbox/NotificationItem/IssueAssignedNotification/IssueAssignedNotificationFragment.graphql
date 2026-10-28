@@ -1,0 +1,7 @@
+#import InboxIssueLinkFragment from "../InboxIssueLink/InboxIssueLinkFragment.graphql"
+
+fragment IssueAssignedNotificationFragment on IssueAssignedNotification {
+  issue {
+    ...InboxIssueLinkFragment
+  }
+}

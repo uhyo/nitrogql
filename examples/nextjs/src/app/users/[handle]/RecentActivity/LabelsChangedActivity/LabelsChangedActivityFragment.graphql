@@ -1,0 +1,18 @@
+#import UserChipFragment from "../../../../../components/UserChip/UserChipFragment.graphql"
+#import ActivityIssueLinkFragment from "../ActivityIssueLink/ActivityIssueLinkFragment.graphql"
+#import LabelBadgeFragment from "../../../../../components/LabelBadge/LabelBadgeFragment.graphql"
+
+fragment LabelsChangedActivityFragment on LabelsChangedEvent {
+  actor {
+    ...UserChipFragment
+  }
+  issue {
+    ...ActivityIssueLinkFragment
+  }
+  addedLabels {
+    ...LabelBadgeFragment
+  }
+  removedLabels {
+    ...LabelBadgeFragment
+  }
+}

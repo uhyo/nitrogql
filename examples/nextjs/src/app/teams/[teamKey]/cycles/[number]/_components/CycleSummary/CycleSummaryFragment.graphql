@@ -1,0 +1,11 @@
+#import CycleDatesFragment from "../../../_components/CycleDates/CycleDatesFragment.graphql"
+#import CycleProgressFragment from "../../../_components/CycleProgress/CycleProgressFragment.graphql"
+
+fragment CycleSummaryFragment on Cycle {
+  id
+  number
+  name
+  completedAt
+  ...CycleDatesFragment
+  ...CycleProgressFragment
+}

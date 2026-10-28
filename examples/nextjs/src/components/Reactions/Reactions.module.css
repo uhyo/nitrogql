@@ -1,0 +1,42 @@
+.reactions {
+  display: flex;
+  flex-flow: row wrap;
+  gap: 0.4em;
+}
+
+.reaction {
+  padding: 0 0.5em;
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  background: var(--color-bg);
+  font-size: 0.9em;
+}
+
+.reaction[data-reacted] {
+  border-color: var(--color-accent);
+  background: color-mix(in srgb, var(--color-accent) 12%, transparent);
+}
+
+.pickerContainer {
+  position: relative;
+}
+
+.picker {
+  position: absolute;
+  z-index: 1;
+  top: 110%;
+  left: 0;
+  display: flex;
+  gap: 0.2em;
+  padding: 0.3em;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  background: var(--color-bg);
+  box-shadow: 0 2px 8px rgb(0 0 0 / 0.15);
+}
+
+.picker > button {
+  border: none;
+  background: none;
+  font-size: 1.2em;
+}

@@ -1,0 +1,19 @@
+#import IssueListFragment from "../../../../components/IssueList/IssueListFragment.graphql"
+#import TeamIssueFiltersFragment from "./_components/TeamIssueFilters/TeamIssueFiltersFragment.graphql"
+#import NewIssueFormFragment from "./_components/NewIssueForm/NewIssueFormFragment.graphql"
+
+query TeamIssues(
+  $teamKey: String!
+  $filter: IssueFilter
+  $sort: IssueSort
+  $first: Int!
+) {
+  team(key: $teamKey) {
+    id
+    ...TeamIssueFiltersFragment
+    ...NewIssueFormFragment
+    issues(filter: $filter, sort: $sort, first: $first) {
+      ...IssueListFragment
+    }
+  }
+}

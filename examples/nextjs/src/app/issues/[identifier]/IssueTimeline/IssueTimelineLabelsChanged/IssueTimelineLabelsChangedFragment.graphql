@@ -1,0 +1,15 @@
+#import LabelBadgeFragment from "../../../../../components/LabelBadge/LabelBadgeFragment.graphql"
+#import IssueTimelineEventFragment from "../IssueTimelineEvent/IssueTimelineEventFragment.graphql"
+
+fragment IssueTimelineLabelsChangedFragment on LabelsChangedEvent {
+  id
+  ...IssueTimelineEventFragment
+  addedLabels {
+    id
+    ...LabelBadgeFragment
+  }
+  removedLabels {
+    id
+    ...LabelBadgeFragment
+  }
+}

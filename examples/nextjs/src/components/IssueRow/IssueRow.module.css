@@ -1,0 +1,52 @@
+.row {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.6em;
+  padding: 0.45em 1em;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.row:hover {
+  background: var(--color-bg-hover);
+}
+
+.identifier {
+  flex: none;
+  width: 5.5em;
+}
+
+.title {
+  flex: 1 1 auto;
+  min-width: 8em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* The whole row is clickable, while links in the row stay clickable */
+.title::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+}
+
+.meta {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.6em;
+  flex: 0 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  font-size: 0.9em;
+}
+
+.unassigned {
+  width: 20px;
+  height: 20px;
+  border: 1px dashed var(--color-text-muted);
+  border-radius: 50%;
+}

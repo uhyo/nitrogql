@@ -1,0 +1,30 @@
+.attachments {
+  display: flex;
+  flex-flow: column nowrap;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  list-style: none;
+}
+
+.attachment {
+  display: flex;
+  align-items: center;
+  gap: 0.6em;
+  padding: 0.45em 1em;
+}
+
+.attachment + .attachment {
+  border-top: 1px solid var(--color-border);
+}
+
+.title {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.title:hover {
+  text-decoration: underline;
+}

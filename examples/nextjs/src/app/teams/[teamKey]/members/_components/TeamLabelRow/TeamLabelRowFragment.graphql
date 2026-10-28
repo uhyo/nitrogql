@@ -1,0 +1,8 @@
+#import LabelBadgeFragment from "../../../../../../components/LabelBadge/LabelBadgeFragment.graphql"
+
+fragment TeamLabelRowFragment on Label {
+  id
+  description
+  openIssueCount
+  ...LabelBadgeFragment
+}

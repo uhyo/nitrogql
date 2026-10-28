@@ -1,0 +1,10 @@
+#import IssueCommentFragment from "../IssueComment/IssueCommentFragment.graphql"
+
+fragment IssueTimelineCommentFragment on Comment {
+  id
+  ...IssueCommentFragment
+  replies {
+    id
+    ...IssueCommentFragment
+  }
+}

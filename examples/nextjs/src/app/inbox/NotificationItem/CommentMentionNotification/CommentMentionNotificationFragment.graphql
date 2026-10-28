@@ -1,0 +1,12 @@
+#import InboxIssueLinkFragment from "../InboxIssueLink/InboxIssueLinkFragment.graphql"
+#import InboxCommentExcerptFragment from "../InboxCommentExcerpt/InboxCommentExcerptFragment.graphql"
+
+fragment CommentMentionNotificationFragment on CommentMentionNotification {
+  comment {
+    id
+    issue {
+      ...InboxIssueLinkFragment
+    }
+    ...InboxCommentExcerptFragment
+  }
+}

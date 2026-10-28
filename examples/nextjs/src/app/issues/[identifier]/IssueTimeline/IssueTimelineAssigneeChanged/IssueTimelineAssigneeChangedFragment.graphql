@@ -1,0 +1,15 @@
+#import UserChipFragment from "../../../../../components/UserChip/UserChipFragment.graphql"
+#import IssueTimelineEventFragment from "../IssueTimelineEvent/IssueTimelineEventFragment.graphql"
+
+fragment IssueTimelineAssigneeChangedFragment on AssigneeChangedEvent {
+  id
+  ...IssueTimelineEventFragment
+  fromAssignee {
+    id
+    ...UserChipFragment
+  }
+  toAssignee {
+    id
+    ...UserChipFragment
+  }
+}

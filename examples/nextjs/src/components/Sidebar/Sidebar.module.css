@@ -1,0 +1,78 @@
+.sidebar {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow-y: auto;
+  padding: 1rem 0.75rem;
+  border-right: 1px solid var(--color-border);
+  background: var(--color-bg-subtle);
+  display: flex;
+  flex-flow: column nowrap;
+  gap: 1rem;
+}
+
+.viewer {
+  min-height: 24px;
+  padding: 0 0.5em;
+  font-weight: 600;
+}
+
+.search > input {
+  width: 100%;
+}
+
+.group {
+  display: flex;
+  flex-flow: column nowrap;
+  gap: 2px;
+}
+
+.groupTitle {
+  padding: 0 0.5em;
+  font-size: 0.8em;
+  font-weight: 600;
+  color: var(--color-text-muted);
+}
+
+.team {
+  display: flex;
+  flex-flow: column nowrap;
+  gap: 2px;
+  margin-top: 0.5em;
+}
+
+.teamName {
+  padding: 0 0.5em;
+  font-weight: 500;
+}
+
+.team > .link {
+  padding-left: 1.8em;
+}
+
+.link {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.25em 0.5em;
+  border-radius: var(--radius);
+}
+
+.link:hover {
+  background: var(--color-bg-hover);
+}
+
+.link[aria-current="page"] {
+  background: var(--color-bg-hover);
+  font-weight: 600;
+}
+
+.count {
+  min-width: 1.6em;
+  padding: 0 0.4em;
+  border-radius: 999px;
+  background: var(--color-accent);
+  color: white;
+  font-size: 0.8em;
+  text-align: center;
+}

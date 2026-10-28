@@ -1,0 +1,21 @@
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4em;
+  min-width: 0;
+}
+
+.chip:hover .name {
+  text-decoration: underline;
+}
+
+.chip[data-deactivated] .name {
+  text-decoration: line-through;
+  color: var(--color-text-muted);
+}
+
+.name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

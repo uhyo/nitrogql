@@ -1,0 +1,18 @@
+#import UserChipFragment from "../../../../../components/UserChip/UserChipFragment.graphql"
+#import ActivityIssueLinkFragment from "../ActivityIssueLink/ActivityIssueLinkFragment.graphql"
+#import ProjectChipFragment from "../../../../../components/ProjectChip/ProjectChipFragment.graphql"
+
+fragment ProjectChangedActivityFragment on ProjectChangedEvent {
+  actor {
+    ...UserChipFragment
+  }
+  issue {
+    ...ActivityIssueLinkFragment
+  }
+  fromProject {
+    ...ProjectChipFragment
+  }
+  toProject {
+    ...ProjectChipFragment
+  }
+}

@@ -1,0 +1,12 @@
+#import UserChipFragment from "../../../../components/UserChip/UserChipFragment.graphql"
+
+fragment SearchUserResultFragment on User {
+  ...UserChipFragment
+  handle
+  email
+  teams {
+    id
+    key
+    icon
+  }
+}

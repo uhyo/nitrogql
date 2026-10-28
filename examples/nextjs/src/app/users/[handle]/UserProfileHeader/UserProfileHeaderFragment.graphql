@@ -1,0 +1,22 @@
+#import AvatarFragment from "../../../../components/Avatar/AvatarFragment.graphql"
+
+fragment UserProfileHeaderFragment on User {
+  id
+  name
+  handle
+  bio
+  timezone
+  deactivated
+  status {
+    emoji
+    message
+    expiresAt
+  }
+  teams {
+    id
+    key
+    name
+    icon
+  }
+  ...AvatarFragment
+}

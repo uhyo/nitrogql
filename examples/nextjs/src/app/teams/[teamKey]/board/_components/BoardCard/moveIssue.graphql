@@ -1,0 +1,13 @@
+#import BoardCard_issue from "./BoardCardFragment.graphql"
+#import TeamIssueCountsFragment from "../../../_components/TeamIssueCounts/TeamIssueCountsFragment.graphql"
+
+mutation BoardCardMoveIssue($id: ID!, $stateId: ID!) {
+  updateIssue(id: $id, input: { stateId: $stateId }) {
+    id
+    ...BoardCard_issue
+    team {
+      id
+      ...TeamIssueCountsFragment
+    }
+  }
+}

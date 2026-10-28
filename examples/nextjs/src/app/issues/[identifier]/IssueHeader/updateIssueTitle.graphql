@@ -1,0 +1,7 @@
+mutation IssueHeaderUpdateTitle($id: ID!, $title: String!) {
+  updateIssue(id: $id, input: { title: $title }) {
+    id
+    title
+    updatedAt
+  }
+}

@@ -1,0 +1,5 @@
+fragment CycleProgressFragment on Cycle {
+  progress
+  scope
+  completedScope
+}

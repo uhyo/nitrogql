@@ -1,0 +1,5 @@
+fragment ActivityIssueLinkFragment on Issue {
+  id
+  identifier
+  title
+}

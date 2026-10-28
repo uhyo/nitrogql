@@ -1,15 +1,8 @@
 import { ApolloServer, HeaderMap, HTTPGraphQLRequest } from "@apollo/server";
-import {
-  getTodoBody,
-  getTodos,
-  getTodoTags,
-  Todo,
-  toggleTodo,
-} from "./todoMaster";
-import { ResolverOutput, Resolvers } from "@/generated/resolvers";
-import schema from "../../schema/scalar";
+import { makeExecutableSchema } from "@graphql-tools/schema";
 import { schema as typeDefs } from "@/generated/graphql";
-import { mergeSchemas } from "@graphql-tools/schema";
+import { getDatabase } from "@/server/data/db";
+import { type Context, resolvers } from "@/server/resolvers";
 
 export async function POST(request: Request) {
   server ??= await initServer();
@@ -23,7 +16,9 @@ export async function POST(request: Request) {
   const response = await server.executeHTTPGraphQLRequest({
     httpGraphQLRequest: req,
     async context() {
-      return {};
+      const db = getDatabase();
+      // There is no authentication in this example; the first user is always signed in.
+      return { db, viewerId: db.data.viewerId };
     },
   });
   if (response.body.kind === "complete") {
@@ -51,53 +46,15 @@ export async function POST(request: Request) {
   }
 }
 
-let server: ApolloServer | undefined;
+let server: ApolloServer<Context> | undefined;
 
-async function initServer(): Promise<ApolloServer> {
-  const server = new ApolloServer({
-    schema: mergeSchemas({
-      schemas: [schema],
+async function initServer(): Promise<ApolloServer<Context>> {
+  const server = new ApolloServer<Context>({
+    schema: makeExecutableSchema({
       typeDefs,
       resolvers,
     }),
   });
   await server.start();
   return server;
-}
-
-const todoResolvers: Resolvers<{}>["Todo"] = {
-  body(todo) {
-    return getTodoBody(todo.id);
-  },
-  tags(todo) {
-    return getTodoTags(todo.id);
-  },
-};
-
-const resolvers: Resolvers<{}> = {
-  Query: {
-    todos(_parent, variables) {
-      if (variables.filter?.unfinishedOnly) {
-        return getTodos()
-          .filter((todo) => todo.finishedAt === null)
-          .map(todoForResolver);
-      } else {
-        return getTodos().map(todoForResolver);
-      }
-    },
-  },
-  Mutation: {
-    toggleTodo(_parent, variables) {
-      return todoForResolver(toggleTodo(variables.id, variables.finished));
-    },
-  },
-  Todo: todoResolvers,
-};
-
-function todoForResolver(todo: Todo): ResolverOutput<"Todo"> {
-  return {
-    id: todo.id,
-    createdAt: todo.createdAt.toISOString(),
-    finishedAt: todo.finishedAt?.toISOString() ?? null,
-  };
 }

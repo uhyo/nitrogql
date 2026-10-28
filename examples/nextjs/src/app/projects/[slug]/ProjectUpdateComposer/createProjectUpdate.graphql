@@ -1,0 +1,12 @@
+#import ProjectUpdateCardFragment from "../ProjectUpdateCard/ProjectUpdateCardFragment.graphql"
+
+mutation ProjectUpdateComposerCreate($input: CreateProjectUpdateInput!) {
+  createProjectUpdate(input: $input) {
+    id
+    ...ProjectUpdateCardFragment
+    project {
+      id
+      health
+    }
+  }
+}

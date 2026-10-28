@@ -1,0 +1,13 @@
+#import AvatarFragment from "../Avatar/AvatarFragment.graphql"
+
+fragment UserChipFragment on User {
+  id
+  handle
+  name
+  deactivated
+  status {
+    emoji
+    message
+  }
+  ...AvatarFragment
+}

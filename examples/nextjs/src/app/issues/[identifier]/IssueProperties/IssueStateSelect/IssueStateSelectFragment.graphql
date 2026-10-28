@@ -1,0 +1,17 @@
+#import StateIconFragment from "../../../../../components/StateIcon/StateIconFragment.graphql"
+
+fragment IssueStateSelectFragment on Issue {
+  id
+  state {
+    id
+    ...StateIconFragment
+  }
+  team {
+    id
+    workflowStates {
+      id
+      name
+      position
+    }
+  }
+}

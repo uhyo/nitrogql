@@ -1,0 +1,16 @@
+.summary {
+  margin-bottom: 1.5rem;
+}
+
+.summary > h2 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+.properties {
+  display: grid;
+  grid-template-columns: 7em 1fr;
+  gap: 0.4em 1em;
+  align-items: center;
+}

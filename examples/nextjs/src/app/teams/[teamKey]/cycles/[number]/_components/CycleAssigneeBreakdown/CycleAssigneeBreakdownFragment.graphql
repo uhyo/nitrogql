@@ -1,0 +1,16 @@
+#import UserChipFragment from "../../../../../../../components/UserChip/UserChipFragment.graphql"
+
+fragment CycleAssigneeBreakdownFragment on IssueConnection {
+  nodes {
+    id
+    estimate
+    state {
+      id
+      type
+    }
+    assignee {
+      id
+      ...UserChipFragment
+    }
+  }
+}

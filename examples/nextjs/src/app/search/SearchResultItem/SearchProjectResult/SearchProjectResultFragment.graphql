@@ -1,0 +1,19 @@
+#import ProjectChipFragment from "../../../../components/ProjectChip/ProjectChipFragment.graphql"
+#import AvatarFragment from "../../../../components/Avatar/AvatarFragment.graphql"
+
+fragment SearchProjectResultFragment on Project {
+  ...ProjectChipFragment
+  description
+  projectStatus: status
+  progress
+  targetDate
+  team {
+    id
+    key
+    name
+  }
+  lead {
+    id
+    ...AvatarFragment
+  }
+}

@@ -1,0 +1,10 @@
+#import UserChipFragment from "../../../../../components/UserChip/UserChipFragment.graphql"
+
+fragment IssueTimelineEventFragment on IssueEvent {
+  id
+  createdAt
+  actor {
+    id
+    ...UserChipFragment
+  }
+}

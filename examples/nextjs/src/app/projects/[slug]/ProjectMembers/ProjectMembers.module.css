@@ -1,0 +1,12 @@
+.members {
+  display: flex;
+  flex-flow: column nowrap;
+  gap: 0.4em;
+  list-style: none;
+}
+
+.members > li {
+  display: flex;
+  align-items: center;
+  gap: 0.5em;
+}

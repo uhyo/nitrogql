@@ -1,0 +1,19 @@
+#import IssueRowFragment from "../IssueRow/IssueRowFragment.graphql"
+
+fragment IssueListFragment on IssueConnection {
+  totalCount
+  nodes {
+    id
+    state {
+      id
+      name
+      type
+      position
+    }
+    ...IssueRowFragment
+  }
+  pageInfo {
+    hasNextPage
+    endCursor
+  }
+}

@@ -8,7 +8,9 @@
     "start": "next start",
     "lint": "next lint",
     "lint-graphql": "nitrogql check",
-    "generate": "nitrogql generate"
+    "generate": "nitrogql generate --config-file graphql.server.config.yaml",
+    "typecheck": "node scripts/tsc.mjs --runExternalCode",
+    "bench-fragments": "node scripts/bench-fragments.mjs"
   },
   "dependencies": {
     "@apollo/server": "^4.9.1",
@@ -29,6 +31,7 @@
     "@nitrogql/graphql-loader": "*",
     "@types/react": "^18.2.22",
     "@types/react-dom": "^18.2.7",
-    "typescript": "^6.0.3"
+    "typescript": "^6.0.3",
+    "typescript7": "npm:typescript@7.1.0-beta"
   }
 }

@@ -71,6 +71,8 @@ jobs:
       - name: run nitrogql in nextjs example
         run: |
           npm run generate
+          npm run lint-graphql
+          npm run typecheck
           npm run build
         working-directory: examples/nextjs
       - name: run nitrogql in vite example

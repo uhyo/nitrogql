@@ -1,0 +1,5 @@
+#import IssueRowFragment from "../../../../components/IssueRow/IssueRowFragment.graphql"
+
+fragment SearchIssueResultFragment on Issue {
+  ...IssueRowFragment
+}

@@ -1,0 +1,15 @@
+#import StateIconFragment from "../../../../../components/StateIcon/StateIconFragment.graphql"
+#import IssueTimelineEventFragment from "../IssueTimelineEvent/IssueTimelineEventFragment.graphql"
+
+fragment IssueTimelineStateChangedFragment on StateChangedEvent {
+  id
+  ...IssueTimelineEventFragment
+  fromState {
+    id
+    ...StateIconFragment
+  }
+  toState {
+    id
+    ...StateIconFragment
+  }
+}

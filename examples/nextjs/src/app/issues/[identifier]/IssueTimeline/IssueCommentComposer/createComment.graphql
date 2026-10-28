@@ -1,0 +1,18 @@
+#import IssueCommentFragment from "../IssueComment/IssueCommentFragment.graphql"
+
+mutation IssueCommentComposerCreate($input: CreateCommentInput!) {
+  createComment(input: $input) {
+    id
+    ...IssueCommentFragment
+    issue {
+      id
+      viewerIsSubscribed
+    }
+    parent {
+      id
+      replies {
+        id
+      }
+    }
+  }
+}

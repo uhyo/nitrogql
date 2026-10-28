@@ -1,3 +1,87 @@
 type Mutation {
-  toggleTodo(id: ID!, finished: Boolean!): Todo!
+  createIssue(input: CreateIssueInput!): Issue!
+  updateIssue(id: ID!, input: UpdateIssueInput!): Issue!
+  addIssueLabel(issueId: ID!, labelId: ID!): Issue!
+  removeIssueLabel(issueId: ID!, labelId: ID!): Issue!
+  archiveIssue(id: ID!): Issue!
+  setIssueSubscription(issueId: ID!, subscribed: Boolean!): Issue!
+  addIssueRelation(
+    issueId: ID!
+    relatedIssueId: ID!
+    type: IssueRelationType!
+  ): Issue!
+
+  createComment(input: CreateCommentInput!): Comment!
+  updateComment(id: ID!, body: String!): Comment!
+  "Deletes a comment and returns the issue it belonged to."
+  deleteComment(id: ID!): Issue!
+  "Adds or removes the viewer's reaction."
+  toggleReaction(subjectId: ID!, emoji: String!): ReactionTarget!
+
+  createProjectUpdate(input: CreateProjectUpdateInput!): ProjectUpdate!
+  updateProject(id: ID!, input: UpdateProjectInput!): Project!
+
+  markNotificationRead(id: ID!, read: Boolean! = true): Notification!
+  "Marks all notifications as read and returns the number of updated notifications."
+  markAllNotificationsRead: Int!
+
+  updateViewerStatus(input: UserStatusInput): User!
+}
+
+"Something that can be reacted to."
+union ReactionTarget = Issue | Comment | ProjectUpdate
+
+input CreateIssueInput {
+  teamId: ID!
+  title: String!
+  description: String
+  stateId: ID
+  priority: IssuePriority = NO_PRIORITY
+  assigneeId: ID
+  labelIds: [ID!]
+  projectId: ID
+  cycleId: ID
+  parentId: ID
+  estimate: Int
+  dueDate: Date
+}
+
+"Fields to update. Omitted fields are left unchanged; null clears the field."
+input UpdateIssueInput {
+  title: String
+  description: String
+  stateId: ID
+  priority: IssuePriority
+  assigneeId: ID
+  projectId: ID
+  milestoneId: ID
+  cycleId: ID
+  estimate: Int
+  dueDate: Date
+}
+
+input CreateCommentInput {
+  issueId: ID!
+  body: String!
+  parentId: ID
+}
+
+input CreateProjectUpdateInput {
+  projectId: ID!
+  body: String!
+  health: ProjectHealth!
+}
+
+input UpdateProjectInput {
+  name: String
+  description: String
+  status: ProjectStatus
+  leadId: ID
+  targetDate: Date
+}
+
+input UserStatusInput {
+  emoji: String!
+  message: String!
+  expiresAt: DateTime
 }

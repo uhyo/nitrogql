@@ -1,0 +1,8 @@
+#import IssuePropertiesFragment from "./IssuePropertiesFragment.graphql"
+
+mutation IssuePropertiesUpdate($id: ID!, $input: UpdateIssueInput!) {
+  updateIssue(id: $id, input: $input) {
+    id
+    ...IssuePropertiesFragment
+  }
+}

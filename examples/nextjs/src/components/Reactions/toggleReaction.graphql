@@ -1,0 +1,25 @@
+#import ReactionsFragment from "./ReactionsFragment.graphql"
+
+mutation ToggleReaction($subjectId: ID!, $emoji: String!) {
+  toggleReaction(subjectId: $subjectId, emoji: $emoji) {
+    __typename
+    ... on Issue {
+      id
+      reactions {
+        ...ReactionsFragment
+      }
+    }
+    ... on Comment {
+      id
+      reactions {
+        ...ReactionsFragment
+      }
+    }
+    ... on ProjectUpdate {
+      id
+      reactions {
+        ...ReactionsFragment
+      }
+    }
+  }
+}

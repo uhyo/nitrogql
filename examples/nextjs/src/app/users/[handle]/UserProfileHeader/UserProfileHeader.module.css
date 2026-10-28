@@ -1,0 +1,47 @@
+.header {
+  display: flex;
+  align-items: flex-start;
+  gap: 1.25em;
+  margin-bottom: 1rem;
+}
+
+.main {
+  display: flex;
+  flex-flow: column nowrap;
+  gap: 0.35em;
+  min-width: 0;
+}
+
+.name {
+  display: flex;
+  align-items: center;
+  gap: 0.5em;
+  font-size: 1.4rem;
+  font-weight: 600;
+}
+
+.deactivated {
+  padding: 0 0.5em;
+  border: 1px solid var(--color-danger);
+  border-radius: 999px;
+  color: var(--color-danger);
+  font-size: 0.6em;
+  font-weight: normal;
+}
+
+.bio {
+  max-width: 40em;
+}
+
+.status {
+  display: flex;
+  align-items: center;
+  flex-flow: row wrap;
+  gap: 0.75em;
+}
+
+.teams {
+  display: flex;
+  gap: 0.5em;
+  list-style: none;
+}

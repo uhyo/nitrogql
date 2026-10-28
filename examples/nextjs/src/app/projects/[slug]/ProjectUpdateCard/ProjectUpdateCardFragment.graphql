@@ -1,0 +1,16 @@
+#import ReactionsFragment from "../../../../components/Reactions/ReactionsFragment.graphql"
+#import UserChipFragment from "../../../../components/UserChip/UserChipFragment.graphql"
+
+fragment ProjectUpdateCardFragment on ProjectUpdate {
+  id
+  body
+  health
+  createdAt
+  author {
+    id
+    ...UserChipFragment
+  }
+  reactions {
+    ...ReactionsFragment
+  }
+}

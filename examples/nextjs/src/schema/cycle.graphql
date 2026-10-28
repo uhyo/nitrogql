@@ -1,0 +1,18 @@
+"A time-boxed iteration of a team."
+type Cycle implements Node {
+  id: ID! @model
+  "Sequential number of the cycle in its team."
+  number: Int! @model
+  name: String @model
+  startsAt: DateTime! @model
+  endsAt: DateTime! @model
+  completedAt: DateTime @model
+  team: Team!
+  issues(filter: IssueFilter, first: Int = 100, after: String): IssueConnection!
+  "Ratio of completed scope, from 0 to 1."
+  progress: Float!
+  "Total estimate of issues in the cycle."
+  scope: Int!
+  "Total estimate of completed issues in the cycle."
+  completedScope: Int!
+}

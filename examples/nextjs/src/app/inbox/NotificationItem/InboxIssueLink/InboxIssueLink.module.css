@@ -1,0 +1,18 @@
+.link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35em;
+  max-width: 100%;
+  vertical-align: middle;
+}
+
+.title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 500;
+}
+
+.link:hover .title {
+  text-decoration: underline;
+}

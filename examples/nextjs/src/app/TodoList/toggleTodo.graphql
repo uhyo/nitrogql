@@ -1,5 +1,0 @@
-mutation ($id: ID!, $finished: Boolean!) {
-  toggleTodo(id: $id, finished: $finished) {
-    id
-  }
-}

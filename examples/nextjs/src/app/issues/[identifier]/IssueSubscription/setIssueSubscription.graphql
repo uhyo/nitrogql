@@ -1,0 +1,8 @@
+#import IssueSubscriptionFragment from "./IssueSubscriptionFragment.graphql"
+
+mutation IssueSubscriptionSet($issueId: ID!, $subscribed: Boolean!) {
+  setIssueSubscription(issueId: $issueId, subscribed: $subscribed) {
+    id
+    ...IssueSubscriptionFragment
+  }
+}

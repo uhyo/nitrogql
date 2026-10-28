@@ -2,11 +2,10 @@
   "emeraldwalk.runonsave": {
     "commands": [
       {
-        "match": "\\.graphql$",
+        "match": "/src/schema/.*\\.graphql$",
         "cmd": "npm run generate"
       }
     ]
   },
-  "typescript.tsdk": "../../node_modules/typescript/lib",
-  "typescript.enablePromptUseWorkspaceTsdk": true
+  "js/ts.contentMappers.enabled": true
 }

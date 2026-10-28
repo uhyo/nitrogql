@@ -1,0 +1,17 @@
+"An object with a globally unique ID."
+interface Node {
+  id: ID!
+}
+
+"Information about pagination in a connection."
+type PageInfo {
+  "Whether there are more items after the last one."
+  hasNextPage: Boolean! @model
+  "Cursor of the last item in the page."
+  endCursor: String @model
+}
+
+enum SortDirection {
+  ASC
+  DESC
+}

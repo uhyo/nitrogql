@@ -1,0 +1,5 @@
+fragment CycleDatesFragment on Cycle {
+  startsAt
+  endsAt
+  completedAt
+}

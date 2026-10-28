@@ -1,0 +1,7 @@
+#import SearchResultItemFragment from "./SearchResultItem/SearchResultItemFragment.graphql"
+
+query SearchPage($query: String!, $kinds: [SearchKind!], $first: Int!) {
+  search(query: $query, kinds: $kinds, first: $first) {
+    ...SearchResultItemFragment
+  }
+}

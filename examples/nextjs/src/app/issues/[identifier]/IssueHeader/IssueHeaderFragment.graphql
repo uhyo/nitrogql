@@ -1,0 +1,20 @@
+#import IssueSubscriptionFragment from "../IssueSubscription/IssueSubscriptionFragment.graphql"
+
+fragment IssueHeaderFragment on Issue {
+  id
+  identifier
+  title
+  archivedAt
+  team {
+    id
+    key
+    name
+    icon
+  }
+  parent {
+    id
+    identifier
+    title
+  }
+  ...IssueSubscriptionFragment
+}

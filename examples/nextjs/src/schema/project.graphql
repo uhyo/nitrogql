@@ -1,0 +1,66 @@
+"A project groups issues towards a goal."
+type Project implements Node {
+  id: ID! @model
+  "Unique slug used in URLs."
+  slug: String! @model
+  name: String! @model
+  description: String @model
+  icon: String! @model
+  color: String! @model
+  status: ProjectStatus! @model
+  startDate: Date @model
+  targetDate: Date @model
+  createdAt: DateTime! @model
+  team: Team!
+  lead: User
+  members: [User!]!
+  "Ratio of completed issues, from 0 to 1."
+  progress: Float!
+  "Health reported by the latest update."
+  health: ProjectHealth
+  milestones: [Milestone!]!
+  issues(
+    filter: IssueFilter
+    sort: IssueSort
+    first: Int = 50
+    after: String
+  ): IssueConnection!
+  "Status updates, newest first."
+  updates(first: Int = 10): [ProjectUpdate!]!
+}
+
+enum ProjectStatus {
+  PLANNED
+  IN_PROGRESS
+  PAUSED
+  COMPLETED
+  CANCELED
+}
+
+enum ProjectHealth {
+  ON_TRACK
+  AT_RISK
+  OFF_TRACK
+}
+
+"A milestone in a project."
+type Milestone implements Node {
+  id: ID! @model
+  name: String! @model
+  description: String @model
+  targetDate: Date @model
+  project: Project!
+  progress: Float!
+  issues: [Issue!]!
+}
+
+"A status update of a project."
+type ProjectUpdate implements Node {
+  id: ID! @model
+  body: String! @model
+  health: ProjectHealth! @model
+  createdAt: DateTime! @model
+  author: User!
+  project: Project!
+  reactions: [ReactionGroup!]!
+}

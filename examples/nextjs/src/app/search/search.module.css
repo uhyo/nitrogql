@@ -1,0 +1,47 @@
+.form {
+  display: flex;
+  flex-flow: column nowrap;
+  gap: 0.75em;
+  margin-bottom: 1rem;
+}
+
+.input {
+  width: 100%;
+  max-width: 40em;
+  font-size: 1.1em;
+}
+
+.kinds {
+  display: flex;
+  align-items: center;
+  gap: 1em;
+  border: none;
+}
+
+.kinds > legend {
+  float: left;
+  margin-right: 0.25em;
+}
+
+.kinds > label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35em;
+}
+
+.list {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+.list > :last-child {
+  border-bottom: none;
+}
+
+.empty {
+  padding: 2em;
+  text-align: center;
+  border: 1px dashed var(--color-border);
+  border-radius: var(--radius);
+}

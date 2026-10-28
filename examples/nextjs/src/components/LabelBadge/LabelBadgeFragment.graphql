@@ -1,0 +1,5 @@
+fragment LabelBadgeFragment on Label {
+  id
+  name
+  color
+}

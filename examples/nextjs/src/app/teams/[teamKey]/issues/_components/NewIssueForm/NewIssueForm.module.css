@@ -1,0 +1,60 @@
+.form {
+  display: flex;
+  flex-flow: column nowrap;
+  gap: 0.6em;
+  margin-bottom: 1rem;
+  padding: 1em;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  background: var(--color-bg-subtle);
+}
+
+.title {
+  font-size: 1.1em;
+  font-weight: 500;
+}
+
+.options {
+  display: flex;
+  flex-flow: row wrap;
+  gap: 0.5em;
+}
+
+.estimate {
+  width: 7em;
+}
+
+.labels {
+  display: flex;
+  flex-flow: row wrap;
+  align-items: center;
+  gap: 0.75em;
+  border: none;
+}
+
+.labels > legend {
+  float: left;
+  margin-right: 0.5em;
+  font-size: 0.9em;
+}
+
+.label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3em;
+}
+
+.footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.5em;
+}
+
+.footer > span {
+  margin-right: auto;
+}
+
+.error {
+  color: var(--color-danger);
+}

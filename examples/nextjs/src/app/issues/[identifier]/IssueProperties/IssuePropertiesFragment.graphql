@@ -1,0 +1,26 @@
+#import UserChipFragment from "../../../../components/UserChip/UserChipFragment.graphql"
+#import IssueStateSelectFragment from "./IssueStateSelect/IssueStateSelectFragment.graphql"
+#import IssueAssigneeSelectFragment from "./IssueAssigneeSelect/IssueAssigneeSelectFragment.graphql"
+#import IssueLabelsEditorFragment from "./IssueLabelsEditor/IssueLabelsEditorFragment.graphql"
+#import IssueProjectSelectFragment from "./IssueProjectSelect/IssueProjectSelectFragment.graphql"
+#import IssueCycleSelectFragment from "./IssueCycleSelect/IssueCycleSelectFragment.graphql"
+
+fragment IssuePropertiesFragment on Issue {
+  id
+  priority
+  estimate
+  dueDate
+  createdAt
+  updatedAt
+  completedAt
+  canceledAt
+  creator {
+    id
+    ...UserChipFragment
+  }
+  ...IssueStateSelectFragment
+  ...IssueAssigneeSelectFragment
+  ...IssueLabelsEditorFragment
+  ...IssueProjectSelectFragment
+  ...IssueCycleSelectFragment
+}

@@ -1,0 +1,13 @@
+.subscription {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5em;
+}
+
+.subscribers {
+  display: inline-flex;
+}
+
+.subscribers > * + * {
+  margin-left: -4px;
+}

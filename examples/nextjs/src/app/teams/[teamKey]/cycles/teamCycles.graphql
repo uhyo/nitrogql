@@ -1,0 +1,12 @@
+#import CycleListItemFragment from "./_components/CycleListItem/CycleListItemFragment.graphql"
+
+query TeamCycles($teamKey: String!) {
+  team(key: $teamKey) {
+    id
+    name
+    cycles(includeCompleted: true) {
+      id
+      ...CycleListItemFragment
+    }
+  }
+}

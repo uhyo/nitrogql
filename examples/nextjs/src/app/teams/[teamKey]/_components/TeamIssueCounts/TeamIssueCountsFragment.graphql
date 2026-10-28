@@ -1,0 +1,6 @@
+fragment TeamIssueCountsFragment on Team {
+  issueCounts {
+    stateType
+    count
+  }
+}

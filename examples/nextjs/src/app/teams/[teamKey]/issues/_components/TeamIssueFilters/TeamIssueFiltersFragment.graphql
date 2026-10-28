@@ -1,0 +1,12 @@
+fragment TeamIssueFiltersFragment on Team {
+  members {
+    user {
+      id
+      name
+    }
+  }
+  labels {
+    id
+    name
+  }
+}

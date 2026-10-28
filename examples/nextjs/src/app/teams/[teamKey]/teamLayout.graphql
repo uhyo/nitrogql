@@ -1,0 +1,8 @@
+#import TeamHeaderFragment from "./_components/TeamHeader/TeamHeaderFragment.graphql"
+
+query TeamLayout($teamKey: String!) {
+  team(key: $teamKey) {
+    id
+    ...TeamHeaderFragment
+  }
+}

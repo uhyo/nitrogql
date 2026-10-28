@@ -1,0 +1,42 @@
+#import IssueTimelineCommentFragment from "./IssueTimelineComment/IssueTimelineCommentFragment.graphql"
+#import IssueTimelineCreatedFragment from "./IssueTimelineCreated/IssueTimelineCreatedFragment.graphql"
+#import IssueTimelineStateChangedFragment from "./IssueTimelineStateChanged/IssueTimelineStateChangedFragment.graphql"
+#import IssueTimelineAssigneeChangedFragment from "./IssueTimelineAssigneeChanged/IssueTimelineAssigneeChangedFragment.graphql"
+#import IssueTimelinePriorityChangedFragment from "./IssueTimelinePriorityChanged/IssueTimelinePriorityChangedFragment.graphql"
+#import IssueTimelineLabelsChangedFragment from "./IssueTimelineLabelsChanged/IssueTimelineLabelsChangedFragment.graphql"
+#import IssueTimelineProjectChangedFragment from "./IssueTimelineProjectChanged/IssueTimelineProjectChangedFragment.graphql"
+
+fragment IssueTimelineFragment on Issue {
+  id
+  timeline {
+    __typename
+    ... on Comment {
+      id
+      ...IssueTimelineCommentFragment
+    }
+    ... on IssueCreatedEvent {
+      id
+      ...IssueTimelineCreatedFragment
+    }
+    ... on StateChangedEvent {
+      id
+      ...IssueTimelineStateChangedFragment
+    }
+    ... on AssigneeChangedEvent {
+      id
+      ...IssueTimelineAssigneeChangedFragment
+    }
+    ... on PriorityChangedEvent {
+      id
+      ...IssueTimelinePriorityChangedFragment
+    }
+    ... on LabelsChangedEvent {
+      id
+      ...IssueTimelineLabelsChangedFragment
+    }
+    ... on ProjectChangedEvent {
+      id
+      ...IssueTimelineProjectChangedFragment
+    }
+  }
+}

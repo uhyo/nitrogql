@@ -1,0 +1,14 @@
+fragment MilestoneItemFragment on Milestone {
+  id
+  name
+  description
+  targetDate
+  progress
+  issues {
+    id
+    state {
+      id
+      type
+    }
+  }
+}

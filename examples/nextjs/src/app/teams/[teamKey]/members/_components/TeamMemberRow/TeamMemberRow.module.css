@@ -1,0 +1,16 @@
+.role {
+  padding: 0 0.5em;
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  font-size: 0.85em;
+}
+
+.role[data-role="OWNER"],
+.role[data-role="ADMIN"] {
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+}
+
+.role[data-role="GUEST"] {
+  color: var(--color-text-muted);
+}

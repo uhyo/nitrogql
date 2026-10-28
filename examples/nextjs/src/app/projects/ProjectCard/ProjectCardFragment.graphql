@@ -1,0 +1,33 @@
+#import AvatarFragment from "../../../components/Avatar/AvatarFragment.graphql"
+#import UserChipFragment from "../../../components/UserChip/UserChipFragment.graphql"
+#import ProjectHealthBadgeFragment from "../ProjectHealthBadge/ProjectHealthBadgeFragment.graphql"
+
+fragment ProjectCardFragment on Project {
+  id
+  slug
+  name
+  description
+  icon
+  color
+  status
+  targetDate
+  progress
+  team {
+    id
+    key
+    name
+    icon
+  }
+  lead {
+    id
+    ...UserChipFragment
+  }
+  members {
+    id
+    ...AvatarFragment
+  }
+  milestones {
+    id
+  }
+  ...ProjectHealthBadgeFragment
+}
