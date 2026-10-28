@@ -1,4 +1,4 @@
-import { NitrogqlConfig } from "@nitrogql/cli";
+import type { NitrogqlConfig } from "@nitrogql/cli";
 
 const config: NitrogqlConfig = {
   schema: ["./src/schema/*.ts", "./src/schema/*.graphql"],

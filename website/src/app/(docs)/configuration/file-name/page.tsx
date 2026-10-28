@@ -108,6 +108,27 @@ const config: NitrogqlConfig = {
 
 export default config;`}
         </Highlight>
+        <p>
+          TypeScript files (configuration files and schema files) are run with
+          Node.js&apos;{" "}
+          <a
+            href="https://nodejs.org/docs/latest/api/typescript.html#type-stripping"
+            target="_blank"
+          >
+            type stripping
+          </a>{" "}
+          when it is available. Therefore, they need to follow its rules: for
+          example, imports that are only used as types need the{" "}
+          <code>type</code> keyword, and imports of other TypeScript files need
+          the <code>.ts</code> extension.
+        </p>
+        <p>
+          To run them with esbuild instead, set the{" "}
+          <code>NITROGQL_DISABLE_TYPE_STRIPPING</code> environment variable to{" "}
+          <code>1</code>. Then, for example, <code>import</code>s without the{" "}
+          <code>type</code> keyword and imports of <code>.ts</code> files with
+          the <code>.js</code> extension are also supported.
+        </p>
       </main>
     </Toc>
   );

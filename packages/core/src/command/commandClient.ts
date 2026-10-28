@@ -1,6 +1,7 @@
 import { Worker } from "node:worker_threads";
 import { once } from "node:events";
 import path from "node:path";
+import { typeScriptExecArgv } from "../typeStripping.js";
 
 export type CommandClient = {
   /**
@@ -69,7 +70,7 @@ function startWorker(): Worker {
       ...process.env,
       DATA_URL_RESOLUTION_BASE: path.join(process.cwd(), "__entrypoint__"),
     },
-    execArgv: ["--no-warnings", "--import=@nitrogql/esbuild-register"],
+    execArgv: ["--no-warnings", ...typeScriptExecArgv()],
   });
 }
 

@@ -1,6 +1,12 @@
 import inspector from "node:inspector";
 import { parentPort } from "node:worker_threads";
 import { CommandRunner } from "./commandRunner.js";
+import { registerDataUrlResolution } from "./dataUrlResolution.js";
+import { useNodeTypeStripping } from "../typeStripping.js";
+
+if (useNodeTypeStripping()) {
+  registerDataUrlResolution();
+}
 
 const commandRunner = new CommandRunner();
 // console.error("CommandRunner started", process.version);
