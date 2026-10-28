@@ -1,5 +1,6 @@
 // Content mapper with a schema that mixes GraphQL files and a TypeScript schema file.
 
+import { once } from "node:events";
 import { mkdir, rm, writeFile } from "node:fs/promises";
 import { after, before, describe, it } from "node:test";
 import assert from "node:assert/strict";
@@ -59,7 +60,13 @@ extensions:
       await mapper.request("initialize", { positionEncodings: ["utf-16"] });
     });
     after(async () => {
-      mapper.child.kill();
+      // The mapper runs in the project directory, which Windows does not
+      // let us remove until the process has exited.
+      if (mapper.child.exitCode === null && mapper.child.signalCode === null) {
+        const exited = once(mapper.child, "exit");
+        mapper.child.kill();
+        await exited;
+      }
       await rm(projectUrl, { recursive: true, force: true });
     });
 
