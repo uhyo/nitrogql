@@ -12,27 +12,15 @@ use once_cell::sync::Lazy;
 
 #[cfg(not(target_os = "wasi"))]
 thread_local! {
-    // @nitrogql/esbuild-register requires different usage
-    // depending on Node.js version.
+    // The command server runs commands in a worker thread and decides
+    // how to run TypeScript files (Node.js' type stripping or
+    // @nitrogql/esbuild-register), just like the wasm build.
     static NODE_COMMAND_SERVER: Lazy<RefCell<Child>> = Lazy::new(|| {
-        let node_supports_module_register_api = check_if_node_supports_module_register_api();
-        let mut command = Command::new("node");
-        command.arg("--no-warnings");
-        command.arg("--input-type=module");
-        if node_supports_module_register_api {
-            command.arg("--import=@nitrogql/esbuild-register");
-        } else {
-            command.arg("--require=@nitrogql/esbuild-register");
-            command.arg("--experimental-loader=@nitrogql/esbuild-register/hook");
-        }
-        command.arg("--eval");
-        command.arg("import \"@nitrogql/core/commandServer.js\";");
-        command.env("DATA_URL_RESOLUTION_BASE", {
-            let mut base = std::env::current_dir().expect("failed to get current dir");
-            base.push("__entrypoint__");
-            base
-        });
-        let child = command
+        let child = Command::new("node")
+            .arg("--no-warnings")
+            .arg("--input-type=module")
+            .arg("--eval")
+            .arg("import \"@nitrogql/core/commandStdioServer.js\";")
             .stdin(Stdio::piped())
             .stdout(Stdio::piped())
             .stderr(Stdio::inherit())
@@ -40,34 +28,6 @@ thread_local! {
             .unwrap();
         RefCell::new(child)
     });
-}
-
-/// @nitrogql/esbuild-register requires different usage
-/// depending on Node.js version.
-#[cfg(not(target_os = "wasi"))]
-fn check_if_node_supports_module_register_api() -> bool {
-    let command = Command::new("node")
-        .arg("--version")
-        .stdin(Stdio::null())
-        .stdout(Stdio::piped())
-        .stderr(Stdio::inherit())
-        .spawn()
-        .unwrap();
-
-    let result = command.wait_with_output().unwrap();
-    if !result.status.success() {
-        panic!("Node.js process exited with non-zero status");
-    }
-
-    let version = String::from_utf8_lossy(&result.stdout);
-    let version = version.trim();
-    let version = version.strip_prefix('v').unwrap_or(version);
-    let version = version.split('.').collect::<Vec<_>>();
-    let version = (
-        version[0].parse::<u32>().unwrap(),
-        version[1].parse::<u32>().unwrap(),
-    );
-    version >= (20, 6) || (version.0 == 18 && version.1 >= 19)
 }
 
 /// Runs given string as JavaScript code, and returns the value exported as default export.
