@@ -2,7 +2,6 @@ use std::{
     borrow::Cow,
     cell::OnceCell,
     collections::BTreeMap,
-    fs,
     hash::{Hash, Hasher},
     path::{Path, PathBuf},
 };
@@ -275,7 +274,9 @@ async fn load_sources(
 /// and TypeScript tracks the files it imports fragments from.
 ///
 /// The identity is computed from what affects the output of other files: the config,
-/// contents of the config file and schema files, and schema additions of plugins.
+/// paths of the config file and schema files, contents of schema files, and schema additions of plugins.
+/// The config file is represented by the parsed config rather than its text, so it is not read again,
+/// and changes that do not affect the config (e.g. comments) keep the identity.
 /// Additions are included because they can depend on type extensions of JavaScript schemas,
 /// which are not part of the printed schema.
 fn watched_files_and_identity(
@@ -283,13 +284,13 @@ fn watched_files_and_identity(
     config_path: Option<&Path>,
     files: &FileStore,
 ) -> (Vec<PathBuf>, String) {
-    let mut watched: BTreeMap<PathBuf, Option<Cow<str>>> = BTreeMap::new();
+    // Contents are borrowed from the file store. The config file has none, as its config is hashed instead.
+    let mut watched: BTreeMap<PathBuf, Option<&str>> = BTreeMap::new();
     if let Some(config_path) = config_path {
-        let content = fs::read_to_string(config_path).ok().map(Cow::Owned);
-        watched.insert(config_path.to_owned(), content);
+        watched.insert(config_path.to_owned(), None);
     }
     for (_, (path, content, _)) in files.iter_kind(FileKind::Schema) {
-        watched.insert(normalize_path(path), Some(Cow::Borrowed(content)));
+        watched.insert(normalize_path(path), Some(content));
     }
 
     let mut hasher = Fnv1a::new();

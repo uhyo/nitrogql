@@ -357,13 +357,30 @@ fn watched_files_and_identity() {
     )
     .unwrap();
     assert_eq!(open(&root).config_identity, identity);
+    // The config file is identified by the config, so changes that do not affect it do not either.
+    fs::write(
+        root.join("graphql.config.yaml"),
+        format!("# comment\n{CONFIG}"),
+    )
+    .unwrap();
+    assert_eq!(open(&root).config_identity, identity);
+    // Changes to the config do.
+    fs::write(
+        root.join("graphql.config.yaml"),
+        format!("{CONFIG}extensions:\n  nitrogql:\n    generate:\n      name:\n        fragmentTypeSuffix: Frag\n"),
+    )
+    .unwrap();
+    let config_changed = open(&root).config_identity;
+    assert_ne!(config_changed, identity);
     // Schema files do.
     fs::write(
         root.join("schema/b.graphql"),
         USER_SCHEMA.replace("age: Int", "age: Int!"),
     )
     .unwrap();
-    assert_ne!(open(&root).config_identity, identity);
+    let schema_changed = open(&root).config_identity;
+    assert_ne!(schema_changed, identity);
+    assert_ne!(schema_changed, config_changed);
 }
 
 #[test]
