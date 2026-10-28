@@ -270,11 +270,13 @@ export const Mutation: Resolvers<Context>["Mutation"] = {
   },
   updateViewerStatus(_parent, { input }, { db, viewerId }) {
     const viewer = db.get("users", viewerId);
-    viewer.status = input && {
-      emoji: input.emoji,
-      message: input.message,
-      expiresAt: input.expiresAt ?? null,
-    };
+    viewer.status = input
+      ? {
+          emoji: input.emoji,
+          message: input.message,
+          expiresAt: input.expiresAt ?? null,
+        }
+      : null;
     return viewer;
   },
 };

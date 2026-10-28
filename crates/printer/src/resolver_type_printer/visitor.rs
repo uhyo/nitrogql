@@ -168,18 +168,25 @@ fn arguments_definition_to_ts(
     context: &ResolverTypePrinterContext,
     arguments: &ArgumentsDefinition,
 ) -> TSType {
-    TSType::object(arguments.input_values.iter().map(|argument| {
-        (
-            ObjectKey::from(&argument.name),
-            get_ts_type_of_type(&argument.r#type, |name| {
-                TSType::NamespaceMember3(
-                    context.options.schema_root_namespace.clone(),
-                    TypeTarget::ResolverInput.to_string(),
-                    name.name.to_string(),
-                )
-            }),
-            argument.description.as_ref().map(|s| s.to_string()),
-        )
-    }))
+    TSType::Object(
+        arguments
+            .input_values
+            .iter()
+            .map(|argument| ObjectField {
+                key: ObjectKey::from(&argument.name),
+                r#type: get_ts_type_of_type(&argument.r#type, |name| {
+                    TSType::NamespaceMember3(
+                        context.options.schema_root_namespace.clone(),
+                        TypeTarget::ResolverInput.to_string(),
+                        name.name.to_string(),
+                    )
+                }),
+                readonly: false,
+                // graphql-js leaves an omitted argument out of `args` unless it has a default value.
+                optional: !argument.r#type.is_nonnull() && argument.default_value.is_none(),
+                description: argument.description.as_ref().map(|s| s.to_string()),
+            })
+            .collect(),
+    )
     .into_readonly()
 }
