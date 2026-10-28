@@ -1,7 +1,10 @@
+import { spawn } from "node:child_process";
+import { once } from "node:events";
 import { mkdir, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
-import { pathToFileURL } from "node:url";
+import readline from "node:readline";
+import { fileURLToPath, pathToFileURL } from "node:url";
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 
 // Workers run the built server, so the built code is tested.
@@ -113,5 +116,59 @@ process.stdout.write(foo);
   it("uses @nitrogql/esbuild-register when opted out", () => {
     vi.stubEnv("NITROGQL_DISABLE_TYPE_STRIPPING", "1");
     expect(executeNodeSync(code("mapped.ts"))).toBe("foo");
+  });
+});
+
+describe("stdio command server", () => {
+  /**
+   * Runs given command in the stdio command server, as the native build of
+   * nitrogql does.
+   */
+  async function runInStdioServer(command: string): Promise<unknown> {
+    const server = spawn(
+      process.execPath,
+      [fileURLToPath(new URL("command/stdioServer.js", dist))],
+      { stdio: ["pipe", "pipe", "inherit"] },
+    );
+    try {
+      const lines = readline.createInterface({ input: server.stdout });
+      server.stdin.write(JSON.stringify(command) + "\n");
+      const [line] = await once(lines, "line");
+      server.stdin.end();
+      await once(server, "exit");
+      return JSON.parse(line);
+    } finally {
+      server.kill();
+    }
+  }
+
+  it.skipIf(!nodeHasTypeStripping)(
+    "uses Node.js type stripping by default",
+    async () => {
+      expect(await runInStdioServer(command("entry.ts"))).toEqual({
+        result: {
+          value: "foo",
+          graphql: "function",
+          esbuildRegister: false,
+        },
+      });
+    },
+  );
+
+  it("uses @nitrogql/esbuild-register when opted out", async () => {
+    vi.stubEnv("NITROGQL_DISABLE_TYPE_STRIPPING", "1");
+    expect(await runInStdioServer(command("mapped.ts"))).toEqual({
+      result: {
+        value: "foo",
+        graphql: "function",
+        esbuildRegister: true,
+      },
+    });
+  });
+
+  it("reports errors", async () => {
+    expect(await runInStdioServer(`throw new Error("oops");`)).toEqual({
+      error: "Error: oops",
+    });
   });
 });
