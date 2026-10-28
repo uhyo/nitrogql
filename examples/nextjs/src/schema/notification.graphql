@@ -48,10 +48,9 @@ type ProjectUpdateNotification implements Notification & Node {
   projectUpdate: ProjectUpdate!
 }
 
-type NotificationConnection
-  @model(type: "import('@/server/data/connection').NotificationConnection") {
-  nodes: [Notification!]!
-  pageInfo: PageInfo!
-  totalCount: Int!
-  unreadCount: Int!
+type NotificationConnection {
+  nodes: [Notification!]! @model
+  pageInfo: PageInfo! @model
+  totalCount: Int! @model
+  unreadCount: Int! @model
 }

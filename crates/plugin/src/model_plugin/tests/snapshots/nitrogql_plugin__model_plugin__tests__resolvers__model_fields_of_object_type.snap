@@ -1,0 +1,59 @@
+---
+source: crates/plugin/src/model_plugin/tests/mod.rs
+expression: doc
+---
+import type { GraphQLResolveInfo } from "graphql";
+import type * as Schema from "";
+type __Resolver<Parent, Args, Context, Result> = (parent: Parent, args: Args, context: Context, info: GraphQLResolveInfo) => Result | Promise<Result>;
+type __TypeResolver<Obj, Context, Result> = (object: Obj, context: Context, info: GraphQLResolveInfo) => Result | Promise<Result>;
+type Int = Schema.__ResolverOutput.Int;
+type Float = Schema.__ResolverOutput.Float;
+type String = Schema.__ResolverOutput.String;
+type Boolean = Schema.__ResolverOutput.Boolean;
+type ID = Schema.__ResolverOutput.ID;
+type Comment = {
+  id: ID;
+  /**
+   * The body of the comment.
+   */
+  body: String;
+};
+type User = (import('somewhere').User);
+type PageInfo = {
+  hasNextPage: Boolean;
+  endCursor: String | null;
+};
+type CommentConnection = {
+  nodes: (Comment)[];
+  pageInfo: PageInfo;
+  results: (SearchResult | null)[] | null;
+};
+type SearchResult = Comment | User;
+export type Resolvers<Context> = {
+  Comment: {
+    author: __Resolver<Comment, {}, Context, User>;
+  };
+  User: {
+    id: __Resolver<User, {}, Context, ID>;
+  };
+  PageInfo?: {};
+  CommentConnection: {
+    totalCount: __Resolver<CommentConnection, {}, Context, Int>;
+  };
+  SearchResult: {
+    __resolveType: __TypeResolver<Comment | User, Context, "Comment" | "User">;
+  };
+};
+export type ResolverOutput<T extends "Int" | "Float" | "String" | "Boolean" | "ID" | "Comment" | "User" | "PageInfo" | "CommentConnection" | "SearchResult"> = 
+{
+  Int: Int;
+  Float: Float;
+  String: String;
+  Boolean: Boolean;
+  ID: ID;
+  Comment: Comment;
+  User: User;
+  PageInfo: PageInfo;
+  CommentConnection: CommentConnection;
+  SearchResult: SearchResult;
+}[T];
