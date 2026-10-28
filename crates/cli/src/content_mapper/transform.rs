@@ -9,10 +9,9 @@ use nitrogql_error::{ErrorCode, PositionedError};
 use nitrogql_operation_set::OperationSet;
 use nitrogql_printer::{
     OperationTypePrinterOptions, SchemaTypePrinter, SchemaTypePrinterOptions,
-    fragment_imports::{FragmentImport, is_imported_fragment},
+    fragment_imports::{fragment_imports_of, is_imported_fragment},
     print_fallback_types_for_operation_document, print_types_for_operation_document_with_fallback,
 };
-use nitrogql_semantics::{ImportTargets, OperationExtension};
 use nitrogql_utils::{normalize_path, relative_path};
 use sourcemap_writer::{RecordedSpan, SpanWriter};
 use thiserror::Error;
@@ -158,7 +157,7 @@ fn transform_operation_file(
     let index = SourceText::new(content, encoding);
     let file = operations.get(file_name);
     let imports = file
-        .map(|file| fragment_imports(file.extension, content))
+        .map(|file| fragment_imports_of(file.extension, content))
         .unwrap_or_default();
     let options = || {
         let mut options = OperationTypePrinterOptions::from_config(&project.config);
@@ -262,36 +261,6 @@ fn transform_operation_file(
         extension: ".ts",
         diagnostics,
     }
-}
-
-/// Converts `#import`s of an operation file into imports of TypeScript modules.
-fn fragment_imports(extension: &OperationExtension, content: &str) -> Vec<FragmentImport> {
-    extension
-        .imports
-        .iter()
-        .map(|import| {
-            let path = import.path.value.replace('\\', "/");
-            // `#import` paths are relative to the file even without `./`.
-            let module =
-                if path.starts_with("./") || path.starts_with("../") || path.starts_with('/') {
-                    path
-                } else {
-                    format!("./{path}")
-                };
-            FragmentImport {
-                module,
-                fragments: match import.targets {
-                    ImportTargets::Wildcard => None,
-                    ImportTargets::Specific(ref names) => {
-                        Some(names.iter().map(|name| name.name.to_owned()).collect())
-                    }
-                },
-                source: content
-                    .get(import.path.position.span())
-                    .map(|text| (import.path.position, text.to_owned())),
-            }
-        })
-        .collect()
 }
 
 /// Returns the schema file that provides schema types, along with its index in the file store.
