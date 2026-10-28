@@ -5,10 +5,7 @@
 //!
 //! Protocol is JSON-RPC 2.0 over stdio. Framing of messages is handled by the JavaScript host.
 
-use std::{
-    collections::HashMap,
-    path::{Path, PathBuf},
-};
+use std::{collections::HashMap, path::Path};
 
 use log::{debug, error};
 use nitrogql_error::ErrorCode;
@@ -79,10 +76,12 @@ pub async fn run_content_mapper() {
 struct Server {
     encoding: Option<PositionEncoding>,
     projects: HashMap<String, Project>,
-    /// The last closed project for each tsconfig.json.
+    /// The last closed project.
     /// TypeScript closes and reopens a project when a watched file changes,
     /// and the reopened project reuses what is unchanged.
-    closed_projects: HashMap<PathBuf, Project>,
+    /// As the reopen follows the close, only one project is kept,
+    /// so that projects closed for good do not stay in memory.
+    closed_project: Option<Project>,
 }
 
 impl Server {
@@ -113,7 +112,9 @@ impl Server {
                 let params: OpenProjectParams = parse_params(params)?;
                 let (options, option_diagnostics) = parse_options(params.options.as_ref());
                 let ts_config_file = Path::new(&params.config_file_name);
-                let previous = self.closed_projects.remove(ts_config_file);
+                let previous = self
+                    .closed_project
+                    .take_if(|project| project.ts_config_file == ts_config_file);
                 let project = Project::open(ts_config_file, &options, previous).await;
                 let result = OpenProjectResult {
                     config_identity: project.config_identity.clone(),
@@ -150,8 +151,7 @@ impl Server {
             "closeProject" => {
                 let params: CloseProjectParams = parse_params(params)?;
                 if let Some(project) = self.projects.remove(&params.project_handle) {
-                    self.closed_projects
-                        .insert(project.ts_config_file.clone(), project);
+                    self.closed_project = Some(project);
                 }
                 Ok(Value::Null)
             }

@@ -6,8 +6,10 @@ use std::{
 
 use futures::executor::block_on;
 use insta::assert_snapshot;
+use serde_json::json;
 
 use super::{
+    Server,
     project::{MapperOptions, Project},
     protocol::{PositionEncoding, TransformResult},
     transform::transform,
@@ -606,6 +608,45 @@ fn reopen_config_changed() {
     assert!(!has_schema_module(&project));
     let result = transform_file(&project, &root, "schema/a.graphql");
     assert!(result.text.contains("ID = number"), "{}", result.text);
+}
+
+#[test]
+fn closed_projects_are_bounded() {
+    let root_a = setup("closed_projects_are_bounded_a", &default_files());
+    let root_b = setup("closed_projects_are_bounded_b", &default_files());
+    let mut server = Server::default();
+    let mut request = |method: &str, root: Option<&Path>, handle: &str| {
+        let params = match root {
+            Some(root) => json!({
+                "configFileName": root.join("tsconfig.json"),
+                "projectHandle": handle,
+            }),
+            None => json!({ "projectHandle": handle }),
+        };
+        block_on(server.handle(method, params)).unwrap();
+        server
+            .closed_project
+            .as_ref()
+            .map(|project| project.ts_config_file.clone())
+    };
+    request("openProject", Some(&root_a), "a");
+    request("openProject", Some(&root_b), "b");
+    assert_eq!(
+        request("closeProject", None, "a"),
+        Some(root_a.join("tsconfig.json"))
+    );
+    // Only the last closed project is kept.
+    assert_eq!(
+        request("closeProject", None, "b"),
+        Some(root_b.join("tsconfig.json"))
+    );
+    // Opening another project keeps it.
+    assert_eq!(
+        request("openProject", Some(&root_a), "a"),
+        Some(root_b.join("tsconfig.json"))
+    );
+    // Reopening it takes it.
+    assert_eq!(request("openProject", Some(&root_b), "b"), None);
 }
 
 /// Measures the time spent by each request on a large project.
