@@ -1,107 +1,19 @@
 // Talks to the content mapper over stdio, as TypeScript does.
 
-import { spawn } from "node:child_process";
 import { once } from "node:events";
 import { readFile } from "node:fs/promises";
-import { fileURLToPath } from "node:url";
 import { after, before, describe, it } from "node:test";
 import assert from "node:assert/strict";
 
-/**
- * Returns an absolute path in the form TypeScript uses,
- * i.e. with forward slashes even on Windows.
- */
+import { startMapper, tsPath as toTsPath } from "./mapper.mjs";
+
 function tsPath(relative) {
-  return fileURLToPath(new URL(relative, import.meta.url)).replaceAll(
-    "\\",
-    "/",
-  );
+  return toTsPath(new URL(relative, import.meta.url));
 }
 
 const projectDir = tsPath(".");
 const tsconfig = tsPath("tsconfig.json");
 const getUserFile = tsPath("src/app/getUser.graphql");
-const mapperScript = fileURLToPath(
-  new URL("content-mapper.mjs", import.meta.resolve("@nitrogql/cli")),
-);
-
-/**
- * Starts the content mapper and returns a client for it.
- */
-function startMapper() {
-  const child = spawn(process.execPath, [mapperScript], {
-    cwd: projectDir,
-    stdio: ["pipe", "pipe", "inherit"],
-  });
-  /** @type {Map<number, (response: any) => void>} */
-  const pending = new Map();
-  /** @type {any[]} */
-  const unexpected = [];
-  let nextId = 1;
-  let buffer = Buffer.alloc(0);
-  child.stdout.on("data", (chunk) => {
-    buffer = Buffer.concat([buffer, chunk]);
-    while (true) {
-      const headerEnd = buffer.indexOf("\r\n\r\n");
-      if (headerEnd === -1) {
-        return;
-      }
-      const header = buffer.subarray(0, headerEnd).toString("ascii");
-      const length = Number(/^Content-Length: (\d+)$/m.exec(header)?.[1]);
-      const start = headerEnd + 4;
-      if (buffer.length < start + length) {
-        return;
-      }
-      const response = JSON.parse(
-        buffer.subarray(start, start + length).toString("utf8"),
-      );
-      buffer = buffer.subarray(start + length);
-      const resolve = pending.get(response.id);
-      if (resolve === undefined) {
-        unexpected.push(response);
-      } else {
-        pending.delete(response.id);
-        resolve(response);
-      }
-    }
-  });
-
-  function frame(message) {
-    const body = Buffer.from(JSON.stringify(message), "utf8");
-    return Buffer.concat([
-      Buffer.from(`Content-Length: ${body.length}\r\n\r\n`, "ascii"),
-      body,
-    ]);
-  }
-
-  return {
-    child,
-    unexpected,
-    /**
-     * Sends requests in one write and waits for all responses.
-     */
-    requestAll(...requests) {
-      const messages = requests.map(([method, params]) => ({
-        jsonrpc: "2.0",
-        id: nextId++,
-        method,
-        params,
-      }));
-      const responses = messages.map(
-        (message) => new Promise((resolve) => pending.set(message.id, resolve)),
-      );
-      child.stdin.write(Buffer.concat(messages.map(frame)));
-      return Promise.all(responses);
-    },
-    request(method, params) {
-      return this.requestAll([method, params]).then(([response]) => response);
-    },
-    notify(method, params) {
-      child.stdin.write(frame({ jsonrpc: "2.0", method, params }));
-    },
-  };
-}
-
 // A broken mapper typically hangs instead of failing.
 describe("content mapper protocol", { timeout: 60_000 }, () => {
   /** @type {ReturnType<typeof startMapper>} */
@@ -109,7 +21,7 @@ describe("content mapper protocol", { timeout: 60_000 }, () => {
   /** @type {string} */
   let configIdentity;
   before(() => {
-    mapper = startMapper();
+    mapper = startMapper(projectDir);
   });
   after(() => {
     mapper.child.kill();

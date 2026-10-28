@@ -5,7 +5,10 @@
 import { pathToFileURL } from "node:url";
 import { execFileSync } from "node:child_process";
 import { readString, utf8Len, writeString } from "./memory.js";
-import { getCommandClient } from "./command/commandClient.js";
+import {
+  getCommandClient,
+  type CommandClientOptions,
+} from "./command/commandClient.js";
 
 /**
  * Executes given code with Node.js.
@@ -57,9 +60,11 @@ export type InitNitrogqlConfigResult = {
  * Initialize the `nitrogql_helper/config` namespace.
  * This namespace is depended by nitrogql's wasm modules.
  */
-export function initConfigNamespace(): InitNitrogqlConfigResult {
+export function initConfigNamespace(
+  options?: CommandClientOptions,
+): InitNitrogqlConfigResult {
   let module: WebAssembly.Exports | undefined = undefined;
-  const w = getCommandClient();
+  const w = getCommandClient(options);
   const namespace: NitrogqlConfigNamespace = {
     execute_node,
   };

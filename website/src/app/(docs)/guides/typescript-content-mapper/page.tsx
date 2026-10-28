@@ -125,16 +125,25 @@ documents: ./app/**/*.graphql
           in <code>tsconfig.json</code> as well.
         </p>
         <p>
+          Your schema may also include{" "}
+          <Link href="/configuration/options#schema-file-types">
+            JavaScript/TypeScript schema files
+          </Link>
+          , such as a file that defines scalars with GraphQL Scalars. Their
+          types, including scalar types given by plugins, are provided from the
+          first GraphQL schema file as well. TypeScript loads the project again
+          when a schema file changes, but not when a file imported by a
+          JavaScript/TypeScript schema file changes.
+        </p>
+        <p>
           When the <code>schemaOutput</code> option or the{" "}
           <code>schemaModuleSpecifier</code> option is set, operation types
-          import schema types from there instead. This is required when your
-          schema is given as an introspection JSON or as a{" "}
-          <Link href="/configuration/options#schema-file-types">
-            JavaScript/TypeScript schema file
-          </Link>
-          , which TypeScript cannot read through the content mapper. In that
-          case, keep running <code>nitrogql generate</code> to generate the
-          schema type definition file.
+          import schema types from there instead. This is required when none of
+          your schema files is a GraphQL file, i.e. when your schema is given as
+          an introspection JSON or only as JavaScript/TypeScript schema files,
+          because the content mapper has no file to provide schema types from.
+          In that case, keep running <code>nitrogql generate</code> to generate
+          the schema type definition file.
         </p>
 
         <h3 id="fragment-imports">Fragment Imports</h3>

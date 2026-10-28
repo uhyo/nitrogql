@@ -16,7 +16,11 @@ import { initWASI } from "@nitrogql/wasi-preview1";
  */
 export async function runWasm({ args, env, preopens, contentMapper }) {
   const wasi = initWASI({ args, env, preopens });
-  const configHelper = core.initConfigNamespace();
+  // The content mapper keeps running while files change, so it runs every
+  // command in a new worker to load changed files again.
+  const configHelper = core.initConfigNamespace({
+    isolated: contentMapper !== undefined,
+  });
   const contentMapperHelper =
     contentMapper && core.initContentMapperNamespace(contentMapper);
 
