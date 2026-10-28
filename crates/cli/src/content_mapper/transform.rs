@@ -17,7 +17,10 @@ use nitrogql_utils::{normalize_path, relative_path};
 use sourcemap_writer::{RecordedSpan, SpanWriter};
 use thiserror::Error;
 
-use crate::{generate::path_to_ts, schema_loader::LoadedSchema};
+use crate::{
+    generate::path_to_ts,
+    schema_loader::{LoadedSchema, SchemaFileKind, schema_kind_by_path},
+};
 
 use super::{
     fallback::fallback_definitions,
@@ -307,12 +310,10 @@ fn schema_module_file<'a>(
     if !matches!(schema.schema, LoadedSchema::GraphQL(_)) {
         return None;
     }
-    project.schema_files.iter().find(|(path, _)| {
-        !matches!(
-            path.extension().and_then(|ext| ext.to_str()),
-            Some("json" | "js" | "mjs" | "cjs" | "ts" | "mts" | "cts")
-        )
-    })
+    project
+        .schema_files
+        .iter()
+        .find(|(path, _)| matches!(schema_kind_by_path(path), SchemaFileKind::GraphQL))
 }
 
 /// Determines the module specifier to import schema types from.
