@@ -3,6 +3,7 @@ use std::{
     cell::OnceCell,
     collections::BTreeMap,
     fs,
+    hash::{Hash, Hasher},
     path::{Path, PathBuf},
 };
 
@@ -180,8 +181,7 @@ impl Project {
         config: &Config,
         schema_sources: &[Result<SchemaSource, PositionedError>],
     ) -> bool {
-        // Options are compared by their debug output, as in the project identity.
-        if format!("{:?}", self.config) != format!("{config:?}") {
+        if self.config != *config {
             return false;
         }
         let mut sources = vec![];
@@ -293,7 +293,7 @@ fn watched_files_and_identity(
     }
 
     let mut hasher = Fnv1a::new();
-    hasher.write(format!("{config:?}").as_bytes());
+    config.hash(&mut hasher);
     for (path, content) in watched.iter() {
         hasher.write(path.to_string_lossy().as_bytes());
         hasher.write(&[0]);
@@ -339,11 +339,19 @@ impl Fnv1a {
     fn new() -> Self {
         Fnv1a(0xcbf29ce484222325)
     }
+}
+
+impl Hasher for Fnv1a {
     fn write(&mut self, bytes: &[u8]) {
         for byte in bytes {
             self.0 ^= u64::from(*byte);
             self.0 = self.0.wrapping_mul(0x100000001b3);
         }
+    }
+    /// Lengths of collections are hashed as `usize`, whose size and byte order depend on the target.
+    /// They are widened so that native and wasm builds compute the same identity.
+    fn write_usize(&mut self, i: usize) {
+        self.write(&(i as u64).to_le_bytes());
     }
     fn finish(&self) -> u64 {
         self.0

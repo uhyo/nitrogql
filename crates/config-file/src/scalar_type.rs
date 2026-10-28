@@ -4,7 +4,7 @@ use crate::TypeTarget;
 
 /// Representation of a scalar type's TypeScript type
 /// as defined in the config file.
-#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Deserialize)]
 #[serde(untagged)]
 pub enum ScalarTypeConfig {
     /// Single specification for use in all situations.
@@ -15,14 +15,14 @@ pub enum ScalarTypeConfig {
     Separate(SeparateScalarTypeConfig),
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct SendReceiveScalarTypeConfig {
     pub send: String,
     pub receive: String,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct SeparateScalarTypeConfig {
     pub resolver_output: String,
