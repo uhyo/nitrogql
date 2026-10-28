@@ -1,6 +1,5 @@
 use std::{borrow::Cow, collections::HashSet, path::PathBuf};
 
-use itertools::Itertools;
 use log::{debug, info};
 
 use nitrogql_ast::{OperationDocument, TypeSystemDocument, TypeSystemOrExtensionDocument};
@@ -99,21 +98,13 @@ fn check_impl<'src>(input: CheckImplInput<'src, '_>) -> CheckImplOutput<'src> {
     };
     let schema = loaded_schema.map_into(|doc| Cow::Owned(ast_to_type_system(doc)), Cow::Borrowed);
 
-    let (operations, visible_fragments) = match resolve_operations(operations) {
-        Ok(result) => result,
-        Err(errors) => {
-            return CheckImplOutput::Err {
-                errors: errors
-                    .into_iter()
-                    .map(|err| (InputFileKind::Operation, err))
-                    .collect(),
-            };
-        }
-    };
+    // Files whose imports cannot be resolved are not validated, but other files still are.
+    let (operations, visible_fragments, resolve_errors) = resolve_operations(operations);
 
     // Fragments are checked in every document that imports them, so errors may be duplicated.
+    // Import errors may be duplicated too, when multiple files depend on the same broken import.
     let mut seen_errors = HashSet::new();
-    let errors = operations
+    let check_errors = operations
         .iter()
         .zip(visible_fragments.iter())
         .flat_map(|((_, doc, _, _), visible_fragments)| {
@@ -123,14 +114,18 @@ fn check_impl<'src>(input: CheckImplInput<'src, '_>) -> CheckImplOutput<'src> {
             let context = OperationCheckContext::new(&schema).with_visible_fragments(&is_visible);
             check_operation_document(doc, &context)
         })
-        .filter(|err| seen_errors.insert((err.position, err.message.to_string())))
+        .map(PositionedError::from);
+    let errors = resolve_errors
+        .into_iter()
+        .chain(check_errors)
+        .filter(|err| seen_errors.insert((err.position(), err.inner().to_string())))
         .collect::<Vec<_>>();
 
     if !errors.is_empty() {
         CheckImplOutput::Err {
             errors: errors
                 .into_iter()
-                .map(|err| (InputFileKind::Operation, err.into()))
+                .map(|err| (InputFileKind::Operation, err))
                 .collect(),
         }
     } else {
@@ -184,48 +179,50 @@ pub(crate) fn resolve_schema<'src>(
     }
 }
 
-/// Resolved operations, along with names of fragments directly imported by each of them.
-type ResolveOperationsResult<'src> = std::result::Result<
-    (
-        Vec<(
-            PathBuf,
-            OperationDocument<'src>,
-            OperationExtension<'src>,
-            usize,
-        )>,
-        Vec<HashSet<&'src str>>,
-    ),
+/// Resolved operations, along with names of fragments directly imported by each of them,
+/// and errors found while loading or resolving them.
+/// Files whose imports cannot be resolved are left out.
+type ResolveOperationsResult<'src> = (
+    Vec<(
+        PathBuf,
+        OperationDocument<'src>,
+        OperationExtension<'src>,
+        usize,
+    )>,
+    Vec<HashSet<&'src str>>,
     Vec<PositionedError>,
->;
+);
 
 fn resolve_operations(mut operations: OperationSet<'_>) -> ResolveOperationsResult<'_> {
-    let resolve_errors = operations.take_errors();
-    if !resolve_errors.is_empty() {
-        return Err(resolve_errors);
-    }
-
-    let (operations, resolve_errors): (Vec<_>, Vec<_>) = operations
-        .files()
-        .map(|file| -> std::result::Result<_, _> {
-            let doc = operations
-                .resolve_imports(file.path)
-                .expect("file should be loaded")?;
-            let visible_fragments = operations
+    let mut errors = operations.take_errors();
+    let mut resolved = vec![];
+    let mut visible_fragments = vec![];
+    for file in operations.files() {
+        let doc = match operations
+            .resolve_imports(file.path)
+            .expect("file should be loaded")
+        {
+            Ok(doc) => doc,
+            Err(err) => {
+                // A file that failed to load has its own error already,
+                // so reporting it as not found would only be confusing.
+                if !operations.imports_unloaded_file(file.path) {
+                    errors.push(err);
+                }
+                continue;
+            }
+        };
+        resolved.push((
+            file.path.to_owned(),
+            doc,
+            file.extension.clone(),
+            file.file_index,
+        ));
+        visible_fragments.push(
+            operations
                 .directly_imported_fragments(file.path)
-                .expect("file should be loaded");
-            Ok((
-                (
-                    file.path.to_owned(),
-                    doc,
-                    file.extension.clone(),
-                    file.file_index,
-                ),
-                visible_fragments,
-            ))
-        })
-        .partition_result();
-    if !resolve_errors.is_empty() {
-        return Err(resolve_errors);
+                .expect("file should be loaded"),
+        );
     }
-    Ok(operations.into_iter().unzip())
+    (resolved, visible_fragments, errors)
 }

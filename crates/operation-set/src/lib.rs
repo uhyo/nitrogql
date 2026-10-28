@@ -192,6 +192,29 @@ impl<'src> OperationSet<'src> {
         )
     }
 
+    /// Returns whether given file imports, directly or transitively, a file that is in the set
+    /// but could not be loaded. Such a file has its own error collected in the set.
+    pub fn imports_unloaded_file(&self, path: &Path) -> bool {
+        let mut visited = HashSet::from([normalize_path(path)]);
+        let mut stack: Vec<_> = self.get(path).into_iter().collect();
+        while let Some(file) = stack.pop() {
+            for (imported_path, _) in file.imports() {
+                if !visited.insert(imported_path.clone()) {
+                    continue;
+                }
+                // files not in the set at all are reported by `resolve_imports`
+                let Some(&idx) = self.by_path.get(&imported_path) else {
+                    continue;
+                };
+                match to_file(&self.files[idx]) {
+                    None => return true,
+                    Some(imported) => stack.push(imported),
+                }
+            }
+        }
+        false
+    }
+
     /// Returns names of fragments that given file imports by itself, not through imported files.
     /// Returns None if the file is not loaded successfully.
     pub fn directly_imported_fragments(&self, path: &Path) -> Option<HashSet<&'src str>> {

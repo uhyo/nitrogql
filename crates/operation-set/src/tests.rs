@@ -179,3 +179,34 @@ fn adding_twice_has_no_effect() {
     assert_eq!(files.len(), 1);
     assert_eq!(definition_names(files[0].document), ["A"]);
 }
+
+#[test]
+fn detects_imports_of_unloaded_files() {
+    let mut set = OperationSet::new();
+    set.add_file(Path::new("/app/main.graphql"), MAIN, 0);
+    set.add_file(Path::new("/app/frag1.graphql"), FRAG1, 1);
+    // nothing is unloaded while an import is simply missing
+    assert!(!set.imports_unloaded_file(Path::new("/app/main.graphql")));
+
+    set.add_file(Path::new("/app/frag2.graphql"), "fragment {", 2);
+    // transitively, through frag1.graphql
+    assert!(set.imports_unloaded_file(Path::new("/app/main.graphql")));
+    assert!(set.imports_unloaded_file(Path::new("/app/frag1.graphql")));
+    assert!(!set.imports_unloaded_file(Path::new("/app/frag2.graphql")));
+}
+
+#[test]
+fn detects_imports_of_unloaded_files_in_cycles() {
+    let mut set = OperationSet::new();
+    set.add_file(
+        Path::new("/app/a.graphql"),
+        "#import * from \"./b.graphql\"\nfragment A on Query { foo }",
+        0,
+    );
+    set.add_file(
+        Path::new("/app/b.graphql"),
+        "#import * from \"./a.graphql\"\nfragment B on Query { foo }",
+        1,
+    );
+    assert!(!set.imports_unloaded_file(Path::new("/app/a.graphql")));
+}
