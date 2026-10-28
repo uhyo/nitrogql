@@ -165,3 +165,27 @@ describe("content mapper protocol", { timeout: 60_000 }, () => {
     assert.deepEqual(mapper.unexpected, []);
   });
 });
+
+describe("content mapper startup", { timeout: 60_000 }, () => {
+  it("answers initialize before the wasm module is compiled", async () => {
+    // TypeScript gives up on a content mapper that takes more than 5 seconds
+    // to answer initialize, while compiling the wasm module can be slow.
+    const neverCompile = "WebAssembly.compile = () => new Promise(() => {});";
+    const mapper = startMapper(projectDir, [
+      "--import",
+      `data:text/javascript,${encodeURIComponent(neverCompile)}`,
+    ]);
+    try {
+      const response = await mapper.request("initialize", {
+        positionEncodings: ["utf-16", "utf-8"],
+      });
+      assert.deepEqual(response, {
+        jsonrpc: "2.0",
+        id: response.id,
+        result: { positionEncoding: "utf-8", diagnosticSource: "nitrogql" },
+      });
+    } finally {
+      mapper.child.kill();
+    }
+  });
+});

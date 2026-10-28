@@ -3,6 +3,7 @@ import { addHook } from "pirates";
 import { resolveModuleSync } from "./core.js";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { cjsHook } from "./legacy.js";
+import { createSyncHooks, type RegisterHooks } from "./syncHook.js";
 
 const isNodeModules = (url: string) => {
   return url.includes("/node_modules/");
@@ -17,8 +18,15 @@ export function register() {
    */
   const includeNodeModules: boolean = !!process.env.INCLUDE_NODE_MODULES;
 
-  // ESM loader (>= Node 20.6.0 or >= 18.19.0)
-  if (nodeModule.register) {
+  const registerHooks = (
+    nodeModule as { registerHooks?: RegisterHooks | undefined }
+  ).registerHooks;
+  if (registerHooks) {
+    // In-thread hooks (>= Node 22.15.0) are much faster than the ESM loader
+    // below, which runs in a separate thread.
+    registerHooks(createSyncHooks());
+  } else if (nodeModule.register) {
+    // ESM loader (>= Node 20.6.0 or >= 18.19.0)
     const hookUrl = new URL("hook.mjs", import.meta.url);
     nodeModule.register(hookUrl);
   }
@@ -52,8 +60,20 @@ export function register() {
   }
 
   // CJS stuff.
-  // Only needed for Node.js < 20.6.0 (as long as the entrypoint is ESM)
-  addHook(cjsHook, {
-    extensions: [".js", ".jsx", ".cjs", ".mjs", ".ts", ".tsx", ".cts", ".mts"],
-  });
+  // Only needed for Node.js < 20.6.0 (as long as the entrypoint is ESM).
+  // In-thread hooks also transform files loaded by `require`.
+  if (!registerHooks) {
+    addHook(cjsHook, {
+      extensions: [
+        ".js",
+        ".jsx",
+        ".cjs",
+        ".mjs",
+        ".ts",
+        ".tsx",
+        ".cts",
+        ".mts",
+      ],
+    });
+  }
 }

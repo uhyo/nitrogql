@@ -38,6 +38,11 @@ export type InitNitrogqlContentMapperResult = {
 const headerDelimiter = Buffer.from("\r\n\r\n");
 
 /**
+ * Position encodings supported by the wasm module, in order of preference.
+ */
+const positionEncodings = ["utf-8", "utf-16"];
+
+/**
  * Initialize the `nitrogql_helper/content_mapper` namespace.
  */
 export function initContentMapperNamespace({
@@ -56,6 +61,15 @@ export function initContentMapperNamespace({
   const tickets: number[] = [];
   let buffer = Buffer.alloc(0);
   let closed = false;
+  /**
+   * Whether an `initialize` request has been received.
+   */
+  let initializeReceived = false;
+  /**
+   * JSON of ids of requests answered by this host.
+   * Responses of the wasm module to them are not sent.
+   */
+  const answeredIds = new Set<string>();
 
   input.on("data", (chunk: Buffer) => {
     buffer = Buffer.concat([buffer, chunk]);
@@ -76,7 +90,10 @@ export function initContentMapperNamespace({
       if (buffer.length < messageEnd) {
         break;
       }
-      messages.push(buffer.subarray(messageStart, messageEnd).toString("utf8"));
+      const message = buffer
+        .subarray(messageStart, messageEnd)
+        .toString("utf8");
+      messages.push(initializeReceived ? message : answerInitialize(message));
       buffer = buffer.subarray(messageEnd);
     }
     flush();
@@ -105,9 +122,80 @@ export function initContentMapperNamespace({
 
   function write_message(message_ptr: number, message_len: number): void {
     const message = readString(message_ptr, message_len);
+    if (answeredIds.size > 0) {
+      const id = JSON.stringify(JSON.parse(message).id);
+      if (answeredIds.delete(id)) {
+        return;
+      }
+    }
+    send(message);
+  }
+
+  function send(message: string): void {
     output.write(
       `Content-Length: ${Buffer.byteLength(message, "utf8")}\r\n\r\n${message}`,
     );
+  }
+
+  /**
+   * Answers an `initialize` request without waiting for the wasm module.
+   * Returns the message to pass to the wasm module.
+   *
+   * TypeScript gives up on a content mapper that does not answer `initialize`
+   * within 5 seconds, and loading the wasm module can take seconds on a busy
+   * machine. Later requests have no such limit.
+   * The request is still passed to the wasm module, with only the chosen
+   * position encoding, so that it uses the same encoding.
+   * Requests that cannot be answered here are left to the wasm module,
+   * which reports errors.
+   */
+  function answerInitialize(message: string): string {
+    let request: unknown;
+    try {
+      request = JSON.parse(message);
+    } catch {
+      return message;
+    }
+    if (
+      typeof request !== "object" ||
+      request === null ||
+      !("method" in request) ||
+      request.method !== "initialize"
+    ) {
+      return message;
+    }
+    initializeReceived = true;
+    const { id, params } = request as { id?: unknown; params?: unknown };
+    // Notifications are not responded to, and the wasm module reports invalid params.
+    if (
+      id === undefined ||
+      id === null ||
+      typeof params !== "object" ||
+      params === null ||
+      !("positionEncodings" in params) ||
+      !Array.isArray(params.positionEncodings)
+    ) {
+      return message;
+    }
+    const offered: unknown[] = params.positionEncodings;
+    const encoding = positionEncodings.find((encoding) =>
+      offered.includes(encoding),
+    );
+    if (encoding === undefined) {
+      return message;
+    }
+    send(
+      JSON.stringify({
+        jsonrpc: "2.0",
+        id,
+        result: { positionEncoding: encoding, diagnosticSource: "nitrogql" },
+      }),
+    );
+    answeredIds.add(JSON.stringify(id));
+    return JSON.stringify({
+      ...request,
+      params: { ...params, positionEncodings: [encoding] },
+    });
   }
 
   function flush(): void {

@@ -292,3 +292,106 @@ describe("writing messages", () => {
     expect(data.equals(frame(message))).toBe(true);
   });
 });
+
+describe("initialize", () => {
+  const initialize = (positionEncodings: string[]) =>
+    JSON.stringify({
+      jsonrpc: "2.0",
+      id: 1,
+      method: "initialize",
+      params: { positionEncodings },
+    });
+
+  function writeMessage(message: string): void {
+    const len = utf8Len(message);
+    const ptr = 32768;
+    writeString(message, ptr, len);
+    namespace.write_message(ptr, len);
+  }
+
+  /**
+   * Returns everything written to the output since the last call.
+   */
+  function sent(): string {
+    // Depending on the Node.js version, one read may return only one chunk.
+    let result = "";
+    let chunk: Buffer | null;
+    while ((chunk = output.read()) !== null) {
+      result += chunk.toString("utf8");
+    }
+    return result;
+  }
+
+  it("answers before the wasm module is ready", async () => {
+    // Without the wasm module, unlike the one created in beforeEach
+    const input = new PassThrough();
+    const output = new PassThrough();
+    initContentMapperNamespace({ input, output, onClose });
+    input.write(frame(initialize(["utf-16"])));
+    await settle();
+    expect(output.read().toString("utf8")).toBe(
+      frame(
+        '{"jsonrpc":"2.0","id":1,"result":{"positionEncoding":"utf-16","diagnosticSource":"nitrogql"}}',
+      ).toString("utf8"),
+    );
+  });
+
+  it("passes the request with the chosen encoding only", async () => {
+    namespace.read_message(1);
+    input.write(frame(initialize(["utf-16", "utf-8"])));
+    await settle();
+    expect(sent()).toContain('"positionEncoding":"utf-8"');
+    expect(deliveries).toEqual(
+      received([
+        1,
+        '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"positionEncodings":["utf-8"]}}',
+      ]),
+    );
+  });
+
+  it("does not send the response of the wasm module to answered requests", async () => {
+    input.write(frame(initialize(["utf-16"])));
+    await settle();
+    sent();
+    writeMessage(
+      '{"jsonrpc":"2.0","id":1,"result":{"positionEncoding":"utf-16","diagnosticSource":"nitrogql"}}',
+    );
+    expect(sent()).toBe("");
+    writeMessage('{"jsonrpc":"2.0","id":2,"result":null}');
+    writeMessage('{"jsonrpc":"2.0","id":1,"result":null}');
+    expect(sent()).toBe(
+      frame('{"jsonrpc":"2.0","id":2,"result":null}').toString("utf8") +
+        frame('{"jsonrpc":"2.0","id":1,"result":null}').toString("utf8"),
+    );
+  });
+
+  it("leaves a request without a supported encoding to the wasm module", async () => {
+    namespace.read_message(1);
+    input.write(frame(initialize(["utf-32"])));
+    await settle();
+    expect(sent()).toBe("");
+    expect(deliveries).toEqual(received([1, initialize(["utf-32"])]));
+  });
+
+  it("leaves a notification to the wasm module", async () => {
+    namespace.read_message(1);
+    const notification =
+      '{"jsonrpc":"2.0","method":"initialize","params":{"positionEncodings":["utf-8"]}}';
+    input.write(frame(notification));
+    await settle();
+    expect(sent()).toBe("");
+    expect(deliveries).toEqual(received([1, notification]));
+  });
+
+  it("only answers the first initialize request", async () => {
+    namespace.read_message(1);
+    namespace.read_message(2);
+    input.write(frame(initialize(["utf-32"])));
+    input.write(frame(initialize(["utf-16"])));
+    await settle();
+    expect(sent()).toBe("");
+    expect(deliveries).toEqual(
+      received([1, initialize(["utf-32"])], [2, initialize(["utf-16"])]),
+    );
+  });
+});
