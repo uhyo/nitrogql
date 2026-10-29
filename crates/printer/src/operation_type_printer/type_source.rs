@@ -52,14 +52,14 @@ pub trait OperationTypeSource {
 /// Type source that computes types from the schema.
 /// The document must be valid against the schema; otherwise an error is returned.
 pub struct SchemaTypeSource<'a, 'src> {
-    options: OperationTypePrinterOptions,
+    options: &'a OperationTypePrinterOptions,
     schema: &'a Schema<Cow<'src, str>, Pos>,
     fragment_definitions: HashMap<&'src str, &'a FragmentDefinition<'src>>,
 }
 
 impl<'a, 'src> SchemaTypeSource<'a, 'src> {
     pub fn new(
-        options: OperationTypePrinterOptions,
+        options: &'a OperationTypePrinterOptions,
         schema: &'a Schema<Cow<'src, str>, Pos>,
         operation: &'a OperationDocument<'src>,
     ) -> Self {
@@ -82,7 +82,7 @@ impl<'a, 'src> SchemaTypeSource<'a, 'src> {
 
     fn type_printer_context(&self) -> QueryTypePrinterContext<'_, 'src, Cow<'src, str>> {
         QueryTypePrinterContext {
-            options: &self.options,
+            options: self.options,
             schema: self.schema,
             fragment_definitions: &self.fragment_definitions,
         }
@@ -189,7 +189,7 @@ pub struct PerDefinitionTypeSource<'a, 'src, F> {
 
 impl<'a, 'src, F: Fn(&Pos) -> bool> PerDefinitionTypeSource<'a, 'src, F> {
     pub fn new(
-        options: OperationTypePrinterOptions,
+        options: &'a OperationTypePrinterOptions,
         schema: &'a Schema<Cow<'src, str>, Pos>,
         operation: &'a OperationDocument<'src>,
         use_fallback: F,
@@ -263,6 +263,43 @@ impl<F: Fn(&Pos) -> bool> OperationTypeSource for PerDefinitionTypeSource<'_, '_
         Ok(self.type_for(&fragment.position, || {
             self.schema.fragment_tree_type(fragment)
         }))
+    }
+}
+
+/// Type source in which all types are `any`.
+///
+/// Unlike `SchemaTypeSource`, this does not require the document to be valid
+/// against the schema. This is useful for providing the same set of exports as usual
+/// for documents that have errors.
+pub struct AnyTypeSource;
+
+impl OperationTypeSource for AnyTypeSource {
+    type Error = Infallible;
+
+    fn uses_schema_types(&self) -> bool {
+        false
+    }
+
+    fn operation_result_type(
+        &self,
+        _operation: &OperationDefinition,
+    ) -> Result<TSType, Self::Error> {
+        Ok(TSType::Any)
+    }
+
+    fn operation_variables_type(
+        &self,
+        _operation: &OperationDefinition,
+    ) -> Result<TSType, Self::Error> {
+        Ok(TSType::Any)
+    }
+
+    fn fragment_type(&self, _fragment: &FragmentDefinition) -> Result<TSType, Self::Error> {
+        Ok(TSType::Any)
+    }
+
+    fn fragment_tree_type(&self, _fragment: &FragmentDefinition) -> Result<TSType, Self::Error> {
+        Ok(TSType::Any)
     }
 }
 

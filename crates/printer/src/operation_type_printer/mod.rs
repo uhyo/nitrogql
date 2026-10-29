@@ -7,17 +7,14 @@ use sourcemap_writer::SourceMapWriter;
 use crate::operation_base_printer::OperationPrinter;
 
 use self::{
-    error::{OperationTypePrinterError, OperationTypePrinterResult},
-    type_source::{PerDefinitionTypeSource, SchemaTypeSource},
+    error::OperationTypePrinterResult,
+    type_source::{OperationTypeSource, SchemaTypeSource},
     visitor::{OperationTypePrinterOptions, OperationTypePrinterVisitor},
 };
-
-pub use self::fallback::print_fallback_types_for_operation_document;
 
 mod branching;
 mod deep_merge;
 pub mod error;
-mod fallback;
 pub mod fragment_imports;
 mod selection_set_visitor;
 mod selection_tree;
@@ -37,31 +34,23 @@ pub fn print_types_for_operation_document(
     operation: &OperationDocument,
     writer: &mut impl SourceMapWriter,
 ) -> OperationTypePrinterResult<()> {
-    let base_options = options.base_options.clone();
-    let types = SchemaTypeSource::new(options.clone(), schema, operation);
-    let visitor = OperationTypePrinterVisitor::new(options, types);
-    let mut printer = OperationPrinter::new(base_options, visitor, writer);
-    printer.print_document(operation)
+    let types = SchemaTypeSource::new(&options, schema, operation);
+    print_types_with_source(&options, types, operation, writer)?;
+    Ok(())
 }
 
-/// Print a TypeScript module for given operation document, choosing between real types and `any`
-/// per definition.
+/// Print a TypeScript module for given operation document, with types from given type source.
 ///
-/// Definitions for which `use_fallback` returns true (given the position of the definition)
-/// get `any` types; the document does not need to be valid against the schema for them.
-/// Other definitions get types from the schema. If that fails, they get `any` types as well
-/// and the errors are returned.
-pub fn print_types_for_operation_document_with_fallback(
-    options: OperationTypePrinterOptions,
-    schema: &Schema<Cow<str>, Pos>,
+/// Returns the type source, so that the caller can take results collected in it.
+/// If the type source fails, the error is returned and the writer may contain partial output.
+pub fn print_types_with_source<T: OperationTypeSource>(
+    options: &OperationTypePrinterOptions,
+    types: T,
     operation: &OperationDocument,
-    use_fallback: impl Fn(&Pos) -> bool,
     writer: &mut impl SourceMapWriter,
-) -> Vec<OperationTypePrinterError> {
-    let base_options = options.base_options.clone();
-    let types = PerDefinitionTypeSource::new(options.clone(), schema, operation, use_fallback);
+) -> Result<T, T::Error> {
     let visitor = OperationTypePrinterVisitor::new(options, types);
-    let mut printer = OperationPrinter::new(base_options, visitor, writer);
-    let Ok(()) = printer.print_document(operation);
-    printer.into_visitor().into_types().into_errors()
+    let mut printer = OperationPrinter::new(options.base_options.clone(), visitor, writer);
+    printer.print_document(operation)?;
+    Ok(printer.into_visitor().into_types())
 }

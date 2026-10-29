@@ -97,15 +97,15 @@ impl OperationTypePrinterOptions {
 
 /// Visitor that prints declarations of operations and fragments.
 /// Their types are provided by the type source.
-pub struct OperationTypePrinterVisitor<T> {
-    options: OperationTypePrinterOptions,
+pub struct OperationTypePrinterVisitor<'a, T> {
+    options: &'a OperationTypePrinterOptions,
     types: T,
     /// Selection trees of printed fragments, exported at the end of the module.
     fragment_trees: RefCell<Vec<(String, TSType)>>,
 }
 
-impl<T: OperationTypeSource> OperationTypePrinterVisitor<T> {
-    pub fn new(options: OperationTypePrinterOptions, types: T) -> Self {
+impl<'a, T: OperationTypeSource> OperationTypePrinterVisitor<'a, T> {
+    pub fn new(options: &'a OperationTypePrinterOptions, types: T) -> Self {
         Self {
             options,
             types,
@@ -119,7 +119,7 @@ impl<T: OperationTypeSource> OperationTypePrinterVisitor<T> {
     }
 }
 
-impl<T: OperationTypeSource> OperationPrinterVisitor for OperationTypePrinterVisitor<T> {
+impl<T: OperationTypeSource> OperationPrinterVisitor for OperationTypePrinterVisitor<'_, T> {
     type Error = T::Error;
     fn print_header(&self, writer: &mut impl SourceMapWriter) {
         writeln!(

@@ -9,9 +9,10 @@ use nitrogql_checker::{OperationCheckContext, check_operation_document};
 use nitrogql_error::{ErrorCode, PositionedError};
 use nitrogql_operation_set::OperationSet;
 use nitrogql_printer::{
-    OperationTypePrinterOptions, SchemaTypePrinter, SchemaTypePrinterOptions,
+    AnyTypeSource, OperationTypePrinterOptions, PerDefinitionTypeSource, SchemaTypePrinter,
+    SchemaTypePrinterOptions,
     fragment_imports::{fragment_imports_of, is_imported_fragment},
-    print_fallback_types_for_operation_document, print_types_for_operation_document_with_fallback,
+    print_types_with_source,
 };
 use nitrogql_utils::{normalize_path, relative_path};
 use sourcemap_writer::{RecordedSpan, SpanWriter};
@@ -172,7 +173,8 @@ fn transform_operation_file(
             return TransformResult::new(EMPTY_OPERATION_MODULE, vec![], diagnostics);
         };
         let mut writer = SpanWriter::new();
-        print_fallback_types_for_operation_document(options(), file.document, &mut writer);
+        let Ok(AnyTypeSource) =
+            print_types_with_source(&options(), AnyTypeSource, file.document, &mut writer);
         printed_result(writer, file_index, &index, encoding, diagnostics)
     };
     let diagnose =
@@ -226,13 +228,11 @@ fn transform_operation_file(
     options.schema_source = schema_source;
 
     let mut writer = SpanWriter::new();
-    let printer_errors = print_types_for_operation_document_with_fallback(
-        options,
-        &schema.type_system,
-        document,
-        |pos| fallback.contains(pos),
-        &mut writer,
-    );
+    let types = PerDefinitionTypeSource::new(&options, &schema.type_system, document, |pos| {
+        fallback.contains(pos)
+    });
+    let Ok(types) = print_types_with_source(&options, types, document, &mut writer);
+    let printer_errors = types.into_errors();
     // Printer errors mean that the checker has missed an error.
     // The same error is reported for every definition that spreads the erroneous fragment.
     let mut seen = HashSet::new();

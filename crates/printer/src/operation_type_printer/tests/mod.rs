@@ -1061,7 +1061,7 @@ mod per_definition_fallback {
     use nitrogql_ast::{base::Pos, operation::ExecutableDefinition};
 
     use super::*;
-    use crate::print_types_for_operation_document_with_fallback;
+    use crate::{PerDefinitionTypeSource, print_types_with_source};
 
     /// Prints given document with definitions of given names falling back to `any`.
     fn print(source: &str, fallback_names: &[&str]) -> (String, Vec<String>) {
@@ -1084,14 +1084,13 @@ mod per_definition_fallback {
         let mut writer = JustWriter::new(&mut result);
         let schema = type_system();
         let schema = ast_to_type_system(&schema);
-        let errors = print_types_for_operation_document_with_fallback(
-            OperationTypePrinterOptions::default(),
-            &schema,
-            &doc,
-            |pos| fallback_positions.contains(pos),
-            &mut writer,
-        );
-        let errors = errors
+        let options = OperationTypePrinterOptions::default();
+        let types = PerDefinitionTypeSource::new(&options, &schema, &doc, |pos| {
+            fallback_positions.contains(pos)
+        });
+        let Ok(types) = print_types_with_source(&options, types, &doc, &mut writer);
+        let errors = types
+            .into_errors()
             .into_iter()
             .map(|err| {
                 format!(
@@ -1146,6 +1145,70 @@ mod per_definition_fallback {
             errors,
             vec!["2:11: Cannot merge selections of field 'a' that have different shapes"]
         );
+    }
+}
+
+/// All types are `any` with `AnyTypeSource`.
+mod any_type_source {
+    use super::*;
+    use crate::{AnyTypeSource, print_types_with_source};
+
+    fn print(source: &str, options: OperationTypePrinterOptions) -> String {
+        let doc = parse_operation_document(source, 0).unwrap();
+        let (doc, _) = resolve_operation_extensions(doc).unwrap();
+        let mut result = String::new();
+        let mut writer = JustWriter::new(&mut result);
+        let Ok(AnyTypeSource) = print_types_with_source(&options, AnyTypeSource, &doc, &mut writer);
+        result
+    }
+
+    #[test]
+    fn fallback_types() {
+        // Fields do not need to exist in any schema.
+        let printed = print(
+            "
+            query GetMe($id: ID!) {
+                me(id: $id) { unknownField }
+            }
+            fragment F on UnknownType {
+                foo
+            }
+            ",
+            OperationTypePrinterOptions::default(),
+        );
+        assert_snapshot!(printed);
+    }
+
+    #[test]
+    fn fallback_types_with_descriptions() {
+        // Descriptions are printed in the same way as the schema-based printer.
+        let printed = print(
+            r#"
+            "Get the current user"
+            query GetMe { me { unknownField } }
+            "User data"
+            fragment F on UnknownType { foo }
+            "#,
+            OperationTypePrinterOptions::default(),
+        );
+        assert_snapshot!(printed);
+    }
+
+    #[test]
+    fn fallback_types_named_exports() {
+        let mut options = OperationTypePrinterOptions::default();
+        options.base_options.default_export_for_operation = false;
+        options.base_options.named_export_for_operation = true;
+        options.base_options.export_result_type = true;
+        options.base_options.export_input_type = true;
+        let printed = print(
+            "
+            query A { a }
+            mutation B { b }
+            ",
+            options,
+        );
+        assert_snapshot!(printed);
     }
 }
 
