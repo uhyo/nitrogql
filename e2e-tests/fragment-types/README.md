@@ -18,46 +18,71 @@ unrendered form:
 import type * as __Nitrogql from "@nitrogql/cli/fragment-types";
 import type * as __NitrogqlImport0 from "./userFields.graphql";
 
-type GetMeResult = __Nitrogql.Render<
-  __Nitrogql.Branch<
-    "Query",
-    Schema.__OperationOutput.Query,
+type GetMeResult = __Nitrogql.Render<{
+  Query: __Nitrogql.Branch<
+    {},
     {
-      me: __Nitrogql.MergeFragment<
-        __Nitrogql.Branch<
-          "User",
-          Schema.__OperationOutput.User,
+      me: {
+        User: __Nitrogql.MergeLeaves<
+          __Nitrogql.At<
+            __Nitrogql.Fragment<
+              __NitrogqlImport0.__NitrogqlFragments,
+              "UserFields"
+            >,
+            "User"
+          >,
           { id: Schema.__OperationOutput.ID },
-          {}
-        >,
-        __Nitrogql.Fragment<__NitrogqlImport0.__NitrogqlFragments, "UserFields">
-      >;
+          never,
+          never
+        >;
+      };
     },
-    {}
-  >
->;
+    never,
+    never
+  >;
+}>;
 ```
 
+An unrendered selection is a record that maps names of concrete object types to `Branch` types,
+or to unions of them when branches of a type are selected under different values of variables.
+`Branch<Leaves, Objects, Omitted, Aliased, Vars>` has the fields of one branch, classified by
+the printer:
+
+- `Leaves`: fields of scalar and enum types (aliased or not). Fields with the same response key
+  have the same type, so leaves are merged by intersecting them.
+- `Objects`: fields of object types, whose values are unrendered selections, possibly in lists
+  or nullable. These are the only fields that are merged deeply.
+- `Omitted`: the union of names of fields omitted by `@skip`/`@include`.
+- `Aliased`: the union of names of aliased fields, which are typed differently when omitted.
+- `Vars`: the union of values of variables the branch is selected under, such as
+  `"flag=true" | "other=false"`.
+
 With `export_fragment_trees`, each module exports `__NitrogqlFragments`, which maps names of
-its fragments to their selection trees: unions of `Branch` types for each concrete object
-type and combination of variable values. Branches selected under values of variables carry
-them as a fifth type argument, such as `{ flag: true }`. Wildcard imports look fragments up in all wildcard
-imported modules; `Fragment` gives `any` for fragments that a module does not provide.
+its fragments to their selections. Wildcard imports look fragments up in all wildcard imported
+modules; `Fragment` gives `any` for fragments that a module does not provide.
 
 The utility types are in `packages/cli/fragment-types.d.ts`, shipped with `@nitrogql/cli`
-so that they always match the printer:
+so that they always match the printer. The printer merges fragments into each branch of a
+selection with the simplest one that applies, as it knows the branch:
 
-- `MergeFragment` merges a fragment's fields into branches of the same object type, deeply.
-  Branches whose values of a shared variable differ are not merged, as they cannot happen
-  together.
-- `CombineFragments` combines the fragments spread in one selection. The printer combines them
-  as a balanced tree, because TypeScript limits the depth of nested instantiations (TS2589).
+- `At` gives the branches of one object type in a fragment's selection.
+- `Spread` merges fragments into a branch without fields of its own: the result is the
+  fragments' branches.
+- `MergeLeaves` merges fragments into a branch that has only leaf fields.
+- `MergeFragment` merges fragments into any other branch. Branches whose values of a shared
+  variable differ are not merged, as they cannot happen together.
+- `CombineFragments` combines the branches of fragments spread in one selection. The printer
+  combines them as a balanced tree, because TypeScript limits the depth of nested
+  instantiations (TS2589).
 - `SkipFragment` handles `@skip`/`@include` on spreads.
-- `Render` turns the result into the same types the expanding printer prints.
+- `Render` turns the result into types identical to the ones the expanding printer prints.
 
-Fields omitted by `@skip`/`@include` are printed as `key?: never` in unrendered selections too.
-Merging maps over the keys of both sides, which keeps a field optional only if both omit it,
-and rendering is a single homomorphic mapped type that keeps the modifiers.
+Expanded types are built by `__SelectionSet`, which picks fields from the schema type, so their
+fields are in the order of the schema. `Render` flattens the fields of each branch instead,
+which gives identical types (the order of fields does not matter to type relations), but hovers
+show leaves before object fields. Omitted fields are typed as `__SelectionSet` types them:
+unaliased ones are `undefined` (`never` with `exactOptionalPropertyTypes`), and aliased ones are
+optional `never`.
 
 ## Running
 
@@ -75,73 +100,83 @@ Cases are defined in `crates/printer/src/operation_type_printer/tests/fragment_r
 Each case is printed with all fragments expanded into one module (`expanded.ts`), and with
 fragments in separate modules (`main.ts` and others), imported with specific and wildcard
 imports. `check.ts` asserts that the types are identical, using the strict `Equal` check.
+In the small cases, each module imports all other modules, so that lookups through several
+wildcard imports are covered. The benchmark cases import only the modules they spread
+fragments of, as real modules do.
 
 ## Findings
 
-All 37 cases pass with TypeScript 7.1.0-beta.
+All 38 cases pass with TypeScript 7.1.0-beta, also with `exactOptionalPropertyTypes`.
 
 - **Identical types** (all cases): fragments on interfaces spread on object types and the other
   way around, nested and list merging, nullable lists, inline fragments inside fragments,
   `__typename`, aliases, chains of fragments across modules, local fragments that spread
   imported ones, `@skip`/`@include` on spreads (constant and variable), variables used inside
   fragments, the same variable used in the operation and in fragments (directly, nested, in
-  chains of fragments and on skipped spreads), and the stress and colocation benchmarks.
+  chains of fragments and on skipped spreads), and the benchmark cases.
 - **Cost**: resolving the types takes more type instantiations. See below.
 
 ## Type checking cost
 
-`bench.sh` generates a colocation-style project: 200 operations, each spreading two
-`UserCard` fragments, each of which spreads two `PostItem` fragments (600 fragment modules).
-Every result type is fully resolved, so this is the worst case: in real code, TypeScript only
-resolves what is used.
+`bench.sh` generates three projects and fully resolves every result type, so this is the worst
+case: in real code, TypeScript only resolves what is used.
 
-| Helpers                    | Instantiations | Check time (TypeScript 7) |
-| -------------------------- | -------------- | ------------------------- |
-| Expanded (current printer) | 145k           | 0.16–0.19s                |
-| First version              | 788k           | 1.1–1.9s                  |
-| Current version            | 477k           | 0.74s                     |
+- `colocation`: 200 operations, each spreading two `UserCard` fragments, each of which spreads
+  two `PostItem` fragments (600 fragment modules).
+- `colocation_variables`: the same, where the operations and both kinds of fragments include
+  fields by the same `$flag`.
+- `wide`: a schema shaped like larger ones, where object types have 30 fields and an interface
+  has 20 implementations. 200 operations select from both and spread a fragment on the object
+  type and two fragments on the interface.
 
-Measured in the same run. Timings on this machine vary between runs by up to 2×; another run
-measured 0.33s expanded against 1.1s referred. Instantiations are stable.
+Instantiations and check time with TypeScript 7.1, measured in the same session:
 
-What made the difference:
+| Case                   | Expanded     | Before (ea4f21c) | Current        |
+| ---------------------- | ------------ | ---------------- | -------------- |
+| `colocation`           | 145k / 0.12s | 579k / 0.36s     | 287k / 0.20s   |
+| `colocation_variables` | 340k / 0.25s | 1,148k / 0.68s   | 636k / 0.41s   |
+| `wide`                 | 536k / 0.44s | 3,694k / 1.9s    | 1,271k / 0.64s |
 
-- Omitted fields as `key?: never` instead of a marker type, so that rendering does not need
-  key remapping (`as` clauses) or a check per field, and not checking for `any` while
-  rendering, as `any` absorbs the union anyway: −32%.
-- Merging fields with a plain intersection when the two sides share no keys, and finding the
-  matching branches once instead of twice: −10%.
+Timings vary between runs by about 10%; instantiations are stable. Checking only the modules,
+without resolving the result types, cost 0.44s before and 0.34s now for 1,000 colocation
+operations (0.19s expanded). In `examples/nextjs`, `scripts/bench-fragments.mjs` measured
+253k instantiations before and 153k now, against 257k with fragments inlined.
 
-Tried without gain: an intersection fast path for overlaps on leaves only (checking costs more
-than it saves).
+What made the difference, measured with 1,000 operations:
 
-### Variables
+- Rendering by flattening fields instead of with `__SelectionSet`, which visits every field of
+  the schema type and costs more for larger types: about −20% time. The schema type is no longer
+  needed in branches, which saved another 10% of instantiations.
+- Selections as records keyed by object types, instead of unions of branches tagged with their
+  type names. Merging looked matching branches up with `Extract`, which compares each branch of
+  one side with each of the other, so selections of abstract types cost quadratically in the
+  number of their implementations: in a synthetic test, going from 5 to 50 implementations
+  multiplied the cost by 23, against 10 now (and 11 for expanded types). The printer also looks
+  up the branches of each object type in fragments (`At`), so that local selections are not
+  merged as a whole: −15% for `colocation`.
+- Values of variables as unions of string literals (`"flag=true"`) instead of objects. Branches
+  that conflict are found by intersecting the values with negated ones (computed once for each
+  combination), instead of relating them to `Partial<Vars> & { [name: string]: boolean }`:
+  −19% for `colocation_variables`.
+- Classifying fields when printing and merging into branches with only leaves with `Spread` and
+  `MergeLeaves`, which skip merging the parts that the branch does not have: −5% to −20% (most
+  when only checking the modules).
 
-`bench.sh` also runs `colocation_variables`, the same project where the operations and both
-kinds of fragments include fields by the same `$flag`. Merging only branches that agree on
-shared variables (#128) measured as follows, in the same run:
+Tried without gain: checking `any` with `unknown extends A | B` in one condition (building the
+union costs more than the condition it saves), classifying aliased fields separately, and
+resolving list elements with `T[number]` instead of `infer`.
 
-| Case                   | Expanded | Ignoring variables (wider) | Matching variables |
-| ---------------------- | -------- | -------------------------- | ------------------ |
-| `colocation`           | 179k     | 539k                       | 542k               |
-| `colocation_variables` | 374k     | 2,356k                     | 1,051k             |
-
-Without variables, the previous helpers measured 528k, so carrying variables costs +2.7%
-(about half of it from intersecting the variables of merged branches). With shared variables, matching them halves the cost, as
-combinations that cannot happen are no longer built.
-
-The pattern for agreeing branches is `{ " $vars": Partial<Vars> & { [name: string]: boolean } }`.
-Without the index signature, the pattern is a weak type, which rejects branches that share no
-variables with it. Tried without gain: excluding branches that match a union of conflicting
-values (552k and 1,113k), and skipping the intersection when one side has no variables.
+Before #128, merging ignored variables, which built combinations that cannot happen and cost
+twice as much for `colocation_variables`.
 
 Merging fragments one at a time nests instantiations, and 50 spreads in one selection
 failed with TS2589. Combining them as a balanced tree removes that limit (tested up to 120).
 
 ## Not covered
 
-- A fragment with errors exports `any` as its tree, which makes branches it is merged into
-  `any`. This is not compared with expanded types, which make the whole definition `any`.
+- A fragment with errors exports `any` as its selection, which makes branches it is merged into
+  `any`. This is not compared with expanded types, which make the whole definition `any`;
+  `any.ts` checks that each utility gives `any` for such branches instead.
 - Fragments that a file spreads without importing them, relying on an imported file importing
   them (`nitrogql check` resolves imports transitively): the content mapper reports them as
   unknown fragments, or types them as `any` when the file has wildcard imports.

@@ -33,16 +33,35 @@ pub fn render_type(unrendered: TSType) -> TSType {
     TSType::TypeFunc(Box::new(utility("Render")), vec![unrendered])
 }
 
-/// Generate the unrendered type of given branches, which is a union of `Branch` types.
+/// Generate the unrendered type of given branches, which is a record that maps names of object
+/// types to `Branch` types (a union of them, if branches of a type differ in variable values).
 /// Other modules merge this type into their selections.
 pub fn generate_unrendered_branches_type<'src, S: Text<'src>>(
     context: &GenerateSelectionTreeTypeContext,
     branches: &[SelectionTreeBranch<S>],
 ) -> TSType {
-    ts_union(
-        branches
-            .iter()
-            .map(|branch| generate_unrendered_branch_type(context, branch)),
+    let mut type_names: Vec<&str> = vec![];
+    for branch in branches {
+        if !type_names.contains(&branch.type_name.as_str()) {
+            type_names.push(&branch.type_name);
+        }
+    }
+    TSType::Object(
+        type_names
+            .into_iter()
+            .map(|type_name| ObjectField {
+                key: type_name.into(),
+                r#type: ts_union(
+                    branches
+                        .iter()
+                        .filter(|branch| branch.type_name == type_name)
+                        .map(|branch| generate_unrendered_branch_type(context, branch)),
+                ),
+                description: None,
+                optional: false,
+                readonly: false,
+            })
+            .collect(),
     )
 }
 
@@ -59,59 +78,88 @@ fn generate_unrendered_branch_type<'src, S: Text<'src>>(
     context: &GenerateSelectionTreeTypeContext,
     branch: &SelectionTreeBranch<S>,
 ) -> TSType {
-    let fields = |fields: &[SelectionTreeField<S>]| {
-        fields_to_object(context, fields, &branch.type_name, |tree| {
-            generate_unrendered_type(context, tree)
-        })
+    // Fields are classified by kind, so that merging does not inspect them.
+    // Aliased fields are typed the same as unaliased ones, except when omitted.
+    let all_fields = || branch.unaliased_fields.iter().chain(&branch.aliased_fields);
+    let fields = |is_kind: fn(&SelectionTreeField<S>) -> bool| {
+        fields_to_object(
+            context,
+            &all_fields()
+                .filter(|field| is_kind(field))
+                .collect::<Vec<_>>(),
+            &branch.type_name,
+            |tree| generate_unrendered_type(context, tree),
+        )
     };
-    let mut branch_args = vec![
-        TSType::StringLiteral(branch.type_name.clone()),
-        operation_output_type(context, branch.type_name.clone()),
-        fields(&branch.unaliased_fields),
-        fields(&branch.aliased_fields),
-    ];
-    // Values of variables, so that merging skips branches computed with other values.
-    if !branch.variables.is_empty() {
-        branch_args.push(TSType::Object(
-            branch
-                .variables
-                .iter()
-                .map(|(name, value)| ObjectField {
-                    key: name.clone().into(),
-                    r#type: TSType::Raw(value.to_string()),
-                    description: None,
-                    optional: false,
-                    readonly: false,
-                })
-                .collect(),
-        ));
-    }
-    let branch_type = TSType::TypeFunc(Box::new(utility("Branch")), branch_args);
-    let trees = branch
-        .fragment_refs
-        .iter()
-        .map(|fragment_ref| {
-            let tree = TSType::Raw(imported_fragment_tree(
-                context.fragment_imports,
-                &fragment_ref.name.to_string(),
-            ));
-            if fragment_ref.skipped {
-                TSType::TypeFunc(Box::new(utility("SkipFragment")), vec![tree])
-            } else {
-                tree
-            }
-        })
-        .collect::<Vec<_>>();
-    match combine_fragment_trees(trees) {
-        Some(fragments) => TSType::TypeFunc(
-            Box::new(utility("MergeFragment")),
-            vec![branch_type, fragments],
+    let names = |fields: &mut dyn Iterator<Item = &SelectionTreeField<S>>| {
+        ts_union(fields.map(|field| TSType::StringLiteral(field.name().to_string())))
+    };
+    let leaves = fields(|field| matches!(field, SelectionTreeField::Leaf(_)));
+    let objects = fields(|field| matches!(field, SelectionTreeField::Object(_)));
+    let omitted =
+        names(&mut all_fields().filter(|field| matches!(field, SelectionTreeField::Empty(_))));
+    let aliased = names(&mut branch.aliased_fields.iter());
+
+    // Branches of this object type in the spread fragments.
+    let type_name = TSType::StringLiteral(branch.type_name.clone());
+    let fragments = combine_fragment_trees(
+        branch
+            .fragment_refs
+            .iter()
+            .map(|fragment_ref| {
+                let tree = TSType::Raw(imported_fragment_tree(
+                    context.fragment_imports,
+                    &fragment_ref.name.to_string(),
+                ));
+                let branches =
+                    TSType::TypeFunc(Box::new(utility("At")), vec![tree, type_name.clone()]);
+                if fragment_ref.skipped {
+                    TSType::TypeFunc(Box::new(utility("SkipFragment")), vec![branches])
+                } else {
+                    branches
+                }
+            })
+            .collect(),
+    );
+    // Fragments are merged into branches that have only leaves with simpler utilities,
+    // as parts that the branch does not have need not be merged.
+    let only_leaves = matches!(&objects, TSType::Object(fields) if fields.is_empty())
+        && branch.variables.is_empty();
+    let is_empty = only_leaves
+        && matches!(&leaves, TSType::Object(fields) if fields.is_empty())
+        && omitted.is_never();
+    match fragments {
+        Some(fragments) if is_empty => {
+            TSType::TypeFunc(Box::new(utility("Spread")), vec![fragments])
+        }
+        Some(fragments) if only_leaves => TSType::TypeFunc(
+            Box::new(utility("MergeLeaves")),
+            vec![fragments, leaves, omitted, aliased],
         ),
-        None => branch_type,
+        fragments => {
+            let mut branch_args = vec![leaves, objects, omitted, aliased];
+            // Values of variables, so that merging skips branches computed with other values.
+            if !branch.variables.is_empty() {
+                branch_args.push(ts_union(
+                    branch
+                        .variables
+                        .iter()
+                        .map(|(name, value)| TSType::StringLiteral(format!("{name}={value}"))),
+                ));
+            }
+            let branch_type = TSType::TypeFunc(Box::new(utility("Branch")), branch_args);
+            match fragments {
+                Some(fragments) => TSType::TypeFunc(
+                    Box::new(utility("MergeFragment")),
+                    vec![branch_type, fragments],
+                ),
+                None => branch_type,
+            }
+        }
     }
 }
 
-/// Combines selection trees of fragments into one.
+/// Combines branches of fragments into one.
 /// They are combined as a balanced tree, as TypeScript limits the depth of nested instantiations.
 fn combine_fragment_trees(mut trees: Vec<TSType>) -> Option<TSType> {
     while trees.len() > 1 {
@@ -157,9 +205,12 @@ fn generate_selection_set_type<'src, S: Text<'src>>(
         "__SelectionSet".into(),
     );
     let fields = |fields: &[SelectionTreeField<S>]| {
-        fields_to_object(context, fields, &branch.type_name, |tree| {
-            generate_selection_tree_type_impl(context, tree)
-        })
+        fields_to_object(
+            context,
+            &fields.iter().collect::<Vec<_>>(),
+            &branch.type_name,
+            |tree| generate_selection_tree_type_impl(context, tree),
+        )
     };
     TSType::TypeFunc(
         Box::new(selection_set_utility),
@@ -195,7 +246,7 @@ fn wrap_nullability<S>(
 /// Object type of given selected fields, with `object` giving types of object fields.
 fn fields_to_object<'src, S: Text<'src>>(
     context: &GenerateSelectionTreeTypeContext,
-    fields: &[SelectionTreeField<S>],
+    fields: &[&SelectionTreeField<S>],
     parent_type_name: &str,
     object: impl Fn(&SelectionTree<S>) -> TSType,
 ) -> TSType {

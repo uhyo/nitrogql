@@ -14,9 +14,11 @@ export type UserName = Schema.__SelectionSet<Schema.__OperationOutput.User, {
 export declare const UserName: TypedDocumentNode<UserName, never>;
 
 export type __NitrogqlFragments = {
-  UserName: __Nitrogql.Branch<"User", Schema.__OperationOutput.User, {
-    name: Schema.__OperationOutput.String;
-  }, {}>;
+  UserName: {
+    User: __Nitrogql.Branch<{
+      name: Schema.__OperationOutput.String;
+    }, {}, never, never>;
+  };
 };
 // mapping: "UserName" -> "UserName" (Verbatim)
 // mapping: "UserName" -> "UserName" (Verbatim)
