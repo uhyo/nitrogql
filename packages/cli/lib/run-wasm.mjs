@@ -31,10 +31,10 @@ export async function runWasm({ args, env, preopens, contentMapper }) {
     // The same wasm module is used in every mode, so this namespace must
     // always be provided.
     "nitrogql_helper/content_mapper": contentMapperHelper?.namespace ?? {
-      read_message() {
+      read_input() {
         throw new Error("Content mapper is not available in this mode");
       },
-      write_message() {
+      write_output() {
         throw new Error("Content mapper is not available in this mode");
       },
     },

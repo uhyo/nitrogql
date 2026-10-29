@@ -1,46 +1,18 @@
 use std::{io, path::Path};
 
-#[cfg(not(target_os = "wasi"))]
-use std::{
-    cell::RefCell,
-    io::{BufRead, BufReader, Write},
-    process::{Child, Command, Stdio},
-};
-
-#[cfg(not(target_os = "wasi"))]
-use once_cell::sync::Lazy;
-
-#[cfg(not(target_os = "wasi"))]
-thread_local! {
-    // The command server runs commands in a worker thread and decides
-    // how to run TypeScript files (Node.js' type stripping or
-    // @nitrogql/esbuild-register), just like the wasm build.
-    static NODE_COMMAND_SERVER: Lazy<RefCell<Child>> = Lazy::new(|| {
-        let child = Command::new("node")
-            .arg("--no-warnings")
-            .arg("--input-type=module")
-            .arg("--eval")
-            .arg("import \"@nitrogql/core/commandStdioServer.js\";")
-            .stdin(Stdio::piped())
-            .stdout(Stdio::piped())
-            .stderr(Stdio::inherit())
-            .spawn()
-            .unwrap();
-        RefCell::new(child)
-    });
-}
-
 /// While a session is alive, code run with `run_node` shares one Node.js worker.
 ///
-/// The content mapper runs each code in a new worker by default, so that changed files
-/// are loaded again. Loading a project in a session starts only one worker for it.
-/// The native build always shares one worker, so a session does nothing there.
+/// Otherwise, each code runs in a new worker, so that changed files are loaded again.
+/// The content mapper loads a project in a session, and the CLI runs in one session.
+/// Sessions can be nested; the session lasts until the outermost one ends.
 pub struct NodeSession(());
 
 impl NodeSession {
     pub fn begin() -> Self {
         #[cfg(target_os = "wasi")]
         crate::execute::begin_node_session();
+        #[cfg(not(target_os = "wasi"))]
+        native::begin_session();
         NodeSession(())
     }
 }
@@ -49,6 +21,8 @@ impl Drop for NodeSession {
     fn drop(&mut self) {
         #[cfg(target_os = "wasi")]
         crate::execute::end_node_session();
+        #[cfg(not(target_os = "wasi"))]
+        native::end_session();
     }
 }
 
@@ -57,35 +31,7 @@ impl Drop for NodeSession {
 pub async fn run_node(code: &str) -> io::Result<String> {
     #[cfg(not(target_os = "wasi"))]
     {
-        #[derive(serde::Deserialize)]
-        #[serde(untagged)]
-        enum RunNodeResult {
-            Result { result: serde_json::Value },
-            Error { error: serde_json::Value },
-        }
-
-        NODE_COMMAND_SERVER.with(|server| {
-            let mut server = server.borrow_mut();
-            let mut stdin = server.stdin.as_mut().expect("failed to open stdin");
-            serde_json::to_writer(&mut stdin, &code)?;
-            writeln!(&mut stdin)?;
-            // read one line from stdout
-            let mut stdout = server.stdout.as_mut().expect("failed to open stdout");
-            let mut reader = BufReader::new(&mut stdout);
-            let mut result = String::new();
-            reader.read_line(&mut result)?;
-            let result: RunNodeResult = serde_json::from_str(&result)?;
-            match result {
-                RunNodeResult::Result { result } => {
-                    let result = serde_json::to_string(&result)?;
-                    Ok(result)
-                }
-                RunNodeResult::Error { error } => {
-                    let error = serde_json::to_string(&error)?;
-                    Err(io::Error::other(error))
-                }
-            }
-        })
+        native::run_node(code)
     }
     #[cfg(target_os = "wasi")]
     {
@@ -93,6 +39,121 @@ pub async fn run_node(code: &str) -> io::Result<String> {
         execute_js(code)
             .await
             .map_err(|err| io::Error::other(format!("Failed to execute config file: {}", err)))
+    }
+}
+
+/// Node.js command server for the native build.
+#[cfg(not(target_os = "wasi"))]
+mod native {
+    use std::{
+        cell::{Cell, RefCell},
+        io::{self, BufRead, BufReader, Write},
+        process::{Child, ChildStdin, ChildStdout, Command, Stdio},
+    };
+
+    use serde_json::json;
+
+    /// Running command server.
+    struct Server {
+        _child: Child,
+        stdin: ChildStdin,
+        stdout: BufReader<ChildStdout>,
+    }
+
+    thread_local! {
+        /// Started by the first code to run.
+        static SERVER: RefCell<Option<Server>> = const { RefCell::new(None) };
+        /// Depth of nested sessions. The server only sees the outermost one.
+        static SESSION_DEPTH: Cell<usize> = const { Cell::new(0) };
+    }
+
+    impl Server {
+        /// Starts the command server.
+        /// It runs code in a worker thread and decides how to run TypeScript files
+        /// (Node.js' type stripping or @nitrogql/esbuild-register), just like the wasm build.
+        fn start() -> io::Result<Self> {
+            let mut child = Command::new("node")
+                .arg("--no-warnings")
+                .arg("--input-type=module")
+                .arg("--eval")
+                .arg("import \"@nitrogql/core/commandStdioServer.js\";")
+                .stdin(Stdio::piped())
+                .stdout(Stdio::piped())
+                .stderr(Stdio::inherit())
+                .spawn()?;
+            let stdin = child.stdin.take().expect("stdin is piped");
+            let stdout = BufReader::new(child.stdout.take().expect("stdout is piped"));
+            let mut server = Server {
+                _child: child,
+                stdin,
+                stdout,
+            };
+            if SESSION_DEPTH.get() > 0 {
+                server.send(&json!({ "session": "begin" }))?;
+            }
+            Ok(server)
+        }
+
+        /// Sends one line of JSON.
+        fn send(&mut self, message: &serde_json::Value) -> io::Result<()> {
+            serde_json::to_writer(&mut self.stdin, message)?;
+            writeln!(&mut self.stdin)?;
+            self.stdin.flush()
+        }
+    }
+
+    pub fn begin_session() {
+        let depth = SESSION_DEPTH.get();
+        SESSION_DEPTH.set(depth + 1);
+        if depth == 0 {
+            notify_session("begin");
+        }
+    }
+
+    pub fn end_session() {
+        let depth = SESSION_DEPTH.get();
+        SESSION_DEPTH.set(depth.saturating_sub(1));
+        if depth == 1 {
+            notify_session("end");
+        }
+    }
+
+    /// Tells the server that a session has begun or ended.
+    /// A server that is not started yet learns it when started.
+    fn notify_session(session: &str) {
+        SERVER.with_borrow_mut(|server| {
+            if let Some(server) = server
+                && let Err(err) = server.send(&json!({ "session": session }))
+            {
+                log::error!("Failed to send session to Node.js: {err}");
+            }
+        });
+    }
+
+    pub fn run_node(code: &str) -> io::Result<String> {
+        #[derive(serde::Deserialize)]
+        #[serde(untagged)]
+        enum RunNodeResult {
+            Result { result: serde_json::Value },
+            Error { error: serde_json::Value },
+        }
+
+        SERVER.with_borrow_mut(|server| {
+            let server = match server {
+                Some(server) => server,
+                None => server.insert(Server::start()?),
+            };
+            server.send(&json!(code))?;
+            let mut result = String::new();
+            server.stdout.read_line(&mut result)?;
+            let result: RunNodeResult = serde_json::from_str(&result)?;
+            match result {
+                RunNodeResult::Result { result } => Ok(serde_json::to_string(&result)?),
+                RunNodeResult::Error { error } => {
+                    Err(io::Error::other(serde_json::to_string(&error)?))
+                }
+            }
+        })
     }
 }
 

@@ -32,7 +32,7 @@ use crate::{
     output::InputFileKind,
     schema_loader::{LoadSchemaJsResult, SchemaFileKind, load_schema_js, schema_kind_by_path},
 };
-use nitrogql_config_file::load_config;
+use nitrogql_config_file::{NodeSession, load_config};
 
 use nitrogql_error::{PositionedError, print_positioned_error};
 use nitrogql_operation_set::OperationSet;
@@ -99,7 +99,10 @@ pub async fn run_cli(args: impl IntoIterator<Item = String>) {
     let mut file_store = FileStore::new(&sources);
     let args = Args::parse_from(args);
     let output_format = args.output_format;
+    // Files do not change during a run, so one worker loads them all.
+    let session = NodeSession::begin();
     let res = run_cli_impl(args, &mut file_store, &mut output).await;
+    drop(session);
     let code = report_result(res, &file_store, &mut output);
 
     match output_format {

@@ -3,7 +3,7 @@ use runtime::Runtime;
 mod runtime;
 mod ticket;
 
-pub use ticket::{Ticket, issue_string_ticket};
+pub use ticket::{Ticket, issue_ticket};
 
 thread_local! {
     static RUNTIME: Runtime = Runtime::new();

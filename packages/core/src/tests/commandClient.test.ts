@@ -1,3 +1,6 @@
+import { spawn } from "node:child_process";
+import readline from "node:readline";
+import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 
 // Workers run the built server, so the built code is tested.
@@ -84,6 +87,38 @@ describe("shared command client", () => {
       expect(await client.run(count())).toBe(3);
     } finally {
       client.close();
+    }
+  });
+});
+
+describe("stdio command server", () => {
+  it("runs each command in a new worker unless it is in a session", async () => {
+    // The native build of nitrogql talks to this server.
+    const server = spawn(
+      process.execPath,
+      [fileURLToPath(new URL("command/stdioServer.js", dist))],
+      { stdio: ["pipe", "pipe", "inherit"] },
+    );
+    const lines = readline
+      .createInterface({ input: server.stdout })
+      [Symbol.asyncIterator]();
+    const send = (message: unknown) =>
+      server.stdin.write(JSON.stringify(message) + "\n");
+    const run = async (command: string) => {
+      send(command);
+      const { value } = await lines.next();
+      return JSON.parse(value);
+    };
+    try {
+      expect(await run(count())).toEqual({ result: 1 });
+      expect(await run(count())).toEqual({ result: 1 });
+      send({ session: "begin" });
+      expect(await run(count())).toEqual({ result: 1 });
+      expect(await run(count())).toEqual({ result: 2 });
+      send({ session: "end" });
+      expect(await run(count())).toEqual({ result: 1 });
+    } finally {
+      server.kill();
     }
   });
 });

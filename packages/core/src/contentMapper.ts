@@ -1,24 +1,26 @@
 /**
  * @file `nitrogql_helper/content_mapper` namespace.
  *
- * Handles the stdio connection to TypeScript for nitrogql's content mapper.
- * Messages are framed with `Content-Length` headers, as in the Language Server Protocol.
+ * Owns the stdio connection to TypeScript for nitrogql's content mapper,
+ * as the wasm module cannot wait for input without blocking Node.js.
+ * The wasm module receives input as is and frames messages itself;
+ * only the first message is read here, to answer `initialize` early.
  */
 
 import type { Readable, Writable } from "node:stream";
-import { readString, utf8Len, writeString } from "./memory.js";
+import { readBytes, writeBytes } from "./memory.js";
 
 export type NitrogqlContentMapperNamespace = {
   /**
-   * Requests the next message.
+   * Requests the next chunk of input.
    * Result is returned asynchronously via `execute_node_ret` function.
-   * Ticket fails when the connection is closed.
+   * Ticket fails when the input is closed.
    */
-  read_message(ticket_handle: number): void;
+  read_input(ticket_handle: number): void;
   /**
-   * Sends a message.
+   * Writes given bytes to the output.
    */
-  write_message(message_ptr: number, message_len: number): void;
+  write_output(data_ptr: number, data_len: number): void;
 };
 
 export type InitNitrogqlContentMapperOptions = {
@@ -52,68 +54,39 @@ export function initContentMapperNamespace({
 }: InitNitrogqlContentMapperOptions): InitNitrogqlContentMapperResult {
   let module: WebAssembly.Exports | undefined = undefined;
   /**
-   * Received messages that are not yet requested.
-   */
-  const messages: string[] = [];
-  /**
-   * Tickets waiting for a message.
-   */
-  const tickets: number[] = [];
-  /**
-   * Received data that does not form a complete message yet.
+   * Received input that is not yet requested.
    */
   let chunks: Buffer[] = [];
-  let bufferedLength = 0;
   /**
-   * Length of data needed for the next message, once its header has been parsed.
+   * Received input until the first message is complete.
+   * Undefined once the first message has been handled.
    */
-  let neededLength = 0;
+  let head: Buffer | undefined = Buffer.alloc(0);
+  /**
+   * Tickets waiting for input.
+   */
+  const tickets: number[] = [];
   let closed = false;
-  /**
-   * Whether an `initialize` request has been received.
-   */
-  let initializeReceived = false;
 
   input.on("data", (chunk: Buffer) => {
-    chunks.push(chunk);
-    bufferedLength += chunk.length;
-    // A large message arrives in many chunks.
-    // They are concatenated once, after the whole message has arrived.
-    if (bufferedLength < neededLength) {
-      return;
+    if (head === undefined) {
+      chunks.push(chunk);
+    } else {
+      head = Buffer.concat([head, chunk]);
+      const data = handleFirstMessage(head);
+      if (data === undefined) {
+        return;
+      }
+      chunks.push(data);
+      head = undefined;
     }
-    let buffer =
-      chunks.length === 1 ? chunks[0]! : Buffer.concat(chunks, bufferedLength);
-    neededLength = 0;
-    while (true) {
-      const headerEnd = buffer.indexOf(headerDelimiter);
-      if (headerEnd === -1) {
-        break;
-      }
-      const header = buffer.subarray(0, headerEnd).toString("ascii");
-      const match = /^Content-Length:\s*(\d+)\s*$/im.exec(header);
-      if (match === null) {
-        console.error("Missing Content-Length header");
-        buffer = buffer.subarray(headerEnd + headerDelimiter.length);
-        continue;
-      }
-      const messageStart = headerEnd + headerDelimiter.length;
-      const messageEnd = messageStart + Number(match[1]);
-      if (buffer.length < messageEnd) {
-        neededLength = messageEnd;
-        break;
-      }
-      const message = buffer
-        .subarray(messageStart, messageEnd)
-        .toString("utf8");
-      messages.push(initializeReceived ? message : answerInitialize(message));
-      buffer = buffer.subarray(messageEnd);
-    }
-    chunks = buffer.length > 0 ? [buffer] : [];
-    bufferedLength = buffer.length;
     flush();
   });
   input.on("end", () => {
+    if (head !== undefined && head.length > 0) {
+      chunks.push(head);
+    }
+    head = undefined;
     closed = true;
     flush();
     onClose();
@@ -121,33 +94,29 @@ export function initContentMapperNamespace({
 
   return {
     namespace: {
-      read_message,
-      write_message,
+      read_input,
+      write_output,
     },
     setWasmModule: (m) => {
       module = m;
     },
   };
 
-  function read_message(ticket_handle: number): void {
+  function read_input(ticket_handle: number): void {
     tickets.push(ticket_handle);
     // Deliver asynchronously, as the wasm module is not reentrant.
     setImmediate(flush);
   }
 
-  function write_message(message_ptr: number, message_len: number): void {
-    send(readString(message_ptr, message_len));
-  }
-
-  function send(message: string): void {
-    output.write(
-      `Content-Length: ${Buffer.byteLength(message, "utf8")}\r\n\r\n${message}`,
-    );
+  function write_output(data_ptr: number, data_len: number): void {
+    // Copied, as the memory is reused after this returns.
+    output.write(Buffer.from(readBytes(data_ptr, data_len)));
   }
 
   /**
-   * Answers an `initialize` request without waiting for the wasm module.
-   * Returns the message to pass to the wasm module.
+   * Answers the first message if it is an `initialize` request.
+   * Returns the input to pass to the wasm module,
+   * or undefined if the first message is not complete yet.
    *
    * TypeScript gives up on a content mapper that does not answer `initialize`
    * within 5 seconds, and loading the wasm module can take seconds on a busy
@@ -155,15 +124,44 @@ export function initContentMapperNamespace({
    * The request is still passed to the wasm module, with only the chosen
    * position encoding, so that it uses the same encoding. It is passed as a
    * notification, without its id, so that the wasm module does not respond.
-   * Requests that cannot be answered here are left to the wasm module as is,
+   * Messages that cannot be answered here are left to the wasm module as is,
    * which reports errors.
    */
-  function answerInitialize(message: string): string {
+  function handleFirstMessage(data: Buffer): Buffer | undefined {
+    const headerEnd = data.indexOf(headerDelimiter);
+    if (headerEnd === -1) {
+      return undefined;
+    }
+    const header = data.subarray(0, headerEnd).toString("ascii");
+    const match = /^Content-Length:\s*(\d+)\s*$/im.exec(header);
+    if (match === null) {
+      return data;
+    }
+    const messageStart = headerEnd + headerDelimiter.length;
+    const messageEnd = messageStart + Number(match[1]);
+    if (data.length < messageEnd) {
+      return undefined;
+    }
+    const notification = answerInitialize(
+      data.subarray(messageStart, messageEnd).toString("utf8"),
+    );
+    if (notification === undefined) {
+      return data;
+    }
+    return Buffer.concat([frame(notification), data.subarray(messageEnd)]);
+  }
+
+  /**
+   * Answers given message if it is an `initialize` request.
+   * Returns the notification to pass to the wasm module instead,
+   * or undefined if it is not answered.
+   */
+  function answerInitialize(message: string): string | undefined {
     let request: unknown;
     try {
       request = JSON.parse(message);
     } catch {
-      return message;
+      return undefined;
     }
     if (
       typeof request !== "object" ||
@@ -171,9 +169,8 @@ export function initContentMapperNamespace({
       !("method" in request) ||
       request.method !== "initialize"
     ) {
-      return message;
+      return undefined;
     }
-    initializeReceived = true;
     const { id, ...notification } = request as {
       id?: unknown;
       params?: unknown;
@@ -188,21 +185,23 @@ export function initContentMapperNamespace({
       !("positionEncodings" in params) ||
       !Array.isArray(params.positionEncodings)
     ) {
-      return message;
+      return undefined;
     }
     const offered: unknown[] = params.positionEncodings;
     const encoding = positionEncodings.find((encoding) =>
       offered.includes(encoding),
     );
     if (encoding === undefined) {
-      return message;
+      return undefined;
     }
-    send(
-      JSON.stringify({
-        jsonrpc: "2.0",
-        id,
-        result: { positionEncoding: encoding, diagnosticSource: "nitrogql" },
-      }),
+    output.write(
+      frame(
+        JSON.stringify({
+          jsonrpc: "2.0",
+          id,
+          result: { positionEncoding: encoding, diagnosticSource: "nitrogql" },
+        }),
+      ),
     );
     return JSON.stringify({
       ...notification,
@@ -226,20 +225,32 @@ export function initContentMapperNamespace({
       result_len: number,
     ) => void;
     while (tickets.length > 0) {
-      const message = messages.shift();
-      if (message === undefined) {
+      if (chunks.length === 0) {
         if (closed) {
           execute_node_ret(tickets.shift()!, 0, 0, 0);
           continue;
         }
         return;
       }
+      // Everything received so far is delivered at once.
+      const data = chunks.length === 1 ? chunks[0]! : Buffer.concat(chunks);
+      chunks = [];
       const ticket_handle = tickets.shift()!;
-      const len = utf8Len(message);
-      const message_ptr = alloc_string(len);
-      writeString(message, message_ptr, len);
-      execute_node_ret(ticket_handle, 1, message_ptr, len);
-      free_string(message_ptr, len);
+      const data_ptr = alloc_string(data.length);
+      writeBytes(data, data_ptr);
+      execute_node_ret(ticket_handle, 1, data_ptr, data.length);
+      free_string(data_ptr, data.length);
     }
   }
+}
+
+/**
+ * Frames a message with a `Content-Length` header.
+ */
+function frame(message: string): Buffer {
+  const body = Buffer.from(message, "utf8");
+  return Buffer.concat([
+    Buffer.from(`Content-Length: ${body.length}\r\n\r\n`, "ascii"),
+    body,
+  ]);
 }

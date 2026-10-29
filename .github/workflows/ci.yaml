@@ -68,6 +68,11 @@ jobs:
         run: ./build/build-node.sh
       - name: run e2e tests
         run: npm run e2e-test --workspace ./e2e-tests
+      - name: run content mapper e2e tests (native)
+        run: |
+          cargo build -p nitrogql-cli
+          NITROGQL_NATIVE_BINARY=../../target/debug/nitrogql-cli npm run e2e-test:native
+        working-directory: e2e-tests/content-mapper
       - name: run nitrogql in nextjs example
         run: |
           npm run generate
@@ -101,4 +106,9 @@ jobs:
         run: ./build/build-node.sh
       - name: run e2e tests
         run: npm run e2e-test
+        working-directory: e2e-tests/content-mapper
+      - name: run e2e tests (native)
+        run: |
+          cargo build -p nitrogql-cli
+          NITROGQL_NATIVE_BINARY=../../target/debug/nitrogql-cli.exe npm run e2e-test:native
         working-directory: e2e-tests/content-mapper

@@ -43,3 +43,18 @@ export function writeString(str: string, ptr: number, len: number): void {
   const bufferView = new Uint8Array(memory.buffer, ptr, bytesToWrite);
   bufferView.set(bytes.slice(0, bytesToWrite));
 }
+
+/**
+ * Returns a view of bytes in memory.
+ * The view is invalidated when the memory grows.
+ */
+export function readBytes(ptr: number, len: number): Uint8Array {
+  return new Uint8Array(getMemory().buffer, ptr, len);
+}
+
+/**
+ * Writes bytes to memory.
+ */
+export function writeBytes(bytes: Uint8Array, ptr: number): void {
+  new Uint8Array(getMemory().buffer, ptr, bytes.length).set(bytes);
+}

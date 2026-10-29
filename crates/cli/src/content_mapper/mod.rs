@@ -3,7 +3,7 @@
 //! TypeScript spawns this as a child process and asks it to transform GraphQL files
 //! into virtual TypeScript code. This replaces generation of `.d.graphql.ts` files.
 //!
-//! Protocol is JSON-RPC 2.0 over stdio. Framing of messages is handled by the JavaScript host.
+//! Protocol is JSON-RPC 2.0 over stdio, with messages framed by `Content-Length` headers.
 
 use std::{collections::HashMap, path::Path};
 
@@ -24,6 +24,7 @@ use self::{
 };
 
 mod fallback;
+mod framing;
 mod io;
 mod logger;
 mod position;
@@ -40,10 +41,11 @@ const DIAGNOSTIC_SOURCE: &str = "nitrogql";
 pub async fn run_content_mapper() {
     logger::init_logger();
     colored::control::set_override(false);
+    let mut connection = io::Connection::default();
     let mut server = Server::default();
-    while let Some(message) = io::receive().await {
+    while let Some(message) = connection.receive().await {
         if let Some(response) = server.handle_message(&message).await {
-            io::send(&response);
+            connection.send(&response);
         }
     }
 }
