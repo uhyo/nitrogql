@@ -65,11 +65,6 @@ export function initContentMapperNamespace({
    * Whether an `initialize` request has been received.
    */
   let initializeReceived = false;
-  /**
-   * JSON of ids of requests answered by this host.
-   * Responses of the wasm module to them are not sent.
-   */
-  const answeredIds = new Set<string>();
 
   input.on("data", (chunk: Buffer) => {
     buffer = Buffer.concat([buffer, chunk]);
@@ -121,14 +116,7 @@ export function initContentMapperNamespace({
   }
 
   function write_message(message_ptr: number, message_len: number): void {
-    const message = readString(message_ptr, message_len);
-    if (answeredIds.size > 0) {
-      const id = JSON.stringify(JSON.parse(message).id);
-      if (answeredIds.delete(id)) {
-        return;
-      }
-    }
-    send(message);
+    send(readString(message_ptr, message_len));
   }
 
   function send(message: string): void {
@@ -145,8 +133,9 @@ export function initContentMapperNamespace({
    * within 5 seconds, and loading the wasm module can take seconds on a busy
    * machine. Later requests have no such limit.
    * The request is still passed to the wasm module, with only the chosen
-   * position encoding, so that it uses the same encoding.
-   * Requests that cannot be answered here are left to the wasm module,
+   * position encoding, so that it uses the same encoding. It is passed as a
+   * notification, without its id, so that the wasm module does not respond.
+   * Requests that cannot be answered here are left to the wasm module as is,
    * which reports errors.
    */
   function answerInitialize(message: string): string {
@@ -165,7 +154,11 @@ export function initContentMapperNamespace({
       return message;
     }
     initializeReceived = true;
-    const { id, params } = request as { id?: unknown; params?: unknown };
+    const { id, ...notification } = request as {
+      id?: unknown;
+      params?: unknown;
+    };
+    const { params } = notification;
     // Notifications are not responded to, and the wasm module reports invalid params.
     if (
       id === undefined ||
@@ -191,9 +184,8 @@ export function initContentMapperNamespace({
         result: { positionEncoding: encoding, diagnosticSource: "nitrogql" },
       }),
     );
-    answeredIds.add(JSON.stringify(id));
     return JSON.stringify({
-      ...request,
+      ...notification,
       params: { ...params, positionEncodings: [encoding] },
     });
   }

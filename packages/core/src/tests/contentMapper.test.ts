@@ -336,32 +336,27 @@ describe("initialize", () => {
     );
   });
 
-  it("passes the request with the chosen encoding only", async () => {
+  it("passes the answered request as a notification with the chosen encoding only", async () => {
     namespace.read_message(1);
     input.write(frame(initialize(["utf-16", "utf-8"])));
     await settle();
     expect(sent()).toContain('"positionEncoding":"utf-8"');
+    // Without an id, so that the wasm module does not respond.
     expect(deliveries).toEqual(
       received([
         1,
-        '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"positionEncodings":["utf-8"]}}',
+        '{"jsonrpc":"2.0","method":"initialize","params":{"positionEncodings":["utf-8"]}}',
       ]),
     );
   });
 
-  it("does not send the response of the wasm module to answered requests", async () => {
+  it("sends every message of the wasm module", async () => {
     input.write(frame(initialize(["utf-16"])));
     await settle();
     sent();
-    writeMessage(
-      '{"jsonrpc":"2.0","id":1,"result":{"positionEncoding":"utf-16","diagnosticSource":"nitrogql"}}',
-    );
-    expect(sent()).toBe("");
-    writeMessage('{"jsonrpc":"2.0","id":2,"result":null}');
     writeMessage('{"jsonrpc":"2.0","id":1,"result":null}');
     expect(sent()).toBe(
-      frame('{"jsonrpc":"2.0","id":2,"result":null}').toString("utf8") +
-        frame('{"jsonrpc":"2.0","id":1,"result":null}').toString("utf8"),
+      frame('{"jsonrpc":"2.0","id":1,"result":null}').toString("utf8"),
     );
   });
 
