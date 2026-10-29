@@ -1,7 +1,7 @@
 mod config;
 #[cfg(feature = "fs")]
 mod error;
-#[cfg(feature = "execute_js")]
+#[cfg(all(feature = "execute_js", target_os = "wasi"))]
 mod execute;
 #[cfg(feature = "fs")]
 mod load_config;
@@ -15,7 +15,7 @@ mod tests;
 mod type_target;
 
 pub use config::{Config, GenerateConfig, GenerateMode};
-#[cfg(feature = "execute_js")]
+#[cfg(all(feature = "execute_js", target_os = "wasi"))]
 pub use execute::execute_js;
 #[cfg(feature = "fs")]
 pub use load_config::load_config;

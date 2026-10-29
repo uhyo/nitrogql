@@ -1,7 +1,9 @@
+//! Bridge to the JavaScript host of the wasm build.
+//! The native build runs Node.js itself (see `node.rs`).
+
 use nitrogql_async_runtime::issue_ticket;
 use thiserror::Error;
 
-#[cfg(target_os = "wasi")]
 #[link(wasm_import_module = "nitrogql_helper/config")]
 unsafe extern "C" {
     /// Executes given code. Result is asynchronously provided to given ticket.
@@ -12,19 +14,12 @@ unsafe extern "C" {
     fn end_session();
 }
 
-#[cfg(target_os = "wasi")]
 pub(crate) fn begin_node_session() {
     unsafe { begin_session() }
 }
 
-#[cfg(target_os = "wasi")]
 pub(crate) fn end_node_session() {
     unsafe { end_session() }
-}
-
-#[cfg(not(target_os = "wasi"))]
-unsafe fn execute_node(_code_ptr: *const u8, _code_len: usize, _ticket_handle: u32) {
-    panic!("Not implemented")
 }
 
 #[derive(Debug, Error)]

@@ -1,8 +1,12 @@
 use runtime::Runtime;
 
 mod runtime;
+// Tickets let the wasm build wait on results from the JavaScript host.
+// The native build waits with blocking calls instead.
+#[cfg(target_os = "wasi")]
 mod ticket;
 
+#[cfg(target_os = "wasi")]
 pub use ticket::{Ticket, issue_ticket};
 
 thread_local! {
