@@ -48,8 +48,8 @@ export type __NitrogqlFragments = {
            * Name of the user.
            */
           name: Schema.__OperationOutput.String;
-        }, {}, never, never>;
+        }, {}, never>;
       })[];
-    }, never, "userName">;
+    }, never>;
   };
 };

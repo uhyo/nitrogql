@@ -49,7 +49,7 @@ assertType<
     ResultOf<typeof getMeQuery>,
     {
       me:
-        | { id: string; name: string; role: undefined }
+        | { id: string; name: string; role?: never }
         | { id: string; name: string; role: "ADMIN" | "USER" };
     }
   >

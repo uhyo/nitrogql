@@ -84,7 +84,6 @@ fn generate_unrendered_branch_type<'src, S: Text<'src>>(
     branch: &SelectionTreeBranch<S>,
 ) -> TSType {
     // Fields are classified by kind, so that merging does not inspect them.
-    // Aliased fields are typed the same as unaliased ones, except when omitted.
     let fields = |is_kind: fn(&SelectionTreeField<S>) -> bool| {
         fields_to_object(
             context,
@@ -103,7 +102,6 @@ fn generate_unrendered_branch_type<'src, S: Text<'src>>(
             .map(|(field, _)| field)
             .filter(|field| matches!(field, SelectionTreeField::Empty(_))),
     );
-    let aliased = names(&mut branch.aliased_fields.iter());
 
     // Branches of this object type in the spread fragments.
     let type_name = TSType::StringLiteral(branch.type_name.clone());
@@ -139,10 +137,10 @@ fn generate_unrendered_branch_type<'src, S: Text<'src>>(
         }
         Some(fragments) if only_leaves => TSType::TypeFunc(
             Box::new(utility("MergeLeaves")),
-            vec![fragments, leaves, omitted, aliased],
+            vec![fragments, leaves, omitted],
         ),
         fragments => {
-            let mut branch_args = vec![leaves, objects, omitted, aliased];
+            let mut branch_args = vec![leaves, objects, omitted];
             // Values of variables, so that merging skips branches computed with other values.
             if !branch.variables.is_empty() {
                 branch_args.push(ts_union(
@@ -260,16 +258,8 @@ fn fields_to_object<'a, 'src, S: Text<'src> + 'a>(
         fields
             .map(|(field, aliased)| {
                 let (r#type, optional) = match field {
-                    // Omitted fields are typed as `undefined` (`never` with
-                    // `exactOptionalPropertyTypes`), or as optional `never` if aliased.
-                    SelectionTreeField::Empty(_) if aliased => (TSType::Never, true),
-                    SelectionTreeField::Empty(_) => (
-                        TSType::NamespaceMember(
-                            context.schema_root_namespace.into(),
-                            "__Omitted".into(),
-                        ),
-                        false,
-                    ),
+                    // Omitted fields are not in the data.
+                    SelectionTreeField::Empty(_) => (TSType::Never, true),
                     SelectionTreeField::Leaf(leaf) => {
                         (leaf_type(context, leaf, &branch.type_name), false)
                     }

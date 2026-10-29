@@ -17,7 +17,7 @@ export type __NitrogqlFragments = {
   UserName: {
     User: __Nitrogql.Branch<{
       name: Schema.__OperationOutput.String;
-    }, {}, never, never>;
+    }, {}, never>;
   };
 };
 // mapping: "UserName" -> "UserName" (Verbatim)

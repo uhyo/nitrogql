@@ -8,8 +8,8 @@ import type * as Schema from "";
 
 type Result = {
   me: {
-    name: Schema.__Omitted;
-    age: Schema.__Omitted;
+    name?: never;
+    age?: never;
   } | {
     name: Schema.__OperationOutput.String;
     age: Schema.__OperationOutput.Int | null;
@@ -26,7 +26,7 @@ export { Query as default };
 
 export type F = {
   me: {
-    age: Schema.__Omitted;
+    age?: never;
   } | {
     age: Schema.__OperationOutput.Int | null;
   };

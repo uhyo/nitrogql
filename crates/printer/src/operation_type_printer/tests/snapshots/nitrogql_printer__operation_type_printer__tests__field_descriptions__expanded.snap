@@ -26,7 +26,7 @@ type QResult = {
     /**
      * @deprecated No longer supported
      */
-    age: Schema.__Omitted;
+    age?: never;
     friends: ({
       /**
        * ID of the user.

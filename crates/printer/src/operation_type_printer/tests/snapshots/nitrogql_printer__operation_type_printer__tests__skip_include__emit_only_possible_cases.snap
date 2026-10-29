@@ -8,9 +8,9 @@ import type * as Schema from "";
 type Result = {
   me: {
     id: Schema.__OperationOutput.ID;
-    name: Schema.__Omitted;
+    name?: never;
   } | {
-    id: Schema.__Omitted;
+    id?: never;
     name: Schema.__OperationOutput.String;
   };
 };

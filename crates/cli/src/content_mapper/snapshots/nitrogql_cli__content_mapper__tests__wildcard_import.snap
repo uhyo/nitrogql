@@ -14,7 +14,7 @@ type GetMeResult = __Nitrogql.Render<{
     me: {
       User: __Nitrogql.Spread<__Nitrogql.CombineFragments<__Nitrogql.At<(__Nitrogql.Fragment<__NitrogqlImport0.__NitrogqlFragments, "UserName">), "User">, __Nitrogql.At<(__Nitrogql.Fragment<__NitrogqlImport1.__NitrogqlFragments, "UserAge">), "User">>>;
     };
-  }, never, never>;
+  }, never>;
 }>;
 
 type GetMeVariables = {};

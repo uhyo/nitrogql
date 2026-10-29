@@ -7,10 +7,10 @@ import type * as Schema from "";
 
 type Result = {
   me: {
-    id: Schema.__Omitted;
-    name: Schema.__Omitted;
+    id?: never;
+    name?: never;
     type: Schema.__OperationOutput.UserType;
-    age: Schema.__Omitted;
+    age?: never;
   };
 };
 

@@ -19,19 +19,17 @@
  *   in lists or nullable.
  * - `Omitted` is the union of names of fields omitted by `@skip` or `@include`.
  *   A field omitted on one side and selected on the other is selected.
- * - `Aliased` is the union of names of aliased fields, which are typed differently when omitted.
  * - `Vars` is the union of values of boolean variables (used in `@skip` or `@include`) that
  *   the branch is selected with, such as `"flag=true" | "other=false"`.
  */
-export type Branch<Leaves, Objects, Omitted, Aliased, Vars = never> = {
+export type Branch<Leaves, Objects, Omitted, Vars = never> = {
   " $leaves": Leaves;
   " $objects": Objects;
   " $omitted": Omitted;
-  " $aliased": Aliased;
   " $vars": Vars;
 };
-type AnyBranch = Branch<unknown, unknown, unknown, unknown, unknown>;
-type EmptyBranch = Branch<{}, {}, never, never>;
+type AnyBranch = Branch<unknown, unknown, unknown, unknown>;
+type EmptyBranch = Branch<{}, {}, never>;
 
 /**
  * Selection tree of an imported fragment, or `any` if the module does not provide it
@@ -103,7 +101,6 @@ type MergeAgreeing<A extends AnyBranch, B> = [B] extends [never]
         A[" $leaves"] & B[" $leaves"],
         MergeObjects<A[" $objects"], B[" $objects"]>,
         A[" $omitted"] | B[" $omitted"],
-        A[" $aliased"] | B[" $aliased"],
         A[" $vars"] | B[" $vars"]
       >
     : never;
@@ -128,7 +125,6 @@ export type SkipFragment<B> = unknown extends B
         {},
         {},
         B[" $omitted"] | keyof B[" $leaves"] | keyof B[" $objects"],
-        B[" $aliased"],
         B[" $vars"]
       >
     : never;
@@ -148,36 +144,28 @@ export type Spread<Fragment> = unknown extends Fragment
  * Merges branches of fragments into a branch of the selection that has only leaf fields
  * (selected or omitted) and is not selected under values of variables.
  */
-export type MergeLeaves<Fragment, Leaves, Omitted, Aliased> =
-  unknown extends Fragment
-    ? any
-    : [Fragment] extends [never]
-      ? Branch<Leaves, {}, Omitted, Aliased>
-      : AddLeaves<Fragment, Leaves, Omitted, Aliased>;
-type AddLeaves<B, Leaves, Omitted, Aliased> = B extends AnyBranch
+export type MergeLeaves<Fragment, Leaves, Omitted> = unknown extends Fragment
+  ? any
+  : [Fragment] extends [never]
+    ? Branch<Leaves, {}, Omitted>
+    : AddLeaves<Fragment, Leaves, Omitted>;
+type AddLeaves<B, Leaves, Omitted> = B extends AnyBranch
   ? Branch<
       Leaves & B[" $leaves"],
       B[" $objects"],
       Omitted | B[" $omitted"],
-      Aliased | B[" $aliased"],
       B[" $vars"]
     >
   : never;
 
-// Omitted fields are typed as in expanded selections: unaliased ones are `undefined` (or `never`
-// with `exactOptionalPropertyTypes`, same as `__Omitted` of schema types), and aliased ones are
-// optional `never`.
-type OmittedValue = { key?: never } extends { key?: infer V } ? V : never;
+// Omitted fields are optional `never`, as in expanded selections, since they are not in the data.
 // Fields omitted on one side of a merge and selected on the other are selected.
 type OmittedFields<B extends AnyBranch> = [B[" $omitted"]] extends [never]
   ? {}
   : OmittedOnly<
-      Exclude<B[" $omitted"], keyof B[" $leaves"] | keyof B[" $objects"]>,
-      B[" $aliased"]
+      Exclude<B[" $omitted"], keyof B[" $leaves"] | keyof B[" $objects"]>
     >;
-type OmittedOnly<Omitted, Aliased> = {
-  [K in Exclude<Omitted, Aliased> & string]: OmittedValue;
-} & { [K in Extract<Omitted, Aliased> & string]?: never };
+type OmittedOnly<Omitted> = { [K in Omitted & string]?: never };
 type RenderObjects<Objects> = { [K in keyof Objects]: Render<Objects[K]> };
 // Fields of a selection are not ordered as in the schema, nor as in expanded selections.
 // The order does not matter to type relations, and visiting all fields of the schema type

@@ -32,12 +32,10 @@ type GetMeResult = __Nitrogql.Render<{
             "User"
           >,
           { id: Schema.__OperationOutput.ID },
-          never,
           never
         >;
       };
     },
-    never,
     never
   >;
 }>;
@@ -45,7 +43,7 @@ type GetMeResult = __Nitrogql.Render<{
 
 An unrendered selection is a record that maps names of concrete object types to `Branch` types,
 or to unions of them when branches of a type are selected under different values of variables.
-`Branch<Leaves, Objects, Omitted, Aliased, Vars>` has the fields of one branch, classified by
+`Branch<Leaves, Objects, Omitted, Vars>` has the fields of one branch, classified by
 the printer:
 
 - `Leaves`: fields of scalar and enum types (aliased or not). Fields with the same response key
@@ -53,7 +51,6 @@ the printer:
 - `Objects`: fields of object types, whose values are unrendered selections, possibly in lists
   or nullable. These are the only fields that are merged deeply.
 - `Omitted`: the union of names of fields omitted by `@skip`/`@include`.
-- `Aliased`: the union of names of aliased fields, which are typed differently when omitted.
 - `Vars`: the union of values of variables the branch is selected under, such as
   `"flag=true" | "other=false"`.
 
@@ -80,8 +77,7 @@ selection with the simplest one that applies, as it knows the branch:
 Expanded types are object types with the fields of each branch: unaliased fields in the order
 of the selection, then aliased ones. `Render` flattens the fields of each branch, which gives
 identical types (the order of fields does not matter to type relations), but hovers show leaves
-before object fields. Omitted fields are typed the same in both: unaliased ones are `undefined`
-(`never` with `exactOptionalPropertyTypes`), and aliased ones are optional `never`.
+before object fields. Omitted fields are optional `never` in both, as they are not in the data.
 
 ## Running
 
@@ -176,18 +172,26 @@ Expanded types were printed with `__SelectionSet<Orig, Fields, Aliased>` of sche
 picks the fields from the schema type `Orig` so that hovers show the descriptions of the fields
 in the schema. This visits every field of the schema type, like rendering did before. The
 printer now prints plain object types and copies the descriptions (and deprecation reasons) of
-unaliased fields to them. Measured in the same session, with TypeScript 7.1:
+unaliased fields to them.
+
+`__SelectionSet` also typed omitted unaliased fields as required `undefined` (`never` with
+`exactOptionalPropertyTypes`), as it kept the modifiers of the schema type. They are now
+optional `never` like omitted aliased fields, so `Branch` no longer needs the names of aliased
+fields, which it had only for typing omitted fields differently.
+
+Measured in the same session, with TypeScript 7.1:
 
 | Case                   | Expanded, before | Expanded, now | Referred, before | Referred, now  |
 | ---------------------- | ---------------- | ------------- | ---------------- | -------------- |
-| `colocation`           | 145k / 0.11s     | 28k / 0.04s   | 288k / 0.16s     | 281k / 0.18s   |
-| `colocation_variables` | 340k / 0.23s     | 67k / 0.06s   | 639k / 0.38s     | 628k / 0.33s   |
-| `wide`                 | 536k / 0.41s     | 86k / 0.07s   | 1,279k / 0.61s   | 1,207k / 0.58s |
+| `colocation`           | 145k / 0.11s     | 28k / 0.04s   | 288k / 0.16s     | 269k / 0.20s   |
+| `colocation_variables` | 340k / 0.23s     | 67k / 0.07s   | 639k / 0.38s     | 600k / 0.34s   |
+| `wide`                 | 536k / 0.41s     | 86k / 0.07s   | 1,279k / 0.61s   | 1,123k / 0.50s |
 
 Checking only the expanded modules for 1,000 colocation operations, without resolving the
 result types, takes 51 instantiations and 0.07s (0.34s referred). In `examples/nextjs`,
 `scripts/bench-fragments.mjs` measured 249k instantiations (0.31s) with fragments inlined before,
-and 94k (0.21s) now, against 142k (0.22s) with imported fragments.
+and 92k (0.19s) now, against 137k (0.22–0.30s between runs) with imported fragments, which took
+150k (0.24s) before.
 
 As each branch of a union has its own declaration of a field, hovers on a deprecated field of a
 union list the `@deprecated` tag once for each branch.
