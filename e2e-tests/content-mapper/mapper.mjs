@@ -58,7 +58,11 @@ export function startMapper(cwd, execArgv = []) {
   });
 
   function frame(message) {
-    const body = Buffer.from(JSON.stringify(message), "utf8");
+    return frameText(JSON.stringify(message));
+  }
+
+  function frameText(text) {
+    const body = Buffer.from(text, "utf8");
     return Buffer.concat([
       Buffer.from(`Content-Length: ${body.length}\r\n\r\n`, "ascii"),
       body,
@@ -89,6 +93,14 @@ export function startMapper(cwd, execArgv = []) {
     },
     notify(method, params) {
       child.stdin.write(frame({ jsonrpc: "2.0", method, params }));
+    },
+    /**
+     * Sends given text as a message and waits for the response with given id.
+     */
+    sendRaw(text, id) {
+      const response = new Promise((resolve) => pending.set(id, resolve));
+      child.stdin.write(frameText(text));
+      return response;
     },
   };
 }

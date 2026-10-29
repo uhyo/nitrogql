@@ -9,16 +9,16 @@ use std::{collections::HashMap, path::Path};
 
 use log::{debug, error};
 use nitrogql_error::ErrorCode;
-use serde::de::DeserializeOwned;
+use serde::{Serialize, de::DeserializeOwned};
 use serde_json::{Value, json};
 
 use self::{
     project::{MapperOptions, Project},
     protocol::{
-        CloseProjectParams, INTERNAL_ERROR, INVALID_PARAMS, InitializeParams, InitializeResult,
-        JsonRpcError, JsonRpcRequest, JsonRpcResponse, METHOD_NOT_FOUND, MethodResult,
-        OpenProjectParams, OpenProjectResult, OptionDiagnostic, PositionEncoding, TransformParams,
-        TransformResult,
+        CloseProjectParams, INTERNAL_ERROR, INVALID_PARAMS, INVALID_REQUEST, InitializeParams,
+        InitializeResult, JsonRpcError, JsonRpcRequest, JsonRpcResponse, METHOD_NOT_FOUND,
+        MethodResult, OpenProjectParams, OpenProjectResult, OptionDiagnostic, PARSE_ERROR,
+        PositionEncoding, TransformParams, TransformResult,
     },
     transform::transform,
 };
@@ -42,21 +42,9 @@ pub async fn run_content_mapper() {
     colored::control::set_override(false);
     let mut server = Server::default();
     while let Some(message) = io::receive().await {
-        let request: JsonRpcRequest = match serde_json::from_str(&message) {
-            Ok(request) => request,
-            Err(err) => {
-                error!("Failed to parse message: {err}");
-                continue;
-            }
-        };
-        debug!("Received {} request", request.method);
-        let result = server.handle(&request.method, request.params).await;
-        // Notifications are not responded to.
-        let Some(id) = request.id else {
-            continue;
-        };
-        let response = JsonRpcResponse::new(&id, result);
-        io::send(&serde_json::to_string(&response).expect("Failed to serialize response"));
+        if let Some(response) = server.handle_message(&message).await {
+            io::send(&response);
+        }
     }
 }
 
@@ -73,6 +61,26 @@ struct Server {
 }
 
 impl Server {
+    /// Handles a JSON-RPC message and returns the response to send, if any.
+    async fn handle_message(&mut self, message: &str) -> Option<String> {
+        let request: JsonRpcRequest = match serde_json::from_str(message) {
+            Ok(request) => request,
+            Err(err) => {
+                error!("Failed to parse message: {err}");
+                let (id, error) = invalid_message_error(message, err);
+                return Some(serialize_response(&JsonRpcResponse::<()>::new(
+                    &id,
+                    Err(error),
+                )));
+            }
+        };
+        debug!("Received {} request", request.method);
+        let result = self.handle(&request.method, request.params).await;
+        // Notifications are not responded to.
+        let id = request.id?;
+        Some(serialize_response(&JsonRpcResponse::new(&id, result)))
+    }
+
     async fn handle(
         &mut self,
         method: &str,
@@ -164,6 +172,31 @@ impl Server {
             self.closed_project = Some(project);
         }
     }
+}
+
+/// Returns the id to respond with and the error for a message that is not a valid request.
+fn invalid_message_error(message: &str, err: serde_json::Error) -> (Value, JsonRpcError) {
+    match serde_json::from_str::<Value>(message) {
+        Err(err) => (
+            Value::Null,
+            JsonRpcError {
+                code: PARSE_ERROR,
+                message: format!("Parse error: {err}"),
+            },
+        ),
+        // The id is used if it can be read, so that the client can tell which request failed.
+        Ok(value) => (
+            value.get("id").cloned().unwrap_or(Value::Null),
+            JsonRpcError {
+                code: INVALID_REQUEST,
+                message: format!("Invalid request: {err}"),
+            },
+        ),
+    }
+}
+
+fn serialize_response(response: &impl Serialize) -> String {
+    serde_json::to_string(response).expect("Failed to serialize response")
 }
 
 fn parse_params<T: DeserializeOwned>(params: Value) -> Result<T, JsonRpcError> {
