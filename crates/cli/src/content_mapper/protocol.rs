@@ -1,6 +1,8 @@
 //! Types for the TypeScript content mapper protocol.
 //! Messages are exchanged as JSON-RPC 2.0 over stdio.
 
+use std::borrow::Cow;
+
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
@@ -14,11 +16,11 @@ pub struct JsonRpcRequest {
 }
 
 #[derive(Serialize, Debug)]
-pub struct JsonRpcResponse<'a> {
+pub struct JsonRpcResponse<'a, T> {
     pub jsonrpc: &'static str,
     pub id: &'a Value,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub result: Option<Value>,
+    pub result: Option<T>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub error: Option<JsonRpcError>,
 }
@@ -32,6 +34,18 @@ pub struct JsonRpcError {
 pub const INVALID_PARAMS: i32 = -32602;
 pub const METHOD_NOT_FOUND: i32 = -32601;
 pub const INTERNAL_ERROR: i32 = -32603;
+
+/// Result of a request.
+/// Each variant is serialized as is, so that results are serialized only once.
+#[derive(Serialize, Debug)]
+#[serde(untagged)]
+pub enum MethodResult<'a> {
+    Initialize(InitializeResult),
+    OpenProject(OpenProjectResult),
+    Transform(TransformResult<'a>),
+    /// Serialized as `null`.
+    Null,
+}
 
 #[derive(Copy, Clone, Debug, PartialEq, Eq, Deserialize, Serialize)]
 pub enum PositionEncoding {
@@ -92,8 +106,9 @@ pub struct TransformParams {
 
 #[derive(Serialize, Debug, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
-pub struct TransformResult {
-    pub text: String,
+pub struct TransformResult<'a> {
+    /// Borrowed when the text is cached, e.g. the schema module.
+    pub text: Cow<'a, str>,
     pub extension: &'static str,
     #[serde(skip_serializing_if = "Vec::is_empty")]
     pub mappings: Vec<SpanMapping>,

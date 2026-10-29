@@ -1,4 +1,5 @@
 use std::{
+    borrow::Cow,
     collections::HashSet,
     path::{Path, PathBuf},
 };
@@ -43,12 +44,12 @@ enum TransformError {
 }
 
 /// Transforms given file into TypeScript code.
-pub fn transform(
-    project: &Project,
+pub fn transform<'a>(
+    project: &'a Project,
     file_name: &Path,
     content: &str,
     encoding: PositionEncoding,
-) -> TransformResult {
+) -> TransformResult<'a> {
     let file_name = normalize_path(file_name);
     if let Some(file_index) = project.schema_file_index(&file_name) {
         return transform_schema_file(project, file_index, content, encoding);
@@ -58,12 +59,12 @@ pub fn transform(
 
 /// Transforms a schema file.
 /// Schema types are emitted from the first GraphQL schema file, so that operation files can import them.
-fn transform_schema_file(
-    project: &Project,
+fn transform_schema_file<'a>(
+    project: &'a Project,
     file_index: usize,
     content: &str,
     encoding: PositionEncoding,
-) -> TransformResult {
+) -> TransformResult<'a> {
     let (_, loaded_content, _) = &project.file_store()[file_index];
     // Positions are valid only if content is the same as the one loaded.
     let is_same_content = *loaded_content == content;
@@ -75,7 +76,7 @@ fn transform_schema_file(
             .map(|(path, _, _)| path.as_path())
     };
     let mut result = TransformResult {
-        text: EMPTY_MODULE.to_owned(),
+        text: Cow::Borrowed(EMPTY_MODULE),
         extension: ".ts",
         mappings: vec![],
         diagnostics: vec![],
@@ -118,7 +119,7 @@ fn transform_schema_file(
                 result.mappings =
                     to_mappings(&module.spans, file_index, &module.text, &index, encoding);
             }
-            result.text = module.text.clone();
+            result.text = Cow::Borrowed(&module.text);
         }
         Err(err) => {
             result.diagnostics = to_diagnostics([err], file_index, &files, &index);
@@ -142,7 +143,7 @@ fn transform_operation_file(
     file_name: &Path,
     content: &str,
     encoding: PositionEncoding,
-) -> TransformResult {
+) -> TransformResult<'static> {
     // Operation files are numbered after schema files.
     let file_index = project.file_store().schema_len();
     let mut operations = OperationSet::new();
@@ -174,7 +175,7 @@ fn transform_operation_file(
     let error_result = |diagnostics: Vec<MapperDiagnostic>| {
         let Some(file) = file else {
             return TransformResult {
-                text: EMPTY_OPERATION_MODULE.to_owned(),
+                text: Cow::Borrowed(EMPTY_OPERATION_MODULE),
                 extension: ".ts",
                 mappings: vec![],
                 diagnostics,
@@ -185,7 +186,7 @@ fn transform_operation_file(
         let (text, spans) = writer.into_parts();
         TransformResult {
             mappings: to_mappings(&spans, file_index, &text, &index, encoding),
-            text,
+            text: Cow::Owned(text),
             extension: ".ts",
             diagnostics,
         }
@@ -260,7 +261,7 @@ fn transform_operation_file(
     let (text, spans) = writer.into_parts();
     TransformResult {
         mappings: to_mappings(&spans, file_index, &text, &index, encoding),
-        text,
+        text: Cow::Owned(text),
         extension: ".ts",
         diagnostics,
     }

@@ -9,15 +9,15 @@ use std::{collections::HashMap, path::Path};
 
 use log::{debug, error};
 use nitrogql_error::ErrorCode;
-use serde::{Serialize, de::DeserializeOwned};
+use serde::de::DeserializeOwned;
 use serde_json::{Value, json};
 
 use self::{
     project::{MapperOptions, Project},
     protocol::{
         CloseProjectParams, INTERNAL_ERROR, INVALID_PARAMS, InitializeParams, InitializeResult,
-        JsonRpcError, JsonRpcRequest, JsonRpcResponse, METHOD_NOT_FOUND, OpenProjectParams,
-        OpenProjectResult, OptionDiagnostic, PositionEncoding, TransformParams,
+        JsonRpcError, JsonRpcRequest, JsonRpcResponse, METHOD_NOT_FOUND, MethodResult,
+        OpenProjectParams, OpenProjectResult, OptionDiagnostic, PositionEncoding, TransformParams,
     },
     transform::transform,
 };
@@ -85,7 +85,11 @@ struct Server {
 }
 
 impl Server {
-    async fn handle(&mut self, method: &str, params: Value) -> Result<Value, JsonRpcError> {
+    async fn handle(
+        &mut self,
+        method: &str,
+        params: Value,
+    ) -> Result<MethodResult<'_>, JsonRpcError> {
         match method {
             "initialize" => {
                 let params: InitializeParams = parse_params(params)?;
@@ -103,10 +107,10 @@ impl Server {
                     });
                 };
                 self.encoding = Some(encoding);
-                to_result(InitializeResult {
+                Ok(MethodResult::Initialize(InitializeResult {
                     position_encoding: encoding,
                     diagnostic_source: DIAGNOSTIC_SOURCE,
-                })
+                }))
             }
             "openProject" => {
                 let params: OpenProjectParams = parse_params(params)?;
@@ -126,7 +130,7 @@ impl Server {
                     option_diagnostics,
                 };
                 self.projects.insert(params.project_handle, project);
-                to_result(result)
+                Ok(MethodResult::OpenProject(result))
             }
             "transform" => {
                 let params: TransformParams = parse_params(params)?;
@@ -141,19 +145,19 @@ impl Server {
                             code: INVALID_PARAMS,
                             message: format!("Unknown project: {}", params.project_handle),
                         })?;
-                to_result(transform(
+                Ok(MethodResult::Transform(transform(
                     project,
                     Path::new(&params.file_name),
                     &params.content,
                     encoding,
-                ))
+                )))
             }
             "closeProject" => {
                 let params: CloseProjectParams = parse_params(params)?;
                 if let Some(project) = self.projects.remove(&params.project_handle) {
                     self.closed_project = Some(project);
                 }
-                Ok(Value::Null)
+                Ok(MethodResult::Null)
             }
             _ => Err(JsonRpcError {
                 code: METHOD_NOT_FOUND,
@@ -167,13 +171,6 @@ fn parse_params<T: DeserializeOwned>(params: Value) -> Result<T, JsonRpcError> {
     serde_json::from_value(params).map_err(|err| JsonRpcError {
         code: INVALID_PARAMS,
         message: format!("Invalid params: {err}"),
-    })
-}
-
-fn to_result(result: impl Serialize) -> Result<Value, JsonRpcError> {
-    serde_json::to_value(result).map_err(|err| JsonRpcError {
-        code: INTERNAL_ERROR,
-        message: format!("Failed to serialize result: {err}"),
     })
 }
 
