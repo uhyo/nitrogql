@@ -10,14 +10,14 @@
 use std::{fmt::Write as _, fs, path::Path};
 
 use nitrogql_ast::{
-    OperationDocument,
+    OperationDocument, TypeSystemDocument,
     operation::{ExecutableDefinition, OperationDefinition},
 };
 use nitrogql_parser::parse_operation_document;
 use nitrogql_semantics::{ast_to_type_system, resolve_operation_extensions};
 use sourcemap_writer::JustWriter;
 
-use super::type_system;
+use super::{TYPE_SYSTEM, type_system, type_system_from};
 use crate::{
     OperationTypePrinterOptions, SchemaTypePrinter, SchemaTypePrinterOptions,
     fragment_imports::FragmentImport, operation_base_printer::options::OperationBasePrinterOptions,
@@ -304,7 +304,8 @@ fn write_fragment_ref_cases() {
     let out_dir = Path::new(&out_dir);
     let _ = fs::remove_dir_all(out_dir);
     fs::create_dir_all(out_dir).unwrap();
-    fs::write(out_dir.join("schema.ts"), print_schema()).unwrap();
+    let schema = type_system();
+    fs::write(out_dir.join("schema.ts"), print_schema(&schema)).unwrap();
     fs::write(
         out_dir.join("fragment-types.d.ts"),
         include_str!("../../../../../packages/cli/fragment-types.d.ts"),
@@ -315,12 +316,38 @@ fn write_fragment_ref_cases() {
         "export interface TypedDocumentNode<Result, Variables> {\n  __result?: Result;\n  __variables?: Variables;\n}\n",
     )
     .unwrap();
-    for case in CASES
-        .iter()
-        .chain([stress_case(), colocation_case(false), colocation_case(true)])
-    {
-        write_case(&out_dir.join(case.name), case);
+    for case in CASES {
+        write_case(
+            &out_dir.join(case.name),
+            case,
+            Imports::All,
+            &schema,
+            "../schema",
+        );
     }
+    // Larger cases import only what they spread, like real projects, as costs depend on it.
+    for case in [stress_case(), colocation_case(false), colocation_case(true)] {
+        write_case(
+            &out_dir.join(case.name),
+            case,
+            Imports::Spread,
+            &schema,
+            "../schema",
+        );
+    }
+    let (case, schema) = wide_case();
+    let dir = out_dir.join(case.name);
+    write_case(&dir, case, Imports::Spread, &schema, "./schema");
+    fs::write(dir.join("schema.ts"), print_schema(&schema)).unwrap();
+}
+
+/// Which modules each module of a case imports.
+#[derive(Clone, Copy, Debug)]
+enum Imports {
+    /// All other modules, so that lookups through several wildcard imports are covered.
+    All,
+    /// Modules that define the fragments it spreads.
+    Spread,
 }
 
 /// Larger case for comparing type checking costs.
@@ -411,17 +438,81 @@ fn colocation_case(variables: bool) -> &'static Case {
     }))
 }
 
-fn print_schema() -> String {
-    let schema = type_system();
+/// Case with a schema shaped like larger ones: object types have many fields, and an interface
+/// has many implementations. Operations select from both, as in the colocation case.
+fn wide_case() -> (&'static Case, TypeSystemDocument<'static>) {
+    const TYPES: usize = 20;
+    const FIELDS: usize = 30;
+    let operations = std::env::var("NITROGQL_FRAGMENT_REF_COLOCATION_OPERATIONS")
+        .map_or(20, |value| value.parse().unwrap());
+    let leak = |s: String| -> &'static str { Box::leak(s.into_boxed_str()) };
+    let fields = (0..FIELDS)
+        .map(|idx| format!("f{idx}: String!"))
+        .collect::<Vec<_>>()
+        .join(" ");
+    let types = (0..TYPES)
+        .map(|idx| format!("type Item{idx} implements Node {{ id: ID! {fields} }}"))
+        .collect::<Vec<_>>()
+        .join("\n");
+    let schema = type_system_from(leak(format!(
+        "{TYPE_SYSTEM}\ninterface Node {{ id: ID! }}\n{types}\n\
+         extend type Query {{ node: Node! items: [Item0!]! }}\n"
+    )));
+    let mut modules = vec![];
+    for idx in 0..operations {
+        modules.push((
+            leak(format!("itemCard{idx}")),
+            leak(format!(
+                "fragment ItemCard{idx} on Item0 {{ id f{} f{} f{} }}",
+                idx % FIELDS,
+                (idx + 1) % FIELDS,
+                (idx + 2) % FIELDS
+            )),
+        ));
+        modules.push((
+            leak(format!("nodeCard{idx}")),
+            leak(format!(
+                "fragment NodeCard{idx} on Node {{ id ... on Item{} {{ f0 f1 }} ... on Item{} {{ f2 }} }}",
+                idx % TYPES,
+                (idx + 1) % TYPES
+            )),
+        ));
+    }
+    let main = (0..operations)
+        .map(|idx| {
+            format!(
+                "query Q{idx} {{ items {{ id f0 ...ItemCard{idx} }} node {{ id ...NodeCard{idx} ...NodeCard{} }} }}",
+                (idx + 1) % operations
+            )
+        })
+        .collect::<Vec<_>>()
+        .join("\n");
+    let case = Box::leak(Box::new(Case {
+        name: "wide",
+        main: leak(main),
+        modules: modules.leak(),
+        expect: Expect::Exact,
+    }));
+    (case, schema)
+}
+
+fn print_schema(schema: &TypeSystemDocument) -> String {
     let mut result = String::new();
     let mut writer = JustWriter::new(&mut result);
     SchemaTypePrinter::new(SchemaTypePrinterOptions::default(), &mut writer)
-        .print_document(&schema)
+        .print_document(schema)
         .unwrap();
     result
 }
 
-fn write_case(dir: &Path, case: &Case) {
+/// Writes modules of given case, which import schema types from `schema_source`.
+fn write_case(
+    dir: &Path,
+    case: &Case,
+    imports: Imports,
+    schema: &TypeSystemDocument,
+    schema_source: &str,
+) {
     fs::create_dir_all(dir).unwrap();
     let main = parse(case.main, 0);
     let modules = case
@@ -430,16 +521,28 @@ fn write_case(dir: &Path, case: &Case) {
         .enumerate()
         .map(|(idx, (name, source))| (*name, parse(source, idx + 1)))
         .collect::<Vec<_>>();
-    // Each module imports fragments of all other modules.
+    // Each module imports fragments of other modules, as specified by `imports`.
     // Every other module is imported with a wildcard import, so that both kinds are covered.
-    let fragment_imports = |except: Option<&str>| {
+    // With `Imports::Spread`, the main module imports specific fragments: it has all operations
+    // of the case, and fragments not imported specifically are looked up in all wildcard imports,
+    // which real modules with a few imports each do not do.
+    let fragment_imports = |except: Option<&str>, source: &str| {
+        let wildcard = |idx: usize| match imports {
+            Imports::All => idx % 2 == 1,
+            Imports::Spread => except.is_some() && idx % 2 == 1,
+        };
         modules
             .iter()
             .enumerate()
             .filter(|(_, (module, _))| Some(*module) != except)
+            .filter(|(_, (_, doc))| match imports {
+                Imports::All => true,
+                Imports::Spread => fragment_names(doc).any(|name| spreads(source, name)),
+            })
             .map(|(idx, (module, doc))| FragmentImport {
                 module: format!("./{module}"),
-                fragments: (idx % 2 == 0).then(|| fragment_names(doc).map(str::to_owned).collect()),
+                fragments: (!wildcard(idx))
+                    .then(|| fragment_names(doc).map(str::to_owned).collect()),
                 source: None,
             })
             .collect::<Vec<_>>()
@@ -455,17 +558,20 @@ fn write_case(dir: &Path, case: &Case) {
             .collect(),
         position: main.position,
     };
+    let print = |doc: &OperationDocument, fragment_imports| {
+        print(schema, schema_source, doc, fragment_imports)
+    };
     fs::write(dir.join("expanded.ts"), print(&expanded, None)).unwrap();
     // Fragments in other modules are referred to.
     fs::write(
         dir.join("main.ts"),
-        print(&main, Some(fragment_imports(None))),
+        print(&main, Some(fragment_imports(None, case.main))),
     )
     .unwrap();
-    for (module, doc) in modules.iter() {
+    for ((module, doc), (_, source)) in modules.iter().zip(case.modules) {
         fs::write(
             dir.join(format!("{module}.ts")),
-            print(doc, Some(fragment_imports(Some(module)))),
+            print(doc, Some(fragment_imports(Some(module), source))),
         )
         .unwrap();
     }
@@ -477,6 +583,15 @@ fn parse(source: &'static str, file_index: usize) -> OperationDocument<'static> 
     resolve_operation_extensions(doc).unwrap().0
 }
 
+/// Returns whether given source spreads a fragment of given name.
+fn spreads(source: &str, name: &str) -> bool {
+    source
+        .match_indices(&format!("...{name}"))
+        .any(|(idx, spread)| {
+            !source[idx + spread.len()..].starts_with(|c: char| c.is_alphanumeric() || c == '_')
+        })
+}
+
 fn fragment_names<'a>(doc: &'a OperationDocument) -> impl Iterator<Item = &'a str> {
     doc.definitions.iter().filter_map(|def| match def {
         ExecutableDefinition::FragmentDefinition(def) => Some(def.name.name),
@@ -486,16 +601,20 @@ fn fragment_names<'a>(doc: &'a OperationDocument) -> impl Iterator<Item = &'a st
 
 /// Prints given document. Modules that import fragments from other modules are given
 /// `fragment_imports`, and export their selection trees as well.
-fn print(doc: &OperationDocument, fragment_imports: Option<Vec<FragmentImport>>) -> String {
-    let schema = type_system();
-    let schema = ast_to_type_system(&schema);
+fn print(
+    schema: &TypeSystemDocument,
+    schema_source: &str,
+    doc: &OperationDocument,
+    fragment_imports: Option<Vec<FragmentImport>>,
+) -> String {
+    let schema = ast_to_type_system(schema);
     let options = OperationTypePrinterOptions {
         base_options: OperationBasePrinterOptions {
             export_input_type: true,
             export_result_type: true,
             ..Default::default()
         },
-        schema_source: "../schema".to_owned(),
+        schema_source: schema_source.to_owned(),
         typed_document_node_source: "../typed-document-node".to_owned(),
         export_fragment_trees: fragment_imports.is_some(),
         fragment_imports: fragment_imports.unwrap_or_default(),

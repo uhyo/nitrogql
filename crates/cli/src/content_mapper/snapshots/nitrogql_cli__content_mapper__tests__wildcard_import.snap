@@ -9,9 +9,13 @@ import type * as __Nitrogql from "@nitrogql/cli/fragment-types";
 import type * as __NitrogqlImport0 from "./fragment.graphql";
 import type * as __NitrogqlImport1 from "./other.graphql";
 
-type GetMeResult = __Nitrogql.Render<__Nitrogql.Branch<"Query", Schema.__OperationOutput.Query, {
-  me: __Nitrogql.MergeFragment<__Nitrogql.Branch<"User", Schema.__OperationOutput.User, {}, {}>, __Nitrogql.CombineFragments<(__Nitrogql.Fragment<__NitrogqlImport0.__NitrogqlFragments, "UserName">), (__Nitrogql.Fragment<__NitrogqlImport1.__NitrogqlFragments, "UserAge">)>>;
-}, {}>>;
+type GetMeResult = __Nitrogql.Render<{
+  Query: __Nitrogql.Branch<{}, {
+    me: {
+      User: __Nitrogql.Spread<__Nitrogql.CombineFragments<__Nitrogql.At<(__Nitrogql.Fragment<__NitrogqlImport0.__NitrogqlFragments, "UserName">), "User">, __Nitrogql.At<(__Nitrogql.Fragment<__NitrogqlImport1.__NitrogqlFragments, "UserAge">), "User">>>;
+    };
+  }, never, never>;
+}>;
 
 type GetMeVariables = {};
 

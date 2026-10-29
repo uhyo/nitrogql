@@ -1,24 +1,37 @@
 // Utility types for merging fragments imported with `#import`, used by the content mapper.
 //
-// Selections that spread imported fragments are printed unrendered: each concrete object type
-// in a selection is a `Branch` with its fields. Fields of fragments are merged into branches of
-// the same object type, and `Render` converts the result into the same types as the ones printed
-// for fully expanded selections.
+// Selections that spread imported fragments are printed unrendered: a selection is a record
+// that maps names of concrete object types to `Branch` types with their fields. Fields of
+// fragments are merged into branches of the same object type, and `Render` converts the result
+// into the same types as the ones printed for fully expanded selections.
+//
+// The printer does as much as it can when printing: it classifies fields by kind, and merges
+// fragments into each branch of a selection with the simplest utility that applies, so that
+// TypeScript does not need to inspect what the printer already knows.
 
 /**
  * Selection of one concrete object type.
- * `Vars` has the values of boolean variables (used in `@skip` or `@include`) that the branch
- * is selected with, such as `{ flag: true }`.
+ * Fields are classified when printed, so that merging does not inspect them:
+ *
+ * - `Leaves` has fields of scalar and enum types. Fields of the same name have the same type,
+ *   so they are merged by intersecting.
+ * - `Objects` has fields of object types, whose values are unrendered selections, possibly
+ *   in lists or nullable.
+ * - `Omitted` is the union of names of fields omitted by `@skip` or `@include`.
+ *   A field omitted on one side and selected on the other is selected.
+ * - `Aliased` is the union of names of aliased fields, which are typed differently when omitted.
+ * - `Vars` is the union of values of boolean variables (used in `@skip` or `@include`) that
+ *   the branch is selected with, such as `"flag=true" | "other=false"`.
  */
-export type Branch<Name extends string, Orig, Fields, Aliased, Vars = {}> = {
-  " $name": Name;
-  " $orig": Orig;
-  " $fields": Fields;
+export type Branch<Leaves, Objects, Omitted, Aliased, Vars = never> = {
+  " $leaves": Leaves;
+  " $objects": Objects;
+  " $omitted": Omitted;
   " $aliased": Aliased;
   " $vars": Vars;
 };
-type AnyBranch = Branch<string, unknown, unknown, unknown, unknown>;
-type IsAny<T> = 0 extends 1 & T ? true : false;
+type AnyBranch = Branch<unknown, unknown, unknown, unknown, unknown>;
+type EmptyBranch = Branch<{}, {}, never, never>;
 
 /**
  * Selection tree of an imported fragment, or `any` if the module does not provide it
@@ -29,109 +42,155 @@ export type Fragment<
   Name extends string,
 > = Name extends keyof Fragments ? Fragments[Name] : any;
 
-// Fields omitted by `@skip` or `@include` are optional `never`, which read as `undefined` (or `never`).
-// Mapping over keys of both keeps a field optional only if it is omitted on both sides.
-// Values are erased before intersecting, as conflicting values would reduce it to `never`.
-type Keys<T> = { [K in keyof T]: unknown };
-type MergeFields<A, B> = [keyof A & keyof B] extends [never]
-  ? A & B
-  : MergeOverlappingFields<A, B>;
-type MergeOverlappingFields<A, B> = {
-  [K in keyof (Keys<A> & Keys<B>)]: K extends keyof A
-    ? K extends keyof B
-      ? MergeValue<A[K], B[K]>
-      : A[K]
-    : K extends keyof B
-      ? B[K]
-      : never;
+/** Branches of given object type in a selection, or `never` if the selection has none. */
+export type At<Selection, Name extends string> = Name extends keyof Selection
+  ? Selection[Name]
+  : never;
+
+// Selections of the same field have branches of the same object types.
+// The left side decides which branches the result has.
+type MergeSelections<A, B> = {
+  [K in keyof A]: K extends keyof B ? MergeBranches<A[K], B[K]> : A[K];
 };
-type MergeValue<A, B> = [A] extends [undefined]
-  ? B
-  : [B] extends [undefined]
+// Values of object fields: selections, possibly in lists or nullable.
+type MergeValue<A, B> = A extends readonly unknown[]
+  ? MergeValue<A[number], B extends readonly unknown[] ? B[number] : never>[]
+  : A extends null
     ? A
-    : MergeMember<A, B>;
-type MergeMember<A, B> = A extends AnyBranch
-  ? MergeBranch<A, B>
-  : A extends readonly (infer E)[]
-    ? MergeValue<E, B extends readonly (infer F)[] ? F : never>[]
-    : A;
-type MergeBranch<
-  A extends AnyBranch,
-  B,
-  Matching = Extract<B, MatchingBranch<A>>,
-> = [Matching] extends [never] ? A : MergeMatchingBranches<A, Matching>;
-// Branches of the same object type that agree on the values of the variables they share.
-// Variables that one side does not have may have any value on the other.
-// The index signature keeps the pattern from being a weak type, which would reject
-// branches that share no variables.
-type MatchingBranch<A extends AnyBranch> = {} extends A[" $vars"]
-  ? { " $name": A[" $name"] }
+    : MergeSelections<A, B & {}>;
+// Only fields that both sides have are merged deeply.
+type MergeObjects<A, B> = [keyof A & keyof B] extends [never]
+  ? A & B
   : {
-      " $name": A[" $name"];
-      " $vars": Partial<A[" $vars"]> & { [name: string]: boolean };
+      [K in keyof A | keyof B]: K extends keyof A
+        ? K extends keyof B
+          ? MergeValue<A[K], B[K]>
+          : A[K]
+        : B[K & keyof B];
     };
-// Distributes over branches of the same object type, which differ in variable values.
-type MergeMatchingBranches<A extends AnyBranch, B> = B extends AnyBranch
+
+// Distributes over branches of one object type, which differ in variable values.
+// Branches of the other side that do not agree on the values of variables both have are
+// not merged, as they cannot happen together. Variables that one side does not have may have
+// any value on the other.
+// Branches merged from fragments with errors are `any`, and so are the results of merging them.
+type MergeBranches<A, B> = unknown extends A
+  ? any
+  : unknown extends B
+    ? any
+    : A extends AnyBranch
+      ? MergeAgreeing<
+          A,
+          [A[" $vars"]] extends [never] ? B : Agreeing<B, Negate<A[" $vars"]>>
+        >
+      : never;
+// Values that conflict with given values. Unions of the same values are the same type, so
+// this is computed once for each combination of values.
+type Negate<Vars> = Vars extends `${infer Name}=true`
+  ? `${Name}=false`
+  : Vars extends `${infer Name}=false`
+    ? `${Name}=true`
+    : never;
+type Agreeing<B, Conflicts> = B extends AnyBranch
+  ? [B[" $vars"] & Conflicts] extends [never]
+    ? B
+    : never
+  : never;
+type MergeAgreeing<A extends AnyBranch, B> = [B] extends [never]
+  ? A
+  : B extends AnyBranch
+    ? Branch<
+        A[" $leaves"] & B[" $leaves"],
+        MergeObjects<A[" $objects"], B[" $objects"]>,
+        A[" $omitted"] | B[" $omitted"],
+        A[" $aliased"] | B[" $aliased"],
+        A[" $vars"] | B[" $vars"]
+      >
+    : never;
+
+/**
+ * Combines branches of one object type from fragments spread in the same selection.
+ * The printer combines them as a balanced tree, as TypeScript limits the depth of nested
+ * instantiations.
+ */
+export type CombineFragments<A, B> = unknown extends A
+  ? any
+  : unknown extends B
+    ? any
+    : [A] extends [never]
+      ? B
+      : MergeBranches<A, B>;
+/** Branches of a fragment spread that is skipped by `@skip` or `@include`. */
+export type SkipFragment<B> = unknown extends B
+  ? any
+  : B extends AnyBranch
+    ? Branch<
+        {},
+        {},
+        B[" $omitted"] | keyof B[" $leaves"] | keyof B[" $objects"],
+        B[" $aliased"],
+        B[" $vars"]
+      >
+    : never;
+
+/** Merges branches of fragments into a branch of the selection. */
+export type MergeFragment<A, Fragment> = MergeBranches<A, Fragment>;
+/**
+ * Merges branches of fragments into a branch of the selection that has no fields of its own
+ * and is not selected under values of variables: the result is the fragments' branches.
+ */
+export type Spread<Fragment> = unknown extends Fragment
+  ? any
+  : [Fragment] extends [never]
+    ? EmptyBranch
+    : Fragment;
+/**
+ * Merges branches of fragments into a branch of the selection that has only leaf fields
+ * (selected or omitted) and is not selected under values of variables.
+ */
+export type MergeLeaves<Fragment, Leaves, Omitted, Aliased> =
+  unknown extends Fragment
+    ? any
+    : [Fragment] extends [never]
+      ? Branch<Leaves, {}, Omitted, Aliased>
+      : AddLeaves<Fragment, Leaves, Omitted, Aliased>;
+type AddLeaves<B, Leaves, Omitted, Aliased> = B extends AnyBranch
   ? Branch<
-      A[" $name"],
-      A[" $orig"],
-      MergeFields<A[" $fields"], B[" $fields"]>,
-      MergeFields<A[" $aliased"], B[" $aliased"]>,
-      A[" $vars"] & B[" $vars"]
+      Leaves & B[" $leaves"],
+      B[" $objects"],
+      Omitted | B[" $omitted"],
+      Aliased | B[" $aliased"],
+      B[" $vars"]
     >
   : never;
 
-/** Merges a fragment into a selection. */
-export type MergeFragment<A, Fragment> =
-  IsAny<Fragment> extends true
-    ? any
-    : A extends AnyBranch
-      ? MergeBranch<A, Fragment>
-      : A;
-/**
- * Combines fragments spread in the same selection.
- * Unlike merging into a selection, branches of object types that only one fragment has are kept.
- */
-export type CombineFragments<A, B> =
-  IsAny<A> extends true
-    ? any
-    : IsAny<B> extends true
-      ? any
-      :
-          | MergeMember<A, B>
-          | Exclude<B, { " $name": A extends AnyBranch ? A[" $name"] : never }>;
-/** Fragment spread that is skipped by `@skip` or `@include`. */
-export type SkipFragment<Fragment> = Fragment extends AnyBranch
-  ? Branch<
-      Fragment[" $name"],
-      Fragment[" $orig"],
-      { [K in keyof Fragment[" $fields"]]?: never },
-      { [K in keyof Fragment[" $aliased"]]?: never },
-      Fragment[" $vars"]
-    >
-  : Fragment;
-
-// Same as `__SelectionSet` in schema types.
-type Beautify<Obj> = { [K in keyof Obj]: Obj[K] } & {};
-type SelectionSet<Orig, Obj, Others> = Beautify<
-  Pick<
-    {
-      [K in keyof Orig]: Obj extends { [P in K]?: infer V } ? V : unknown;
-    },
-    Extract<keyof Orig, keyof Obj>
-  > &
-    Others
->;
-// Homomorphic, so that omitted fields stay optional.
-type RenderFields<Fields> = { [K in keyof Fields]: Render<Fields[K]> };
-/** Converts a selection into the type of its data. */
-// `any` needs no special handling, as it absorbs the union of both branches.
-export type Render<T> = T extends AnyBranch
-  ? SelectionSet<
-      T[" $orig"],
-      RenderFields<T[" $fields"]>,
-      RenderFields<T[" $aliased"]>
-    >
-  : T extends readonly (infer E)[]
-    ? Render<E>[]
-    : T;
+// Omitted fields are typed as in `__SelectionSet` of schema types, which picks fields from the
+// schema type: unaliased ones are `undefined` (or `never` with `exactOptionalPropertyTypes`),
+// and aliased ones are optional `never`.
+type OmittedValue = { key?: never } extends { key?: infer V } ? V : never;
+// Fields omitted on one side of a merge and selected on the other are selected.
+type OmittedFields<B extends AnyBranch> = [B[" $omitted"]] extends [never]
+  ? {}
+  : OmittedOnly<
+      Exclude<B[" $omitted"], keyof B[" $leaves"] | keyof B[" $objects"]>,
+      B[" $aliased"]
+    >;
+type OmittedOnly<Omitted, Aliased> = {
+  [K in Exclude<Omitted, Aliased> & string]: OmittedValue;
+} & { [K in Extract<Omitted, Aliased> & string]?: never };
+type RenderObjects<Objects> = { [K in keyof Objects]: Render<Objects[K]> };
+// Fields of a selection, unlike `__SelectionSet`, are not ordered as in the schema.
+// The order does not matter to type relations, and visiting all fields of the schema type
+// costs much more for large types.
+type Flatten<Obj> = { [K in keyof Obj]: Obj[K] } & {};
+// `any` (merged from fragments with errors) needs no special handling, as it absorbs the union
+// of both branches.
+type RenderBranch<B> = B extends AnyBranch
+  ? Flatten<B[" $leaves"] & RenderObjects<B[" $objects"]> & OmittedFields<B>>
+  : B;
+/** Converts a selection, possibly in lists or nullable, into the type of its data. */
+export type Render<T> = T extends readonly unknown[]
+  ? Render<T[number]>[]
+  : T extends null
+    ? T
+    : RenderBranch<T[keyof T]>;

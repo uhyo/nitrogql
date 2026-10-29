@@ -18,9 +18,7 @@ use crate::print_types_for_operation_document;
 
 mod fragment_refs;
 
-fn type_system() -> TypeSystemDocument<'static> {
-    let mut doc = parse_type_system_document(
-        "
+const TYPE_SYSTEM: &str = "
             type User implements HasID {
                 id: ID!
                 name: String!
@@ -62,10 +60,14 @@ fn type_system() -> TypeSystemDocument<'static> {
                 posts: [Post!]
                 nullablePosts: [Post]!
             }
-            ",
-        0,
-    )
-    .unwrap();
+";
+
+fn type_system() -> TypeSystemDocument<'static> {
+    type_system_from(TYPE_SYSTEM)
+}
+
+fn type_system_from(source: &'static str) -> TypeSystemDocument<'static> {
+    let mut doc = parse_type_system_document(source, 0).unwrap();
     doc.extend(generate_builtins());
 
     resolve_schema_extensions(doc).unwrap()

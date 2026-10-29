@@ -8,5 +8,5 @@
     "skipLibCheck": true,
     "types": []
   },
-  "include": ["generated/**/*.ts"]
+  "include": ["generated/**/*.ts", "any.ts"]
 }
