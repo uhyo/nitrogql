@@ -1,7 +1,7 @@
 use std::{
     borrow::Cow,
     cell::OnceCell,
-    collections::BTreeMap,
+    collections::{BTreeMap, HashMap},
     hash::{Hash, Hasher},
     path::{Path, PathBuf},
 };
@@ -27,6 +27,8 @@ use crate::{
     load_plugins, parse_schema_files, read_schema_files,
     schema_loader::{LoadedSchema, SchemaFileKind, schema_kind_by_path},
 };
+
+use super::protocol::SpanMapping;
 
 /// Options given to the content mapper via the `options` field of tsconfig's `contentMappers` entry.
 #[derive(Debug, Default)]
@@ -65,6 +67,9 @@ pub struct Project {
 pub struct SchemaModule {
     pub text: String,
     pub spans: Vec<RecordedSpan>,
+    /// Mappings to the loaded schema file, indexed by position encoding and computed on first request.
+    /// The encoding is fixed for the server's lifetime, so only one of them is computed in practice.
+    pub mappings: [OnceCell<Vec<SpanMapping>>; 2],
 }
 
 self_cell!(
@@ -78,17 +83,18 @@ self_cell!(
 
 struct ProjectFiles<'src> {
     file_store: FileStore<'src>,
-    /// Absolute paths of loaded schema files, along with their indices in the file store.
-    schema_files: Vec<(PathBuf, usize)>,
+    /// Absolute paths of loaded schema files, mapped to their indices in the file store.
+    schema_files: HashMap<PathBuf, usize>,
     state: ProjectState<'src>,
 }
 
 impl<'src> ProjectFiles<'src> {
     fn new(file_store: FileStore<'src>, state: ProjectState<'src>) -> Self {
-        let schema_files = file_store
-            .iter_kind(FileKind::Schema)
-            .map(|(idx, (path, _, _))| (normalize_path(path), idx))
-            .collect();
+        let mut schema_files = HashMap::new();
+        for (idx, (path, _, _)) in file_store.iter_kind(FileKind::Schema) {
+            // The first one is used if a file is loaded twice.
+            schema_files.entry(normalize_path(path)).or_insert(idx);
+        }
         ProjectFiles {
             file_store,
             schema_files,
@@ -130,6 +136,9 @@ enum ProjectState<'src> {
 pub struct LoadedProjectSchema<'src> {
     pub schema: LoadedSchema<'src, TypeSystemDocument<'src>>,
     pub type_system: Schema<Cow<'src, str>, Pos>,
+    /// The first GraphQL schema file, along with its index in the file store.
+    /// It provides schema types unless the config specifies other means.
+    pub schema_module_file: Option<(PathBuf, usize)>,
     /// Schema types printed for the schema module, computed on first request.
     /// They also depend on the config, but a schema is only reused with the same config.
     pub schema_module: OnceCell<Result<SchemaModule, PositionedError>>,
@@ -227,8 +236,8 @@ impl Project {
         &self.files.borrow_dependent().file_store
     }
 
-    /// Returns absolute paths of loaded schema files, along with their indices in the file store.
-    pub fn schema_files(&self) -> &[(PathBuf, usize)] {
+    /// Returns absolute paths of loaded schema files, mapped to their indices in the file store.
+    pub fn schema_files(&self) -> &HashMap<PathBuf, usize> {
         &self.files.borrow_dependent().schema_files
     }
 
@@ -243,10 +252,7 @@ impl Project {
     /// Looks up the given file among loaded schema files.
     /// Returns the index of the file in the file store.
     pub fn schema_file_index(&self, path: &Path) -> Option<usize> {
-        self.schema_files()
-            .iter()
-            .find(|(schema_path, _)| schema_path == path)
-            .map(|(_, idx)| *idx)
+        self.schema_files().get(path).copied()
     }
 }
 
@@ -338,13 +344,22 @@ fn parse_schema<'src>(
     let schema = parse_schema_files(schema_sources, file_store, plugins)
         .map_err(CommandError::into_errors)?;
     let schema = resolve_schema(schema, plugins)?;
-    let type_system = match schema {
-        LoadedSchema::GraphQL(ref doc) => ast_to_type_system(doc),
-        LoadedSchema::Introspection(ref schema) => schema.clone(),
+    let (type_system, schema_module_file) = match schema {
+        LoadedSchema::GraphQL(ref doc) => {
+            let schema_module_file = file_store
+                .iter_kind(FileKind::Schema)
+                .find(|(_, (path, _, _))| {
+                    matches!(schema_kind_by_path(path), SchemaFileKind::GraphQL)
+                })
+                .map(|(idx, (path, _, _))| (normalize_path(path), idx));
+            (ast_to_type_system(doc), schema_module_file)
+        }
+        LoadedSchema::Introspection(ref schema) => (schema.clone(), None),
     };
     Ok(LoadedProjectSchema {
         schema,
         type_system,
+        schema_module_file,
         schema_module: OnceCell::new(),
     })
 }

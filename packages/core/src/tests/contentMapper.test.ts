@@ -151,6 +151,24 @@ describe("framing", () => {
     );
   });
 
+  it("concatenates a large message once after all chunks arrive", async () => {
+    namespace.read_message(1);
+    const message = JSON.stringify({ id: 1, text: "x".repeat(10000) });
+    const data = frame(message);
+    const concat = vi.spyOn(Buffer, "concat");
+    try {
+      for (let start = 0; start < data.length; start += 100) {
+        input.write(data.subarray(start, start + 100));
+        await settle();
+      }
+      expect(deliveries).toEqual(received([1, message]));
+      // once until the header is complete, and once for the whole message
+      expect(concat.mock.calls.length).toBeLessThanOrEqual(2);
+    } finally {
+      concat.mockRestore();
+    }
+  });
+
   it("handles several messages in one chunk", async () => {
     namespace.read_message(1);
     namespace.read_message(2);

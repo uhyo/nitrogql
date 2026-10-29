@@ -48,7 +48,7 @@ fn transform_file<'a>(project: &'a Project, root: &Path, path: &str) -> Transfor
 /// Prints transform result with mapped spans annotated.
 fn print_result(result: &TransformResult, original: &str, root: &Path) -> String {
     let mut output = result.text.to_string();
-    for (virtual_start, virtual_len, original_start, original_len, kind) in &result.mappings {
+    for (virtual_start, virtual_len, original_start, original_len, kind) in result.mappings.iter() {
         writeln!(
             output,
             "// mapping: {:?} -> {:?} ({kind:?})",
@@ -160,8 +160,10 @@ fn schema_files() {
             .contains("export type User = __OperationOutput.User;")
     );
     assert!(result.diagnostics.is_empty());
-    // The cached schema module is not copied.
+    // The cached schema module and its mappings are not copied.
     assert!(matches!(result.text, Cow::Borrowed(_)));
+    assert!(matches!(result.mappings, Cow::Borrowed(_)));
+    assert!(!result.mappings.is_empty());
     // Other schema files are empty modules.
     let result = transform_file(&project, &root, "schema/b.graphql");
     assert_eq!(result.text, "export {};\n");
@@ -318,6 +320,31 @@ fn utf16_positions() {
     assert_eq!(result.mappings[index].2, original_start - 2);
     // generated code is ASCII only
     assert_eq!(result.mappings[index].0, utf8_result.mappings[index].0);
+}
+
+#[test]
+fn schema_module_utf16_positions() {
+    let mut files = default_files();
+    let schema = format!("# 😀\n{SCHEMA}");
+    files[2] = ("schema/a.graphql", &schema);
+    let root = setup("schema_module_utf16_positions", &files);
+    let project = open(&root);
+    let path = root.join("schema/a.graphql");
+    // Mappings of the schema module are cached for each encoding.
+    let utf16_result = into_owned(transform(&project, &path, &schema, PositionEncoding::Utf16));
+    let utf8_result = transform(&project, &path, &schema, PositionEncoding::Utf8);
+    let original_start = schema.find("Query").unwrap();
+    let index = utf8_result
+        .mappings
+        .iter()
+        .position(|mapping| mapping.2 == original_start)
+        .unwrap();
+    // 😀 is 4 bytes in UTF-8 and 2 code units in UTF-16.
+    assert_eq!(utf16_result.mappings[index].2, original_start - 2);
+    assert_eq!(
+        transform(&project, &path, &schema, PositionEncoding::Utf16),
+        utf16_result
+    );
 }
 
 #[test]
@@ -555,6 +582,7 @@ fn has_schema_module(project: &Project) -> bool {
 fn into_owned(result: TransformResult) -> TransformResult<'static> {
     TransformResult {
         text: Cow::Owned(result.text.into_owned()),
+        mappings: Cow::Owned(result.mappings.into_owned()),
         ..result
     }
 }
@@ -610,11 +638,12 @@ fn plugin_files() {
     let project = open(&root);
     // Schema additions of plugins are loaded, but are not schema files.
     assert_eq!(project.file_store().schema_len(), 3);
-    let schema_files = project
+    let mut schema_files = project
         .schema_files()
         .iter()
         .map(|(path, idx)| (path.strip_prefix(&root).unwrap().to_owned(), *idx))
         .collect::<Vec<_>>();
+    schema_files.sort();
     assert_eq!(
         schema_files,
         vec![
