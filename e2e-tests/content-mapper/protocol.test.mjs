@@ -206,3 +206,21 @@ describe("content mapper startup", { timeout: 60_000 }, () => {
     }
   });
 });
+
+describe("content mapper initialize", { timeout: 60_000 }, () => {
+  it("answers the same in the host and in the wasm module", async () => {
+    // The host answers the first initialize request by itself and leaves
+    // later ones to the wasm module. Both must choose the same encoding.
+    const mapper = startMapper(projectDir);
+    try {
+      const params = { positionEncodings: ["utf-16", "utf-8"] };
+      const host = await mapper.request("initialize", params);
+      const wasm = await mapper.request("initialize", params);
+      assert.equal(host.error, undefined);
+      assert.deepEqual(wasm.result, host.result);
+      assert.deepEqual(mapper.unexpected, []);
+    } finally {
+      mapper.child.kill();
+    }
+  });
+});
