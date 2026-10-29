@@ -1,15 +1,20 @@
-use graphql_type_system::{NamedType, Text, Type};
+use graphql_type_system::{NamedType, Schema, Text, Type};
+use nitrogql_ast::base::Pos;
 use nitrogql_config_file::TypeTarget;
 
-use crate::ts_types::{ObjectField, TSType, ts_types_util::ts_union};
+use crate::{
+    jsdoc::description_with_deprecation,
+    ts_types::{ObjectField, TSType, ts_types_util::ts_union},
+};
 
 use super::{
     super::fragment_imports::{FragmentImport, UTILITIES_NAMESPACE, imported_fragment_tree},
     SelectionTree, SelectionTreeBranch, SelectionTreeField, SelectionTreeLeaf,
 };
 
-#[derive(Debug, Copy, Clone)]
-pub struct GenerateSelectionTreeTypeContext<'a> {
+pub struct GenerateSelectionTreeTypeContext<'a, S> {
+    /// Schema, whose descriptions of fields are copied to the printed types.
+    pub schema: &'a Schema<S, Pos>,
     pub schema_root_namespace: &'a str,
     pub fragment_imports: &'a [FragmentImport],
 }
@@ -19,7 +24,7 @@ pub struct GenerateSelectionTreeTypeContext<'a> {
 /// Trees that refer to imported fragments are printed unrendered,
 /// and the fragments are merged and the result is rendered at the type level.
 pub fn generate_selection_tree_type<'src, S: Text<'src>>(
-    context: &GenerateSelectionTreeTypeContext,
+    context: &GenerateSelectionTreeTypeContext<S>,
     tree: &SelectionTree<S>,
 ) -> TSType {
     if tree.has_fragment_refs() {
@@ -37,7 +42,7 @@ pub fn render_type(unrendered: TSType) -> TSType {
 /// types to `Branch` types (a union of them, if branches of a type differ in variable values).
 /// Other modules merge this type into their selections.
 pub fn generate_unrendered_branches_type<'src, S: Text<'src>>(
-    context: &GenerateSelectionTreeTypeContext,
+    context: &GenerateSelectionTreeTypeContext<S>,
     branches: &[SelectionTreeBranch<S>],
 ) -> TSType {
     let mut type_names: Vec<&str> = vec![];
@@ -66,7 +71,7 @@ pub fn generate_unrendered_branches_type<'src, S: Text<'src>>(
 }
 
 fn generate_unrendered_type<'src, S: Text<'src>>(
-    context: &GenerateSelectionTreeTypeContext,
+    context: &GenerateSelectionTreeTypeContext<S>,
     tree: &SelectionTree<S>,
 ) -> TSType {
     wrap_nullability(tree, false, &|branches| {
@@ -75,19 +80,16 @@ fn generate_unrendered_type<'src, S: Text<'src>>(
 }
 
 fn generate_unrendered_branch_type<'src, S: Text<'src>>(
-    context: &GenerateSelectionTreeTypeContext,
+    context: &GenerateSelectionTreeTypeContext<S>,
     branch: &SelectionTreeBranch<S>,
 ) -> TSType {
     // Fields are classified by kind, so that merging does not inspect them.
     // Aliased fields are typed the same as unaliased ones, except when omitted.
-    let all_fields = || branch.unaliased_fields.iter().chain(&branch.aliased_fields);
     let fields = |is_kind: fn(&SelectionTreeField<S>) -> bool| {
         fields_to_object(
             context,
-            &all_fields()
-                .filter(|field| is_kind(field))
-                .collect::<Vec<_>>(),
-            &branch.type_name,
+            branch,
+            branch_fields(branch).filter(|(field, _)| is_kind(field)),
             |tree| generate_unrendered_type(context, tree),
         )
     };
@@ -96,8 +98,11 @@ fn generate_unrendered_branch_type<'src, S: Text<'src>>(
     };
     let leaves = fields(|field| matches!(field, SelectionTreeField::Leaf(_)));
     let objects = fields(|field| matches!(field, SelectionTreeField::Object(_)));
-    let omitted =
-        names(&mut all_fields().filter(|field| matches!(field, SelectionTreeField::Empty(_))));
+    let omitted = names(
+        &mut branch_fields(branch)
+            .map(|(field, _)| field)
+            .filter(|field| matches!(field, SelectionTreeField::Empty(_))),
+    );
     let aliased = names(&mut branch.aliased_fields.iter());
 
     // Branches of this object type in the spread fragments.
@@ -184,7 +189,7 @@ fn utility(name: &str) -> TSType {
 }
 
 fn generate_selection_tree_type_impl<'src, S: Text<'src>>(
-    context: &GenerateSelectionTreeTypeContext,
+    context: &GenerateSelectionTreeTypeContext<S>,
     tree: &SelectionTree<S>,
 ) -> TSType {
     wrap_nullability(tree, false, &|branches| {
@@ -196,30 +201,25 @@ fn generate_selection_tree_type_impl<'src, S: Text<'src>>(
     })
 }
 
+/// Object type of given branch.
+/// Fields are typed by the printer instead of being picked from the schema type, which
+/// costs type checking in proportion to the number of fields of the schema type.
 fn generate_selection_set_type<'src, S: Text<'src>>(
-    context: &GenerateSelectionTreeTypeContext,
+    context: &GenerateSelectionTreeTypeContext<S>,
     branch: &SelectionTreeBranch<S>,
 ) -> TSType {
-    let selection_set_utility = TSType::NamespaceMember(
-        context.schema_root_namespace.into(),
-        "__SelectionSet".into(),
-    );
-    let fields = |fields: &[SelectionTreeField<S>]| {
-        fields_to_object(
-            context,
-            &fields.iter().collect::<Vec<_>>(),
-            &branch.type_name,
-            |tree| generate_selection_tree_type_impl(context, tree),
-        )
-    };
-    TSType::TypeFunc(
-        Box::new(selection_set_utility),
-        vec![
-            operation_output_type(context, branch.type_name.clone()),
-            fields(&branch.unaliased_fields),
-            fields(&branch.aliased_fields),
-        ],
-    )
+    fields_to_object(context, branch, branch_fields(branch), |tree| {
+        generate_selection_tree_type_impl(context, tree)
+    })
+}
+
+/// Fields of given branch, with whether each is aliased.
+fn branch_fields<S>(
+    branch: &SelectionTreeBranch<S>,
+) -> impl Iterator<Item = (&SelectionTreeField<S>, bool)> {
+    let unaliased = branch.unaliased_fields.iter().map(|field| (field, false));
+    let aliased = branch.aliased_fields.iter().map(|field| (field, true));
+    unaliased.chain(aliased)
 }
 
 /// Maps given tree to a type, with `object` giving types of objects.
@@ -243,29 +243,53 @@ fn wrap_nullability<S>(
     }
 }
 
-/// Object type of given selected fields, with `object` giving types of object fields.
-fn fields_to_object<'src, S: Text<'src>>(
-    context: &GenerateSelectionTreeTypeContext,
-    fields: &[&SelectionTreeField<S>],
-    parent_type_name: &str,
+/// Object type of given fields selected in given branch, with `object` giving types of object
+/// fields. Unaliased fields have the descriptions of the fields in the schema.
+fn fields_to_object<'a, 'src, S: Text<'src> + 'a>(
+    context: &GenerateSelectionTreeTypeContext<S>,
+    branch: &SelectionTreeBranch<S>,
+    fields: impl Iterator<Item = (&'a SelectionTreeField<S>, bool)>,
     object: impl Fn(&SelectionTree<S>) -> TSType,
 ) -> TSType {
+    let schema_fields = context
+        .schema
+        .get_type(&branch.type_name)
+        .and_then(|ty| ty.as_object())
+        .map_or(&[][..], |ty| &ty.fields);
     TSType::Object(
         fields
-            .iter()
-            .map(|field| {
+            .map(|(field, aliased)| {
                 let (r#type, optional) = match field {
-                    // Omitted fields are optional `never`.
-                    SelectionTreeField::Empty(_) => (TSType::Never, true),
+                    // Omitted fields are typed as `undefined` (`never` with
+                    // `exactOptionalPropertyTypes`), or as optional `never` if aliased.
+                    SelectionTreeField::Empty(_) if aliased => (TSType::Never, true),
+                    SelectionTreeField::Empty(_) => (
+                        TSType::NamespaceMember(
+                            context.schema_root_namespace.into(),
+                            "__Omitted".into(),
+                        ),
+                        false,
+                    ),
                     SelectionTreeField::Leaf(leaf) => {
-                        (leaf_type(context, leaf, parent_type_name), false)
+                        (leaf_type(context, leaf, &branch.type_name), false)
                     }
                     SelectionTreeField::Object(field) => (object(&field.selection), false),
                 };
+                let schema_field = schema_fields
+                    .iter()
+                    .find(|schema_field| !aliased && *schema_field.name == *field.name());
                 ObjectField {
                     key: field.name().to_string().into(),
                     r#type,
-                    description: None,
+                    description: schema_field.and_then(|schema_field| {
+                        description_with_deprecation(
+                            schema_field
+                                .description
+                                .as_ref()
+                                .map(|d| d.inner_ref().borrow()),
+                            schema_field.deprecation.as_ref(),
+                        )
+                    }),
                     optional,
                     readonly: false,
                 }
@@ -275,7 +299,10 @@ fn fields_to_object<'src, S: Text<'src>>(
 }
 
 /// Type of given GraphQL type in the schema's `__OperationOutput` namespace.
-fn operation_output_type(context: &GenerateSelectionTreeTypeContext, type_name: String) -> TSType {
+fn operation_output_type<S>(
+    context: &GenerateSelectionTreeTypeContext<S>,
+    type_name: String,
+) -> TSType {
     TSType::NamespaceMember3(
         context.schema_root_namespace.into(),
         TypeTarget::OperationOutput.to_string(),
@@ -284,7 +311,7 @@ fn operation_output_type(context: &GenerateSelectionTreeTypeContext, type_name: 
 }
 
 fn leaf_type<'src, S: Text<'src>>(
-    context: &GenerateSelectionTreeTypeContext,
+    context: &GenerateSelectionTreeTypeContext<S>,
     leaf: &SelectionTreeLeaf<S>,
     parent_type_name: &str,
 ) -> TSType {

@@ -1,3 +1,5 @@
+use std::fmt::Display;
+
 use nitrogql_utils::{first_non_space_byte_index, skip_chars};
 use sourcemap_writer::SourceMapWriter;
 
@@ -10,6 +12,21 @@ pub fn print_description(description: &str, writer: &mut impl SourceMapWriter) {
         writer.write("\n");
     }
     writer.write(" */\n");
+}
+
+/// Combines description and deprecation reason into the text of a JSDoc comment.
+pub fn description_with_deprecation(
+    description: Option<&str>,
+    deprecation: Option<impl Display>,
+) -> Option<String> {
+    match (description, deprecation) {
+        (Some(description), Some(deprecation)) => {
+            Some(format!("{description}\n\n@deprecated {deprecation}"))
+        }
+        (Some(description), None) => Some(description.to_owned()),
+        (None, Some(deprecation)) => Some(format!("@deprecated {deprecation}")),
+        (None, None) => None,
+    }
 }
 
 /// Removes extra indentation and surrounding empty lines from given string.

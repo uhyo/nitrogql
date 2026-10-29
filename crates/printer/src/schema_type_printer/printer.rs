@@ -119,6 +119,7 @@ export type __SelectionSet<Orig, Obj, Others> =
   __Beautify<Pick<{
     [K in keyof Orig]: Obj extends { [P in K]?: infer V } ? V : unknown
   }, Extract<keyof Orig, keyof Obj>> & Others>;
+export type __Omitted = { key?: never } extends { key?: infer V } ? V : never;
 
 ",
         );

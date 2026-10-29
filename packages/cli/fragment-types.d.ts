@@ -164,9 +164,9 @@ type AddLeaves<B, Leaves, Omitted, Aliased> = B extends AnyBranch
     >
   : never;
 
-// Omitted fields are typed as in `__SelectionSet` of schema types, which picks fields from the
-// schema type: unaliased ones are `undefined` (or `never` with `exactOptionalPropertyTypes`),
-// and aliased ones are optional `never`.
+// Omitted fields are typed as in expanded selections: unaliased ones are `undefined` (or `never`
+// with `exactOptionalPropertyTypes`, same as `__Omitted` of schema types), and aliased ones are
+// optional `never`.
 type OmittedValue = { key?: never } extends { key?: infer V } ? V : never;
 // Fields omitted on one side of a merge and selected on the other are selected.
 type OmittedFields<B extends AnyBranch> = [B[" $omitted"]] extends [never]
@@ -179,7 +179,7 @@ type OmittedOnly<Omitted, Aliased> = {
   [K in Exclude<Omitted, Aliased> & string]: OmittedValue;
 } & { [K in Extract<Omitted, Aliased> & string]?: never };
 type RenderObjects<Objects> = { [K in keyof Objects]: Render<Objects[K]> };
-// Fields of a selection, unlike `__SelectionSet`, are not ordered as in the schema.
+// Fields of a selection are not ordered as in the schema, nor as in expanded selections.
 // The order does not matter to type relations, and visiting all fields of the schema type
 // costs much more for large types.
 type Flatten<Obj> = { [K in keyof Obj]: Obj[K] } & {};

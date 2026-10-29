@@ -77,12 +77,11 @@ selection with the simplest one that applies, as it knows the branch:
 - `SkipFragment` handles `@skip`/`@include` on spreads.
 - `Render` turns the result into types identical to the ones the expanding printer prints.
 
-Expanded types are built by `__SelectionSet`, which picks fields from the schema type, so their
-fields are in the order of the schema. `Render` flattens the fields of each branch instead,
-which gives identical types (the order of fields does not matter to type relations), but hovers
-show leaves before object fields. Omitted fields are typed as `__SelectionSet` types them:
-unaliased ones are `undefined` (`never` with `exactOptionalPropertyTypes`), and aliased ones are
-optional `never`.
+Expanded types are object types with the fields of each branch: unaliased fields in the order
+of the selection, then aliased ones. `Render` flattens the fields of each branch, which gives
+identical types (the order of fields does not matter to type relations), but hovers show leaves
+before object fields. Omitted fields are typed the same in both: unaliased ones are `undefined`
+(`never` with `exactOptionalPropertyTypes`), and aliased ones are optional `never`.
 
 ## Running
 
@@ -106,11 +105,11 @@ fragments of, as real modules do.
 
 ## Findings
 
-All 38 cases pass with TypeScript 7.1.0-beta, also with `exactOptionalPropertyTypes`.
+All 39 cases pass with TypeScript 7.1.0-beta, also with `exactOptionalPropertyTypes`.
 
 - **Identical types** (all cases): fragments on interfaces spread on object types and the other
   way around, nested and list merging, nullable lists, inline fragments inside fragments,
-  `__typename`, aliases, chains of fragments across modules, local fragments that spread
+  `__typename`, aliases (also to the field's own name), chains of fragments across modules, local fragments that spread
   imported ones, `@skip`/`@include` on spreads (constant and variable), variables used inside
   fragments, the same variable used in the operation and in fragments (directly, nested, in
   chains of fragments and on skipped spreads), and the benchmark cases.
@@ -131,11 +130,13 @@ case: in real code, TypeScript only resolves what is used.
 
 Instantiations and check time with TypeScript 7.1, measured in the same session:
 
-| Case                   | Expanded     | Before (ea4f21c) | Current        |
+| Case                   | Expanded\*   | Before (ea4f21c) | Current        |
 | ---------------------- | ------------ | ---------------- | -------------- |
 | `colocation`           | 145k / 0.12s | 579k / 0.36s     | 287k / 0.20s   |
 | `colocation_variables` | 340k / 0.25s | 1,148k / 0.68s   | 636k / 0.41s   |
 | `wide`                 | 536k / 0.44s | 3,694k / 1.9s    | 1,271k / 0.64s |
+
+\* Expanded types as they were printed then, with `__SelectionSet` (see below).
 
 Timings vary between runs by about 10%; instantiations are stable. Checking only the modules,
 without resolving the result types, cost 0.44s before and 0.34s now for 1,000 colocation
@@ -168,6 +169,28 @@ resolving list elements with `T[number]` instead of `infer`.
 
 Before #128, merging ignored variables, which built combinations that cannot happen and cost
 twice as much for `colocation_variables`.
+
+### Expanded types
+
+Expanded types were printed with `__SelectionSet<Orig, Fields, Aliased>` of schema types, which
+picks the fields from the schema type `Orig` so that hovers show the descriptions of the fields
+in the schema. This visits every field of the schema type, like rendering did before. The
+printer now prints plain object types and copies the descriptions (and deprecation reasons) of
+unaliased fields to them. Measured in the same session, with TypeScript 7.1:
+
+| Case                   | Expanded, before | Expanded, now | Referred, before | Referred, now  |
+| ---------------------- | ---------------- | ------------- | ---------------- | -------------- |
+| `colocation`           | 145k / 0.11s     | 28k / 0.04s   | 288k / 0.16s     | 281k / 0.18s   |
+| `colocation_variables` | 340k / 0.23s     | 67k / 0.06s   | 639k / 0.38s     | 628k / 0.33s   |
+| `wide`                 | 536k / 0.41s     | 86k / 0.07s   | 1,279k / 0.61s   | 1,207k / 0.58s |
+
+Checking only the expanded modules for 1,000 colocation operations, without resolving the
+result types, takes 51 instantiations and 0.07s (0.34s referred). In `examples/nextjs`,
+`scripts/bench-fragments.mjs` measured 249k instantiations (0.31s) with fragments inlined before,
+and 94k (0.21s) now, against 142k (0.22s) with imported fragments.
+
+As each branch of a union has its own declaration of a field, hovers on a deprecated field of a
+union list the `@deprecated` tag once for each branch.
 
 Merging fragments one at a time nests instantiations, and 50 spreads in one selection
 failed with TS2589. Combining them as a balanced tree removes that limit (tested up to 120).

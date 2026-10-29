@@ -9,6 +9,7 @@ export type __SelectionSet<Orig, Obj, Others> =
   __Beautify<Pick<{
     [K in keyof Orig]: Obj extends { [P in K]?: infer V } ? V : unknown
   }, Extract<keyof Orig, keyof Obj>> & Others>;
+export type __Omitted = { key?: never } extends { key?: infer V } ? V : never;
 
 export declare namespace __OperationInput {
   type __tmp_Rec1 = string | Rec2;

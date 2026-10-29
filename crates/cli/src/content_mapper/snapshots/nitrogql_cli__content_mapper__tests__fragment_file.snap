@@ -7,9 +7,9 @@ import type * as Schema from "../schema/a.graphql";
 
 import type * as __Nitrogql from "@nitrogql/cli/fragment-types";
 
-export type UserName = Schema.__SelectionSet<Schema.__OperationOutput.User, {
+export type UserName = {
   name: Schema.__OperationOutput.String;
-}, {}>;
+};
 
 export declare const UserName: TypedDocumentNode<UserName, never>;
 

@@ -5,14 +5,14 @@ expression: printed
 import type { TypedDocumentNode } from "@graphql-typed-document-node/core";
 import type * as Schema from "";
 
-type Result = Schema.__SelectionSet<Schema.__OperationOutput.Query, {
-  me: Schema.__SelectionSet<Schema.__OperationOutput.User, {
-    id?: never;
-    name?: never;
+type Result = {
+  me: {
+    id: Schema.__Omitted;
+    name: Schema.__Omitted;
     type: Schema.__OperationOutput.UserType;
-    age?: never;
-  }, {}>;
-}, {}>;
+    age: Schema.__Omitted;
+  };
+};
 
 type Variables = {};
 

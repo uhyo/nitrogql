@@ -112,8 +112,9 @@ impl<'a, 'src> SchemaTypeSource<'a, 'src> {
         }
     }
 
-    fn selection_tree_type_context(&self) -> GenerateSelectionTreeTypeContext<'_> {
+    fn selection_tree_type_context(&self) -> GenerateSelectionTreeTypeContext<'_, Cow<'src, str>> {
         GenerateSelectionTreeTypeContext {
+            schema: self.schema,
             schema_root_namespace: &self.options.schema_root_namespace,
             fragment_imports: &self.options.fragment_imports,
         }

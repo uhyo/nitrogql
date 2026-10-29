@@ -141,6 +141,15 @@ const CASES: &[Case] = &[
         expect: Expect::Exact,
     },
     Case {
+        name: "alias_same_as_name",
+        main: "query Test { me { id id: id posts { id } ...F } }",
+        modules: &[(
+            "f",
+            "fragment F on User { name name: name posts: posts { id } }",
+        )],
+        expect: Expect::Exact,
+    },
+    Case {
         name: "aliases",
         main: "query Test { me { userName: name myPosts: posts { id } ...F } }",
         modules: &[(

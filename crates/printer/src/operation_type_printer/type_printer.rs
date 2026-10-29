@@ -290,9 +290,10 @@ fn get_fields_for_selection_set<'a, 'src, S: Text<'src>>(
             }
         };
 
+        // A field aliased to its own name is the same as an unaliased one, and is merged with it.
         types_for_simple_fields.push(match field.alias {
-            None => Either::Left(field_type),
-            Some(_) => Either::Right(field_type),
+            Some(alias) if alias.name != field_name => Either::Right(field_type),
+            _ => Either::Left(field_type),
         });
     }
 

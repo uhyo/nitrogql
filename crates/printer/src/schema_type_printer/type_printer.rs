@@ -20,7 +20,7 @@ use nitrogql_ast::{
 use nitrogql_config_file::TypeTarget;
 use sourcemap_writer::SourceMapWriter;
 
-use crate::jsdoc::print_description as jsdoc_print_description;
+use crate::jsdoc::{description_with_deprecation, print_description as jsdoc_print_description};
 
 use super::{
     context::SchemaTypePrinterContext,
@@ -592,13 +592,10 @@ fn make_ts_description(
     description: &Option<StringValue>,
     deprecation: &Option<impl Display>,
 ) -> Option<String> {
-    match (description, deprecation) {
-        (Some(description), Some(deprecation)) => Some(format!(
-            "{}\n\n@deprecated {}",
-            description.value, deprecation
-        )),
-        (Some(description), None) => Some(description.value.clone()),
-        (None, Some(deprecation)) => format!("@deprecated {}", deprecation).into(),
-        (None, None) => None,
-    }
+    description_with_deprecation(
+        description
+            .as_ref()
+            .map(|description| description.value.as_str()),
+        deprecation.as_ref(),
+    )
 }

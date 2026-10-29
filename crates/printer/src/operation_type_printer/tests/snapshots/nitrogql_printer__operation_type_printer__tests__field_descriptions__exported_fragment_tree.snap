@@ -1,0 +1,55 @@
+---
+source: crates/printer/src/operation_type_printer/tests/mod.rs
+expression: printed
+---
+import type { TypedDocumentNode } from "@graphql-typed-document-node/core";
+import type * as Schema from "";
+
+import type * as __Nitrogql from "@nitrogql/cli/fragment-types";
+
+export type F = {
+  /**
+   * ID of the user.
+   */
+  id: Schema.__OperationOutput.ID;
+  /**
+   * Old name of the user.
+   * @deprecated Use `name`.
+   */
+  nick: Schema.__OperationOutput.String | null;
+  friends: ({
+    /**
+     * Name of the user.
+     */
+    name: Schema.__OperationOutput.String;
+  })[];
+  userName: Schema.__OperationOutput.String;
+};
+
+export declare const F: TypedDocumentNode<F, never>;
+
+export type __NitrogqlFragments = {
+  F: {
+    User: __Nitrogql.Branch<{
+      /**
+       * ID of the user.
+       */
+      id: Schema.__OperationOutput.ID;
+      /**
+       * Old name of the user.
+       * @deprecated Use `name`.
+       */
+      nick: Schema.__OperationOutput.String | null;
+      userName: Schema.__OperationOutput.String;
+    }, {
+      friends: ({
+        User: __Nitrogql.Branch<{
+          /**
+           * Name of the user.
+           */
+          name: Schema.__OperationOutput.String;
+        }, {}, never, never>;
+      })[];
+    }, never, "userName">;
+  };
+};
