@@ -42,6 +42,14 @@ pub async fn run_node(code: &str) -> io::Result<String> {
     }
 }
 
+/// Stops Node.js started by `run_node`, and waits for it to exit.
+/// Otherwise it may outlive this process for a moment, keeping its working directory in use.
+/// The wasm build runs code in this process, so there is nothing to stop.
+pub fn stop_node() {
+    #[cfg(not(target_os = "wasi"))]
+    native::stop();
+}
+
 /// Node.js command server for the native build.
 #[cfg(not(target_os = "wasi"))]
 mod native {
@@ -55,7 +63,7 @@ mod native {
 
     /// Running command server.
     struct Server {
-        _child: Child,
+        child: Child,
         stdin: ChildStdin,
         stdout: BufReader<ChildStdout>,
     }
@@ -84,7 +92,7 @@ mod native {
             let stdin = child.stdin.take().expect("stdin is piped");
             let stdout = BufReader::new(child.stdout.take().expect("stdout is piped"));
             let mut server = Server {
-                _child: child,
+                child,
                 stdin,
                 stdout,
             };
@@ -128,6 +136,20 @@ mod native {
                 log::error!("Failed to send session to Node.js: {err}");
             }
         });
+    }
+
+    pub fn stop() {
+        let Some(Server {
+            mut child, stdin, ..
+        }) = SERVER.take()
+        else {
+            return;
+        };
+        // The server exits when its stdin is closed.
+        drop(stdin);
+        if let Err(err) = child.wait() {
+            log::error!("Failed to wait for Node.js to exit: {err}");
+        }
     }
 
     pub fn run_node(code: &str) -> io::Result<String> {

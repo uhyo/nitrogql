@@ -8,6 +8,7 @@
 use std::{collections::HashMap, path::Path};
 
 use log::{debug, error};
+use nitrogql_config_file::stop_node;
 use nitrogql_error::ErrorCode;
 use serde::{Serialize, de::DeserializeOwned};
 use serde_json::{Value, json};
@@ -47,6 +48,17 @@ pub async fn run_content_mapper() {
         if let Some(response) = server.handle_message(&message).await {
             connection.send(&response);
         }
+    }
+    stop_node();
+}
+
+/// Returns given path in the form TypeScript uses, i.e. with forward slashes even on Windows.
+fn ts_path(path: &Path) -> String {
+    let path = path.to_string_lossy();
+    if cfg!(windows) {
+        path.replace('\\', "/")
+    } else {
+        path.into_owned()
     }
 }
 
@@ -141,7 +153,7 @@ impl Server {
             watched_files: project
                 .watched_files
                 .iter()
-                .map(|path| path.to_string_lossy().into_owned())
+                .map(|path| ts_path(path))
                 .collect(),
             option_diagnostics,
         };

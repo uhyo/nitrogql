@@ -49,8 +49,13 @@ pub fn normalize_path(path: &Path) -> PathBuf {
             Component::ParentDir => {
                 stack.pop();
             }
-            c @ Component::Prefix(_) | c @ Component::RootDir => {
+            c @ Component::Prefix(_) => {
                 stack.clear();
+                stack.push(c);
+            }
+            // On Windows, the root follows the prefix (`C:` of `C:\`), which is kept.
+            c @ Component::RootDir => {
+                stack.retain(|c| matches!(c, Component::Prefix(_)));
                 stack.push(c);
             }
         }
@@ -69,6 +74,15 @@ pub fn resolve_relative_path(from_file: &Path, relative: &Path) -> PathBuf {
     result.pop();
     result.push(relative);
     normalize_path(&result)
+}
+
+#[cfg(windows)]
+#[test]
+fn test_normalize_windows_path() {
+    assert_eq!(
+        normalize_path(Path::new("C:/path/to/../main.graphql")),
+        Path::new(r"C:\path\main.graphql")
+    );
 }
 
 #[test]
