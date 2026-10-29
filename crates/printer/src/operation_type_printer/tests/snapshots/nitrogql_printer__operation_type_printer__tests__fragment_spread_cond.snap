@@ -5,25 +5,25 @@ expression: printed
 import type { TypedDocumentNode } from "@graphql-typed-document-node/core";
 import type * as Schema from "";
 
-type FooBar123Result = Schema.__SelectionSet<Schema.__OperationOutput.Query, {
-  me: Schema.__SelectionSet<Schema.__OperationOutput.User, {
+type FooBar123Result = {
+  me: {
     id: Schema.__OperationOutput.ID;
     name: Schema.__OperationOutput.String;
     type: Schema.__OperationOutput.UserType;
     age: Schema.__OperationOutput.Int | null;
-    posts: (Schema.__SelectionSet<Schema.__OperationOutput.User, {
+    posts: ({
       id: Schema.__OperationOutput.ID;
-    }, {}> | Schema.__SelectionSet<Schema.__OperationOutput.Bot, {
+    } | {
       id: Schema.__OperationOutput.ID;
-    }, {}> | Schema.__SelectionSet<Schema.__OperationOutput.Post, {
+    } | {
       id: Schema.__OperationOutput.ID;
       title: Schema.__OperationOutput.String;
       body: Schema.__OperationOutput.String;
-    }, {}> | Schema.__SelectionSet<Schema.__OperationOutput.Tweet, {
+    } | {
       id: Schema.__OperationOutput.ID;
-    }, {}>)[];
-  }, {}>;
-}, {}>;
+    })[];
+  };
+};
 
 type FooBar123Variables = {};
 
@@ -31,21 +31,21 @@ declare const FooBar123Query: TypedDocumentNode<FooBar123Result, FooBar123Variab
 
 export { FooBar123Query as default };
 
-export type F = Schema.__SelectionSet<Schema.__OperationOutput.User, {
+export type F = {
   id: Schema.__OperationOutput.ID;
-}, {}> | Schema.__SelectionSet<Schema.__OperationOutput.Bot, {
+} | {
   id: Schema.__OperationOutput.ID;
-}, {}> | Schema.__SelectionSet<Schema.__OperationOutput.Post, {
+} | {
   id: Schema.__OperationOutput.ID;
-}, {}> | Schema.__SelectionSet<Schema.__OperationOutput.Tweet, {
+} | {
   id: Schema.__OperationOutput.ID;
-}, {}>;
+};
 
 export declare const F: TypedDocumentNode<F, never>;
 
-export type P = Schema.__SelectionSet<Schema.__OperationOutput.Post, {
+export type P = {
   title: Schema.__OperationOutput.String;
   body: Schema.__OperationOutput.String;
-}, {}>;
+};
 
 export declare const P: TypedDocumentNode<P, never>;

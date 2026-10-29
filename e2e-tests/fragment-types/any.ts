@@ -7,25 +7,20 @@ import type * as N from "./generated/fragment-types";
 type IsAny<T> = 0 extends 1 & T ? true : false;
 type Expect<T extends true> = T;
 
-type Post = { Post: N.Branch<{ id: string }, {}, never, never> };
+type Post = { Post: N.Branch<{ id: string }, {}, never> };
 type User<Objects> = {
-  User: N.Branch<{ name: string }, Objects, never, never>;
+  User: N.Branch<{ name: string }, Objects, never>;
 };
 type RenderUser<Branches> = N.Render<{ User: Branches }>;
 
 export type _0 = Expect<IsAny<RenderUser<N.Spread<N.At<any, "User">>>>>;
 export type _1 = Expect<
-  IsAny<
-    RenderUser<N.MergeLeaves<N.At<any, "User">, { id: string }, never, never>>
-  >
+  IsAny<RenderUser<N.MergeLeaves<N.At<any, "User">, { id: string }, never>>>
 >;
 export type _2 = Expect<
   IsAny<
     RenderUser<
-      N.MergeFragment<
-        N.Branch<{ id: string }, { posts: Post[] }, never, never>,
-        any
-      >
+      N.MergeFragment<N.Branch<{ id: string }, { posts: Post[] }, never>, any>
     >
   >
 >;

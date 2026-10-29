@@ -6,21 +6,21 @@ expression: printed
 import type { TypedDocumentNode } from "@graphql-typed-document-node/core";
 import type * as Schema from "";
 
-type Result = Schema.__SelectionSet<Schema.__OperationOutput.Query, {
-  me: Schema.__SelectionSet<Schema.__OperationOutput.User, {
+type Result = {
+  me: {
     name?: never;
     age?: never;
-  }, {}> | Schema.__SelectionSet<Schema.__OperationOutput.User, {
+  } | {
     name?: never;
     age: Schema.__OperationOutput.Int | null;
-  }, {}> | Schema.__SelectionSet<Schema.__OperationOutput.User, {
+  } | {
     name: Schema.__OperationOutput.String;
     age?: never;
-  }, {}> | Schema.__SelectionSet<Schema.__OperationOutput.User, {
+  } | {
     name: Schema.__OperationOutput.String;
     age: Schema.__OperationOutput.Int | null;
-  }, {}>;
-}, {}>;
+  };
+};
 
 type Variables = {
   readonly x: Schema.__OperationInput.Boolean;
@@ -31,12 +31,12 @@ declare const Query: TypedDocumentNode<Result, Variables>;
 
 export { Query as default };
 
-export type F = Schema.__SelectionSet<Schema.__OperationOutput.Query, {
-  me: Schema.__SelectionSet<Schema.__OperationOutput.User, {
+export type F = {
+  me: {
     age?: never;
-  }, {}> | Schema.__SelectionSet<Schema.__OperationOutput.User, {
+  } | {
     age: Schema.__OperationOutput.Int | null;
-  }, {}>;
-}, {}>;
+  };
+};
 
 export declare const F: TypedDocumentNode<F, never>;

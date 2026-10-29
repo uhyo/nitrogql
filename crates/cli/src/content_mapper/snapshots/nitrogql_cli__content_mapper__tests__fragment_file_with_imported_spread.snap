@@ -16,7 +16,7 @@ export type __NitrogqlFragments = {
   UserName: {
     User: __Nitrogql.MergeLeaves<__Nitrogql.At<(__Nitrogql.Fragment<__NitrogqlImport0.__NitrogqlFragments, "UserAge">), "User">, {
       name: Schema.__OperationOutput.String;
-    }, never, never>;
+    }, never>;
   };
 };
 // mapping: "\"./age.graphql\"" -> "\"./age.graphql\"" (Verbatim)

@@ -1,0 +1,71 @@
+---
+source: crates/printer/src/operation_type_printer/tests/mod.rs
+expression: printed
+---
+import type { TypedDocumentNode } from "@graphql-typed-document-node/core";
+import type * as Schema from "";
+
+type QResult = {
+  /**
+   * The current user.
+   */
+  me: {
+    /**
+     * ID of the user.
+     */
+    id: Schema.__OperationOutput.ID;
+    /**
+     * Name of the user.
+     */
+    name: Schema.__OperationOutput.String;
+    /**
+     * Old name of the user.
+     * @deprecated Use `name`.
+     */
+    nick: Schema.__OperationOutput.String | null;
+    /**
+     * @deprecated No longer supported
+     */
+    age?: never;
+    friends: ({
+      /**
+       * ID of the user.
+       */
+      id: Schema.__OperationOutput.ID;
+    })[];
+    userName: Schema.__OperationOutput.String;
+  } | {
+    /**
+     * ID of the user.
+     */
+    id: Schema.__OperationOutput.ID;
+    /**
+     * Name of the user.
+     */
+    name: Schema.__OperationOutput.String;
+    /**
+     * Old name of the user.
+     * @deprecated Use `name`.
+     */
+    nick: Schema.__OperationOutput.String | null;
+    /**
+     * @deprecated No longer supported
+     */
+    age: Schema.__OperationOutput.Int | null;
+    friends: ({
+      /**
+       * ID of the user.
+       */
+      id: Schema.__OperationOutput.ID;
+    })[];
+    userName: Schema.__OperationOutput.String;
+  };
+};
+
+type QVariables = {
+  readonly flag: Schema.__OperationInput.Boolean;
+};
+
+declare const QQuery: TypedDocumentNode<QResult, QVariables>;
+
+export { QQuery as default };

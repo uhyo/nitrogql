@@ -257,6 +257,26 @@ fn typename_field() {
     assert_snapshot!(printed);
 }
 
+/// A field aliased to its own name is merged with the unaliased field.
+#[test]
+fn alias_same_as_name() {
+    let doc = parse_operation_document(
+        "
+        query {
+            me {
+                id id: id
+                posts { id }
+                posts: posts { ... on Post { title } }
+            }
+        }
+        ",
+        0,
+    )
+    .unwrap();
+    let printed = print_document_default(&doc);
+    assert_snapshot!(printed);
+}
+
 #[test]
 fn typename_field_on_union() {
     let doc = parse_operation_document(
@@ -939,6 +959,80 @@ mod import_fragments {
         let doc = (Path::new("/path/to/main.graphql"), &doc, &extensions);
         let resolved = resolve_operation_imports(doc, &TestOperationResolver).unwrap();
         let printed = print_document(&resolved, OperationTypePrinterOptions::default());
+        assert_snapshot!(printed);
+    }
+}
+
+/// Fields of result types have the descriptions of the fields in the schema.
+mod field_descriptions {
+    use super::*;
+    use crate::OperationTypePrinterOptions;
+
+    const SCHEMA: &str = r#"
+        type Query {
+            "The current user."
+            me: User!
+        }
+        type User {
+            "ID of the user."
+            id: ID!
+            """
+            Name of the user.
+            """
+            name: String!
+            "Old name of the user."
+            nick: String @deprecated(reason: "Use `name`.")
+            age: Int @deprecated
+            friends: [User!]!
+        }
+    "#;
+
+    fn print(source: &str, options: OperationTypePrinterOptions) -> String {
+        let doc = parse_operation_document(source, 0).unwrap();
+        let (doc, _) = resolve_operation_extensions(doc).unwrap();
+        let schema = type_system_from(SCHEMA);
+        let schema = ast_to_type_system(&schema);
+        let mut result = String::new();
+        let mut writer = JustWriter::new(&mut result);
+        print_types_for_operation_document(options, &schema, &doc, &mut writer).unwrap();
+        result
+    }
+
+    /// Aliased fields have no descriptions, and omitted fields keep theirs.
+    #[test]
+    fn expanded() {
+        let printed = print(
+            "
+            query Q($flag: Boolean!) {
+                me {
+                    id name nick
+                    age @include(if: $flag)
+                    userName: name
+                    friends { id }
+                }
+            }
+            ",
+            OperationTypePrinterOptions::default(),
+        );
+        assert_snapshot!(printed);
+    }
+
+    /// Selections of fragments exported for other modules have the descriptions too.
+    #[test]
+    fn exported_fragment_tree() {
+        let printed = print(
+            "
+            fragment F on User {
+                id nick
+                userName: name
+                friends { name }
+            }
+            ",
+            OperationTypePrinterOptions {
+                export_fragment_trees: true,
+                ..Default::default()
+            },
+        );
         assert_snapshot!(printed);
     }
 }

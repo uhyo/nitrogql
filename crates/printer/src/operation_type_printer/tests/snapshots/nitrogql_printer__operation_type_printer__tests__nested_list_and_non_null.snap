@@ -5,16 +5,16 @@ expression: printed
 import type { TypedDocumentNode } from "@graphql-typed-document-node/core";
 import type * as Schema from "";
 
-type Result = Schema.__SelectionSet<Schema.__OperationOutput.Query, {
-  posts: (Schema.__SelectionSet<Schema.__OperationOutput.Post, {
+type Result = {
+  posts: ({
     id: Schema.__OperationOutput.ID;
     title: Schema.__OperationOutput.String;
-  }, {}>)[] | null;
-  nullablePosts: (Schema.__SelectionSet<Schema.__OperationOutput.Post, {
+  })[] | null;
+  nullablePosts: ({
     id: Schema.__OperationOutput.ID;
     body: Schema.__OperationOutput.String;
-  }, {}> | null)[];
-}, {}>;
+  } | null)[];
+};
 
 type Variables = {};
 
