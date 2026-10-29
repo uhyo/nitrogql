@@ -1,4 +1,5 @@
 use std::{
+    borrow::Cow,
     fmt::Write,
     fs,
     path::{Path, PathBuf},
@@ -11,7 +12,7 @@ use serde_json::json;
 use super::{
     Server,
     project::{MapperOptions, Project},
-    protocol::{PositionEncoding, TransformResult},
+    protocol::{JsonRpcResponse, PositionEncoding, TransformResult},
     transform::transform,
 };
 
@@ -38,7 +39,7 @@ fn open(root: &Path) -> Project {
     ))
 }
 
-fn transform_file(project: &Project, root: &Path, path: &str) -> TransformResult {
+fn transform_file<'a>(project: &'a Project, root: &Path, path: &str) -> TransformResult<'a> {
     let path = root.join(path);
     let content = fs::read_to_string(&path).unwrap();
     transform(project, &path, &content, PositionEncoding::Utf8)
@@ -46,7 +47,7 @@ fn transform_file(project: &Project, root: &Path, path: &str) -> TransformResult
 
 /// Prints transform result with mapped spans annotated.
 fn print_result(result: &TransformResult, original: &str, root: &Path) -> String {
-    let mut output = result.text.clone();
+    let mut output = result.text.to_string();
     for (virtual_start, virtual_len, original_start, original_len, kind) in &result.mappings {
         writeln!(
             output,
@@ -145,6 +146,8 @@ fn schema_files() {
             .contains("export type User = __OperationOutput.User;")
     );
     assert!(result.diagnostics.is_empty());
+    // The cached schema module is not copied.
+    assert!(matches!(result.text, Cow::Borrowed(_)));
     // Other schema files are empty modules.
     let result = transform_file(&project, &root, "schema/b.graphql");
     assert_eq!(result.text, "export {};\n");
@@ -535,13 +538,21 @@ fn has_schema_module(project: &Project) -> bool {
         .is_ok_and(|schema| schema.schema_module.get().is_some())
 }
 
+fn into_owned(result: TransformResult) -> TransformResult<'static> {
+    TransformResult {
+        text: Cow::Owned(result.text.into_owned()),
+        ..result
+    }
+}
+
 #[test]
 fn reopen_unchanged() {
     let root = setup("reopen_unchanged", &default_files());
     let project = open(&root);
     let identity = project.config_identity.clone();
     let watched = project.watched_files.clone();
-    let schema_module = transform_file(&project, &root, "schema/a.graphql");
+    // The schema module is borrowed from the project.
+    let schema_module = into_owned(transform_file(&project, &root, "schema/a.graphql"));
 
     let project = reopen(&root, project);
     // The schema is reused.
@@ -666,6 +677,54 @@ fn closed_projects_are_bounded() {
     );
     // Reopening it takes it.
     assert_eq!(request("openProject", Some(&root_b), "b"), None);
+}
+
+#[test]
+fn response_serialization() {
+    let root = setup("response_serialization", &default_files());
+    let mut server = Server::default();
+    let mut request = |method: &str, params: serde_json::Value| {
+        let result = block_on(server.handle(method, params));
+        let (result, error) = match result {
+            Ok(result) => (Some(result), None),
+            Err(error) => (None, Some(error)),
+        };
+        serde_json::to_string(&JsonRpcResponse {
+            jsonrpc: "2.0",
+            id: &json!(1),
+            result,
+            error,
+        })
+        .unwrap()
+    };
+    assert_eq!(
+        request("initialize", json!({ "positionEncodings": ["utf-8"] })),
+        r#"{"jsonrpc":"2.0","id":1,"result":{"positionEncoding":"utf-8","diagnosticSource":"nitrogql"}}"#
+    );
+    let response = request(
+        "openProject",
+        json!({ "configFileName": root.join("tsconfig.json"), "projectHandle": "p" }),
+    );
+    assert!(
+        response.starts_with(r#"{"jsonrpc":"2.0","id":1,"result":{"configIdentity":""#),
+        "{response}"
+    );
+    let response = request(
+        "transform",
+        json!({ "fileName": root.join("schema/b.graphql"), "content": "", "projectHandle": "p" }),
+    );
+    assert_eq!(
+        response,
+        r#"{"jsonrpc":"2.0","id":1,"result":{"text":"export {};\n","extension":".ts"}}"#
+    );
+    assert_eq!(
+        request("closeProject", json!({ "projectHandle": "p" })),
+        r#"{"jsonrpc":"2.0","id":1,"result":null}"#
+    );
+    assert_eq!(
+        request("unknown", json!({})),
+        r#"{"jsonrpc":"2.0","id":1,"error":{"code":-32601,"message":"Method not found: unknown"}}"#
+    );
 }
 
 /// Measures the time spent by each request on a large project.
