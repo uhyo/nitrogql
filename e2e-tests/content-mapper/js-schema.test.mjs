@@ -61,10 +61,11 @@ extensions:
     });
     after(async () => {
       // The mapper runs in the project directory, which Windows does not
-      // let us remove until the process has exited.
+      // let us remove until the process has exited. Closing stdin lets the
+      // native build stop Node.js it started in the directory, too.
       if (mapper.child.exitCode === null && mapper.child.signalCode === null) {
         const exited = once(mapper.child, "exit");
-        mapper.child.kill();
+        mapper.child.stdin.end();
         await exited;
       }
       await rm(projectUrl, { recursive: true, force: true });

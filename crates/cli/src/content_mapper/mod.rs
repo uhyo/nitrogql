@@ -3,11 +3,12 @@
 //! TypeScript spawns this as a child process and asks it to transform GraphQL files
 //! into virtual TypeScript code. This replaces generation of `.d.graphql.ts` files.
 //!
-//! Protocol is JSON-RPC 2.0 over stdio. Framing of messages is handled by the JavaScript host.
+//! Protocol is JSON-RPC 2.0 over stdio, with messages framed by `Content-Length` headers.
 
 use std::{collections::HashMap, path::Path};
 
 use log::{debug, error};
+use nitrogql_config_file::stop_node;
 use nitrogql_error::ErrorCode;
 use serde::{Serialize, de::DeserializeOwned};
 use serde_json::{Value, json};
@@ -24,6 +25,7 @@ use self::{
 };
 
 mod fallback;
+mod framing;
 mod io;
 mod logger;
 mod position;
@@ -40,11 +42,23 @@ const DIAGNOSTIC_SOURCE: &str = "nitrogql";
 pub async fn run_content_mapper() {
     logger::init_logger();
     colored::control::set_override(false);
+    let mut connection = io::Connection::default();
     let mut server = Server::default();
-    while let Some(message) = io::receive().await {
+    while let Some(message) = connection.receive().await {
         if let Some(response) = server.handle_message(&message).await {
-            io::send(&response);
+            connection.send(&response);
         }
+    }
+    stop_node();
+}
+
+/// Returns given path in the form TypeScript uses, i.e. with forward slashes even on Windows.
+fn ts_path(path: &Path) -> String {
+    let path = path.to_string_lossy();
+    if cfg!(windows) {
+        path.replace('\\', "/")
+    } else {
+        path.into_owned()
     }
 }
 
@@ -139,7 +153,7 @@ impl Server {
             watched_files: project
                 .watched_files
                 .iter()
-                .map(|path| path.to_string_lossy().into_owned())
+                .map(|path| ts_path(path))
                 .collect(),
             option_diagnostics,
         };

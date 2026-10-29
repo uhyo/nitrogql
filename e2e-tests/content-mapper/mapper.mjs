@@ -1,6 +1,7 @@
 // Client of the content mapper, which talks to it over stdio as TypeScript does.
 
 import { spawn } from "node:child_process";
+import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 /**
@@ -16,11 +17,22 @@ const mapperScript = fileURLToPath(
 );
 
 /**
+ * Path to a native build of nitrogql, which is tested instead of the wasm build if given.
+ * A relative path is resolved from the current directory.
+ */
+export const nativeBinary =
+  process.env.NITROGQL_NATIVE_BINARY &&
+  resolve(process.env.NITROGQL_NATIVE_BINARY);
+
+/**
  * Starts the content mapper in given directory and returns a client for it.
- * `execArgv` is passed to Node.js.
+ * `execArgv` is passed to Node.js, and is not available for the native build.
  */
 export function startMapper(cwd, execArgv = []) {
-  const child = spawn(process.execPath, [...execArgv, mapperScript], {
+  const [command, args] = nativeBinary
+    ? [nativeBinary, ["content-mapper"]]
+    : [process.execPath, [...execArgv, mapperScript]];
+  const child = spawn(command, args, {
     cwd,
     stdio: ["pipe", "pipe", "inherit"],
   });

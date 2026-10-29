@@ -1,4 +1,4 @@
-use nitrogql_async_runtime::issue_string_ticket;
+use nitrogql_async_runtime::issue_ticket;
 use thiserror::Error;
 
 #[cfg(target_os = "wasi")]
@@ -38,7 +38,7 @@ pub enum ExecuteConfigError {
 /// Executes given code using Node.js and returns the result.
 /// Result is a JSON string containing the value exported as default export.
 pub async fn execute_js(code: &str) -> Result<String, ExecuteConfigError> {
-    let ticket = issue_string_ticket();
+    let ticket = issue_ticket();
     unsafe { execute_node(code.as_ptr(), code.len(), ticket.id.into()) };
 
     let result = ticket.await;
@@ -46,5 +46,5 @@ pub async fn execute_js(code: &str) -> Result<String, ExecuteConfigError> {
         return Err(ExecuteConfigError::FailedToExecuteConfigFile);
     };
 
-    Ok(result)
+    String::from_utf8(result).map_err(|_| ExecuteConfigError::FailedToReadResult)
 }

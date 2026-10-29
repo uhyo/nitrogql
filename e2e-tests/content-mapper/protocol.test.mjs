@@ -5,7 +5,7 @@ import { readFile } from "node:fs/promises";
 import { after, before, describe, it } from "node:test";
 import assert from "node:assert/strict";
 
-import { startMapper, tsPath as toTsPath } from "./mapper.mjs";
+import { nativeBinary, startMapper, tsPath as toTsPath } from "./mapper.mjs";
 
 function tsPath(relative) {
   return toTsPath(new URL(relative, import.meta.url));
@@ -183,31 +183,37 @@ describe("content mapper protocol", { timeout: 60_000 }, () => {
   });
 });
 
-describe("content mapper startup", { timeout: 60_000 }, () => {
-  it("answers initialize before the wasm module is compiled", async () => {
-    // TypeScript gives up on a content mapper that takes more than 5 seconds
-    // to answer initialize, while compiling the wasm module can be slow.
-    const neverCompile = "WebAssembly.compile = () => new Promise(() => {});";
-    const mapper = startMapper(projectDir, [
-      "--import",
-      `data:text/javascript,${encodeURIComponent(neverCompile)}`,
-    ]);
-    try {
-      const response = await mapper.request("initialize", {
-        positionEncodings: ["utf-16", "utf-8"],
-      });
-      assert.deepEqual(response, {
-        jsonrpc: "2.0",
-        id: response.id,
-        result: { positionEncoding: "utf-8", diagnosticSource: "nitrogql" },
-      });
-    } finally {
-      mapper.child.kill();
-    }
-  });
-});
+// The native build has no wasm module to wait for.
+describe(
+  "content mapper startup",
+  { timeout: 60_000, skip: !!nativeBinary },
+  () => {
+    it("answers initialize before the wasm module is compiled", async () => {
+      // TypeScript gives up on a content mapper that takes more than 5 seconds
+      // to answer initialize, while compiling the wasm module can be slow.
+      const neverCompile = "WebAssembly.compile = () => new Promise(() => {});";
+      const mapper = startMapper(projectDir, [
+        "--import",
+        `data:text/javascript,${encodeURIComponent(neverCompile)}`,
+      ]);
+      try {
+        const response = await mapper.request("initialize", {
+          positionEncodings: ["utf-16", "utf-8"],
+        });
+        assert.deepEqual(response, {
+          jsonrpc: "2.0",
+          id: response.id,
+          result: { positionEncoding: "utf-8", diagnosticSource: "nitrogql" },
+        });
+      } finally {
+        mapper.child.kill();
+      }
+    });
+  },
+);
 
 describe("content mapper initialize", { timeout: 60_000 }, () => {
+  // The native build answers both in the same way.
   it("answers the same in the host and in the wasm module", async () => {
     // The host answers the first initialize request by itself and leaves
     // later ones to the wasm module. Both must choose the same encoding.
