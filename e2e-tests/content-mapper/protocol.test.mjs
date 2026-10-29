@@ -124,6 +124,23 @@ describe("content mapper protocol", { timeout: 60_000 }, () => {
     assert.deepEqual(mapper.unexpected, []);
   });
 
+  it("responds to messages that are not JSON", async () => {
+    const response = await mapper.sendRaw("{", null);
+    assert.equal(response.error.code, -32700);
+  });
+
+  it("responds to invalid requests", async () => {
+    const response = await mapper.sendRaw(
+      JSON.stringify({ jsonrpc: "2.0", id: "invalid", method: 1 }),
+      "invalid",
+    );
+    assert.equal(response.error.code, -32600);
+    // Requests after invalid ones are still handled.
+    const next = await mapper.request("unknownMethod", {});
+    assert.equal(next.error.code, -32601);
+    assert.deepEqual(mapper.unexpected, []);
+  });
+
   it("closeProject", async () => {
     const response = await mapper.request("closeProject", {
       projectHandle: "project",

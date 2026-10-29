@@ -717,6 +717,38 @@ fn response_serialization() {
     );
 }
 
+#[test]
+fn invalid_messages() {
+    let mut server = Server::default();
+    let mut respond = |message: &str| {
+        let response = block_on(server.handle_message(message)).expect("responds");
+        let response: serde_json::Value = serde_json::from_str(&response).unwrap();
+        (response["id"].clone(), response["error"]["code"].clone())
+    };
+    // Not JSON.
+    assert_eq!(respond("{"), (json!(null), json!(-32700)));
+    // Not a valid request, with or without a readable id.
+    assert_eq!(
+        respond(r#"{"jsonrpc":"2.0","id":1,"method":2}"#),
+        (json!(1), json!(-32600))
+    );
+    assert_eq!(
+        respond(r#"{"jsonrpc":"2.0","method":2}"#),
+        (json!(null), json!(-32600))
+    );
+    assert_eq!(respond("[]"), (json!(null), json!(-32600)));
+    assert_eq!(respond("1"), (json!(null), json!(-32600)));
+    // Valid requests are still handled.
+    assert_eq!(
+        respond(r#"{"jsonrpc":"2.0","id":"a","method":"unknown"}"#),
+        (json!("a"), json!(-32601))
+    );
+    assert_eq!(
+        block_on(server.handle_message(r#"{"jsonrpc":"2.0","method":"unknown"}"#)),
+        None
+    );
+}
+
 /// Measures the time spent by each request on a large project.
 /// Run with `cargo test --release -p nitrogql-cli content_mapper::tests::benchmark -- --ignored --nocapture`.
 #[test]
