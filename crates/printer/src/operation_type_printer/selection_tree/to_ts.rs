@@ -23,9 +23,9 @@ pub fn generate_selection_tree_type<'src, S: Text<'src>>(
     tree: &SelectionTree<S>,
 ) -> TSType {
     if tree.has_fragment_refs() {
-        return render_type(generate_unrendered_type(context, tree, false));
+        return render_type(generate_unrendered_type(context, tree));
     }
-    generate_selection_tree_type_impl(context, tree, false)
+    generate_selection_tree_type_impl(context, tree)
 }
 
 /// Renders given unrendered type at the type level.
@@ -49,20 +49,10 @@ pub fn generate_unrendered_branches_type<'src, S: Text<'src>>(
 fn generate_unrendered_type<'src, S: Text<'src>>(
     context: &GenerateSelectionTreeTypeContext,
     tree: &SelectionTree<S>,
-    is_non_null: bool,
 ) -> TSType {
-    let result = match tree {
-        SelectionTree::NonNull(inner) => return generate_unrendered_type(context, inner, true),
-        SelectionTree::List(inner) => {
-            TSType::Array(Box::new(generate_unrendered_type(context, inner, false)))
-        }
-        SelectionTree::Object(branches) => generate_unrendered_branches_type(context, branches),
-    };
-    if is_non_null {
-        result
-    } else {
-        ts_union(vec![result, TSType::Null])
-    }
+    wrap_nullability(tree, false, &|branches| {
+        generate_unrendered_branches_type(context, branches)
+    })
 }
 
 fn generate_unrendered_branch_type<'src, S: Text<'src>>(
@@ -70,39 +60,13 @@ fn generate_unrendered_branch_type<'src, S: Text<'src>>(
     branch: &SelectionTreeBranch<S>,
 ) -> TSType {
     let fields = |fields: &[SelectionTreeField<S>]| {
-        TSType::Object(
-            fields
-                .iter()
-                .map(|field| {
-                    let (r#type, optional) = match field {
-                        // Omitted fields are printed the same as rendered ones.
-                        SelectionTreeField::Empty(_) => (TSType::Never, true),
-                        SelectionTreeField::Leaf(leaf) => {
-                            (leaf_type(context, leaf, &branch.type_name), false)
-                        }
-                        SelectionTreeField::Object(object) => (
-                            generate_unrendered_type(context, &object.selection, false),
-                            false,
-                        ),
-                    };
-                    ObjectField {
-                        key: field.name().to_string().into(),
-                        r#type,
-                        description: None,
-                        optional,
-                        readonly: false,
-                    }
-                })
-                .collect(),
-        )
+        fields_to_object(context, fields, &branch.type_name, |tree| {
+            generate_unrendered_type(context, tree)
+        })
     };
     let mut branch_args = vec![
         TSType::StringLiteral(branch.type_name.clone()),
-        TSType::NamespaceMember3(
-            context.schema_root_namespace.into(),
-            TypeTarget::OperationOutput.to_string(),
-            branch.type_name.clone(),
-        ),
+        operation_output_type(context, branch.type_name.clone()),
         fields(&branch.unaliased_fields),
         fields(&branch.aliased_fields),
     ];
@@ -174,88 +138,98 @@ fn utility(name: &str) -> TSType {
 fn generate_selection_tree_type_impl<'src, S: Text<'src>>(
     context: &GenerateSelectionTreeTypeContext,
     tree: &SelectionTree<S>,
-    is_non_null: bool,
 ) -> TSType {
-    match tree {
-        SelectionTree::NonNull(inner) => generate_selection_tree_type_impl(context, inner, true),
-        SelectionTree::List(inner) => {
-            let list_type = TSType::Array(Box::new(generate_selection_tree_type_impl(
-                context, inner, false,
-            )));
-            if is_non_null {
-                list_type
-            } else {
-                ts_union(vec![list_type, TSType::Null])
-            }
-        }
-        SelectionTree::Object(branches) => {
-            let branches_type = ts_union(branches.iter().map(|branch| {
-                let selection_set_utility = TSType::NamespaceMember(
-                    context.schema_root_namespace.into(),
-                    "__SelectionSet".into(),
-                );
-                let schema_type = TSType::NamespaceMember3(
-                    context.schema_root_namespace.into(),
-                    TypeTarget::OperationOutput.to_string(),
-                    branch.type_name.clone(),
-                );
+    wrap_nullability(tree, false, &|branches| {
+        ts_union(
+            branches
+                .iter()
+                .map(|branch| generate_selection_set_type(context, branch)),
+        )
+    })
+}
 
-                let unaliased_object = TSType::Object(
-                    branch
-                        .unaliased_fields
-                        .iter()
-                        .map(|field| field_to_type(context, field, &branch.type_name))
-                        .collect(),
-                );
-                let aliased_object = TSType::Object(
-                    branch
-                        .aliased_fields
-                        .iter()
-                        .map(|field| field_to_type(context, field, &branch.type_name))
-                        .collect(),
-                );
-                TSType::TypeFunc(
-                    Box::new(selection_set_utility),
-                    vec![schema_type, unaliased_object, aliased_object],
-                )
-            }));
-            if is_non_null {
-                branches_type
-            } else {
-                ts_union(vec![branches_type, TSType::Null])
-            }
+fn generate_selection_set_type<'src, S: Text<'src>>(
+    context: &GenerateSelectionTreeTypeContext,
+    branch: &SelectionTreeBranch<S>,
+) -> TSType {
+    let selection_set_utility = TSType::NamespaceMember(
+        context.schema_root_namespace.into(),
+        "__SelectionSet".into(),
+    );
+    let fields = |fields: &[SelectionTreeField<S>]| {
+        fields_to_object(context, fields, &branch.type_name, |tree| {
+            generate_selection_tree_type_impl(context, tree)
+        })
+    };
+    TSType::TypeFunc(
+        Box::new(selection_set_utility),
+        vec![
+            operation_output_type(context, branch.type_name.clone()),
+            fields(&branch.unaliased_fields),
+            fields(&branch.aliased_fields),
+        ],
+    )
+}
+
+/// Maps given tree to a type, with `object` giving types of objects.
+/// Lists become arrays, and trees not wrapped in `NonNull` are nullable.
+fn wrap_nullability<S>(
+    tree: &SelectionTree<S>,
+    is_non_null: bool,
+    object: &impl Fn(&[SelectionTreeBranch<S>]) -> TSType,
+) -> TSType {
+    let result = match tree {
+        SelectionTree::NonNull(inner) => return wrap_nullability(inner, true, object),
+        SelectionTree::List(inner) => {
+            TSType::Array(Box::new(wrap_nullability(inner, false, object)))
         }
+        SelectionTree::Object(branches) => object(branches),
+    };
+    if is_non_null {
+        result
+    } else {
+        ts_union(vec![result, TSType::Null])
     }
 }
 
-fn field_to_type<'src, S: Text<'src>>(
+/// Object type of given selected fields, with `object` giving types of object fields.
+fn fields_to_object<'src, S: Text<'src>>(
     context: &GenerateSelectionTreeTypeContext,
-    field: &SelectionTreeField<S>,
+    fields: &[SelectionTreeField<S>],
     parent_type_name: &str,
-) -> ObjectField {
-    match field {
-        SelectionTreeField::Empty(empty) => ObjectField {
-            key: empty.name.to_string().into(),
-            r#type: TSType::Never,
-            description: None,
-            optional: true,
-            readonly: false,
-        },
-        SelectionTreeField::Leaf(leaf) => ObjectField {
-            key: leaf.name.to_string().into(),
-            r#type: leaf_type(context, leaf, parent_type_name),
-            description: None,
-            optional: false,
-            readonly: false,
-        },
-        SelectionTreeField::Object(object) => ObjectField {
-            key: object.name.clone().to_string().into(),
-            r#type: generate_selection_tree_type_impl(context, &object.selection, false),
-            description: None,
-            optional: false,
-            readonly: false,
-        },
-    }
+    object: impl Fn(&SelectionTree<S>) -> TSType,
+) -> TSType {
+    TSType::Object(
+        fields
+            .iter()
+            .map(|field| {
+                let (r#type, optional) = match field {
+                    // Omitted fields are optional `never`.
+                    SelectionTreeField::Empty(_) => (TSType::Never, true),
+                    SelectionTreeField::Leaf(leaf) => {
+                        (leaf_type(context, leaf, parent_type_name), false)
+                    }
+                    SelectionTreeField::Object(field) => (object(&field.selection), false),
+                };
+                ObjectField {
+                    key: field.name().to_string().into(),
+                    r#type,
+                    description: None,
+                    optional,
+                    readonly: false,
+                }
+            })
+            .collect(),
+    )
+}
+
+/// Type of given GraphQL type in the schema's `__OperationOutput` namespace.
+fn operation_output_type(context: &GenerateSelectionTreeTypeContext, type_name: String) -> TSType {
+    TSType::NamespaceMember3(
+        context.schema_root_namespace.into(),
+        TypeTarget::OperationOutput.to_string(),
+        type_name,
+    )
 }
 
 fn leaf_type<'src, S: Text<'src>>(
@@ -268,11 +242,7 @@ fn leaf_type<'src, S: Text<'src>>(
         TSType::StringLiteral(parent_type_name.to_string())
     } else {
         map_to_tstype(&leaf.r#type, |ty| {
-            TSType::NamespaceMember3(
-                context.schema_root_namespace.into(),
-                TypeTarget::OperationOutput.to_string(),
-                ty.to_string(),
-            )
+            operation_output_type(context, ty.to_string())
         })
     }
 }
