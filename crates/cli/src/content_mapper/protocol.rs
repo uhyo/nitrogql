@@ -25,6 +25,21 @@ pub struct JsonRpcResponse<'a, T> {
     pub error: Option<JsonRpcError>,
 }
 
+impl<'a, T> JsonRpcResponse<'a, T> {
+    pub fn new(id: &'a Value, result: Result<T, JsonRpcError>) -> Self {
+        let (result, error) = match result {
+            Ok(result) => (Some(result), None),
+            Err(error) => (None, Some(error)),
+        };
+        JsonRpcResponse {
+            jsonrpc: "2.0",
+            id,
+            result,
+            error,
+        }
+    }
+}
+
 #[derive(Serialize, Debug)]
 pub struct JsonRpcError {
     pub code: i32,
@@ -114,6 +129,21 @@ pub struct TransformResult<'a> {
     pub mappings: Vec<SpanMapping>,
     #[serde(skip_serializing_if = "Vec::is_empty")]
     pub diagnostics: Vec<MapperDiagnostic>,
+}
+
+impl<'a> TransformResult<'a> {
+    pub fn new(
+        text: impl Into<Cow<'a, str>>,
+        mappings: Vec<SpanMapping>,
+        diagnostics: Vec<MapperDiagnostic>,
+    ) -> Self {
+        TransformResult {
+            text: text.into(),
+            extension: ".ts",
+            mappings,
+            diagnostics,
+        }
+    }
 }
 
 /// `[virtualStart, virtualLength, originalStart, originalLength, kind]`

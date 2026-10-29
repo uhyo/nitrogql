@@ -685,17 +685,7 @@ fn response_serialization() {
     let mut server = Server::default();
     let mut request = |method: &str, params: serde_json::Value| {
         let result = block_on(server.handle(method, params));
-        let (result, error) = match result {
-            Ok(result) => (Some(result), None),
-            Err(error) => (None, Some(error)),
-        };
-        serde_json::to_string(&JsonRpcResponse {
-            jsonrpc: "2.0",
-            id: &json!(1),
-            result,
-            error,
-        })
-        .unwrap()
+        serde_json::to_string(&JsonRpcResponse::new(&json!(1), result)).unwrap()
     };
     assert_eq!(
         request("initialize", json!({ "positionEncodings": ["utf-8"] })),
