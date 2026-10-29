@@ -1,4 +1,5 @@
 mod base64_vlq;
+mod indented_buffer;
 mod js_string_writer;
 mod just_writer;
 mod source_writer;
