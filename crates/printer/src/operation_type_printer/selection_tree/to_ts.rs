@@ -23,12 +23,14 @@ pub fn generate_selection_tree_type<'src, S: Text<'src>>(
     tree: &SelectionTree<S>,
 ) -> TSType {
     if tree.has_fragment_refs() {
-        return TSType::TypeFunc(
-            Box::new(utility("Render")),
-            vec![generate_unrendered_type(context, tree, false)],
-        );
+        return render_type(generate_unrendered_type(context, tree, false));
     }
     generate_selection_tree_type_impl(context, tree, false)
+}
+
+/// Renders given unrendered type at the type level.
+pub fn render_type(unrendered: TSType) -> TSType {
+    TSType::TypeFunc(Box::new(utility("Render")), vec![unrendered])
 }
 
 /// Generate the unrendered type of given branches, which is a union of `Branch` types.

@@ -130,6 +130,20 @@ fn fragment_file() {
 }
 
 #[test]
+fn fragment_file_with_imported_spread() {
+    // The data type of a fragment that spreads imported fragments refers to its exported tree.
+    let mut files = default_files();
+    let fragment = "#import UserAge from \"./age.graphql\"\nfragment UserName on User {\n  name\n  ...UserAge\n}\n";
+    files[4] = ("app/fragment.graphql", fragment);
+    files.push(("app/age.graphql", "fragment UserAge on User {\n  age\n}\n"));
+    let root = setup("fragment_file_with_imported_spread", &files);
+    let project = open(&root);
+    let result = transform_file(&project, &root, "app/fragment.graphql");
+    assert!(result.diagnostics.is_empty(), "{:?}", result.diagnostics);
+    assert_snapshot!(print_result(&result, fragment, &root));
+}
+
+#[test]
 fn schema_files() {
     let root = setup("schema_files", &default_files());
     let project = open(&root);

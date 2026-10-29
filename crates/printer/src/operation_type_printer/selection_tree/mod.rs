@@ -8,7 +8,7 @@ mod to_ts;
 
 pub use to_ts::{
     GenerateSelectionTreeTypeContext, generate_selection_tree_type,
-    generate_unrendered_branches_type,
+    generate_unrendered_branches_type, render_type,
 };
 
 #[derive(Debug, Clone)]

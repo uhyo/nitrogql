@@ -273,12 +273,14 @@ impl<T: OperationTypeSource> OperationPrinterVisitor for OperationTypePrinterVis
 
         writer.write_for(&fragment_type_name, &fragment.name);
 
+        let types = self
+            .types
+            .fragment_types(fragment, self.options.export_fragment_trees)?;
         writer.write(" = ");
-        self.types.fragment_type(fragment)?.print_type(writer);
+        types.data.print_type(writer);
         writer.write(";\n\n");
 
-        if self.options.export_fragment_trees {
-            let tree = self.types.fragment_tree_type(fragment)?;
+        if let Some(tree) = types.tree {
             self.fragment_trees
                 .borrow_mut()
                 .push((fragment.name.name.to_owned(), tree));
