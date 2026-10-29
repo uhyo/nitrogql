@@ -9,7 +9,7 @@ use std::{
 use graphql_type_system::Schema;
 use log::{debug, info};
 use nitrogql_ast::{TypeSystemDocument, base::Pos};
-use nitrogql_config_file::{Config, load_config};
+use nitrogql_config_file::{Config, NodeSession, load_config};
 use nitrogql_error::PositionedError;
 use nitrogql_plugin::Plugin;
 use nitrogql_semantics::ast_to_type_system;
@@ -158,6 +158,9 @@ impl Project {
             .parent()
             .map(normalize_path)
             .unwrap_or_default();
+        // A JavaScript config file and JavaScript schema files are loaded by one worker,
+        // and loaded again by a new one when the project is reopened.
+        let session = NodeSession::begin();
         // The project is rooted at the directory of the config file if it is found.
         let (config_path, root_dir, config, sources) =
             match find_config(ts_config_file, &ts_config_dir, options).await {
@@ -168,6 +171,7 @@ impl Project {
                 }
                 Err(errors) => (None, ts_config_dir, Config::default(), Err(errors)),
             };
+        drop(session);
 
         let files = match sources {
             Ok((plugins, schema_sources)) => {

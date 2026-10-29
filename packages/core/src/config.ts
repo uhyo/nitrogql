@@ -47,6 +47,15 @@ export type NitrogqlConfigNamespace = {
    * Result is returned asynchronously via `execute_node_ret` function.
    */
   execute_node(code_ptr: number, code_len: number, ticket_handle: number): void;
+  /**
+   * Starts a session. Code executed in a session shares one worker,
+   * so that loading a project does not start a worker for every file.
+   */
+  begin_session(): void;
+  /**
+   * Ends the session started by `begin_session`.
+   */
+  end_session(): void;
 };
 
 export type InitNitrogqlConfigResult = {
@@ -65,6 +74,8 @@ export function initConfigNamespace(
   const w = getCommandClient(options);
   const namespace: NitrogqlConfigNamespace = {
     execute_node,
+    begin_session: () => w.beginSession(),
+    end_session: () => w.endSession(),
   };
   return {
     namespace,

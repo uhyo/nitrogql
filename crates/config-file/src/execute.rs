@@ -6,6 +6,20 @@ use thiserror::Error;
 unsafe extern "C" {
     /// Executes given code. Result is asynchronously provided to given ticket.
     fn execute_node(code_ptr: *const u8, code_len: usize, ticket_handle: u32);
+    /// Starts a session. Code executed in a session shares one worker.
+    fn begin_session();
+    /// Ends the session started by `begin_session`.
+    fn end_session();
+}
+
+#[cfg(target_os = "wasi")]
+pub(crate) fn begin_node_session() {
+    unsafe { begin_session() }
+}
+
+#[cfg(target_os = "wasi")]
+pub(crate) fn end_node_session() {
+    unsafe { end_session() }
 }
 
 #[cfg(not(target_os = "wasi"))]
