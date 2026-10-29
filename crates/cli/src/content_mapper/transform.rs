@@ -1,5 +1,6 @@
 use std::{
     borrow::Cow,
+    cell::LazyCell,
     collections::HashSet,
     path::{Path, PathBuf},
 };
@@ -18,10 +19,7 @@ use nitrogql_utils::{normalize_path, relative_path};
 use sourcemap_writer::{RecordedSpan, SpanWriter};
 use thiserror::Error;
 
-use crate::{
-    generate::path_to_ts,
-    schema_loader::{LoadedSchema, SchemaFileKind, schema_kind_by_path},
-};
+use crate::{generate::path_to_ts, schema_loader::LoadedSchema};
 
 use super::{
     fallback::fallback_definitions,
@@ -69,7 +67,8 @@ fn transform_schema_file<'a>(
     let (_, loaded_content, _) = &project.file_store()[file_index];
     // Positions are valid only if content is the same as the one loaded.
     let is_same_content = *loaded_content == content;
-    let index = SourceText::new(content, encoding);
+    // Only needed for diagnostics and for the first mappings, as mappings are cached.
+    let index = LazyCell::new(|| SourceText::new(content, encoding));
     let files = |idx: usize| {
         project
             .file_store()
@@ -107,13 +106,20 @@ fn transform_schema_file<'a>(
         let mut printer = SchemaTypePrinter::new(options, &mut writer);
         printer.print_document(document)?;
         let (text, spans) = writer.into_parts();
-        Ok(SchemaModule { text, spans })
+        Ok(SchemaModule {
+            text,
+            spans,
+            mappings: Default::default(),
+        })
     });
     match module {
         Ok(module) => {
             if is_same_content {
-                result.mappings =
-                    to_mappings(&module.spans, file_index, &module.text, &index, encoding);
+                // The loaded content does not change either, so mappings are computed once.
+                let mappings = module.mappings[encoding as usize].get_or_init(|| {
+                    to_mappings(&module.spans, file_index, &module.text, &index, encoding)
+                });
+                result.mappings = Cow::Borrowed(mappings);
             }
             result.text = Cow::Borrowed(&module.text);
         }
@@ -262,20 +268,14 @@ fn printed_result(
 /// Returns the schema file that provides schema types, along with its index in the file store.
 /// This is used only if schema types are not provided by other means.
 fn schema_module_file<'a>(
-    project: &'a Project,
-    schema: &LoadedProjectSchema<'_>,
+    project: &Project,
+    schema: &'a LoadedProjectSchema<'_>,
 ) -> Option<&'a (PathBuf, usize)> {
     let generate = &project.config.generate;
     if generate.schema_output.is_some() || generate.schema_module_specifier.is_some() {
         return None;
     }
-    if !matches!(schema.schema, LoadedSchema::GraphQL(_)) {
-        return None;
-    }
-    project
-        .schema_files()
-        .iter()
-        .find(|(path, _)| matches!(schema_kind_by_path(path), SchemaFileKind::GraphQL))
+    schema.schema_module_file.as_ref()
 }
 
 /// Determines the module specifier to import schema types from.

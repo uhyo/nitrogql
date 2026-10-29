@@ -59,7 +59,15 @@ export function initContentMapperNamespace({
    * Tickets waiting for a message.
    */
   const tickets: number[] = [];
-  let buffer = Buffer.alloc(0);
+  /**
+   * Received data that does not form a complete message yet.
+   */
+  let chunks: Buffer[] = [];
+  let bufferedLength = 0;
+  /**
+   * Length of data needed for the next message, once its header has been parsed.
+   */
+  let neededLength = 0;
   let closed = false;
   /**
    * Whether an `initialize` request has been received.
@@ -67,7 +75,16 @@ export function initContentMapperNamespace({
   let initializeReceived = false;
 
   input.on("data", (chunk: Buffer) => {
-    buffer = Buffer.concat([buffer, chunk]);
+    chunks.push(chunk);
+    bufferedLength += chunk.length;
+    // A large message arrives in many chunks.
+    // They are concatenated once, after the whole message has arrived.
+    if (bufferedLength < neededLength) {
+      return;
+    }
+    let buffer =
+      chunks.length === 1 ? chunks[0]! : Buffer.concat(chunks, bufferedLength);
+    neededLength = 0;
     while (true) {
       const headerEnd = buffer.indexOf(headerDelimiter);
       if (headerEnd === -1) {
@@ -83,6 +100,7 @@ export function initContentMapperNamespace({
       const messageStart = headerEnd + headerDelimiter.length;
       const messageEnd = messageStart + Number(match[1]);
       if (buffer.length < messageEnd) {
+        neededLength = messageEnd;
         break;
       }
       const message = buffer
@@ -91,6 +109,8 @@ export function initContentMapperNamespace({
       messages.push(initializeReceived ? message : answerInitialize(message));
       buffer = buffer.subarray(messageEnd);
     }
+    chunks = buffer.length > 0 ? [buffer] : [];
+    bufferedLength = buffer.length;
     flush();
   });
   input.on("end", () => {

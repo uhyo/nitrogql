@@ -127,8 +127,9 @@ pub struct TransformResult<'a> {
     /// Borrowed when the text is cached, e.g. the schema module.
     pub text: Cow<'a, str>,
     pub extension: &'static str,
-    #[serde(skip_serializing_if = "Vec::is_empty")]
-    pub mappings: Vec<SpanMapping>,
+    /// Borrowed when the mappings are cached along with the text.
+    #[serde(skip_serializing_if = "<[SpanMapping]>::is_empty")]
+    pub mappings: Cow<'a, [SpanMapping]>,
     #[serde(skip_serializing_if = "Vec::is_empty")]
     pub diagnostics: Vec<MapperDiagnostic>,
 }
@@ -142,7 +143,7 @@ impl<'a> TransformResult<'a> {
         TransformResult {
             text: text.into(),
             extension: ".ts",
-            mappings,
+            mappings: mappings.into(),
             diagnostics,
         }
     }
