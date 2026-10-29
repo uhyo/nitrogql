@@ -94,6 +94,12 @@ pub fn imported_fragment_tree(imports: &[FragmentImport], name: &str) -> String 
     format!("{UTILITIES_NAMESPACE}.Fragment<{maps}, \"{name}\">")
 }
 
+/// Returns a TypeScript type that refers to the selection tree of given fragment,
+/// exported from the module being printed.
+pub fn exported_fragment_tree(name: &str) -> String {
+    format!("{FRAGMENTS_EXPORT_NAME}[\"{name}\"]")
+}
+
 /// Node that is printed for a node in the source.
 pub(super) struct SourceNode<'a> {
     pub position: &'a Pos,

@@ -1,0 +1,23 @@
+---
+source: crates/cli/src/content_mapper/tests.rs
+expression: "print_result(&result, fragment, &root)"
+---
+import type { TypedDocumentNode } from "@graphql-typed-document-node/core";
+import type * as Schema from "../schema/a.graphql";
+
+import type * as __Nitrogql from "@nitrogql/cli/fragment-types";
+import type * as __NitrogqlImport0 from "./age.graphql";
+
+export type UserName = __Nitrogql.Render<(__NitrogqlFragments["UserName"])>;
+
+export declare const UserName: TypedDocumentNode<UserName, never>;
+
+export type __NitrogqlFragments = {
+  UserName: __Nitrogql.MergeFragment<__Nitrogql.Branch<"User", Schema.__OperationOutput.User, {
+    name: Schema.__OperationOutput.String;
+  }, {}>, (__Nitrogql.Fragment<__NitrogqlImport0.__NitrogqlFragments, "UserAge">)>;
+};
+// mapping: "\"./age.graphql\"" -> "\"./age.graphql\"" (Verbatim)
+// mapping: "UserName" -> "UserName" (Verbatim)
+// mapping: "UserName" -> "UserName" (Verbatim)
+// mapping: "UserName" -> "UserName" (Verbatim)

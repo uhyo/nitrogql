@@ -22,7 +22,10 @@ pub use resolver_type_printer::{
 pub use operation_type_printer::{
     error::{OperationTypePrinterError, OperationTypePrinterErrorMessage},
     fragment_imports, print_types_for_operation_document, print_types_with_source,
-    type_source::{AnyTypeSource, OperationTypeSource, PerDefinitionTypeSource, SchemaTypeSource},
+    type_source::{
+        AnyTypeSource, FragmentTypes, OperationTypeSource, PerDefinitionTypeSource,
+        SchemaTypeSource,
+    },
     visitor::OperationTypePrinterOptions,
 };
 

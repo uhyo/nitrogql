@@ -16,9 +16,10 @@ use crate::ts_types::TSType;
 
 use super::{
     error::OperationTypePrinterError,
+    fragment_imports::exported_fragment_tree,
     selection_tree::{
         GenerateSelectionTreeTypeContext, SelectionTree, generate_selection_tree_type,
-        generate_unrendered_branches_type,
+        generate_unrendered_branches_type, render_type,
     },
     type_printer::{
         QueryTypePrinterContext, get_type_for_selection_set, get_type_for_variable_definitions,
@@ -43,10 +44,33 @@ pub trait OperationTypeSource {
         &self,
         operation: &OperationDefinition,
     ) -> Result<TSType, Self::Error>;
-    /// Type of the data of given fragment.
-    fn fragment_type(&self, fragment: &FragmentDefinition) -> Result<TSType, Self::Error>;
-    /// Selection tree of given fragment, which other modules merge into their selections.
-    fn fragment_tree_type(&self, fragment: &FragmentDefinition) -> Result<TSType, Self::Error>;
+    /// Types of given fragment.
+    /// With `export_tree`, its selection tree is computed too,
+    /// and the type of its data may refer to the tree exported from the module.
+    fn fragment_types(
+        &self,
+        fragment: &FragmentDefinition,
+        export_tree: bool,
+    ) -> Result<FragmentTypes, Self::Error>;
+}
+
+/// Types of a fragment.
+pub struct FragmentTypes {
+    /// Type of the data of the fragment.
+    pub data: TSType,
+    /// Selection tree of the fragment, which other modules merge into their selections.
+    /// `None` if the tree is not exported.
+    pub tree: Option<TSType>,
+}
+
+impl FragmentTypes {
+    /// Types of a fragment in which all types are `any`.
+    fn any(export_tree: bool) -> Self {
+        Self {
+            data: TSType::Any,
+            tree: export_tree.then_some(TSType::Any),
+        }
+    }
 }
 
 /// Type source that computes types from the schema.
@@ -135,25 +159,11 @@ impl OperationTypeSource for SchemaTypeSource<'_, '_> {
             }))
     }
 
-    fn fragment_type(&self, fragment: &FragmentDefinition) -> Result<TSType, Self::Error> {
-        let parent_type = Type::NonNull(Box::new(NonNullType::from(Type::Named(NamedType::from(
-            Node::from(
-                fragment.type_condition.name,
-                fragment.type_condition.position,
-            ),
-        )))));
-        let fragment_type = get_type_for_selection_set(
-            &self.type_printer_context(),
-            &fragment.selection_set,
-            &parent_type,
-        )?;
-        Ok(generate_selection_tree_type(
-            &self.selection_tree_type_context(),
-            &fragment_type,
-        ))
-    }
-
-    fn fragment_tree_type(&self, fragment: &FragmentDefinition) -> Result<TSType, Self::Error> {
+    fn fragment_types(
+        &self,
+        fragment: &FragmentDefinition,
+        export_tree: bool,
+    ) -> Result<FragmentTypes, Self::Error> {
         let parent_type = Type::Named(NamedType::from(Node::from(
             fragment.type_condition.name,
             fragment.type_condition.position,
@@ -166,10 +176,18 @@ impl OperationTypeSource for SchemaTypeSource<'_, '_> {
         else {
             unreachable!("selection tree of a named type is an object");
         };
-        Ok(generate_unrendered_branches_type(
-            &self.selection_tree_type_context(),
-            &branches,
-        ))
+        let context = self.selection_tree_type_context();
+        let tree = export_tree.then(|| generate_unrendered_branches_type(&context, &branches));
+        // Data of a fragment is never null.
+        let selection = SelectionTree::NonNull(Box::new(SelectionTree::Object(branches)));
+        let data = match tree {
+            // The data is the rendered tree, which would print the exported tree again.
+            Some(_) if selection.has_fragment_refs() => {
+                render_type(TSType::Raw(exported_fragment_tree(fragment.name.name)))
+            }
+            _ => generate_selection_tree_type(&context, &selection),
+        };
+        Ok(FragmentTypes { data, tree })
     }
 }
 
@@ -214,18 +232,21 @@ impl<'a, 'src, F: Fn(&Pos) -> bool> PerDefinitionTypeSource<'a, 'src, F> {
         self.errors.into_inner()
     }
 
-    fn type_for(
+    /// Returns `get_type()` for the definition at given position, or `fallback` if the
+    /// definition falls back to `any`.
+    fn type_for<T>(
         &self,
         position: &Pos,
-        get_type: impl FnOnce() -> Result<TSType, OperationTypePrinterError>,
-    ) -> TSType {
+        fallback: T,
+        get_type: impl FnOnce() -> Result<T, OperationTypePrinterError>,
+    ) -> T {
         if (self.use_fallback)(position) || self.failed.borrow().contains(position) {
-            return TSType::Any;
+            return fallback;
         }
         get_type().unwrap_or_else(|err| {
             self.failed.borrow_mut().insert(*position);
             self.errors.borrow_mut().push(err);
-            TSType::Any
+            fallback
         })
     }
 }
@@ -241,7 +262,7 @@ impl<F: Fn(&Pos) -> bool> OperationTypeSource for PerDefinitionTypeSource<'_, '_
         &self,
         operation: &OperationDefinition,
     ) -> Result<TSType, Self::Error> {
-        Ok(self.type_for(&operation.position, || {
+        Ok(self.type_for(&operation.position, TSType::Any, || {
             self.schema.operation_result_type(operation)
         }))
     }
@@ -250,19 +271,21 @@ impl<F: Fn(&Pos) -> bool> OperationTypeSource for PerDefinitionTypeSource<'_, '_
         &self,
         operation: &OperationDefinition,
     ) -> Result<TSType, Self::Error> {
-        Ok(self.type_for(&operation.position, || {
+        Ok(self.type_for(&operation.position, TSType::Any, || {
             self.schema.operation_variables_type(operation)
         }))
     }
 
-    fn fragment_type(&self, fragment: &FragmentDefinition) -> Result<TSType, Self::Error> {
-        Ok(self.type_for(&fragment.position, || self.schema.fragment_type(fragment)))
-    }
-
-    fn fragment_tree_type(&self, fragment: &FragmentDefinition) -> Result<TSType, Self::Error> {
-        Ok(self.type_for(&fragment.position, || {
-            self.schema.fragment_tree_type(fragment)
-        }))
+    fn fragment_types(
+        &self,
+        fragment: &FragmentDefinition,
+        export_tree: bool,
+    ) -> Result<FragmentTypes, Self::Error> {
+        Ok(
+            self.type_for(&fragment.position, FragmentTypes::any(export_tree), || {
+                self.schema.fragment_types(fragment, export_tree)
+            }),
+        )
     }
 }
 
@@ -294,12 +317,12 @@ impl OperationTypeSource for AnyTypeSource {
         Ok(TSType::Any)
     }
 
-    fn fragment_type(&self, _fragment: &FragmentDefinition) -> Result<TSType, Self::Error> {
-        Ok(TSType::Any)
-    }
-
-    fn fragment_tree_type(&self, _fragment: &FragmentDefinition) -> Result<TSType, Self::Error> {
-        Ok(TSType::Any)
+    fn fragment_types(
+        &self,
+        _fragment: &FragmentDefinition,
+        export_tree: bool,
+    ) -> Result<FragmentTypes, Self::Error> {
+        Ok(FragmentTypes::any(export_tree))
     }
 }
 
