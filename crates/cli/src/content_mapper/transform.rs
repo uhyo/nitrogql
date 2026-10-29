@@ -75,12 +75,7 @@ fn transform_schema_file<'a>(
             .get_file(idx)
             .map(|(path, _, _)| path.as_path())
     };
-    let mut result = TransformResult {
-        text: Cow::Borrowed(EMPTY_MODULE),
-        extension: ".ts",
-        mappings: vec![],
-        diagnostics: vec![],
-    };
+    let mut result = TransformResult::new(EMPTY_MODULE, vec![], vec![]);
 
     let schema = match project.schema() {
         Ok(schema) => schema,
@@ -174,22 +169,11 @@ fn transform_operation_file(
 
     let error_result = |diagnostics: Vec<MapperDiagnostic>| {
         let Some(file) = file else {
-            return TransformResult {
-                text: Cow::Borrowed(EMPTY_OPERATION_MODULE),
-                extension: ".ts",
-                mappings: vec![],
-                diagnostics,
-            };
+            return TransformResult::new(EMPTY_OPERATION_MODULE, vec![], diagnostics);
         };
         let mut writer = SpanWriter::new();
         print_fallback_types_for_operation_document(options(), file.document, &mut writer);
-        let (text, spans) = writer.into_parts();
-        TransformResult {
-            mappings: to_mappings(&spans, file_index, &text, &index, encoding),
-            text: Cow::Owned(text),
-            extension: ".ts",
-            diagnostics,
-        }
+        printed_result(writer, file_index, &index, encoding, diagnostics)
     };
     let diagnose =
         |errors: &[PositionedError]| to_diagnostics(errors, file_index, &file_path, &index);
@@ -258,13 +242,21 @@ fn transform_operation_file(
         .map(PositionedError::from)
         .collect::<Vec<_>>();
     diagnostics.extend(diagnose(&printer_errors));
+    printed_result(writer, file_index, &index, encoding, diagnostics)
+}
+
+/// Makes a result from the module printed to `writer`,
+/// mapping spans in the file with given index.
+fn printed_result(
+    writer: SpanWriter,
+    file_index: usize,
+    original: &SourceText,
+    encoding: PositionEncoding,
+    diagnostics: Vec<MapperDiagnostic>,
+) -> TransformResult<'static> {
     let (text, spans) = writer.into_parts();
-    TransformResult {
-        mappings: to_mappings(&spans, file_index, &text, &index, encoding),
-        text: Cow::Owned(text),
-        extension: ".ts",
-        diagnostics,
-    }
+    let mappings = to_mappings(&spans, file_index, &text, original, encoding);
+    TransformResult::new(text, mappings, diagnostics)
 }
 
 /// Returns the schema file that provides schema types, along with its index in the file store.
