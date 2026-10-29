@@ -30,6 +30,28 @@ thread_local! {
     });
 }
 
+/// While a session is alive, code run with `run_node` shares one Node.js worker.
+///
+/// The content mapper runs each code in a new worker by default, so that changed files
+/// are loaded again. Loading a project in a session starts only one worker for it.
+/// The native build always shares one worker, so a session does nothing there.
+pub struct NodeSession(());
+
+impl NodeSession {
+    pub fn begin() -> Self {
+        #[cfg(target_os = "wasi")]
+        crate::execute::begin_node_session();
+        NodeSession(())
+    }
+}
+
+impl Drop for NodeSession {
+    fn drop(&mut self) {
+        #[cfg(target_os = "wasi")]
+        crate::execute::end_node_session();
+    }
+}
+
 /// Runs given string as JavaScript code, and returns the value exported as default export.
 /// Value is serialized as JSON.
 pub async fn run_node(code: &str) -> io::Result<String> {
