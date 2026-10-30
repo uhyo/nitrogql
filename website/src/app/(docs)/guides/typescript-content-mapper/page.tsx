@@ -28,9 +28,14 @@ export default function TypeScriptContentMapper() {
           <code>nitrogql generate</code> to get types for your operations.
         </p>
         <Hint>
-          🧪 Content mappers are a new feature of TypeScript 7.1, which is
-          currently in beta. nitrogql&apos;s support for content mappers is
-          experimental too.
+          🧪 <strong>Experimental:</strong> content mappers are a new feature of
+          TypeScript 7.1, which is currently in beta. Because the feature may
+          still change in TypeScript, nitrogql&apos;s content mapper is
+          experimental too: its behavior and options may change in minor
+          releases of nitrogql, including in ways that are not backward
+          compatible. Generating types with <code>nitrogql generate</code>{" "}
+          remains the stable way to use nitrogql. Feedback is welcome on{" "}
+          <a href="https://github.com/uhyo/nitrogql/issues">GitHub Issues</a>.
         </Hint>
 
         <h3 id="how-it-works">How It Works</h3>
