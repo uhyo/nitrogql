@@ -9,7 +9,7 @@ export const blogPostRelease2_1: ArticleMetadata = {
 which lets TypeScript read your .graphql files directly without generated files.
 This release also brings stricter static checks and stable error codes.
 `,
-  publishDate: new Date("2026-11-06T00:00Z"),
+  publishDate: new Date("2026-10-30T00:00Z"),
   render,
 };
 
