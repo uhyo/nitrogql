@@ -22,7 +22,7 @@ export default function Guides() {
           </Link>
           <Link href="/guides/monorepo">Monorepo Guide</Link>
           <Link href="/guides/typescript-content-mapper">
-            Using TypeScript Content Mapper
+            Using TypeScript Content Mapper (experimental)
           </Link>
           <Link href="/guides/migrating-from-graphql-codegen">
             Migrating from GraphQL Code Generator
