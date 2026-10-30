@@ -71,14 +71,6 @@ function render() {
         allow running them, e.g. with <code>tsc --runExternalCode</code>.
       </p>
       <p>
-        When your schema consists of GraphQL files, the content mapper provides
-        schema types too, so no generated files are needed at all. Fragments
-        imported with <code>#import</code> are not copied into the importing
-        file; instead, the importing file&apos;s types import the fragment from
-        the file that defines it, just like TypeScript modules. Editing a
-        fragment updates every operation that uses it.
-      </p>
-      <p>
         The content mapper is <strong>experimental</strong>, because content
         mappers themselves are a new feature of TypeScript 7.1, which is still
         in beta. Its behavior and options may change in minor releases of
